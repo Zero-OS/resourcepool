@@ -7,6 +7,7 @@ struct Schema {
     setting @3: Setting;
     status @4: Status;
     node @5: Text; # pointer to parent service
+    name @6: Text; # bridge name
 
     enum NetworkMode{
         none @0;
