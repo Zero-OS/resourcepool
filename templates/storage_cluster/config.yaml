@@ -1,19 +1,13 @@
 links:
   consume:
     - auto: false
-      min: 0
+      min: 1
       max: 9999
-      role: storagepool
-      argname: storagePool
+      role: node
+      argname: nodes
 
     - auto: false
       min: 0
-      max: 256
+      max: 257
       role: ardb
       argname: dataArdb
-
-    - auto: false
-      min: 0
-      max: 256
-      role: ardb
-      argname: metaArdb
