@@ -7,7 +7,6 @@ def install(job):
         port=service.model.data.redisPort,
         password=service.model.data.redisPassword or None,
     )
-
     # create storage pool for fuse cache
     storagepool = node.ensure_persistance()
     actor_storagepool = service.aysrepo.actorGet('storagepool')
