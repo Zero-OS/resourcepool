@@ -1,11 +1,13 @@
-def init(job):
-    raise NotImplementedError()
-    # create the ardb server service
-    # make sure to distribute the ardb on all the node availables
-    # and make sure the ardb distributed over all the disks availables
+from JumpScale import j
+
 
 def install(job):
-    raise NotImplementedError()
+    service = job.parent.service
+    node = j.sal.g8os.get_node(
+        addr=service.model.data.redisaddr,
+        port=service.model.data.redisport,
+        password=service.model.data.redispassword or None,
+    )
 
 def delete(job):
     raise NotImplementedError()
