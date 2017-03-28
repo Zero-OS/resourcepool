@@ -10,7 +10,7 @@ struct Schema {
 
     enum NetworkMode{
         none @0;
-        status @1;
+        static @1;
         dnsmasq @2;
     }
 
