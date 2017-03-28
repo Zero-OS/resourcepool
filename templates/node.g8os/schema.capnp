@@ -5,7 +5,7 @@ struct Schema {
     status @1: NodeStatus;
     hostname @2: Text;
 
-    gridConfig @3: Text; # name of the gridConfig service consumed
+    networks @3:List(Text); # list of consumed network config
 
     redisAddr @4 :Text; # redis addr for client
     redisPort @5 :UInt32 = 6379; # redis port for client

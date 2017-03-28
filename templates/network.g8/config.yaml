@@ -1,0 +1,12 @@
+links:
+  consume:
+    - auto: false
+      min: 0
+      max: 1
+      role: bridge
+      argname: bridge
+  parent:
+    auto: false
+    optional: true
+    role: node
+    argname: node

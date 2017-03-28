@@ -3,3 +3,10 @@ events:
     command: discover
     actions:
       - bootstrap
+links:
+  consume:
+    - auto: false
+      role: network
+      argname: networks
+      min: 0
+      max: 9999
