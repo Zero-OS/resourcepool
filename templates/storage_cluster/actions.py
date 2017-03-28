@@ -66,6 +66,7 @@ def init(job):
         container_args = {
             'node': fs_service.parent.parent.name,
             'hostNetworking': True,
+            'filesystems': [fs_service.name],
         }
         container_service = container_actor.serviceCreate(
             instance="{}_data{}".format(service.name, i),
@@ -90,6 +91,7 @@ def init(job):
     container_args = {
         'node': fs_service.parent.parent.name,
         'hostNetworking': True,
+        'filesystems': [fs_service.name],
     }
     container_service = container_actor.serviceCreate(
         instance="{}_metadata0".format(service.name),
@@ -125,6 +127,7 @@ def init(job):
             container_args = {
                 'node': slave_fs.parent.parent.name,
                 'hostNetworking': True,
+                'filesystems': [slave_fs.name],
             }
             container_service = container_actor.serviceCreate(
                 instance=ardb_service.parent.name + '_slave',
