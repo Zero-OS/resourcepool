@@ -4,9 +4,9 @@ struct Schema {
     node @0 :Text; # pointer to the parent service
     status @1 :Status;
     hostname @2 :Text;
-    flist @3 :Text; Url to the root filesystem flist
+    flist @3 :Text; # Url to the root filesystem flist
     initProcesses @4 :List(Process);
-    filesystems: @5 :List(Text); # pointer to the filesystem to mount into the container
+    filesystems @5 :List(Text); # pointer to the filesystem to mount into the container
     zerotier @6 :Text; # pointer to the zerotier service to consume
     bridges @7 :List(Text); # pointers to the bridges to consumes
     hostNetworking @8 :Bool;
