@@ -22,8 +22,8 @@ func (api NodeAPI) GetCPUInfo(w http.ResponseWriter, r *http.Request) {
 
 	for _, cpu := range result {
 		var info CPUInfo
-		info.CacheSize = int(cpu.CacheSize)
-		info.Cores = int(cpu.Cores)
+		info.CacheSize = cpu.CacheSize
+		info.Cores = cpu.Cores
 		info.Family = cpu.Family
 		info.Flags = cpu.Flags
 		info.Mhz = cpu.Mhz
