@@ -13,15 +13,38 @@ def is_ardb_running_(client):
         raise
 
 def install(job):
-    # The container has everything needed
-    pass
+    import io
+    service = job.service
+    client = service.actions.get_container_client_(service=service)
+    job.logger.info("get template config")
+    # download template cfg
+
+    buff = io.BytesIO()
+    client.filesystem.download('/etc/ardb.conf', buff)
+    content = buff.getvalue().decode()
+
+    # update config
+    job.logger.info("update config")
+    content = content.replace('/opt/ardb', service.model.data.homeDir)
+    content = content.replace('0.0.0.0:16379', '{host}:{port}'.format(host=service.model.data.host, port=service.model.data.port))
+
+    if service.model.data.master != '' and service.producers.get('master', None) is not None:
+        master = service.producers['master'][0] # it can only have one
+        content = content.replace('#slaveof 127.0.0.1:6379', 'slaveof {host}:{port}'.format(host=master.model.data.host, port=master.model.data.port))
+
+    # make sure home directory exists
+    client.bash('mkdir -p {}'.format(service.model.data.homeDir))
+
+    # upload new config
+    job.logger.info("send new config to g8os")
+    client.filesystem.upload('/etc/ardb.conf', io.BytesIO(initial_bytes=content.encode()))
 
 def start(job):
     import time
     service = job.service
     client = service.actions.get_container_client_(service=service)
-    # TODO: the flist should be rebuilt with the shared objects under the default location
-    resp = client.system('/opt/lib/ld-linux-x86-64.so.2 --library-path /opt/lib /opt/bin/ardb-server /optvar/cfg/ardb.conf')
+
+    resp = client.system('/bin/ardb-server /etc/ardb.conf')
 
     # wait for ardb to start
     for i in range(60):
