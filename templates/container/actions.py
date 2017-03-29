@@ -44,25 +44,21 @@ def install(job):
 
 def start(job):
     service = job.service
-    node = service.parent
-    # Get g8core client
-    node = service.parent
-    cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                              port=node.model.data.redisPort,
-                              password=node.model.data.redisPassword)
-    if str(service.model.data.id) not in cl.container.list():
+    if str(service.model.data.status) == "halted":
         service.executeAction('install', inprocess=True)
 
 
 def stop(job):
     service = job.service
-    node = service.parent
-    # Get g8core client
-    node = service.parent
-    cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                              port=node.model.data.redisPort,
-                              password=node.model.data.redisPassword)
-    cl.container.terminate(service.model.data.id)
+    if str(service.model.data.status) == "running":
+        node = service.parent
+        # Get g8core client
+        node = service.parent
+        cl = j.clients.g8core.get(host=node.model.data.redisAddr,
+                                  port=node.model.data.redisPort,
+                                  password=node.model.data.redisPassword)
+        cl.container.terminate(service.model.data.id)
+        service.model.data.status = 'halted'
 
 
 def monitor(job):
