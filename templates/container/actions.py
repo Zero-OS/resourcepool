@@ -2,10 +2,7 @@
 def install(job):
     service = job.service
     # Get g8core client
-    node = service.parent
-    cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                              port=node.model.data.redisPort,
-                              password=node.model.data.redisPassword)
+    cl = service.actions.get_node_clinet_(service)
     # create ports config
     ports = {}
     if len(service.model.data.ports) > 0:
@@ -26,7 +23,10 @@ def install(job):
     mount_points = {}
     for mount_point in service.model.data.mounts:
         fs_name, container_mount_path = mount_point.split(':')
-        _fs = service.aysrepo.servicesFind(actor='filesystem', name=fs_name)[0]
+        try:
+            _fs = service.aysrepo.servicesFind(actor='filesystem', name=fs_name)[0]
+        except IndexError:
+            raise j.exceptions.Input("filesystem serviceL '{}' does not exist, cannot continue install of {}".format(fs_name, service))
         mount_points[_fs.model.data.mountpoint] = container_mount_path
     container_id = cl.container.create(root_url=service.model.data.flist,
                                        mount=mount_points,
@@ -51,16 +51,22 @@ def stop(job):
     service = job.service
     if str(service.model.data.status) == "running":
         # Get g8core client
-        node = service.parent
-        cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                                  port=node.model.data.redisPort,
-                                  password=node.model.data.redisPassword)
+        cl = service.actions.get_node_clinet_(service)
         cl.container.terminate(service.model.data.id)
         service.model.data.status = 'halted'
 
 
 def monitor(job):
     service = job.service
-    coro = service.executeAction('start')
-    j.tools.async.wrappers.sync(coro)
+    # Get g8core client
+    cl = service.actions.get_node_clinet_(service)
+    if str(service.model.data.id) not in cl.container.list():
+        coro = service.executeAction('start')
+        j.tools.async.wrappers.sync(coro)
 
+
+def get_node_clinet_(service):
+    node = service.parent
+    return j.clients.g8core.get(host=node.model.data.redisAddr,
+                                port=node.model.data.redisPort,
+                                password=node.model.data.redisPassword)
