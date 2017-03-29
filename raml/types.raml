@@ -19,7 +19,9 @@ CPUInfo:
     cores: integer
     family: string
     flags: string[]
-    mhz: integer
+    mhz:
+      type: number
+      format: float
 
 MemInfo:
   type: object
@@ -384,9 +386,10 @@ JobListItem:
     id:
       description: The unique identifier for the job
       type: string
-    starttime:
+    startTime:
       description: Epoch timestamp when the job was started
-      type: integer
+      type: number
+      format: int64
 
 JobResult:
   type: object
@@ -407,10 +410,11 @@ JobResult:
              'btrfs.subvol_create', 'btrfs.subvol_list', 'btrfs.subvol_delete']
     level:
       description: 20 means that the data is json serialized object
-      type: string
-    starttime:
-      description: Epoch timestamp when the job was started
       type: integer
+    startTime:
+      description: Epoch timestamp when the job was started
+      type: number
+      format: int64
     stdout:
       type: string
       description: Stdout of process/job
