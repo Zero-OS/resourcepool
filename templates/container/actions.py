@@ -16,7 +16,8 @@ def input(job):
 def install(job):
     service = job.service
     # Get g8core client
-    cl = service.actions.get_node_clinet_(service)
+    cl = service.actions.get_node_client_(service)
+
     # create ports config
     ports = {}
     if len(service.model.data.ports) > 0:
@@ -39,6 +40,7 @@ def install(job):
         fs_name, container_mount_path = mount_point.split(':')
         _fs = service.aysrepo.serviceGet(role='filesystem', instance=fs_name)
         mount_points[_fs.model.data.mountpoint] = container_mount_path
+
     container_id = cl.container.create(root_url=service.model.data.flist,
                                        mount=mount_points,
                                        host_network=service.model.data.hostNetworking or False,
@@ -47,6 +49,7 @@ def install(job):
                                        port=ports,
                                        hostname=service.model.data.hostname or None,
                                        storage=service.model.data.storage or None)
+
     service.model.data.id = container_id
     service.model.data.status = 'running'
 
@@ -62,7 +65,7 @@ def stop(job):
     service = job.service
     if str(service.model.data.status) == "running":
         # Get g8core client
-        cl = service.actions.get_node_clinet_(service)
+        cl = service.actions.get_node_client_(service)
         cl.container.terminate(service.model.data.id)
         service.model.data.status = 'halted'
 
@@ -70,13 +73,13 @@ def stop(job):
 def monitor(job):
     service = job.service
     # Get g8core client
-    cl = service.actions.get_node_clinet_(service)
+    cl = service.actions.get_node_client_(service)
     if str(service.model.data.id) not in cl.container.list():
         coro = service.executeAction('start')
         j.tools.async.wrappers.sync(coro)
 
 
-def get_node_clinet_(service):
+def get_node_client_(service):
     node = service.parent
     return j.clients.g8core.get(host=node.model.data.redisAddr,
                                 port=node.model.data.redisPort,
@@ -86,5 +89,5 @@ def get_node_clinet_(service):
 def get_container_client_(service):
     if str(service.model.data.status) == "running":
         # Get g8core client
-        cl = service.actions.get_node_clinet_(service)
+        cl = service.actions.get_node_client_(service)
         return cl.container.client(service.model.data.id)
