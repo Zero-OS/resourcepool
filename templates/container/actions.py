@@ -1,13 +1,16 @@
 def input(job):
-    service = job.service
-    mounts = job.model.args.get('mounts', [])
-    if len(mounts) > 0:
-        for mount_point in mounts:
-            fs_name, container_mount_path = mount_point.split(':')
-            try:
-                service.aysrepo.serviceGet(role='filesystem', instance=fs_name)
-            except j.exceptions.NotFound:
-                raise j.exceptions.Input("filesystem service '{}' does not exist, cannot continue install of {}".format(fs_name, service))
+    # make sure we always consume all the filesystems used in the mounts property
+    args = job.model.args
+    mounts = args.get('mounts', [])
+    if 'filesystems' not in args:
+        args['filesystems'] = []
+    filesystems = args['filesystems']
+    for mount_point in mounts:
+        fs_name, _ = mount_point.split(':')
+        if fs_name not in filesystems:
+            args['filesystems'].append(fs_name)
+
+    return args
 
 
 def install(job):
