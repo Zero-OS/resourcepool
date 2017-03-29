@@ -6,7 +6,7 @@ struct Schema {
     hostname @2 :Text;
     flist @3 :Text; # Url to the root filesystem flist
     initProcesses @4 :List(Process);
-    filesystems @5 :List(Text); # pointer to the filesystem to mount into the container [filesystem_name:/path/inside/container]
+    filesystems @5 :List(Text); # pointer to the filesystem to mount into the container
     zerotier @6 :Text; # pointer to the zerotier service to consume
     bridges @7 :List(Text); # pointers to the bridges to consumes
     hostNetworking @8 :Bool;
@@ -15,6 +15,7 @@ struct Schema {
     ports @9:List(Text); # List of node to container post mappings. e.g: 8080:80
     storage @10 :Text;
     id @11: UInt32;
+    mounts @12: List(Text); # List mount points mapping to the container [filesystem_name:/path/inside/container]
     enum Status{
         running @0;
         halted @1;

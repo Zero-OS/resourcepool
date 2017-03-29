@@ -1,7 +1,6 @@
 
 def install(job):
     service = job.service
-    node = service.parent
     # Get g8core client
     node = service.parent
     cl = j.clients.g8core.get(host=node.model.data.redisAddr,
@@ -14,22 +13,21 @@ def install(job):
 
     # create bridges config
     bridges = []
-    for bridge in service.model.data.bridges:
-        _bridge = service.aysrepo.servicesFind(actor='bridge', name=bridge)[0]
-        if str(_bridge.model.data.networkMode) == 'dhcp':
-            bridges.append((_bridge.name, str(_bridge.model.data.networkMode)))
+    for _bridge in service.producers.get('bridge', []):
+        if str(_bridge.model.data.networkMode) == 'dnsmasq':
+            bridges.append((_bridge.name, 'dhcp'))
         elif str(_bridge.model.data.networkMode) == 'static':
             cidr = _bridge.model.data.setting.to_dict()['cidr']
             bridges.append((_bridge.name, cidr))
         else:
             bridges.append((_bridge.name, ''))
 
+    # Create mount points mapping
     mount_points = {}
-    for fs in service.model.data.filesystems:
-        fs_name, container_mount_path = fs.split(':')
+    for idx, mount_point in enumerate(service.model.data.mounts):
+        fs_name, container_mount_path = mount_point.split(':')
         _fs = service.aysrepo.servicesFind(actor='filesystem', name=fs_name)[0]
         mount_points[_fs.model.data.mountpoint] = container_mount_path
-
     container_id = cl.container.create(root_url=service.model.data.flist,
                                        mount=mount_points,
                                        host_network=service.model.data.hostNetworking or False,
@@ -45,13 +43,13 @@ def install(job):
 def start(job):
     service = job.service
     if str(service.model.data.status) == "halted":
-        service.executeAction('install', inprocess=True)
+        coro = service.executeAction('install')
+        j.tools.async.wrappers.sync(coro)
 
 
 def stop(job):
     service = job.service
     if str(service.model.data.status) == "running":
-        node = service.parent
         # Get g8core client
         node = service.parent
         cl = j.clients.g8core.get(host=node.model.data.redisAddr,
@@ -63,4 +61,6 @@ def stop(job):
 
 def monitor(job):
     service = job.service
-    service.executeAction('start', inprocess=True)
+    coro = service.executeAction('start')
+    j.tools.async.wrappers.sync(coro)
+
