@@ -70,3 +70,10 @@ def get_node_clinet_(service):
     return j.clients.g8core.get(host=node.model.data.redisAddr,
                                 port=node.model.data.redisPort,
                                 password=node.model.data.redisPassword)
+
+
+def get_container_client_(service):
+    if str(service.model.data.status) == "running":
+        # Get g8core client
+        cl = service.actions.get_node_clinet_(service)
+        return cl.container.client(service.model.data.id)
