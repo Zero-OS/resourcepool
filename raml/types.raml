@@ -46,14 +46,20 @@ OSInfo:
   type: object
   description: Information on the operating system
   properties:
-    bootTime: integer
+    bootTime:
+      type: number
+      format: int64
     hostname: string
     os: string
     platform: string
     platformFamily: string
     platformVersion: string
-    procs: integer
-    uptime: integer
+    procs:
+      type: number
+      format: int64
+    uptime:
+      type: number
+      format: int64
     virtualizationRole: string
     virtualizationSystem: string
 
