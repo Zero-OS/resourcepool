@@ -1,3 +1,14 @@
+def input(job):
+    service = job.service
+    mounts = job.model.args.get('mounts', [])
+    if len(mounts) > 0:
+        for mount_point in mounts:
+            fs_name, container_mount_path = mount_point.split(':')
+            try:
+                service.aysrepo.serviceGet(role='filesystem', instance=fs_name)
+            except j.exceptions.NotFound:
+                raise j.exceptions.Input("filesystem service '{}' does not exist, cannot continue install of {}".format(fs_name, service))
+
 
 def install(job):
     service = job.service
@@ -23,10 +34,7 @@ def install(job):
     mount_points = {}
     for mount_point in service.model.data.mounts:
         fs_name, container_mount_path = mount_point.split(':')
-        try:
-            _fs = service.aysrepo.servicesFind(actor='filesystem', name=fs_name)[0]
-        except IndexError:
-            raise j.exceptions.Input("filesystem serviceL '{}' does not exist, cannot continue install of {}".format(fs_name, service))
+        _fs = service.aysrepo.serviceGet(role='filesystem', instance=fs_name)
         mount_points[_fs.model.data.mountpoint] = container_mount_path
     container_id = cl.container.create(root_url=service.model.data.flist,
                                        mount=mount_points,
