@@ -8,7 +8,7 @@ def install(job):
                               password=node.model.data.redisPassword)
     # create ports config
     ports = {}
-    if not service.model.data.ports:
+    if len(service.model.data.ports) > 0:
         ports = dict(map(int, port.split(':')) for port in service.model.data.ports)
 
     # create bridges config
@@ -24,7 +24,7 @@ def install(job):
 
     # Create mount points mapping
     mount_points = {}
-    for idx, mount_point in enumerate(service.model.data.mounts):
+    for mount_point in service.model.data.mounts:
         fs_name, container_mount_path = mount_point.split(':')
         _fs = service.aysrepo.servicesFind(actor='filesystem', name=fs_name)[0]
         mount_points[_fs.model.data.mountpoint] = container_mount_path
