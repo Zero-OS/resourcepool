@@ -11,33 +11,42 @@ import (
 // GetNodeJob is the handler for GET /node/{nodeid}/job/{jobid}
 // Get the details of a submitted job
 func (api NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
+	var respBody JobResult
 	vars := mux.Vars(r)
 	jobID := vars["jobid"]
+	job := client.Job(jobID)
 	cl := GetConnection(r)
-	result, err := cl.ResultNonBlock(client.Job(jobID))
+	core := client.Core(cl)
 
-	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	// Check first if the job is running and return
+	if process, _ := core.Process(job); process != nil {
+		respBody = JobResult{
+			Id:        process.Command.ID,
+			Name:      EnumJobResultName(process.Command.Command),
+			StartTime: process.StartTime,
+			State:     EnumJobResultStaterunning,
+		}
+		w.Header().Set("content-type", "application/json")
+		json.NewEncoder(w).Encode(&respBody)
 		return
 	}
 
-	if result == nil {
-		w.WriteHeader(http.StatusNotFound)
+	// Check if the job has finished
+	if process, _ := cl.ResultNonBlock(client.Job(jobID)); process != nil {
+		respBody = JobResult{
+			Data:      process.Data,
+			Id:        process.ID,
+			Level:     process.Level,
+			Name:      EnumJobResultName(process.Command),
+			StartTime: process.StartTime,
+			Stderr:    process.Streams.Stderr(),
+			Stdout:    process.Streams.Stdout(),
+			State:     EnumJobResultState(process.State),
+		}
+		w.Header().Set("content-type", "application/json")
+		json.NewEncoder(w).Encode(&respBody)
 		return
 	}
 
-	respBody := JobResult{
-		Data:      result.Data,
-		Id:        result.ID,
-		Level:     result.Level,
-		Name:      EnumJobResultName(result.Command),
-		StartTime: result.StartTime,
-		Stderr:    result.Streams.Stderr(),
-		Stdout:    result.Streams.Stdout(),
-		State:     EnumJobResultState(result.State),
-	}
-
-	w.Header().Set("content-type", "application/json")
-	json.NewEncoder(w).Encode(&respBody)
+	w.WriteHeader(http.StatusNotFound)
 }
