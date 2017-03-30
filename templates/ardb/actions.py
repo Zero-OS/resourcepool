@@ -1,5 +1,8 @@
-def get_container_client_(service):
-    return service.parent.actions.get_container_client_(service=service.parent)
+def get_container_client(service):
+    cl = j.clients.g8core.get(host=service.parent.parent.model.data.redisAddr,
+                              port=service.parent.parent.model.data.redisPort,
+                              password=service.parent.parent.model.data.redisPassword)
+    return cl.container.client(service.model.data.id)
 
 def is_ardb_running_(client):
     try:
@@ -15,7 +18,7 @@ def is_ardb_running_(client):
 def install(job):
     import io
     service = job.service
-    client = service.actions.get_container_client_(service=service)
+    client = get_container_client(service=service)
     job.logger.info("get template config")
     # download template cfg
 
@@ -26,14 +29,14 @@ def install(job):
     # update config
     job.logger.info("update config")
     content = content.replace('/mnt/data', service.model.data.homeDir)
-    content = content.replace('0.0.0.0:16379', '{host}:{port}'.format(host=service.model.data.host, port=service.model.data.port))
+    content = content.replace('0.0.0.0:16379', service.model.data.bind)
 
     if service.model.data.master != '' and service.producers.get('master', None) is not None:
         master = service.producers['master'][0] # it can only have one
         content = content.replace('#slaveof 127.0.0.1:6379', 'slaveof {host}:{port}'.format(host=master.model.data.host, port=master.model.data.port))
 
     # make sure home directory exists
-    client.filesystem.mkdir('service.model.data.homeDir')
+    client.filesystem.mkdir(service.model.data.homeDir)
 
     # upload new config
     job.logger.info("send new config to g8os")
@@ -42,7 +45,7 @@ def install(job):
 def start(job):
     import time
     service = job.service
-    client = service.actions.get_container_client_(service=service)
+    client = get_container_client(service=service)
 
     resp = client.system('/bin/ardb-server /etc/ardb.conf')
 
@@ -59,7 +62,7 @@ def start(job):
 def stop(job):
     import time
     service = job.service
-    client = service.actions.get_container_client_(service=service)
+    client = get_container_client(service=service)
     process = service.actions.is_ardb_running_(client)
     if process:
         job.logger.info("killing process {}".format(process['cmd']['arguments']['name']))
@@ -76,7 +79,7 @@ def stop(job):
 
 def monitor(job):
     service = job.service
-    client = service.actions.get_container_client_(service=service)
+    client = get_container_client(service=service)
     process = service.actions.is_ardb_running_(client)
     if not process:
         try:
