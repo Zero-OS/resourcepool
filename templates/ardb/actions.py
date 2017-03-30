@@ -4,7 +4,7 @@ def get_container_client_(service):
 def is_ardb_running_(client):
     try:
         for process in client.process.list():
-            if process['cmd']['arguments']['name'] == '/opt/bin/ardb-server':
+            if process['cmd']['arguments']['name'] == '/bin/ardb-server':
                 return process
         return False
     except Exception as err:
@@ -25,7 +25,7 @@ def install(job):
 
     # update config
     job.logger.info("update config")
-    content = content.replace('/opt/ardb', service.model.data.homeDir)
+    content = content.replace('/mnt/data', service.model.data.homeDir)
     content = content.replace('0.0.0.0:16379', '{host}:{port}'.format(host=service.model.data.host, port=service.model.data.port))
 
     if service.model.data.master != '' and service.producers.get('master', None) is not None:
