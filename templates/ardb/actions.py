@@ -42,6 +42,8 @@ def install(job):
     job.logger.info("send new config to g8os")
     client.filesystem.upload('/etc/ardb.conf', io.BytesIO(initial_bytes=content.encode()))
 
+    j.tools.async.wrappers.sync(service.executeAction('start'))
+
 def start(job):
     import time
     service = job.service
