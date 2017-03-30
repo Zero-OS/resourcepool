@@ -2,9 +2,9 @@ def get_container_client(service):
     cl = j.clients.g8core.get(host=service.parent.parent.model.data.redisAddr,
                               port=service.parent.parent.model.data.redisPort,
                               password=service.parent.parent.model.data.redisPassword)
-    return cl.container.client(service.model.data.id)
+    return cl.container.client(service.parent.model.data.id)
 
-def is_ardb_running_(client):
+def is_ardb_running(client):
     try:
         for process in client.process.list():
             if process['cmd']['arguments']['name'] == '/bin/ardb-server':
@@ -51,7 +51,7 @@ def start(job):
 
     # wait for ardb to start
     for i in range(60):
-        if not service.actions.is_ardb_running_(client):
+        if not is_ardb_running(client):
             time.sleep(1)
         else:
             return
@@ -63,7 +63,7 @@ def stop(job):
     import time
     service = job.service
     client = get_container_client(service=service)
-    process = service.actions.is_ardb_running_(client)
+    process = is_ardb_running(client)
     if process:
         job.logger.info("killing process {}".format(process['cmd']['arguments']['name']))
         client.process.kill(process['cmd']['id'])
@@ -71,7 +71,7 @@ def stop(job):
         job.logger.info("wait for ardb to stop")
         for i in range(60):
             time.sleep(1)
-            if service.actions.is_ardb_running_(client):
+            if is_ardb_running(client):
                 time.sleep(1)
             else:
                 return
@@ -80,7 +80,7 @@ def stop(job):
 def monitor(job):
     service = job.service
     client = get_container_client(service=service)
-    process = service.actions.is_ardb_running_(client)
+    process = is_ardb_running(client)
     if not process:
         try:
             job.logger.warning("ardb {} not running, trying to restart".format(service.name))
