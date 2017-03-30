@@ -1,4 +1,4 @@
-@0x80eab0d1fa3f13a2;
+@0x80eab0d1fa3f13a3;
 
 struct Schema {
     label @0 :Text;
@@ -6,8 +6,10 @@ struct Schema {
     nbrServer @2 :UInt32 = 256;
     hasSlave @3 :Bool = false;
     diskType @4:DiskClass = ssd;
+    filesystems @5:List(Text);
+    ardbs @6 :List(Text);
 
-    nodes @5 :List(Text); # list of node where we can deploy storage server
+    nodes @7 :List(Text); # list of node where we can deploy storage server
 
     enum Status{
         empty @0;

@@ -10,4 +10,10 @@ links:
       min: 0
       max: 257
       role: ardb
-      argname: dataArdb
+      argname: ardbs
+
+    - auto: false
+      min: 0
+      max: 257
+      role: filesystem
+      argname: filesystems
