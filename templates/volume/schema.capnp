@@ -1,4 +1,4 @@
-@0x935023b5e21bf041;
+@0xf5773e7b7181182f;
 
 struct Schema {
     size @0 :UInt64;
@@ -8,12 +8,15 @@ struct Schema {
     readOnly @4 :Bool;
     driver @5 :Text;
     status @6 :Status;
+    gridApiUrl @7:Text;
+    node @8 :Text;
+    containerId @9 :UInt32;
 
-    storageCluster @6 :Text; # parent
+    storageCluster @10 :Text; # parent
 
     enum Status {
         running @0;
-        halter @1;
-        rollingback @3;
+        halted @1;
+        rollingback @2;
     }
 }
