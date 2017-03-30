@@ -33,7 +33,7 @@ def install(job):
         content = content.replace('#slaveof 127.0.0.1:6379', 'slaveof {host}:{port}'.format(host=master.model.data.host, port=master.model.data.port))
 
     # make sure home directory exists
-    client.bash('mkdir -p {}'.format(service.model.data.homeDir))
+    client.filesystem.mkdir('service.model.data.homeDir')
 
     # upload new config
     job.logger.info("send new config to g8os")
