@@ -81,16 +81,17 @@ def stop(job):
 
 def monitor(job):
     service = job.service
-    client = get_container_client(service=service)
-    process = is_ardb_running(client)
-    if not process:
-        try:
-            job.logger.warning("ardb {} not running, trying to restart".format(service.name))
-            service.model.dbobj.state = 'error'
-            j.tools.async.wrappers.sync(service.executeActionJob('start'))
-            service.model.dbobj.state = 'ok'
-        except:
-            job.logger.error("can't restart ardb {} not running".format(service.name))
-            service.model.dbobj.state = 'error'
-        finally:
-            service.saveAll()
+    if service.model.actionsState['install'] == 'ok':
+        client = get_container_client(service=service)
+        process = is_ardb_running(client)
+        if not process:
+            try:
+                job.logger.warning("ardb {} not running, trying to restart".format(service.name))
+                service.model.dbobj.state = 'error'
+                j.tools.async.wrappers.sync(service.executeActionJob('start'))
+                service.model.dbobj.state = 'ok'
+            except:
+                job.logger.error("can't restart ardb {} not running".format(service.name))
+                service.model.dbobj.state = 'error'
+            finally:
+                service.saveAll()

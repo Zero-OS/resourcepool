@@ -12,4 +12,4 @@ links:
 recurring:
   - action: monitor
     log: true
-    period: 1m
+    period: 30m
