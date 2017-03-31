@@ -26,7 +26,7 @@ def install(job):
         fs = pool.get(fsname)
     except ValueError:
         fs = pool.create(fsname, int(job.service.model.data.quota))
-    job.service.model.mountpoint = fs.path
+    job.service.model.data.mountpoint = fs.path
 
 
 def delete(job):
