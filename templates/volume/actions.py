@@ -11,7 +11,7 @@ def get_container_client(service, id):
 def create_container(service):
     client = get_node_client(service)
     id = client.container.create(
-        'https://hub.gig.tech/maxux/flist-gonbdserver.flist',
+        'https://hub.gig.tech/gig-official-apps/gonbdserver.flist',
         host_network=True,
         storage='ardb://hub.gig.tech:16379')
     service.model.data.containerId = id
