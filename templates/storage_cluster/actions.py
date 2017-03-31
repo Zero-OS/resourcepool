@@ -1,9 +1,19 @@
 from JumpScale import j
 
+
 def input(job):
     for arg in ['filesystems', 'arbds']:
         if job.model.args.get(arg, []) != []:
             raise j.exceptions.Input("{} should not be set as input".format(arg))
+
+
+def find_port(addr, start_port):
+    while True:
+        if j.sal.nettools.tcpPortConnectionTest(addr, start_port, timeout=2):
+            start_port += 1
+            continue
+        return start_port
+
 
 def create_filesystem(storagecluster_service, node_service, instance, disk):
     storagepool_actor = storagecluster_service.aysrepo.actorGet('storagepool')
@@ -14,22 +24,22 @@ def create_filesystem(storagecluster_service, node_service, instance, disk):
         'totalCapacity': disk.size,
         'metadataProfile': 'single',
         'dataProfile': 'single',
-        'mountpoint': "/storage/{}".format(disk.name),
         'devices': [disk.devicename],
         'node': node_service.name,
     }
     sp_service = storagepool_actor.serviceCreate(instance=instance, args=sp_args)
 
     fs_args = {
+        'name': "{}_{}".format(sp_service.name, disk.name),
         'storagePool': sp_service.name,
         'readOnly': False,
         'quota': 0,
-        'mountpoint': "/storage/{}".format(disk.name),
     }
     fs_service = filesystem_actor.serviceCreate(instance=instance, args=fs_args)
     return fs_service
 
-def create_ardb(storagecluster_service, fs_service, instance, master=None):
+
+def create_ardb(storagecluster_service, fs_service, instance, port, master=None):
     container_actor = storagecluster_service.aysrepo.actorGet('container')
     ardb_actor = storagecluster_service.aysrepo.actorGet('ardb')
 
@@ -40,16 +50,17 @@ def create_ardb(storagecluster_service, fs_service, instance, master=None):
         'flist': 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist',
         'storage': 'ardb://hub.gig.tech:16379',
         'mounts': ["{}:{}".format(fs_service.name, "/mnt/data")],
-        'ports': ['16379:16379'],
     }
     container_service = container_actor.serviceCreate(
         instance=instance,
         args=container_args
     )
 
+    # find free port
+
     ardb_args = {
         'homeDir': "/mnt/data",
-        'bind': '0.0.0.0:16379',  # FIXME: should be 40G network
+        'bind': '0.0.0.0:{}'.format(port),  # FIXME: should be 40G network
         'container': container_service.name,
     }
     if master:
@@ -62,12 +73,14 @@ def create_ardb(storagecluster_service, fs_service, instance, master=None):
 
     return ardb_service
 
+
 def init(job):
     service = job.service
     service.model.data.status = 'deploying'
     service.save()
 
     filesystems = []
+    start_port = 20000
 
     job.logger.info("create storagepool and filesystem services")
     for node_service in service.producers['node']:
@@ -99,10 +112,10 @@ def init(job):
 
     if len(filesystems) <= 0:
         raise j.exceptions.RuntimeError(
-        "no available disks on node {node}. can't continue to deploy storage cluster {sc}".format(
-            node=node_service.name,
-            sc=service.name,
-        ))
+            "no available disks on node {node}. can't continue to deploy storage cluster {sc}".format(
+                node=node_service.name,
+                sc=service.name,
+            ))
 
     job.logger.info("distribute data ardb server on all the filesystems available")
     ardb_services = []
@@ -110,7 +123,9 @@ def init(job):
         fs_service = filesystems[i % len(filesystems) - 1]
 
         name = "{}_data{}".format(service.name, i)
-        ardb_service = create_ardb(service, fs_service, name)
+        port = find_port(addr=fs_service.parent.parent.model.data.redisAddr, start_port=start_port)
+        start_port = port + 1
+        ardb_service = create_ardb(service, fs_service, name, port)
         service.consume(ardb_service)
         ardb_services.append(ardb_service)
 
@@ -118,7 +133,9 @@ def init(job):
     fs_service = filesystems[(service.model.data.nbrServer + 1) % len(filesystems) - 1]
 
     name = "{}_metadata0".format(service.name)
-    ardb_service = create_ardb(service, fs_service, name)
+    port = find_port(addr=fs_service.parent.parent.model.data.redisAddr, start_port=start_port)
+    start_port = port + 1
+    ardb_service = create_ardb(service, fs_service, name, port)
     service.consume(ardb_service)
     ardb_services.append(ardb_service)
 
@@ -136,12 +153,9 @@ def init(job):
             if slave_fs is None:
                 raise j.exceptions.RuntimeError("can't find a node to deploy slave of {}".format(ardb_service))
 
-            ardb_service = create_ardb(
-                storagecluster_service=service,
-                fs_service=slave_fs,
-                instance=ardb_service.parent.name + '_slave',
-                master=ardb_service
-            )
+            port = find_port(addr=fs_service.parent.parent.model.data.redisAddr, start_port=start_port)
+            start_port = port + 1
+            ardb_service = create_ardb(service, slave_fs, ardb_service.parent.name + '_slave', port, ardb_service)
             service.consume(ardb_service)
 
 
