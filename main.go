@@ -29,5 +29,5 @@ func main() {
 	StorageclusterInterfaceRoutes(r, StorageclusterAPI{})
 
 	log.Println("starting server")
-	http.ListenAndServe(":5000", r)
+	http.ListenAndServe(":5000", ConnectionMiddleware()(r))
 }
