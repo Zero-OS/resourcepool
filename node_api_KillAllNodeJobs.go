@@ -11,8 +11,8 @@ import (
 func (api NodeAPI) KillAllNodeJobs(w http.ResponseWriter, r *http.Request) {
 	cl := GetConnection(r)
 	core := client.Core(cl)
-	err := core.KillAll()
-	if err != nil {
+
+	if err := core.KillAll(); err != nil {
 		json.NewEncoder(w).Encode(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
