@@ -10,7 +10,7 @@ type BridgeCreate struct {
 	Name        string                      `json:"name" validate:"nonzero"`
 	Nat         bool                        `json:"nat" validate:"nonzero"`
 	NetworkMode EnumBridgeCreateNetworkMode `json:"networkMode" validate:"nonzero"`
-	//Settings    object                      `json:"settings" validate:"nonzero"`
+	Settings    BridgeCreateSetting         `json:"settings" validate:"nonzero"`
 }
 
 func (s BridgeCreate) Validate() error {

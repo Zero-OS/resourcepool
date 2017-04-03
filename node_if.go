@@ -15,18 +15,57 @@ type NodeInterface interface { // ListNodes is the handler for GET /node
 	// GetNode is the handler for GET /node/{nodeid}
 	// Get detailed information of a node
 	GetNode(http.ResponseWriter, *http.Request)
-	// GetNicInfo is the handler for GET /node/{nodeid}/nic
-	// Get detailed information about the network interfaces in the node
-	GetNicInfo(http.ResponseWriter, *http.Request)
-	// ListNodeProcesses is the handler for GET /node/{nodeid}/process
-	// Get Processes
-	ListNodeProcesses(http.ResponseWriter, *http.Request)
-	// GetNodeProcess is the handler for GET /node/{nodeid}/process/{proccessid}
-	// Get process details
-	GetNodeProcess(http.ResponseWriter, *http.Request)
-	// KillNodeProcess is the handler for DELETE /node/{nodeid}/process/{proccessid}
-	// Kill Process
-	KillNodeProcess(http.ResponseWriter, *http.Request)
+	// GetStoragePools is the handler for GET /node/{nodeid}/storagepool
+	// List storage pools present in the node
+	GetStoragePools(http.ResponseWriter, *http.Request)
+	// CreateStoragePool is the handler for POST /node/{nodeid}/storagepool
+	// Create a new storage pool
+	CreateStoragePool(http.ResponseWriter, *http.Request)
+	// GetStoragePoolInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}
+	// Get detailed information of this storage pool
+	GetStoragePoolInfo(http.ResponseWriter, *http.Request)
+	// DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
+	// Delete the storage pool
+	DeleteStoragePool(http.ResponseWriter, *http.Request)
+	// ListStoragePoolDevices is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/device
+	// Lists the devices in the storage pool
+	ListStoragePoolDevices(http.ResponseWriter, *http.Request)
+	// CreateStoragePoolDevices is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/device
+	// Add extra devices to this storage pool
+	CreateStoragePoolDevices(http.ResponseWriter, *http.Request)
+	// GetStoragePoolDeviceInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}
+	// Get information of the device
+	GetStoragePoolDeviceInfo(http.ResponseWriter, *http.Request)
+	// DeleteStoragePoolDevice is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}
+	// Removes the device from the storagepool
+	DeleteStoragePoolDevice(http.ResponseWriter, *http.Request)
+	// ListFilesystems is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem
+	// List filesystems
+	ListFilesystems(http.ResponseWriter, *http.Request)
+	// CreateFilesystem is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem
+	// Create a new filesystem
+	CreateFilesystem(http.ResponseWriter, *http.Request)
+	// GetFilesystemInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}
+	// Get detailed filesystem information
+	GetFilesystemInfo(http.ResponseWriter, *http.Request)
+	// DeleteFilesystem is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}
+	// Delete filesystem
+	DeleteFilesystem(http.ResponseWriter, *http.Request)
+	// ListFilesystemSnapshots is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot
+	// List snapshots of this filesystem
+	ListFilesystemSnapshots(http.ResponseWriter, *http.Request)
+	// CreateSnapshot is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot
+	// Create a new readonly filesystem of the current state of the volume
+	CreateSnapshot(http.ResponseWriter, *http.Request)
+	// GetFilesystemSnapshotInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
+	// Get detailed information on the snapshot
+	GetFilesystemSnapshotInfo(http.ResponseWriter, *http.Request)
+	// DeleteFilesystemSnapshot is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
+	// Delete snapshot
+	DeleteFilesystemSnapshot(http.ResponseWriter, *http.Request)
+	// RollbackFilesystemSnapshot is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}/rollback
+	// Rollback the filesystem to the state at the moment the snapshot was taken
+	RollbackFilesystemSnapshot(http.ResponseWriter, *http.Request)
 	// ListVMs is the handler for GET /node/{nodeid}/vm
 	// List VMs
 	ListVMs(http.ResponseWriter, *http.Request)
@@ -39,9 +78,6 @@ type NodeInterface interface { // ListNodes is the handler for GET /node
 	// DeleteVM is the handler for DELETE /node/{nodeid}/vm/{vmid}
 	// Deletes the VM
 	DeleteVM(http.ResponseWriter, *http.Request)
-	// ShutdownVM is the handler for POST /node/{nodeid}/vm/{vmid}/shutdown
-	// Gracefully shutdown the VM
-	ShutdownVM(http.ResponseWriter, *http.Request)
 	// MigrateVM is the handler for POST /node/{nodeid}/vm/{vmid}/migrate
 	// Migrate the VM to another host
 	MigrateVM(http.ResponseWriter, *http.Request)
@@ -60,15 +96,54 @@ type NodeInterface interface { // ListNodes is the handler for GET /node
 	// ResumeVM is the handler for POST /node/{nodeid}/vm/{vmid}/resume
 	// Resumes the VM
 	ResumeVM(http.ResponseWriter, *http.Request)
-	// GetNodeState is the handler for GET /node/{nodeid}/state
-	// The aggregated consumption of node + all processes (cpu, memory, etc...)
-	GetNodeState(http.ResponseWriter, *http.Request)
-	// GetDiskInfo is the handler for GET /node/{nodeid}/disk
-	// Get detailed information of all the disks in the node
-	GetDiskInfo(http.ResponseWriter, *http.Request)
+	// ShutdownVM is the handler for POST /node/{nodeid}/vm/{vmid}/shutdown
+	// Gracefully shutdown the VM
+	ShutdownVM(http.ResponseWriter, *http.Request)
+	// ListNodeJobs is the handler for GET /node/{nodeid}/job
+	// List running jobs
+	ListNodeJobs(http.ResponseWriter, *http.Request)
+	// KillAllNodeJobs is the handler for DELETE /node/{nodeid}/job
+	// Kills all running jobs
+	KillAllNodeJobs(http.ResponseWriter, *http.Request)
+	// GetNodeJob is the handler for GET /node/{nodeid}/job/{jobid}
+	// Get the details of a submitted job
+	GetNodeJob(http.ResponseWriter, *http.Request)
+	// KillNodeJob is the handler for DELETE /node/{nodeid}/job/{jobid}
+	// Kills the job
+	KillNodeJob(http.ResponseWriter, *http.Request)
+	// GetMemInfo is the handler for GET /node/{nodeid}/mem
+	// Get detailed information about the memory in the node
+	GetMemInfo(http.ResponseWriter, *http.Request)
+	// GetNicInfo is the handler for GET /node/{nodeid}/nic
+	// Get detailed information about the network interfaces in the node
+	GetNicInfo(http.ResponseWriter, *http.Request)
+	// ListBridges is the handler for GET /node/{nodeid}/bridge
+	// List bridges
+	ListBridges(http.ResponseWriter, *http.Request)
+	// CreateBridge is the handler for POST /node/{nodeid}/bridge
+	// Creates a new bridge
+	CreateBridge(http.ResponseWriter, *http.Request)
+	// GetBridge is the handler for GET /node/{nodeid}/bridge/{bridgeid}
+	// Get bridge details
+	GetBridge(http.ResponseWriter, *http.Request)
+	// DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
+	// Remove bridge
+	DeleteBridge(http.ResponseWriter, *http.Request)
 	// GetNodeOSInfo is the handler for GET /node/{nodeid}/info
 	// Get detailed information of the os of the node
 	GetNodeOSInfo(http.ResponseWriter, *http.Request)
+	// ListZerotier is the handler for GET /node/{nodeid}/zerotier
+	// List running Zerotier networks
+	ListZerotier(http.ResponseWriter, *http.Request)
+	// JoinZerotier is the handler for POST /node/{nodeid}/zerotier
+	// Join Zerotier network
+	JoinZerotier(http.ResponseWriter, *http.Request)
+	// GetZerotier is the handler for GET /node/{nodeid}/zerotier/{zerotierid}
+	// Get Zerotier network details
+	GetZerotier(http.ResponseWriter, *http.Request)
+	// ExitZerotier is the handler for DELETE /node/{nodeid}/zerotier/{zerotierid}
+	// Exit the Zerotier network
+	ExitZerotier(http.ResponseWriter, *http.Request)
 	// ListContainers is the handler for GET /node/{nodeid}/container
 	// List running Containers
 	ListContainers(http.ResponseWriter, *http.Request)
@@ -129,129 +204,79 @@ type NodeInterface interface { // ListNodes is the handler for GET /node
 	// FileDelete is the handler for DELETE /node/{nodeid}/container/{containerid}/filesystem
 	// Delete file from container
 	FileDelete(http.ResponseWriter, *http.Request)
-	// ListNodeJobs is the handler for GET /node/{nodeid}/job
-	// List running jobs
-	ListNodeJobs(http.ResponseWriter, *http.Request)
-	// KillAllNodeJobs is the handler for DELETE /node/{nodeid}/job
-	// Kills all running jobs
-	KillAllNodeJobs(http.ResponseWriter, *http.Request)
-	// GetNodeJob is the handler for GET /node/{nodeid}/job/{jobid}
-	// Get the details of a submitted job
-	GetNodeJob(http.ResponseWriter, *http.Request)
-	// KillNodeJob is the handler for DELETE /node/{nodeid}/job/{jobid}
-	// Kills the job
-	KillNodeJob(http.ResponseWriter, *http.Request)
-	// GetCPUInfo is the handler for GET /node/{nodeid}/cpu
-	// Get detailed information of all CPUs in the node
-	GetCPUInfo(http.ResponseWriter, *http.Request)
-	// ListZerotier is the handler for GET /node/{nodeid}/zerotier
-	// List running Zerotier networks
-	ListZerotier(http.ResponseWriter, *http.Request)
-	// JoinZerotier is the handler for POST /node/{nodeid}/zerotier
-	// Join Zerotier network
-	JoinZerotier(http.ResponseWriter, *http.Request)
-	// GetZerotier is the handler for GET /node/{nodeid}/zerotier/{zerotierid}
-	// Get Zerotier network details
-	GetZerotier(http.ResponseWriter, *http.Request)
-	// ExitZerotier is the handler for DELETE /node/{nodeid}/zerotier/{zerotierid}
-	// Exit the Zerotier network
-	ExitZerotier(http.ResponseWriter, *http.Request)
+	// ListNodeProcesses is the handler for GET /node/{nodeid}/process
+	// Get Processes
+	ListNodeProcesses(http.ResponseWriter, *http.Request)
+	// GetNodeProcess is the handler for GET /node/{nodeid}/process/{proccessid}
+	// Get process details
+	GetNodeProcess(http.ResponseWriter, *http.Request)
+	// KillNodeProcess is the handler for DELETE /node/{nodeid}/process/{proccessid}
+	// Kill Process
+	KillNodeProcess(http.ResponseWriter, *http.Request)
 	// PingNode is the handler for POST /node/{nodeid}/ping
 	// Ping this node
 	PingNode(http.ResponseWriter, *http.Request)
 	// RebootNode is the handler for POST /node/{nodeid}/reboot
 	// Immediately reboot the machine.
 	RebootNode(http.ResponseWriter, *http.Request)
-	// GetMemInfo is the handler for GET /node/{nodeid}/mem
-	// Get detailed information about the memory in the node
-	GetMemInfo(http.ResponseWriter, *http.Request)
-	// ListBridges is the handler for GET /node/{nodeid}/bridge
-	// List bridges
-	ListBridges(http.ResponseWriter, *http.Request)
-	// CreateBridge is the handler for POST /node/{nodeid}/bridge
-	// Creates a new bridge
-	CreateBridge(http.ResponseWriter, *http.Request)
-	// GetBridge is the handler for GET /node/{nodeid}/bridge/{bridgeid}
-	// Get bridge details
-	GetBridge(http.ResponseWriter, *http.Request)
-	// DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
-	// Remove bridge
-	DeleteBridge(http.ResponseWriter, *http.Request)
-	// GetStoragePools is the handler for GET /node/{nodeid}/storagepool
-	// List storage pools present in the node
-	GetStoragePools(http.ResponseWriter, *http.Request)
-	// CreateStoragePool is the handler for POST /node/{nodeid}/storagepool
-	// Create a new storage pool
-	CreateStoragePool(http.ResponseWriter, *http.Request)
-	// GetStoragePoolInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}
-	// Get detailed information of this storage pool
-	GetStoragePoolInfo(http.ResponseWriter, *http.Request)
-	// DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
-	// Delete the storage pool
-	DeleteStoragePool(http.ResponseWriter, *http.Request)
-	// ListStoragePoolDevices is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/device
-	// Lists the devices in the storage pool
-	ListStoragePoolDevices(http.ResponseWriter, *http.Request)
-	// CreateStoragePoolDevices is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/device
-	// Add extra devices to this storage pool
-	CreateStoragePoolDevices(http.ResponseWriter, *http.Request)
-	// GetStoragePoolDeviceInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}
-	// Get information of the device
-	GetStoragePoolDeviceInfo(http.ResponseWriter, *http.Request)
-	// DeleteStoragePoolDevice is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}
-	// Removes the device from the storagepool
-	DeleteStoragePoolDevice(http.ResponseWriter, *http.Request)
-	// ListFilesystems is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem
-	// List filesystems
-	ListFilesystems(http.ResponseWriter, *http.Request)
-	// CreateFilesystem is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem
-	// Create a new filesystem
-	CreateFilesystem(http.ResponseWriter, *http.Request)
-	// GetFilesystemInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}
-	// Get detailed filesystem information
-	GetFilesystemInfo(http.ResponseWriter, *http.Request)
-	// DeleteFilesystem is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}
-	// Delete filesystem
-	DeleteFilesystem(http.ResponseWriter, *http.Request)
-	// ListFilesystemSnapshots is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot
-	// List snapshots of this filesystem
-	ListFilesystemSnapshots(http.ResponseWriter, *http.Request)
-	// CreateSnapshot is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot
-	// Create a new readonly filesystem of the current state of the volume
-	CreateSnapshot(http.ResponseWriter, *http.Request)
-	// GetFilesystemSnapshotInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
-	// Get detailed information on the snapshot
-	GetFilesystemSnapshotInfo(http.ResponseWriter, *http.Request)
-	// DeleteFilesystemSnapshot is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
-	// Delete snapshot
-	DeleteFilesystemSnapshot(http.ResponseWriter, *http.Request)
-	// RollbackFilesystemSnapshot is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}/rollback
-	// Rollback the filesystem to the state at the moment the snapshot was taken
-	RollbackFilesystemSnapshot(http.ResponseWriter, *http.Request)
+	// GetCPUInfo is the handler for GET /node/{nodeid}/cpu
+	// Get detailed information of all CPUs in the node
+	GetCPUInfo(http.ResponseWriter, *http.Request)
+	// GetDiskInfo is the handler for GET /node/{nodeid}/disk
+	// Get detailed information of all the disks in the node
+	GetDiskInfo(http.ResponseWriter, *http.Request)
+	// GetNodeState is the handler for GET /node/{nodeid}/state
+	// The aggregated consumption of node + all processes (cpu, memory, etc...)
+	GetNodeState(http.ResponseWriter, *http.Request)
 }
 
 // NodeInterfaceRoutes is routing for /node root endpoint
 func NodeInterfaceRoutes(r *mux.Router, i NodeInterface) {
 	r.HandleFunc("/node", i.ListNodes).Methods("GET")
 	r.HandleFunc("/node/{nodeid}", i.GetNode).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/nic", i.GetNicInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/process", i.ListNodeProcesses).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/process/{proccessid}", i.GetNodeProcess).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/process/{proccessid}", i.KillNodeProcess).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/storagepool", i.GetStoragePools).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool", i.CreateStoragePool).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}", i.GetStoragePoolInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}", i.DeleteStoragePool).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device", i.ListStoragePoolDevices).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device", i.CreateStoragePoolDevices).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}", i.GetStoragePoolDeviceInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}", i.DeleteStoragePoolDevice).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem", i.ListFilesystems).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem", i.CreateFilesystem).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}", i.GetFilesystemInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}", i.DeleteFilesystem).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot", i.ListFilesystemSnapshots).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot", i.CreateSnapshot).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}", i.GetFilesystemSnapshotInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}", i.DeleteFilesystemSnapshot).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}/rollback", i.RollbackFilesystemSnapshot).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm", i.ListVMs).Methods("GET")
 	r.HandleFunc("/node/{nodeid}/vm", i.CreateVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}", i.GetVM).Methods("GET")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}", i.DeleteVM).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/vm/{vmid}/shutdown", i.ShutdownVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/migrate", i.MigrateVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/info", i.GetVMInfo).Methods("GET")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/start", i.StartVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/stop", i.StopVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/pause", i.PauseVM).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/vm/{vmid}/resume", i.ResumeVM).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/state", i.GetNodeState).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/disk", i.GetDiskInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/vm/{vmid}/shutdown", i.ShutdownVM).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/job", i.ListNodeJobs).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/job", i.KillAllNodeJobs).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/job/{jobid}", i.GetNodeJob).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/job/{jobid}", i.KillNodeJob).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/mem", i.GetMemInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/nic", i.GetNicInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/bridge", i.ListBridges).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/bridge", i.CreateBridge).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/bridge/{bridgeid}", i.GetBridge).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/bridge/{bridgeid}", i.DeleteBridge).Methods("DELETE")
 	r.HandleFunc("/node/{nodeid}/info", i.GetNodeOSInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/zerotier", i.ListZerotier).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/zerotier", i.JoinZerotier).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/zerotier/{zerotierid}", i.GetZerotier).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/zerotier/{zerotierid}", i.ExitZerotier).Methods("DELETE")
 	r.HandleFunc("/node/{nodeid}/container", i.ListContainers).Methods("GET")
 	r.HandleFunc("/node/{nodeid}/container", i.CreateContainer).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/container/{containerid}", i.GetContainer).Methods("GET")
@@ -272,37 +297,12 @@ func NodeInterfaceRoutes(r *mux.Router, i NodeInterface) {
 	r.HandleFunc("/node/{nodeid}/container/{containerid}/filesystem", i.FileDownload).Methods("GET")
 	r.HandleFunc("/node/{nodeid}/container/{containerid}/filesystem", i.FileUpload).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/container/{containerid}/filesystem", i.FileDelete).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/job", i.ListNodeJobs).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/job", i.KillAllNodeJobs).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/job/{jobid}", i.GetNodeJob).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/job/{jobid}", i.KillNodeJob).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/cpu", i.GetCPUInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/zerotier", i.ListZerotier).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/zerotier", i.JoinZerotier).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/zerotier/{zerotierid}", i.GetZerotier).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/zerotier/{zerotierid}", i.ExitZerotier).Methods("DELETE")
+	r.HandleFunc("/node/{nodeid}/process", i.ListNodeProcesses).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/process/{proccessid}", i.GetNodeProcess).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/process/{proccessid}", i.KillNodeProcess).Methods("DELETE")
 	r.HandleFunc("/node/{nodeid}/ping", i.PingNode).Methods("POST")
 	r.HandleFunc("/node/{nodeid}/reboot", i.RebootNode).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/mem", i.GetMemInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/bridge", i.ListBridges).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/bridge", i.CreateBridge).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/bridge/{bridgeid}", i.GetBridge).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/bridge/{bridgeid}", i.DeleteBridge).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/storagepool", i.GetStoragePools).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool", i.CreateStoragePool).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}", i.GetStoragePoolInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}", i.DeleteStoragePool).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device", i.ListStoragePoolDevices).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device", i.CreateStoragePoolDevices).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}", i.GetStoragePoolDeviceInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/device/{deviceuuid}", i.DeleteStoragePoolDevice).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem", i.ListFilesystems).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem", i.CreateFilesystem).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}", i.GetFilesystemInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}", i.DeleteFilesystem).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot", i.ListFilesystemSnapshots).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot", i.CreateSnapshot).Methods("POST")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}", i.GetFilesystemSnapshotInfo).Methods("GET")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}", i.DeleteFilesystemSnapshot).Methods("DELETE")
-	r.HandleFunc("/node/{nodeid}/storagepool/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}/rollback", i.RollbackFilesystemSnapshot).Methods("POST")
+	r.HandleFunc("/node/{nodeid}/cpu", i.GetCPUInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/disk", i.GetDiskInfo).Methods("GET")
+	r.HandleFunc("/node/{nodeid}/state", i.GetNodeState).Methods("GET")
 }

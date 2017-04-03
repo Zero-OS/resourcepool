@@ -65,7 +65,7 @@ types:
     properties:
       bootTime:
         type: number
-        format: int64
+        format: uint64
       hostname: string
       os: string
       platform: string
@@ -73,10 +73,10 @@ types:
       platformVersion: string
       procs:
         type: number
-        format: int64
+        format: uint64
       uptime:
         type: number
-        format: int64
+        format: uint64
       virtualizationRole: string
       virtualizationSystem: string
   
@@ -135,25 +135,28 @@ types:
         description: If true, SNAT will be enabled on this bridge.
         type: boolean
       settings:
-        type: object
-        description: |
-          Networking settings, depending on the selected mode.
-            none:
-              no settings, bridge won't get any ip settings
-            static:
-              settings={'cidr': 'ip/net'}
-              bridge will get assigned the given IP address
-            dnsmasq:
-              settings={'cidr': 'ip/net', 'start': 'ip', 'end': 'ip'}
-              bridge will get assigned the ip in cidr
-              and each running container that is attached to this IP will get
-              IP from the start/end range. Netmask of the range is the netmask
-              part of the provided cidr.
-              if nat is true, SNAT rules will be automatically added in the firewall.
-        properties:
-          cidr: string
-          start: string
-          end: string
+        type: BridgeCreateSetting
+  
+  BridgeCreateSetting:
+    properties:
+      cidr: string
+      start: string
+      end: string
+    description: |
+      Networking settings, depending on the selected mode.
+        none:
+          no settings, bridge won't get any ip settings
+        static:
+          settings={'cidr': 'ip/net'}
+          bridge will get assigned the given IP address
+        dnsmasq:
+          settings={'cidr': 'ip/net', 'start': 'ip', 'end': 'ip'}
+          bridge will get assigned the ip in cidr
+          and each running container that is attached to this IP will get
+          IP from the start/end range. Netmask of the range is the netmask
+          part of the provided cidr.
+          if nat is true, SNAT rules will be automatically added in the firewall.
+  
   
   Job:
     type: object
@@ -229,6 +232,20 @@ types:
         default: 15
         minimum: 1
   
+  NicLink:
+    type: object
+    description: Definition of a virtual nic
+    properties:
+      id:
+        type: string
+        description: Vlantag, vxlanid or zerotier id
+      type:
+        enum: [vlan, vxlan, zerotier]
+        description: Type of nic
+      macaddress:
+        type: string
+        description: Phyiscal address of the nic
+  
   VDiskLink:
     type: object
     description: Definition of a virtual disk
@@ -236,9 +253,6 @@ types:
       maxIOps:
         description: Maximum amount of iops the virtual disk should deliver
         type: integer
-      url:
-        description: File path to the NBD unix domain socket
-        type: string
       storageclusterid:
         type: string
         description: Id of the storage cluster of the volume
@@ -299,14 +313,8 @@ types:
         description: Number of virtual CUPs
         type: integer
       nic:
-        description: |
-          List of nic specifications.
-          Possible formats:
-          - "VxLAN:<<VxLAN id>>"
-            eg "VxLAN:200" Attaches the nic to VxLan 200
-          - "Zerotier:<<Zerotier network id>>"
-            eg "Zerotier:fsjyhgu76fsd87ydzf86t7dfygis" Attaches the nic to Zerotier network fsjyhgu76fsd87ydzf86t7dfygis
-        type: string[]
+        description: List of nic specifications.
+        type: NicLink[]
       disk:
         description: List of virtual disks
         type: VDiskLink[]
@@ -394,6 +402,9 @@ types:
         description: |
           List of node to container post mappings.
         example: ['10022:22', '8080:80']
+      storage:
+        type: string
+        description: A Url to the ardb storage to use to mount the root plist
   
   JobListItem:
     type: object
@@ -454,13 +465,13 @@ types:
         format: float
       rss:
         type: number
-        format: int64
+        format: uint64
       vms:
         type: number
-        format: int64
+        format: uint64
       swap:
         type: number
-        format: int64
+        format: uint64
   
   ZerotierRoute:
     type: object
