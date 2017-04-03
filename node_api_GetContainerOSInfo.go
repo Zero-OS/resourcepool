@@ -19,8 +19,7 @@ func (api NodeAPI) GetContainerOSInfo(w http.ResponseWriter, r *http.Request) {
 	info := client.Info(container)
 	os, err := info.OS()
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

@@ -13,8 +13,7 @@ func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 	info := client.Info(cl)
 	result, err := info.Disk()
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

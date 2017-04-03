@@ -14,8 +14,7 @@ func (api NodeAPI) ListNodeJobs(w http.ResponseWriter, r *http.Request) {
 	processes, err := core.Processes()
 
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 	var respBody []JobListItem

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/g8os/go-client"
 	"net/http"
+
+	"github.com/g8os/go-client"
 )
 
 // KillAllNodeJobs is the handler for DELETE /node/{nodeid}/job
@@ -13,8 +13,7 @@ func (api NodeAPI) KillAllNodeJobs(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(cl)
 
 	if err := core.KillAll(); err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

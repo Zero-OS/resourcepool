@@ -14,8 +14,7 @@ func (api NodeAPI) GetMemInfo(w http.ResponseWriter, r *http.Request) {
 	result, err := info.Mem()
 
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

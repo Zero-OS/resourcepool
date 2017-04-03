@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 
 	client "github.com/g8os/go-client"
@@ -22,8 +21,7 @@ func (api NodeAPI) KillContainerJob(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(container)
 
 	if err := core.Kill(jobID); err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

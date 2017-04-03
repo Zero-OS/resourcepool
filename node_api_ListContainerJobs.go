@@ -19,8 +19,7 @@ func (api NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(container)
 	processes, err := core.Processes()
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

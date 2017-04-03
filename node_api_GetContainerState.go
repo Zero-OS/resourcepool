@@ -19,8 +19,7 @@ func (api NodeAPI) GetContainerState(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(container)
 	stats, err := core.State()
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

@@ -14,8 +14,7 @@ func (api NodeAPI) GetNodeOSInfo(w http.ResponseWriter, r *http.Request) {
 	os, err := info.OS()
 
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 

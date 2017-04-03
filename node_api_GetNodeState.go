@@ -14,8 +14,7 @@ func (api NodeAPI) GetNodeState(w http.ResponseWriter, r *http.Request) {
 	stats, err := core.State()
 
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
