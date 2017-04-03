@@ -21,9 +21,9 @@ func (api NodeAPI) GetNodeState(w http.ResponseWriter, r *http.Request) {
 
 	respBody := CoreStateResult{
 		Cpu:  stats.CPU,
-		Rss:  int64(stats.RSS),
-		Vms:  int64(stats.VMS),
-		Swap: int64(stats.Swap),
+		Rss:  stats.RSS,
+		Vms:  stats.VMS,
+		Swap: stats.Swap,
 	}
 	json.NewEncoder(w).Encode(&respBody)
 }

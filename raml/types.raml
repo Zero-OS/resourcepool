@@ -48,7 +48,7 @@ OSInfo:
   properties:
     bootTime:
       type: number
-      format: int64
+      format: uint64
     hostname: string
     os: string
     platform: string
@@ -56,10 +56,10 @@ OSInfo:
     platformVersion: string
     procs:
       type: number
-      format: int64
+      format: uint64
     uptime:
       type: number
-      format: int64
+      format: uint64
     virtualizationRole: string
     virtualizationSystem: string
 
@@ -448,13 +448,13 @@ CoreStateResult:
       format: float
     rss:
       type: number
-      format: int64
+      format: uint64
     vms:
       type: number
-      format: int64
+      format: uint64
     swap:
       type: number
-      format: int64
+      format: uint64
 
 ZerotierRoute:
   type: object

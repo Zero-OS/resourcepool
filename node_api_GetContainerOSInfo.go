@@ -34,14 +34,14 @@ func (api NodeAPI) GetContainerOSInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := OSInfo{
-		BootTime:             int64(os.BootTime),
+		BootTime:             os.BootTime,
 		Hostname:             os.Hostname,
 		Os:                   os.OS,
 		Platform:             os.Platform,
 		PlatformFamily:       os.PlatformFamily,
 		PlatformVersion:      os.PlatformVersion,
-		Procs:                int64(os.Procs),
-		Uptime:               int64(os.Uptime),
+		Procs:                os.Procs,
+		Uptime:               os.Uptime,
 		VirtualizationRole:   os.VirtualizationRole,
 		VirtualizationSystem: os.VirtualizationSystem,
 	}
