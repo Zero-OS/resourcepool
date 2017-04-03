@@ -203,6 +203,20 @@ ProcessSignal:
       default: 15
       minimum: 1
 
+NicLink:
+  type: object
+  description: Definition of a virtual nic
+  properties:
+    id:
+      type: string
+      description: Vlantag, vxlanid or zerotier id
+    type:
+      enum: [vlan, vxlan, zerotier]
+      description: Type of nic
+    macaddress:
+      type: string
+      description: Phyiscal address of the nic
+
 VDiskLink:
   type: object
   description: Definition of a virtual disk
@@ -210,9 +224,6 @@ VDiskLink:
     maxIOps:
       description: Maximum amount of iops the virtual disk should deliver
       type: integer
-    url:
-      description: File path to the NBD unix domain socket
-      type: string
     storageclusterid:
       type: string
       description: Id of the storage cluster of the volume
@@ -273,14 +284,8 @@ VMCreate:
       description: Number of virtual CUPs
       type: integer
     nic:
-      description: |
-        List of nic specifications.
-        Possible formats:
-        - "VxLAN:<<VxLAN id>>"
-          eg "VxLAN:200" Attaches the nic to VxLan 200
-        - "Zerotier:<<Zerotier network id>>"
-          eg "Zerotier:fsjyhgu76fsd87ydzf86t7dfygis" Attaches the nic to Zerotier network fsjyhgu76fsd87ydzf86t7dfygis
-      type: string[]
+      description: List of nic specifications.
+      type: NicLink[]
     disk:
       description: List of virtual disks
       type: VDiskLink[]
