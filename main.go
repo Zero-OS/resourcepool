@@ -6,8 +6,14 @@ import (
 
 	"github.com/g8os/grid/goraml"
 
+	"fmt"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/validator.v2"
+)
+
+const (
+	port = 5000
 )
 
 func main() {
@@ -29,5 +35,9 @@ func main() {
 	StorageclusterInterfaceRoutes(r, StorageclusterAPI{})
 
 	log.Println("starting server")
-	http.ListenAndServe(":5000", ConnectionMiddleware()(r))
+	log.Println("Server is listening on port", port)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), ConnectionMiddleware()(r))
+	if err != nil {
+		log.Println(err)
+	}
 }
