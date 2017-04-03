@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"strconv"
 )
 
 const (
@@ -131,3 +132,19 @@ func GetConnection(r *http.Request) client.Client {
 
 	return mw.getConnection(id)
 }
+
+func GetContainerConnection(r *http.Request) (client.Client, error) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["containerid"])
+
+	if err != nil {
+		return nil, err
+	}
+
+	cl := GetConnection(r)
+	contMgr := client.Container(cl)
+	container := contMgr.Client(id)
+
+	return container, nil
+}
+
