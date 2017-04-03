@@ -8,9 +8,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
-	"strconv"
 )
 
 const (
@@ -147,4 +147,3 @@ func GetContainerConnection(r *http.Request) (client.Client, error) {
 
 	return container, nil
 }
-

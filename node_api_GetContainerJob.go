@@ -13,20 +13,16 @@ import (
 // Get details of a submitted job on the container
 func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult
+
 	vars := mux.Vars(r)
 	jobID := client.Job(vars["jobid"])
-	containerID := vars["containerid"]
 
-	cID, err := strconv.Atoi(containerID)
+	container, err := GetContainerConnection(r)
 	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	cl := GetConnection(r)
-	contMgr := client.Container(cl)
-	container := contMgr.Client(cID)
 	core := client.Core(container)
 
 	// Check first if the job is running and return
@@ -42,6 +38,11 @@ func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cID, err := strconv.Atoi(vars["containerid"])
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
 	// Check if the job has finished
 	if process, _ := container.ResultNonBlock(jobID); process != nil {
 		if int(process.Container) != cID {

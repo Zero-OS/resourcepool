@@ -5,29 +5,17 @@ import (
 	"github.com/g8os/go-client"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 // KillNodeJob is the handler for DELETE /node/{nodeid}/job/{jobid}
 // Kills the job
 func (api NodeAPI) KillNodeJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	jobID := client.Job(vars["jobid"])
-	containerID := vars["containerid"]
-
-	cID, err := strconv.Atoi(containerID)
-	if err != nil {
-		json.NewEncoder(w).Encode(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
+	jobID := vars["jobid"]
 	cl := GetConnection(r)
-	contMgr := client.Container(cl)
-	container := contMgr.Client(cID)
-	core := client.Core(container)
+	core := client.Core(cl)
 
-	if err := core.Kill(jobID); err != nil {
+	if err := core.Kill(client.Job(jobID)); err != nil {
 		json.NewEncoder(w).Encode(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
