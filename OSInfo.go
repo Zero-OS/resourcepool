@@ -6,7 +6,7 @@ import (
 
 // Information on the operating system
 type OSInfo struct {
-	BootTime             uint64  `json:"bootTime" validate:"nonzero"`
+	BootTime             uint64 `json:"bootTime" validate:"nonzero"`
 	Hostname             string `json:"hostname" validate:"nonzero"`
 	Os                   string `json:"os" validate:"nonzero"`
 	Platform             string `json:"platform" validate:"nonzero"`

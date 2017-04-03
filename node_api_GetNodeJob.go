@@ -13,13 +13,12 @@ import (
 func (api NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult
 	vars := mux.Vars(r)
-	jobID := vars["jobid"]
-	job := client.Job(jobID)
+	jobID := client.Job(vars["jobid"])
 	cl := GetConnection(r)
 	core := client.Core(cl)
 
 	// Check first if the job is running and return
-	if process, _ := core.Process(job); process != nil {
+	if process, _ := core.Process(jobID); process != nil {
 		respBody = JobResult{
 			Id:        process.Command.ID,
 			Name:      EnumJobResultName(process.Command.Command),
@@ -32,7 +31,7 @@ func (api NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the job has finished
-	if process, _ := cl.ResultNonBlock(client.Job(jobID)); process != nil {
+	if process, _ := cl.ResultNonBlock(jobID); process != nil {
 		respBody = JobResult{
 			Data:      process.Data,
 			Id:        process.ID,
