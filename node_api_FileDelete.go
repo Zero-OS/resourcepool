@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	client "github.com/g8os/go-client"
 )
 
 // FileDelete is the handler for DELETE /node/{nodeid}/container/{containerid}/filesystem
@@ -22,4 +24,16 @@ func (api NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
 		return
 	}
+
+	container, err := GetContainerConnection(r)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, err)
+	}
+
+	fs := client.Filesystem(container)
+	if err := fs.Remove(reqBody.Path); err != nil {
+		WriteError(w, http.StatusInternalServerError, err)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
