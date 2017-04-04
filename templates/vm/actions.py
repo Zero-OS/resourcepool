@@ -116,6 +116,9 @@ def start(job):
 def stop(job):
     service = job.service
 
+    job.logger.info("stop vm {}".format(service.name))
+    client = get_node_client(service)
+    client.experimental.kvm.destroy(service.name)
 
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
@@ -130,9 +133,6 @@ def stop(job):
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
-    job.logger.info("stop vm {}".format(service.name))
-    client = get_node_client(service)
-    client.experimental.kvm.destroy(service.name)
 
     service.model.data.status = 'halted'
 
