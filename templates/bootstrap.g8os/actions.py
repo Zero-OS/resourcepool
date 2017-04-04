@@ -34,4 +34,4 @@ def bootstrap(job):
         node = node_actor.serviceCreate(instance=mac, args=node_args)
 
         job.logger.info("install node.g8os service {}".format(mac))
-        j.tools.async.wrappers.sync(node.executeActionJob('install'))
+        j.tools.async.wrappers.sync(node.executeAction('install'))

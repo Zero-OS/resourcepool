@@ -1,4 +1,4 @@
-@0xf5773e7b7181182f;
+@0xf5773e7b7181183f;
 
 struct Schema {
     size @0 :UInt64;
@@ -10,7 +10,7 @@ struct Schema {
     status @6 :Status;
     gridApiUrl @7:Text;
 
-    storageCluster @9 :Text; # parent
+    storageCluster @8 :Text; # parent
 
     enum Status {
         running @0;

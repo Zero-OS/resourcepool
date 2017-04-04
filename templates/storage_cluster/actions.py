@@ -49,7 +49,7 @@ def create_ardb(storagecluster_service, fs_service, instance, port, master=None)
         'filesystems': [fs_service.name],
         'flist': 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist',
         'storage': 'ardb://hub.gig.tech:16379',
-        'mounts': ["{}:{}".format(fs_service.name, "/mnt/data")],
+        'mounts': [{'filesystem' : fs_service.name, 'target': "/mnt/data"}],
     }
     container_service = container_actor.serviceCreate(
         instance=instance,

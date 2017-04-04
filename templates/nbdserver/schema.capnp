@@ -1,4 +1,4 @@
-@0xf5773e7b7181183f;
+@0xf6773e7b7181183f;
 
 struct Schema {
     backendControllerUrl @0 :Text;

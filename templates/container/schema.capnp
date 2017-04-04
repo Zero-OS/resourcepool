@@ -15,10 +15,15 @@ struct Schema {
     ports @9:List(Text); # List of node to container post mappings. e.g: 8080:80
     storage @10 :Text;
     id @11: UInt32;
-    mounts @12: List(Text); # List mount points mapping to the container [filesystem_name:/path/inside/container]
+    mounts @12: List(Mount); # List mount points mapping to the container
     enum Status{
         running @0;
         halted @1;
+    }
+
+    struct Mount {
+        filesystem @0 :Text; # Instance name of a filesystem service
+        target @1 :Text; # where to mount this filesystem in the container
     }
 
     struct Process {

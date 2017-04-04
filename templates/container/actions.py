@@ -5,10 +5,9 @@ def input(job):
     if 'filesystems' not in args:
         args['filesystems'] = []
     filesystems = args['filesystems']
-    for mount_point in mounts:
-        fs_name, _ = mount_point.split(':')
-        if fs_name not in filesystems:
-            args['filesystems'].append(fs_name)
+    for mount in mounts:
+        if mount['filesystem'] not in filesystems:
+            args['filesystems'].append(mount['filesystem'])
 
     return args
 
@@ -36,10 +35,9 @@ def install(job):
 
     # Create mount points mapping
     mount_points = {}
-    for mount_point in service.model.data.mounts:
-        fs_name, container_mount_path = mount_point.split(':')
-        _fs = service.aysrepo.serviceGet(role='filesystem', instance=fs_name)
-        mount_points[_fs.model.data.mountpoint] = container_mount_path
+    for mount in service.model.data.mounts:
+        _fs = service.aysrepo.serviceGet(role='filesystem', instance=mount.filesystem)
+        mount_points[_fs.model.data.mountpoint] = mount.target
 
     container_id = cl.container.create(root_url=service.model.data.flist,
                                        mount=mount_points,

@@ -1,10 +1,10 @@
-@0x9e3b2bd4c67f72e9;
+@0x9e3b2bd4c67f73e9;
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
     status @1 :Status;
     id @2 :Text;
-    memroy @3 :UInt16; # Amount of memory in MiB
+    memory @3 :UInt16; # Amount of memory in MiB
     cpu @4 :UInt16; # Number of virtual CUPs
     nic @5 :List(Text);
     # # List of nic specifications.
