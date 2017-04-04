@@ -6,14 +6,26 @@ import (
 
 	"github.com/g8os/grid/goraml"
 
+	"fmt"
+
+	"flag"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/validator.v2"
 )
 
-func main() {
-	// input validator
-	validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
+const (
+	port = 5000
+)
 
+// AysRepo refers to the ays repository name
+var AysRepo string
+
+func main() {
+	validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
+	AysRepo = *flag.String("repo", "grid", "Name of the repo to use")
+	flag.Parse()
+	// input validator
 	r := mux.NewRouter()
 
 	// home page
@@ -29,5 +41,9 @@ func main() {
 	StorageclusterInterfaceRoutes(r, StorageclusterAPI{})
 
 	log.Println("starting server")
-	http.ListenAndServe(":5000", r)
+	log.Println("Server is listening on port", port)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), ConnectionMiddleware()(r))
+	if err != nil {
+		log.Println(err)
+	}
 }

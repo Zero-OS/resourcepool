@@ -18,9 +18,9 @@ import (
 //     part of the provided cidr.
 //     if nat is true, SNAT rules will be automatically added in the firewall.
 type BridgeCreateSetting struct {
-	Cidr  string `json:"cidr" validate:"nonzero"`
-	End   string `json:"end" validate:"nonzero"`
-	Start string `json:"start" validate:"nonzero"`
+	Cidr  string `json:"cidr"`
+	End   string `json:"end"`
+	Start string `json:"start"`
 }
 
 func (s BridgeCreateSetting) Validate() error {

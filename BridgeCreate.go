@@ -8,9 +8,9 @@ import (
 type BridgeCreate struct {
 	Hwaddr      string                      `json:"hwaddr,omitempty"`
 	Name        string                      `json:"name" validate:"nonzero"`
-	Nat         bool                        `json:"nat" validate:"nonzero"`
+	Nat         bool                        `json:"nat"`
 	NetworkMode EnumBridgeCreateNetworkMode `json:"networkMode" validate:"nonzero"`
-	Settings    BridgeCreateSetting         `json:"settings" validate:"nonzero"`
+	Setting     BridgeCreateSetting         `json:"settings" validate:"nonzero"`
 }
 
 func (s BridgeCreate) Validate() error {
