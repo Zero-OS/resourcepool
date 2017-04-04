@@ -40,7 +40,7 @@ def install(job):
         -export {id}'
         .format(id=service.model.key))
 
-    service.model.data.socketPath = 'nbd+unix:///{id}?socket=/server.socket.{id}'.format(id=service.model.key)
+    service.model.data.socketPath = '/server.socket.{id}'.format(id=service.model.key)
 
 def start(job):
     service = job.service

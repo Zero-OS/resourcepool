@@ -4,7 +4,16 @@ def get_node_client(service):
                                 port=node.model.data.redisPort,
                                 password=node.model.data.redisPassword)
 
-def create_container(service, parent):
+def get_container_root(service, id):
+    client = get_node_client(service)
+    containers_info = client.container.list()
+    id = str(id)
+    if id in containers_info:
+        return containers_info[id]['root']
+
+    raise j.exceptions.RuntimeError("container with id {} doesn't exists".format(id))
+
+def create_nbdserver_container(service, parent):
     """
     first check if the volumes container for this vm exists.
     if not it creates it.
@@ -60,7 +69,7 @@ def init(job):
 
     # creates all nbd servers for each volume this vm uses
     job.logger.info("creates volumes container for vm {}".format(service.name))
-    volume_container = create_container(service, service.parent)
+    volume_container = create_nbdserver_container(service, service.parent)
 
     for volume in service.producers.get('volume', []):
         job.logger.info("creates nbd server for vm {}".format(service.name))
@@ -73,7 +82,12 @@ def install(job):
     # get all path to the vdisks serve by the nbdservers
     medias = []
     for nbdserver in service.producers.get('nbdserver', []):
-        medias.append({'url': nbdserver.model.data.socketPath})
+        # build full path of the nbdserver unix socket on the host filesystem
+        container_root = get_container_root(service, nbdserver.parent.model.data.id)
+        socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
+        url = 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.key, socket=socket_path)
+        medias.append({'url': url})
+
         # make sure the container is started
         j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
         # make sure the nbdserver is started
@@ -144,7 +158,7 @@ def migrate(job):
     old_volume_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
-    volume_container = create_container(service, target_node)
+    volume_container = create_nbdserver_container(service, target_node)
     for volume in service.producers.get('volume', []):
         job.logger.info("start nbd server for migration of vm {}".format(service.name))
         nbdserver = create_nbd(service, volume_container, volume)
