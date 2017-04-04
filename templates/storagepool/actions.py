@@ -25,7 +25,7 @@ def install(job):
         pool = node.storagepools.get(name)
     except ValueError:
         # pool does not exists lets create it
-        pool = node.storagepools.create(name, devices, metadataProfile, dataProfile)
+        pool = node.storagepools.create(name, devices, metadataProfile, dataProfile, overwrite=True)
 
     # mount device
     if pool.mountpoint:
