@@ -1,53 +1,13 @@
-def get_node_client(service):
-    node = service.producers['node'][0]
-    return j.clients.g8core.get(host=node.model.data.redisAddr,
-                                port=node.model.data.redisPort,
-                                password=node.model.data.redisPassword)
-
-def get_container_client(service, id):
-    client = get_node_client(service)
-    return client.container.client(id)
-
-def create_container(service):
-    client = get_node_client(service)
-    id = client.container.create(
-        'https://hub.gig.tech/gig-official-apps/gonbdserver.flist',
-        host_network=True,
-        storage='ardb://hub.gig.tech:16379')
-    service.model.data.containerId = id
-    return get_container_client(service, id)
-
 def install(job):
     service = job.service
-    container = create_container(service)
-    # client.system(
-    #     '/nbdserver \
-    #     -protocol unix \
-    #     -address "/server.socket.{id}" \
-    #     -export {id} \
-    #     -backendcontroller {api} \
-    #     -volumecontroller {api}'
-    #     .format(id=service.model.key, api=service.model.data.gridApiUrl)
-    # )
-    # FIXME: update when the change on the nbd server for grid API are done.
-    container.system(
-        '/nbdserver \
-        -protocol unix \
-        -address "/server.socket.{id}" \
-        -export {id}'
-        .format(id=service.model.key))
-    service.model.data.status = 'running'
+    service.model.data.status = 'halted'
 
 def start(job):
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install'))
+    service.model.data.status = 'running'
 
 def pause(job):
     service = job.service
-    client = get_container_client(job.service, service.model.data.containerId)
-    for proc in client.process.list():
-        if service.model.key in proc['cmd']['arguments']['args']:
-            client.process.kill(proc['cmd']['id'])
     service.model.data.status = 'halted'
 
 def rollback(job):

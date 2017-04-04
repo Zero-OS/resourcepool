@@ -9,10 +9,8 @@ struct Schema {
     driver @5 :Text;
     status @6 :Status;
     gridApiUrl @7:Text;
-    node @8 :Text;
-    containerId @9 :UInt32;
 
-    storageCluster @10 :Text; # parent
+    storageCluster @9 :Text; # parent
 
     enum Status {
         running @0;
