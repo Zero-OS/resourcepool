@@ -531,7 +531,7 @@ types:
                 description: Jobs killed successfully
           post:
             (DirectAccess):
-            displayName: SendSignal
+            displayName: SendSignalToJob
             description: Send signal to the job
             body:
               application/json:
@@ -625,7 +625,7 @@ types:
                    description: Process killed successfully
              post:
                (DirectAccess):
-               displayName: SendSignal
+               displayName: SendSignalToProcess
                description: Send signal to the process
                body:
                  application/json:
@@ -772,61 +772,61 @@ types:
       responses:
         204:
           description: Cluster destroyed
-    /volumes:
+/volumes:
+  post:
+    (AYSBased):
+    displayName: CreateNewVolume
+    description: Create a new volume, can be a copy from an existing volume
+    body:
+      application/json:
+        type: VolumeCreate
+    responses:
+      201:
+        headers:
+          Location:
+            description: Url to the created volume resource
+      404:
+        description: The template volume or storagecluster do not exist
+  /{volumeid}:
+    get:
+      (AYSBased):
+      displayName: GetVolumeInfo
+      description: Get volume information
+      responses:
+        200:
+          body:
+            application/json:
+              type: Volume
+        404:
+          description: The volume does not exist
+    delete:
+      (AYSBased):
+      displayName: DeleteVolume
+      description: Delete Volume
+      responses:
+        204:
+          description: Deleted
+        404:
+          description: The volume does not exist
+    /resize:
       post:
         (AYSBased):
-        displayName: CreateNewVolume
-        description: Create a new volume, can be a copy from an existing volume
+        displayName: ResizeVolume
+        description: Resize Volume
         body:
           application/json:
-            type: VolumeCreate
+            type: VolumeResize
         responses:
-          201:
-            headers:
-              Location:
-                description: Url to the created volume resource
-          404:
-            description: The template volume or storagecluster do not exist
-      /{volumeid}:
-        get:
-          (AYSBased):
-          displayName: GetVolumeInfo
-          description: Get volume information
-          responses:
-            200:
-              body:
-                application/json:
-                  type: Volume
-            404:
-              description: The volume does not exist
-        delete:
-          (AYSBased):
-          displayName: DeleteVolume
-          description: Delete Volume
-          responses:
-            204:
-              description: Deleted
-            404:
-              description: The volume does not exist
-        /resize:
-          post:
-            (AYSBased):
-            displayName: ResizeVolume
-            description: Resize Volume
-            body:
-              application/json:
-                type: VolumeResize
-            responses:
-              204:
-                description: Volume Resized
-        /rollback:
-          post:
-            (AYSBased):
-            displayName: RollbackVolume
-            description: Rollback a volume to a previous state
-            body:
-              application/json:
-                type: VolumeRollback
-            responses:
-              204:
-                description: Rollback started successfully
+          204:
+            description: Volume Resized
+    /rollback:
+      post:
+        (AYSBased):
+        displayName: RollbackVolume
+        description: Rollback a volume to a previous state
+        body:
+          application/json:
+            type: VolumeRollback
+        responses:
+          204:
+            description: Rollback started successfully
