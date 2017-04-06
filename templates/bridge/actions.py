@@ -9,9 +9,10 @@ def install(job):
                               password=node.model.data.redisPassword)
 
     # Create bridge
+    network = None if str(service.model.data.networkMode) == "none" else str(service.model.data.networkMode)
     cl.bridge.create(service.name,
                      hwaddr=service.model.data.hwaddr or None,
-                     network=str(service.model.data.networkMode),
+                     network=network,
                      nat=service.model.data.nat,
                      settings=service.model.data.setting.to_dict())
     service.model.data.status = 'up'

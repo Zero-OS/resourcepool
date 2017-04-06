@@ -64,4 +64,10 @@ def delete(job):
         password=pservice.model.data.redisPassword or None,
     )
     name = service.name
-    node.storagepools.destroy(name)
+
+    try:
+        pool = node.storagepools.get(name)
+        pool.delete()
+    except ValueError:
+        # pool does not exists, nothing to do
+        pass

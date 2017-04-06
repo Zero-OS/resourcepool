@@ -15,11 +15,17 @@ CPUInfo:
   type: object
   description: Information about physical CPUs
   properties:
-    cacheSize: integer
-    cores: integer
+    cacheSize:
+      type: number
+      format: int32
+    cores:
+      type: number
+      format: int32
     family: string
     flags: string[]
-    mhz: integer
+    mhz:
+      type: number
+      format: float
 
 MemInfo:
   type: object
@@ -40,14 +46,20 @@ OSInfo:
   type: object
   description: Information on the operating system
   properties:
-    bootTime: integer
+    bootTime:
+      type: number
+      format: uint64
     hostname: string
     os: string
     platform: string
     platformFamily: string
     platformVersion: string
-    procs: integer
-    uptime: integer
+    procs:
+      type: number
+      format: uint64
+    uptime:
+      type: number
+      format: uint64
     virtualizationRole: string
     virtualizationSystem: string
 
@@ -105,7 +117,7 @@ BridgeCreate:
     nat:
       description: If true, SNAT will be enabled on this bridge.
       type: boolean
-    settings:
+    setting:
       type: BridgeCreateSetting
 
 BridgeCreateSetting:
@@ -296,7 +308,7 @@ Bridge:
     name:
       description: Name of the bridge
       type: string
-    config:
+    setting:
       description: |
         '' or 'none':
           no IP is gonna be set on the link
@@ -410,9 +422,10 @@ JobListItem:
     id:
       description: The unique identifier for the job
       type: string
-    starttime:
+    startTime:
       description: Epoch timestamp when the job was started
-      type: integer
+      type: number
+      format: int64
 
 JobResult:
   type: object
@@ -433,10 +446,11 @@ JobResult:
              'btrfs.subvol_create', 'btrfs.subvol_list', 'btrfs.subvol_delete']
     level:
       description: 20 means that the data is json serialized object
-      type: string
-    starttime:
-      description: Epoch timestamp when the job was started
       type: integer
+    startTime:
+      description: Epoch timestamp when the job was started
+      type: number
+      format: int64
     stdout:
       type: string
       description: Stdout of process/job
@@ -456,10 +470,17 @@ CoreStateResult:
   properties:
     cpu:
       description: percentage cpu used in a node
-      type: integer
-    rss: integer
-    vms: integer
-    swap: integer
+      type: number
+      format: float
+    rss:
+      type: number
+      format: uint64
+    vms:
+      type: number
+      format: uint64
+    swap:
+      type: number
+      format: uint64
 
 ZerotierRoute:
   type: object
@@ -650,6 +671,10 @@ FilesystemCreate:
     quota:
       description: Amount of MiB that can be written to the filesystem. 0 means no quota is set.
       type: integer
+    readOnly:
+      type: bool
+      default: false
+      description: set the filesystem to read only mode
 
 Snapshot:
   type: object

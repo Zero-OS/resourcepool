@@ -1,9 +1,15 @@
 from JumpScale import j
 
+def init_actions_(service, args):
+    return {
+        'init': [],
+        'install': ['init'],
+        'delete': [],
+    }
 
 def input(job):
-    if job.model.args.get("mountpoint", "") != "":
-        raise j.exceptions.Input("Mountpoint should not be set as input")
+    if job.model.args.get("path", "") != "":
+        raise j.exceptions.Input("path should not be set as input")
 
 
 def get_filesystem(service):
@@ -23,9 +29,11 @@ def install(job):
     name = str(job.service.model.data.name)
     fs = get_filesystem(job.service)
     try:
-        fs.get(name)
+        snap = fs.get(name)
     except ValueError:
-        fs.create(name)
+        snap = fs.create(name)
+
+    job.service.model.data.path = snap.path
 
 
 def delete(job):
