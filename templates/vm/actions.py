@@ -106,7 +106,7 @@ def install(job):
 
     job.logger.info("create vm {}".format(service.name))
     client = get_node_client(service)
-    client.experimental.kvm.create(
+    client.kvm.create(
         service.name,
         media=medias,
         cpu=service.model.data.cpu,
