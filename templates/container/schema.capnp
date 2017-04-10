@@ -39,9 +39,9 @@ struct Schema {
 
     struct NicConfig {
         dhcp @0: Bool;
-        cidr @0: Text;
-        gateway @1: Text;
-        dns @2: List(Text);
+        cidr @1: Text;
+        gateway @2: Text;
+        dns @3: List(Text);
     }
 
     enum Status{

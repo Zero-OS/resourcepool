@@ -28,7 +28,7 @@ struct Schema {
 
     struct DiskLink {
       volumeid @0: Text;
-      maxIOps @2: UInt32;
+      maxIOps @1: UInt32;
     }
 
     enum NicType {
