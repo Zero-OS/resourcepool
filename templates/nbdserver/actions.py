@@ -15,9 +15,10 @@ def get_container_client(service):
 
 def is_running(client, key):
     try:
-        for process in client.process.list():
-            if process['cmd']['arguments']['name'] == '/nbdserver' and \
-               '-export {}'.format(key) in process['cmd']['arguments']['args']:
+        for process in client.job.list():
+            arguments = process['cmd']['arguments']
+            if 'name' in arguments and arguments['name'] == '/nbdserver' and \
+               key in arguments['args']:
                 return process
         return False
     except Exception as err:
@@ -37,15 +38,16 @@ def install(job):
     grid_addr = services[0].model.data.apiURL
 
     container = get_container_client(service)
-    socketpath = '/server.socket.{id}'.format(id=service.model.key)
-    container.system(
-        '/nbdserver \
-        -protocol unix \
-        -address "{socketpath}" \
-        -export {id} \
-        -gridapi {api}'
-        .format(id=service.model.key, api=grid_addr, socketpath=socketpath)
-    )
+    socketpath = '/server.socket.{id}'.format(id=service.name)
+    if not is_running(container, service.name):
+        container.system(
+            '/nbdserver \
+            -protocol unix \
+            -address "{socketpath}" \
+            -export {id} \
+            -gridapi {api}'
+            .format(id=service.name, api=grid_addr, socketpath=socketpath)
+        )
     # wait for socket to be created
     start = time.time()
     while start + 60 > time.time():
@@ -56,13 +58,10 @@ def install(job):
     else:
         raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
     # make sure nbd is still running
-    for job in container.job.list():
-        if 'args' in job['cmd']['arguments'] and '/nbdserver' == job['cmd']['arguments']['name']:
-            break
-    else:
+    if not is_running(container, service.name):
         raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
 
-    service.model.data.socketPath = '/server.socket.{id}'.format(id=service.model.key)
+    service.model.data.socketPath = '/server.socket.{id}'.format(id=service.name)
 
 
 def start(job):

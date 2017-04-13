@@ -63,7 +63,7 @@ def create_nbd(service, container, volume):
     if not it creates it.
     return the nbdserver service
     """
-    nbd_name = 'nbd_{}'.format(volume.name)
+    nbd_name = volume.name
 
     try:
         nbdserver = service.aysrepo.serviceGet(role='container', instance=nbd_name)
@@ -104,7 +104,7 @@ def install(job):
         # build full path of the nbdserver unix socket on the host filesystem
         container_root = get_container_root(service, nbdserver.parent.model.data.id)
         socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
-        url = 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.key, socket=socket_path)
+        url = 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.name, socket=socket_path)
         medias.append({'url': url})
 
         # make sure the container is started
