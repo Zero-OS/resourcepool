@@ -5,6 +5,7 @@ import (
 )
 
 type VolumeCreate struct {
+	ID                 string                     `yaml:"-" json:"id" validate:"nonzero"`
 	Blocksize          int                        `yaml:"blocksize" json:"blocksize" validate:"nonzero"`
 	ReadOnly           bool                       `yaml:"readOnly" json:"readOnly,omitempty"`
 	Size               int                        `yaml:"size" json:"size" validate:"nonzero"`

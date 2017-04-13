@@ -913,6 +913,10 @@ Cluster:
 # Volumes API
 VolumeCreate:
   properties:
+    id:
+      type: string
+      description: name of the volume. need to be unique
+      required: true
     size:
       type: integer
       description: Size of the volume in GiB
