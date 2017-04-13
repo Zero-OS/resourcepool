@@ -1,3 +1,6 @@
+from JumpScale import j
+
+
 def input(job):
     # Check the blueprint input for errors
     args = job.model.args
@@ -15,14 +18,16 @@ def get_node_client(service):
                                 port=node.model.data.redisPort,
                                 password=node.model.data.redisPassword)
 
+
 def get_container_root(service, id):
     client = get_node_client(service)
     containers_info = client.container.list()
     id = str(id)
     if id in containers_info:
-        return containers_info[id]['root']
+        return containers_info[id]['container']['root']
 
     raise j.exceptions.RuntimeError("container with id {} doesn't exists".format(id))
+
 
 def create_nbdserver_container(service, parent):
     """
@@ -40,7 +45,7 @@ def create_nbdserver_container(service, parent):
         container_actor = service.aysrepo.actorGet('container')
         args = {
             'node': parent.name,
-            'flist': 'https://hub.gig.tech/gig-official-apps/gonbdserver.flist',
+            'flist': 'https://hub.gig.tech/gig-official-apps/gonbdserver-master.flist',
             'hostNetworking': True,
             'storage': 'ardb://hub.gig.tech:16379',
         }
@@ -50,6 +55,7 @@ def create_nbdserver_container(service, parent):
     container.model.changeParent(service.parent)
 
     return container
+
 
 def create_nbd(service, container, volume):
     """
@@ -75,6 +81,7 @@ def create_nbd(service, container, volume):
 
     return nbdserver
 
+
 def init(job):
     service = job.service
 
@@ -86,6 +93,7 @@ def init(job):
         job.logger.info("creates nbd server for vm {}".format(service.name))
         nbdserver = create_nbd(service, volume_container, volume)
         service.consume(nbdserver)
+
 
 def install(job):
     service = job.service
@@ -106,18 +114,22 @@ def install(job):
 
     job.logger.info("create vm {}".format(service.name))
     client = get_node_client(service)
+    nics = []
+    for nic in service.model.data.nics:
+        nic = nic.to_dict()
+        nic['hwaddr'] = nic.pop('macaddress', None)
+        nics.append(nic)
     client.kvm.create(
         service.name,
         media=medias,
         cpu=service.model.data.cpu,
         memory=service.model.data.memory,
-        nics=service.model.data.nics,
-        # port=None, #TODO
-        # bridge=None #TODO
+        nics=nics,
     )
 
     # TODO: test vm actually exists
     service.model.data.status = 'running'
+
 
 def start(job):
     service = job.service
@@ -129,7 +141,10 @@ def stop(job):
 
     job.logger.info("stop vm {}".format(service.name))
     client = get_node_client(service)
-    client.experimental.kvm.destroy(service.name)
+    for kvm in client.kvm.list():
+        if kvm['name'] == service.name:
+            client.kvm.destroy(kvm['uuid'])
+            break
 
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
@@ -144,8 +159,8 @@ def stop(job):
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
-
     service.model.data.status = 'halted'
+
 
 def pause(job):
     pass
@@ -196,12 +211,12 @@ def updatedevices(service, client, args):
     if 'node' in args and args['node'] != service.model.data.node:
         j.tools.async.wrappers.sync(service.executeAction('migrate', args={'node': args['node']}))
     if 'disks' in args['disks'] != service.model.data.disks:
-            new_disks = set(args['disks'])-set(service.model.data.disks)
+            new_disks = set(args['disks']) - set(service.model.data.disks)
             if new_disks:
                 new_disks = list(new_disks)
                 for new_disk in new_disks:
                     client.experimental.kvm.attachDisk(service.name, new_disk)
-            old_disks = set(service.model.data.disks)-set(args['disks'])
+            old_disks = set(service.model.data.disks) - set(args['disks'])
             if old_disks:
                 old_disks = list(old_disks)
                 for old_disk in old_disks:
@@ -227,6 +242,7 @@ def monitor(job):
     pass
     # raise NotADirectoryError()
 
+
 def processChange(job):
     service = job.service
 
@@ -238,4 +254,3 @@ def processChange(job):
             updatedevices(service, client, args)
         except ValueError:
             job.logger.error("vm {} doesn't exist, cant update devices", service.name)
-

@@ -1,6 +1,4 @@
-def input(job):
-    if job.model.args.get("status", "") != "":
-        raise j.exceptions.Input("status should not be set as input")
+from JumpScale import j
 
 
 def install(job):

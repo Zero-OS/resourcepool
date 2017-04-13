@@ -12,8 +12,8 @@ struct Schema {
     tlogStoragecluster @7 :Text; # consume
 
     enum Status {
-        running @0;
-        halted @1;
+        halted @0;
+        running @1;
         rollingback @2;
     }
 

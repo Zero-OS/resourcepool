@@ -35,14 +35,14 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 		BlockSize      int    `yaml:"blocksize" json:"blocksize"`
 		TemplateVolume string `yaml:"templateVolume" json:"templateVolume"`
 		ReadOnly       bool   `yaml:"readOnly" json:"readOnly"`
-		Driver         string `yaml:"driver" json:"driver"`
+		Type           string `yaml:"driver" json:"driver"`
 		StorageCluster string `yaml:"storageCluster" json:"storageCluster"`
 	}{
 		Size:           reqBody.Size,
 		BlockSize:      reqBody.Blocksize,
 		TemplateVolume: reqBody.Templatevolume,
 		ReadOnly:       reqBody.ReadOnly,
-		Driver:         string(reqBody.Volumetype),
+		Type:           string(reqBody.Volumetype),
 		StorageCluster: reqBody.Storagecluster,
 	}
 
