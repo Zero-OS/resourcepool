@@ -47,7 +47,7 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 		StorageCluster: reqBody.Storagecluster,
 	}
 
-	byteSecret, err := generateRandomBytes(256)
+	byteSecret, err := generateRandomBytes(32)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
