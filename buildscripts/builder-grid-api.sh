@@ -11,16 +11,14 @@ fi
 apt-get update
 apt-get install -y curl git
 
-curl https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz > /tmp/go1.8.linux-amd64.tar.gz
-tar -C /usr/local -xzf /tmp/go1.8.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-mkdir -p /gopath
-export GOPATH=/gopath
+source get_go.sh
 
-git clone -b "${branch}" https://github.com/g8os/grid.git $GOPATH/src/github.com/g8os/grid
 
+go get -u -v -d github.com/g8os/grid/api
 cd $GOPATH/src/github.com/g8os/grid/api
-go get -v
+
+git fetch origin "${branch}:${branch}" || true
+git checkout "${branch}" || true
 
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .
 
