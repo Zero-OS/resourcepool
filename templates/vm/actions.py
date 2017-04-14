@@ -136,15 +136,21 @@ def start(job):
     j.tools.async.wrappers.sync(service.executeAction('install'))
 
 
-def stop(job):
-    service = job.service
-
-    job.logger.info("stop vm {}".format(service.name))
+def get_domain(service):
     client = get_node_client(service)
     for kvm in client.kvm.list():
         if kvm['name'] == service.name:
-            client.kvm.destroy(kvm['uuid'])
+            return kvm
             break
+
+
+def stop(job):
+    service = job.service
+    job.logger.info("stop vm {}".format(service.name))
+    client = get_node_client(service)
+    kvm = get_domain(service)
+    if kvm:
+        client.kvm.destroy(kvm['uuid'])
 
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
@@ -163,8 +169,21 @@ def stop(job):
 
 
 def pause(job):
-    pass
-    # raise NotADirectoryError()
+    service = job.service
+    job.logger.info("resume vm {}".format(service.name))
+    client = get_node_client(service)
+    kvm = get_domain(service)
+    if kvm:
+        client.kvm.pause(kvm['uuid'])
+
+
+def resume(job):
+    service = job.service
+    job.logger.info("resume vm {}".format(service.name))
+    client = get_node_client(service)
+    kvm = get_domain(service)
+    if kvm:
+        client.kvm.resume(kvm['uuid'])
 
 
 def migrate(job):
