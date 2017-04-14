@@ -18,10 +18,11 @@ func (api VolumesAPI) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
-		"actions": []map[string]string{{
+		"actions": []tools.ActionBlock{{
 			"action":  "delete",
 			"actor":   "volume",
 			"service": volumeID,
+			"force":   true,
 		}},
 	}
 

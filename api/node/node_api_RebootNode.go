@@ -1,9 +1,10 @@
 package node
 
 import (
+	"net/http"
+
 	"github.com/g8os/grid/api/tools"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 // RebootNode is the handler for POST /nodes/{nodeid}/reboot
@@ -13,10 +14,11 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 	nodeId := vars["nodeid"]
 
 	blueprint := map[string]interface{}{
-		"actions": []map[string]string{{
+		"actions": []tools.ActionBlock{{
 			"action":  "reboot",
 			"actor":   "node",
 			"service": nodeId,
+			"force":   true,
 		}},
 	}
 

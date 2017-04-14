@@ -18,10 +18,11 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 
 	// execute the exit action of the zerotier
 	bp := map[string]interface{}{
-		"actions": []map[string]string{{
+		"actions": []tools.ActionBlock{{
 			"action":  "delete",
 			"actor":   "zerotier",
 			"service": fmt.Sprintf("%s_%s", nodeID, zerotierID),
+			"force":   true,
 		}},
 	}
 

@@ -55,7 +55,7 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[bpName] = bp
-	obj["actions"] = []map[string]string{map[string]string{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{"action": "install"}}
 
 	// And Execute
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "volume", reqBody.ID, "install", obj); err != nil {

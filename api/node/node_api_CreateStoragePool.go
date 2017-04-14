@@ -45,7 +45,7 @@ func (api NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 
 	blueprint := map[string]interface{}{
 		fmt.Sprintf("storagepool__%s", reqBody.Name): bpContent,
-		"actions": []map[string]string{{"action": "install"}},
+		"actions": []tools.ActionBlock{{"action": "install"}},
 	}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint); err != nil {

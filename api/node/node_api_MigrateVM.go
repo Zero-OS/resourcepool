@@ -41,7 +41,10 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[decl] = bp
-	obj["actions"] = []map[string]string{map[string]string{"action": "migrate"}}
+	obj["actions"] = []tools.ActionBlock{{
+		"action": "migrate",
+		"force":  true,
+	}}
 
 	// And execute
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj); err != nil {

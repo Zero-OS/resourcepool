@@ -41,7 +41,10 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid)] = bp
-	obj["actions"] = []map[string]string{map[string]string{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{
+		"action": "install",
+		"force":  true,
+	}}
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
 	if err != nil {

@@ -46,7 +46,7 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("bridge__%s", reqBody.Name)] = bp
-	obj["actions"] = []map[string]string{map[string]string{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{"action": "install"}}
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
 	if err != nil {

@@ -16,10 +16,11 @@ func (api NodeAPI) RollbackFilesystemSnapshot(w http.ResponseWriter, r *http.Req
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
-		"actions": []map[string]string{{
+		"actions": []tools.ActionBlock{{
 			"action":  "rollback",
 			"actor":   "fssnapshot",
 			"service": name,
+			"force":   true,
 		}},
 	}
 

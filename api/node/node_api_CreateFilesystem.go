@@ -39,7 +39,7 @@ func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
 
 	blueprint := map[string]interface{}{
 		fmt.Sprintf("filesystem__%s", reqBody.Name): bpContent,
-		"actions": []map[string]string{{"action": "install"}},
+		"actions": []tools.ActionBlock{{"action": "install"}},
 	}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint); err != nil {

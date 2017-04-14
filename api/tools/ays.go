@@ -19,6 +19,8 @@ func SetAYSClient(client *ays.AtYourServiceAPI) {
 	ayscl = client
 }
 
+type ActionBlock map[string]interface{}
+
 //ExecuteBlueprint runs ays operations needed to run blueprints, if block is true, the function will block until the run is done
 // create blueprint
 // execute blueprint
