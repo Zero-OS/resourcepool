@@ -54,9 +54,7 @@ def bootstrap(job):
         # read mac Addr of g8os
         mac = None
         try:
-            for nic in g8.info.nic():
-                if not is_valid_nic(nic):
-                    continue
+            for nic in filter(is_valid_nic, g8.info.nic()):
                 # get mac address and ip of the management interface
                 if len(nic['addrs']) > 0 and nic['addrs'][0]['addr'] != '':
                     mac = nic['hardwareaddr']
