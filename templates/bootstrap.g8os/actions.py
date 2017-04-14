@@ -53,7 +53,6 @@ def bootstrap(job):
 
         # read mac Addr of g8os
         mac = None
-        ip = None
         try:
             for nic in g8.info.nic():
                 if not is_valid_nic(nic):
@@ -61,7 +60,6 @@ def bootstrap(job):
                 # get mac address and ip of the management interface
                 if len(nic['addrs']) > 0 and nic['addrs'][0]['addr'] != '':
                     mac = nic['hardwareaddr']
-                    ip = nic['addrs'][0]['addr'].split('/')[0]
                     break
         except ConnectionError:
             j.logger.error("can't connect to g8os at {}".format(zerotier_ip))
@@ -78,7 +76,7 @@ def bootstrap(job):
             job.logger.info("service for node {} already exists, updating model".format(mac))
             # mac sure the service has the correct ip in his model.
             # it could happend that a node get a new ip after a reboot
-            node.model.data.redisAddr = ip
+            node.model.data.redisAddr = zerotier_ip
             node.model.data.status = 'running'
 
         except j.exceptions.NotFound:
@@ -90,7 +88,7 @@ def bootstrap(job):
                 'id': mac,
                 'status':'running',
                 'networks': networks,
-                'redisAddr': ip,
+                'redisAddr': zerotier_ip,
             }
             job.logger.info("create node.g8os service {}".format(mac))
             node = node_actor.serviceCreate(instance=mac, args=node_args)
