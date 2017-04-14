@@ -96,13 +96,18 @@ def init(job):
 
 
 def install(job):
+    import time
     service = job.service
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
     for nbdserver in service.producers.get('nbdserver', []):
         # build full path of the nbdserver unix socket on the host filesystem
-        container_root = get_container_root(service, nbdserver.parent.model.data.id)
+        container = nbdserver.parent
+        if container.model.data.id == 0:
+            # start container
+            j.tools.async.wrappers.sync(container.executeAction('start'))
+        container_root = get_container_root(service, container.model.data.id)
         socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
         url = 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.name, socket=socket_path)
         medias.append({'url': url})
@@ -119,15 +124,26 @@ def install(job):
         nic = nic.to_dict()
         nic['hwaddr'] = nic.pop('macaddress', None)
         nics.append(nic)
-    client.kvm.create(
-        service.name,
-        media=medias,
-        cpu=service.model.data.cpu,
-        memory=service.model.data.memory,
-        nics=nics,
-    )
 
-    # TODO: test vm actually exists
+    kvm = get_domain(service)
+    if not kvm:
+        client.kvm.create(
+            service.name,
+            media=medias,
+            cpu=service.model.data.cpu,
+            memory=service.model.data.memory,
+            nics=nics,
+        )
+        # wait for max 60 seconds for vm to be running
+        start = time.time()
+        while start + 60 > time.time():
+            if get_domain(service):
+                break
+            else:
+                time.sleep(3)
+        else:
+            raise j.exceptions.RuntimeError("Failed to start vm {}".format(service.name))
+
     service.model.data.status = 'running'
 
 
