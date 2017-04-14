@@ -155,7 +155,7 @@ func DeleteServiceByName(name, role, repository string) error {
 	if err != nil {
 		return NewHTTPError(resp, err.Error())
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		return NewHTTPError(resp, resp.Status)
 	}
 	return nil

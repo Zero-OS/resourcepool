@@ -37,4 +37,5 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
