@@ -28,6 +28,12 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, resp, _ := api.AysAPI.Ays.GetServiceByName(reqBody.ID, "volume", api.AysRepo, nil, nil)
+	if resp.StatusCode != http.StatusNotFound {
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A volume with ID %s already exists", reqBody.ID))
+		return
+	}
+
 	// Create the blueprint
 	bp := struct {
 		Size           int    `yaml:"size" json:"size"`

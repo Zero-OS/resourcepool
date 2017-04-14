@@ -821,6 +821,8 @@ types:
             description: Url to the created volume resource
       404:
         description: The template volume or storagecluster do not exist
+      409:
+        description: A volume with this ID already exists
   /{volumeid}:
     get:
       (AYSBased):
