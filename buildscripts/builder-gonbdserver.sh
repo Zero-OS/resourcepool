@@ -11,11 +11,7 @@ fi
 apt-get update
 apt-get install -y curl git
 
-curl https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz > /tmp/go1.8.linux-amd64.tar.gz
-tar -C /usr/local -xzf /tmp/go1.8.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-mkdir -p /gopath
-export GOPATH=/gopath
+source get_go.sh
 
 go get -v -d github.com/g8os/blockstor/nbdserver
 cd $GOPATH/src/github.com/g8os/blockstor/nbdserver
