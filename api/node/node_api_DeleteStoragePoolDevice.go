@@ -1,7 +1,6 @@
 package node
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -16,7 +15,7 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
-	toDeleteDevice := vars["deviceuuid"]
+	toDeleteUUID := vars["deviceuuid"]
 
 	devices, err := api.getStoragePoolDevices(node, storagepool)
 	if err != nil {
@@ -25,23 +24,18 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// decode request
-	if err := json.NewDecoder(r.Body).Decode(&devices); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
 	// remove device from list of current devices
-	for i, device := range devices {
-		if device == toDeleteDevice {
-			devices = append(devices[:i], devices[i+1:]...)
+	updatedDevices := []DeviceInfo{}
+	for _, device := range devices {
+		if device.PartUUID != toDeleteUUID {
+			updatedDevices = append(updatedDevices, DeviceInfo{Device: device.Device})
 		}
 	}
 
 	bpContent := struct {
-		Devices []string `yaml:"devices" json:"devices"`
+		Devices []DeviceInfo `yaml:"devices" json:"devices"`
 	}{
-		Devices: devices,
+		Devices: updatedDevices,
 	}
 	blueprint := map[string]interface{}{
 		fmt.Sprintf("storagepool__%s", storagepool): bpContent,

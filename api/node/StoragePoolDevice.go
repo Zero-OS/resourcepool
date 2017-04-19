@@ -6,7 +6,7 @@ import (
 
 type StoragePoolDevice struct {
 	Status EnumStoragePoolDeviceStatus `json:"status" validate:"nonzero"`
-	Uuid   string                      `json:"uuid" validate:"nonzero"`
+	UUID   string                      `json:"uuid" validate:"nonzero"`
 }
 
 func (s StoragePoolDevice) Validate() error {

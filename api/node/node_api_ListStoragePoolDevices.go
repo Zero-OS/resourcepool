@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	log "github.com/Sirupsen/logrus"
-	g8client "github.com/g8os/go-client"
 	"github.com/g8os/grid/api/tools"
 	"github.com/gorilla/mux"
 )
@@ -22,33 +21,15 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 	storagepoolname := vars["storagepoolname"]
 	nodeid := vars["nodeid"]
 
-	devices, err := api.getStoragePoolDevices(nodeid, storagepoolname)
+	devicesMap, err := api.getStoragePoolDevices(nodeid, storagepoolname)
 	if err != nil {
 		log.Errorf("Error Listing storage pool devices: %+v", err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	cl, err := tools.GetConnection(r, api)
-	if err != nil {
-		log.Errorf("Error Listing storage pool devices: %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	btrfsMgr := g8client.Btrfs(cl)
-	fss, err := btrfsMgr.List()
-	if err != nil {
-		log.Errorf("Error Listing storage pool devices: %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-	for _, fs := range fss {
-		for _, device := range fs.Devices {
-			if containsStrings(devices, device.Path) {
-				respBody = append(respBody, StoragePoolDevice{Uuid: fs.UUID})
-			}
-		}
+	for _, device := range devicesMap {
+		respBody = append(respBody, StoragePoolDevice{UUID: device.PartUUID})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -56,8 +37,13 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(&respBody)
 }
 
+type DeviceInfo struct {
+	Device   string `json:"device"`
+	PartUUID string `json:"partUUID"`
+}
+
 // Get storagepool devices
-func (api NodeAPI) getStoragePoolDevices(node, storagepool string) ([]string, error) {
+func (api NodeAPI) getStoragePoolDevices(node, storagepool string) ([]DeviceInfo, error) {
 	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.g8os!%s", node)}
 
 	service, _, err := api.AysAPI.Ays.GetServiceByName(storagepool, "storagepool", api.AysRepo, nil, queryParams)
@@ -66,7 +52,7 @@ func (api NodeAPI) getStoragePoolDevices(node, storagepool string) ([]string, er
 	}
 
 	var data struct {
-		Devices []string `json:"devices"`
+		Devices []DeviceInfo `json:"devices"`
 	}
 
 	if err := json.Unmarshal(service.Data, &data); err != nil {

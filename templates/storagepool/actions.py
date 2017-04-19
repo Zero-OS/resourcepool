@@ -16,7 +16,8 @@ def install(job):
         port=pservice.model.data.redisPort,
         password=pservice.model.data.redisPassword or None,
     )
-    devices = list(service.model.data.devices)
+
+    devices = [d.device for d in service.model.data.devices]
     name = service.name
     dataProfile = str(service.model.data.dataProfile)
     metadataProfile = str(service.model.data.metadataProfile)
@@ -42,7 +43,7 @@ def install(job):
     if pool.fsinfo['metadata']['profile'].lower() != metadataProfile:
         raise RuntimeError("Metadata profile of storagepool {} does not match".format(name))
 
-    updateDevices(pool, devices)
+    updateDevices(service, pool, devices)
 
 
 def delete(job):
@@ -62,7 +63,8 @@ def delete(job):
         # pool does not exists, nothing to do
         pass
 
-def updateDevices(pool, devices):
+
+def updateDevices(service, pool, devices):
     pooldevices = set(pool.devices)
     requireddevices = set(devices)
 
@@ -76,6 +78,9 @@ def updateDevices(pool, devices):
     if removeddevices:
         pool.device_remove(*removeddevices)
 
+    pool.ays.create(service.aysrepo)
+
+
 def processChange(job):
     service = job.service
     pservice = service.parent
@@ -87,9 +92,10 @@ def processChange(job):
 
     args = job.model.args
     category = args.pop('changeCategory')
-    if category == "dataschema" and service.model.actionsState['install'] == 'ok':
+    if category == "dataschema":
         try:
             pool = node.storagepools.get(service.name)
-            updateDevices(pool, args['devices'])
+            devices = [d['device'] for d in args['devices']]
+            updateDevices(service, pool, devices)
         except ValueError:
             job.logger.error("pool {} doesn't exist, cant update devices", service.name)

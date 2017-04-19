@@ -24,6 +24,11 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	deviceMap := map[string]struct{}{}
+	for _, dev := range devices {
+		deviceMap[dev.Device] = struct{}{}
+	}
+
 	// decode request
 	var newDevices []string
 	defer r.Body.Close()
@@ -32,14 +37,18 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	for _, device := range newDevices {
-		if !containsStrings(devices, device) {
-			devices = append(devices, device)
+	// add new device to existing ones
+	for _, dev := range newDevices {
+		if _, exists := deviceMap[dev]; exists {
+			continue
 		}
+		devices = append(devices, DeviceInfo{
+			Device: dev,
+		})
 	}
 
 	bpContent := struct {
-		Devices []string `yaml:"devices" json:"devices"`
+		Devices []DeviceInfo `yaml:"devices" json:"devices"`
 	}{
 		Devices: devices,
 	}

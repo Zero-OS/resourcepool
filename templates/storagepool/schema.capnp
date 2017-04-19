@@ -1,4 +1,4 @@
-@0xb65823af76a98817;
+@0xb65823af76a98818;
 
 struct Schema {
     status @0 :Status;
@@ -7,8 +7,13 @@ struct Schema {
     metadataProfile @3 :Profile;
     dataProfile @4 :Profile;
     mountpoint @5: Text;
-    devices @6: List(Text); # List of devices that are part to the storage pool
+    devices @6: List(PartitionMap); # List of object that map a device to a partition uuid
     node @7: Text;
+
+    struct PartitionMap {
+        device @0 :Text;
+        partUUID @1 :Text;
+    }
 
     enum Status {
         healthy @0;
