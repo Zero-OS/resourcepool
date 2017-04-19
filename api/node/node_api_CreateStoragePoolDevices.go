@@ -26,7 +26,8 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 
 	// decode request
 	var newDevices []string
-	if err := json.NewDecoder(r.Body).Decode(&devices); err != nil {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&newDevices); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
