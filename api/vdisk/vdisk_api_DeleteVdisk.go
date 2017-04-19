@@ -1,4 +1,4 @@
-package volume
+package vdisk
 
 import (
 	"net/http"
@@ -9,27 +9,27 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// DeleteVolume is the handler for DELETE /volumes/{volumeid}
-// Delete Volume
-func (api VolumesAPI) DeleteVolume(w http.ResponseWriter, r *http.Request) {
+// DeleteVdisk is the handler for DELETE /vdisks/{vdiskid}
+// Delete Vdisk
+func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	volumeID := vars["volumeid"]
+	vdiskID := vars["vdiskid"]
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			"action":  "delete",
-			"actor":   "volume",
-			"service": volumeID,
+			"actor":   "vdisk",
+			"service": vdiskID,
 			"force":   true,
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "volume", volumeID, "delete", blueprint)
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for volume deletion : %+v", err.Error())
+		log.Errorf("Error executing blueprint for vdisk deletion : %+v", err.Error())
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
 		return
 	}
@@ -45,10 +45,10 @@ func (api VolumesAPI) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.AysAPI.Ays.DeleteServiceByName(volumeID, "volume", api.AysRepo, nil, nil)
+	_, err = api.AysAPI.Ays.DeleteServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("Error in deleting volume %s : %+v", volumeID, err)
+		log.Errorf("Error in deleting vdisk %s : %+v", vdiskID, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}

@@ -25,7 +25,7 @@ def rollback(job):
 
 def resize(job):
     service = job.service
-    job.logger.info("resize volume {}".format(service.name))
+    job.logger.info("resize vdisk {}".format(service.name))
 
     if 'size' not in job.model.args:
         raise j.exceptions.Input("size is not present in the arguments of the job")

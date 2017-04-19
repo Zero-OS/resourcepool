@@ -1,14 +1,14 @@
-package volume
+package vdisk
 
 import (
 	"gopkg.in/validator.v2"
 )
 
-type VolumeRollback struct {
+type VdiskRollback struct {
 	Epoch int `yaml:"epoch" json:"epoch" validate:"nonzero"`
 }
 
-func (s VolumeRollback) Validate() error {
+func (s VdiskRollback) Validate() error {
 
 	return validator.Validate(s)
 }

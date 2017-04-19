@@ -281,9 +281,9 @@ VDiskLink:
   type: object
   description: Definition of a virtual disk
   properties:
-    volumeid:
+    vdiskid:
       type: string
-      description: Id of the volume
+      description: Id of the vdisk
     maxIOps:
       description: Maximum amount of iops the virtual disk should deliver
       type: integer
@@ -910,25 +910,25 @@ Cluster:
       type: HAStorageServer[]
       description: List of metadata storage servers in the cluster
 
-# Volumes API
-VolumeCreate:
+# Vdisks API
+VdiskCreate:
   properties:
     id:
       type: string
-      description: name of the volume. need to be unique
+      description: name of the vdisk. need to be unique
       required: true
     size:
       type: integer
-      description: Size of the volume in GiB
+      description: Size of the vdisk in GiB
     blocksize:
       type: integer
       description: blocksize in bytes
       default: 4096
     type:
       enum: [boot, db, cache, tmp]
-      description: The type of volume.
+      description: The type of vdisk.
       required: true
-    templatevolume:
+    templatevdisk:
       type: string
       required: false
     readOnly:
@@ -937,61 +937,61 @@ VolumeCreate:
       default: false
     storagecluster:
       type: string
-      description: the storagecluster used for this volume's main storage.
+      description: the storagecluster used for this vdisk's main storage.
       required: false
     tlogStoragecluster:
       type: string
-      description: the storagecluster used for this volume's transaction logs
+      description: the storagecluster used for this vdisk's transaction logs
       required: false
 
-Volume:
+Vdisk:
   properties:
     id: string
     status:
       enum: [running, halted, rollingback]
-      description: Status of the volume
+      description: Status of the vdisk
     size:
       type: integer
-      description: Size of the volume in GiB
+      description: Size of the vdisk in GiB
     blocksize:
       type: integer
       description: blocksize in bytes
       default: 4096
     type:
       enum: [boot, db, cache, tmp]
-      description: The type of volume.
+      description: The type of vdisk.
     readOnly:
       type: boolean
       default: false
       required: false
     storagecluster:
       type: string
-      description: the storagecluster used for this volume's main storage.
+      description: the storagecluster used for this vdisk's main storage.
     tlogStoragecluster:
       type: string
-      description: the storagecluster used for this volume's transaction logs
+      description: the storagecluster used for this vdisk's transaction logs
 
-VolumeListItem:
+VdiskListItem:
   properties:
     id: string
     status:
       enum: [running, halted, rollingback]
-      description: Status of the volume
+      description: Status of the vdisk
     type:
       enum: [boot, db, cache, tmp]
-      description: The type of volume.
+      description: The type of vdisk.
     storagecluster:
       type: string
-      description: the storagecluster used for this volume's main storage.
+      description: the storagecluster used for this vdisk's main storage.
 
-VolumeResize:
+VdiskResize:
   properties:
     newSize:
       type: integer
       description: New size in Gib, need to be bigger then the current size.
 
-VolumeRollback:
+VdiskRollback:
   properties:
     epoch:
       type: integer
-      description: Epoch to which we want to rollback the volume
+      description: Epoch to which we want to rollback the vdisk

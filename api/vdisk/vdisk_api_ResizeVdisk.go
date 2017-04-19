@@ -1,4 +1,4 @@
-package volume
+package vdisk
 
 import (
 	"encoding/json"
@@ -11,12 +11,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// ResizeVolume is the handler for POST /volumes/{volumeid}/resize
-// Resize Volume
-func (api VolumesAPI) ResizeVolume(w http.ResponseWriter, r *http.Request) {
-	var reqBody VolumeResize
+// ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
+// Resize Vdisk
+func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
+	var reqBody VdiskResize
 
-	volumeID := mux.Vars(r)["volumeid"]
+	vdiskID := mux.Vars(r)["vdiskid"]
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -38,15 +38,15 @@ func (api VolumesAPI) ResizeVolume(w http.ResponseWriter, r *http.Request) {
 		Size: reqBody.NewSize,
 	}
 
-	decl := fmt.Sprintf("volume__%v", volumeID)
+	decl := fmt.Sprintf("vdisk__%v", vdiskID)
 
 	obj := make(map[string]interface{})
 	obj[decl] = bp
 	obj["actions"] = []map[string]string{map[string]string{"action": "resize"}}
 
 	// And execute
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "volume", volumeID, "resize", obj); err != nil {
-		log.Errorf("error executing blueprint for volume %s resize : %+v", volumeID, err)
+	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj); err != nil {
+		log.Errorf("error executing blueprint for vdisk %s resize : %+v", vdiskID, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}

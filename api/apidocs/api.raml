@@ -255,10 +255,10 @@ types:
         type: integer
       storageclusterid:
         type: string
-        description: Id of the storage cluster of the volume
-      volumeid:
+        description: Id of the storage cluster of the vdisk
+      vdiskid:
         type: string
-        description: Id of the volume
+        description: Id of the vdisk
 
 
   VMListItem:
@@ -787,12 +787,12 @@ types:
         type: StorageServer[]
         description: List of metadata storage server in the cluster
 
-  # Volumes API
-  VolumeCreate:
+  # Vdisks API
+  VdiskCreate:
     properties:
       size:
         type: integer
-        description: Size of the volume in GiB
+        description: Size of the vdisk in GiB
       blocksize:
         type: integer
         description: blocksize in bytes
@@ -800,7 +800,7 @@ types:
       deduped:
         type: boolean
         default: true
-      templatevolume:
+      templatevdisk:
         type: string
         required: false
       readOnly:
@@ -809,45 +809,45 @@ types:
         default: false
       driver:
         type: string
-        description: name of the driver of this volume
+        description: name of the driver of this vdisk
         required: false
 
-  Volume:
+  Vdisk:
     properties:
       id: string
       status:
         enum: [running, halted, rollingback]
-        description: Status of the volume
+        description: Status of the vdisk
       size:
         type: integer
-        description: Size of the volume in GiB
+        description: Size of the vdisk in GiB
       blocksize:
         type: integer
         description: blocksize in bytes
         default: 4096
       deduped:
         type: boolean
-        description: Indicates if this volume is deduped or not.
+        description: Indicates if this vdisk is deduped or not.
       readOnly:
         type: boolean
         default: false
         required: false
       driver:
         type: string
-        description: name of the driver of this volume
+        description: name of the driver of this vdisk
         required: false
 
-  VolumeResize:
+  VdiskResize:
     properties:
       newSize:
         type: integer
         description: New size in Gib, need to be bigger then the current size.
 
-  VolumeRollback:
+  VdiskRollback:
     properties:
       epoch:
         type: integer
-        description: Epoch to which we want to rollback the volume
+        description: Epoch to which we want to rollback the vdisk
 
 
 /node:
@@ -1187,7 +1187,7 @@ types:
               post:
                 (AYSBased):
                 displayName: CreateSnapshot
-                description: Create a new readonly filesystem of the current state of the volume
+                description: Create a new readonly filesystem of the current state of the vdisk
                 body:
                   application/json:
                     description: |
@@ -1621,61 +1621,61 @@ types:
       responses:
         204:
           description: Cluster destroyed
-    /volumes:
+    /vdisks:
       post:
         (AYSBased):
-        displayName: CreateNewVolume
-        description: Create a new volume, can be a copy from an existing volume
+        displayName: CreateNewVdisk
+        description: Create a new vdisk, can be a copy from an existing vdisk
         body:
           application/json:
-            type: VolumeCreate
+            type: VdiskCreate
         responses:
           201:
             headers:
               Location:
-                description: Url to the created volume resource
+                description: Url to the created vdisk resource
           404:
-            description: The template volume or storagecluster do not exist
-      /{volumeid}:
+            description: The template vdisk or storagecluster do not exist
+      /{vdiskid}:
         get:
           (AYSBased):
-          displayName: GetVolumeInfo
-          description: Get volume information
+          displayName: GetVdiskInfo
+          description: Get vdisk information
           responses:
             200:
               body:
                 application/json:
-                  type: Volume
+                  type: Vdisk
             404:
-              description: The volume does not exist
+              description: The vdisk does not exist
         delete:
           (AYSBased):
-          displayName: DeleteVolume
-          description: Delete Volume
+          displayName: DeleteVdisk
+          description: Delete Vdisk
           responses:
             204:
               description: Deleted
             404:
-              description: The volume does not exist
+              description: The vdisk does not exist
         /resize:
           post:
             (AYSBased):
-            displayName: ResizeVolume
-            description: Resize Volume
+            displayName: ResizeVdisk
+            description: Resize Vdisk
             body:
               application/json:
-                type: VolumeResize
+                type: VdiskResize
             responses:
               204:
-                description: Volume Resized
+                description: Vdisk Resized
         /rollback:
           post:
             (AYSBased):
-            displayName: RollbackVolume
-            description: Rollback a volume to a previous state
+            displayName: RollbackVdisk
+            description: Rollback a vdisk to a previous state
             body:
               application/json:
-                type: VolumeRollback
+                type: VdiskRollback
             responses:
               204:
                 description: Rollback started successfully

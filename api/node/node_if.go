@@ -56,7 +56,7 @@ type NodesInterface interface { // ListNodes is the handler for GET /node
 	// List snapshots of this filesystem
 	ListFilesystemSnapshots(http.ResponseWriter, *http.Request)
 	// CreateSnapshot is the handler for POST /node/{nodeid}/storagepool/{storagepoolname}/filesystems/{filesystemname}/snapshot
-	// Create a new readonly filesystem of the current state of the volume
+	// Create a new readonly filesystem of the current state of the vdisk
 	CreateSnapshot(http.ResponseWriter, *http.Request)
 	// GetFilesystemSnapshotInfo is the handler for GET /node/{nodeid}/storagepool/{storagepoolname}/filesystems/{filesystemname}/snapshot/{snapshotname}
 	// Get detailed information on the snapshot

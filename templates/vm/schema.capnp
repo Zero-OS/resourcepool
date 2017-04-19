@@ -8,7 +8,7 @@ struct Schema {
     cpu @4: UInt16; # Number of virtual CUPs
     nics @5: List(NicLink);
     disks @6: List(DiskLink);
-    volumes @7: List(Text); # consume volume services, should not be set via blueprint, will be calculated from disks
+    vdisks @7: List(Text); # consume vdisk services, should not be set via blueprint, will be calculated from disks
     userCloudInit @8: Text;
     systemCloudInit @9: Text;
 
@@ -27,7 +27,7 @@ struct Schema {
     }
 
     struct DiskLink {
-      volumeid @0: Text;
+      vdiskid @0: Text;
       maxIOps @1: UInt32;
     }
 

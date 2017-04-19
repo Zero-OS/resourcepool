@@ -354,7 +354,7 @@ types:
               post:
                 (AYSBased):
                 displayName: CreateSnapshot
-                description: Create a new readonly filesystem of the current state of the volume
+                description: Create a new readonly filesystem of the current state of the vdisk
                 body:
                   application/json:
                     description: |
@@ -797,72 +797,72 @@ types:
       responses:
         204:
           description: Cluster destroyed
-/volumes:
+/vdisks:
   get:
     (AYSBased):
-    displayName: ListVolumes
-    description: List volumes
+    displayName: ListVdisks
+    description: List vdisks
     responses:
       200:
         body:
           application/json:
-            type: VolumeListItem[]
+            type: VdiskListItem[]
   post:
     (AYSBased):
-    displayName: CreateNewVolume
-    description: Create a new volume, can be a copy from an existing volume
+    displayName: CreateNewVdisk
+    description: Create a new vdisk, can be a copy from an existing vdisk
     body:
       application/json:
-        type: VolumeCreate
+        type: VdiskCreate
     responses:
       201:
         headers:
           Location:
-            description: Url to the created volume resource
+            description: Url to the created vdisk resource
       404:
-        description: The template volume or storagecluster do not exist
+        description: The template vdisk or storagecluster do not exist
       409:
-        description: A volume with this ID already exists
-  /{volumeid}:
+        description: A vdisk with this ID already exists
+  /{vdiskid}:
     get:
       (AYSBased):
-      displayName: GetVolumeInfo
-      description: Get volume information
+      displayName: GetVdiskInfo
+      description: Get vdisk information
       responses:
         200:
           body:
             application/json:
-              type: Volume
+              type: Vdisk
         404:
-          description: The volume does not exist
+          description: The vdisk does not exist
     delete:
       (AYSBased):
-      displayName: DeleteVolume
-      description: Delete Volume
+      displayName: DeleteVdisk
+      description: Delete Vdisk
       responses:
         204:
           description: Deleted
         404:
-          description: The volume does not exist
+          description: The vdisk does not exist
     /resize:
       post:
         (AYSBased):
-        displayName: ResizeVolume
-        description: Resize Volume
+        displayName: ResizeVdisk
+        description: Resize Vdisk
         body:
           application/json:
-            type: VolumeResize
+            type: VdiskResize
         responses:
           204:
-            description: Volume Resized
+            description: Vdisk Resized
     /rollback:
       post:
         (AYSBased):
-        displayName: RollbackVolume
-        description: Rollback a volume to a previous state
+        displayName: RollbackVdisk
+        description: Rollback a vdisk to a previous state
         body:
           application/json:
-            type: VolumeRollback
+            type: VdiskRollback
         responses:
           204:
             description: Rollback started successfully

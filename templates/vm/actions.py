@@ -4,11 +4,11 @@ from JumpScale import j
 def input(job):
     # Check the blueprint input for errors
     args = job.model.args
-    if args.get('volumes'):
-        raise j.exceptions.Input('volumes property should not be set in the blueprint. Instead use disks property.')
+    if args.get('vdisks'):
+        raise j.exceptions.Input('vdisks property should not be set in the blueprint. Instead use disks property.')
     disks = args.get("disks", [])
     if disks:
-        args['volumes'] = [disk['volumeid'] for disk in disks]
+        args['vdisks'] = [disk['vdiskid'] for disk in disks]
     return args
 
 
@@ -31,11 +31,11 @@ def get_container_root(service, id):
 
 def create_nbdserver_container(service, parent):
     """
-    first check if the volumes container for this vm exists.
+    first check if the vdisks container for this vm exists.
     if not it creates it.
     return the container service
     """
-    container_name = 'volumes_{}_{}'.format(service.name, parent.name)
+    container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     try:
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
     except j.exceptions.NotFound:
@@ -57,13 +57,13 @@ def create_nbdserver_container(service, parent):
     return container
 
 
-def create_nbd(service, container, volume):
+def create_nbd(service, container, vdisk):
     """
-    first check if the nbd server for a specific volume exists.
+    first check if the nbd server for a specific vdisk exists.
     if not it creates it.
     return the nbdserver service
     """
-    nbd_name = volume.name
+    nbd_name = vdisk.name
 
     try:
         nbdserver = service.aysrepo.serviceGet(role='container', instance=nbd_name)
@@ -74,7 +74,7 @@ def create_nbd(service, container, volume):
         nbd_actor = service.aysrepo.actorGet('nbdserver')
         args = {
             # 'backendControllerUrl': '', #FIXME
-            # 'volumeControllerUrl': '', #FIXME
+            # 'vdiskControllerUrl': '', #FIXME
             'container': container.name,
         }
         nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)
@@ -85,13 +85,13 @@ def create_nbd(service, container, volume):
 def init(job):
     service = job.service
 
-    # creates all nbd servers for each volume this vm uses
-    job.logger.info("creates volumes container for vm {}".format(service.name))
-    volume_container = create_nbdserver_container(service, service.parent)
+    # creates all nbd servers for each vdisk this vm uses
+    job.logger.info("creates vdisks container for vm {}".format(service.name))
+    vdisk_container = create_nbdserver_container(service, service.parent)
 
-    for volume in service.producers.get('volume', []):
+    for vdisk in service.producers.get('vdisk', []):
         job.logger.info("creates nbd server for vm {}".format(service.name))
-        nbdserver = create_nbd(service, volume_container, volume)
+        nbdserver = create_nbd(service, vdisk_container, vdisk)
         service.consume(nbdserver)
 
 
@@ -173,9 +173,9 @@ def stop(job):
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
 
-    job.logger.info("stop volumes container for vm {}".format(service.name))
+    job.logger.info("stop vdisks container for vm {}".format(service.name))
     try:
-        container_name = 'volumes_{}_{}'.format(service.name, service.parent.name)
+        container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
         j.tools.async.wrappers.sync(container.executeAction('stop'))
     except j.exceptions.NotFound:
@@ -215,16 +215,16 @@ def migrate(job):
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     old_nbd = service.producers.get('nbdserver', [])
-    container_name = 'volumes_{}_{}'.format(service.name, service.parent.name)
-    old_volume_container = service.aysrepo.serviceGet('container', container_name)
+    container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
+    old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
-    volume_container = create_nbdserver_container(service, target_node)
-    for volume in service.producers.get('volume', []):
+    vdisk_container = create_nbdserver_container(service, target_node)
+    for vdisk in service.producers.get('vdisk', []):
         job.logger.info("start nbd server for migration of vm {}".format(service.name))
-        nbdserver = create_nbd(service, volume_container, volume)
+        nbdserver = create_nbd(service, vdisk_container, vdisk)
         service.consume(nbdserver)
-        volume.model.data.node = target_node.name
+        vdisk.model.data.node = target_node.name
 
     # TODO: migrate domain, not impleented yet in core0
 
@@ -232,13 +232,13 @@ def migrate(job):
     service.model.data.status = 'running'
 
     # delete current nbd services and volue container
-    job.logger.info("delete current nbd services and volume container")
+    job.logger.info("delete current nbd services and vdisk container")
     for nbdserver in old_nbd:
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
         j.tools.async.wrappers.sync(nbdserver.delete())
 
-    j.tools.async.wrappers.sync(old_volume_container.executeAction('stop'))
-    j.tools.async.wrappers.sync(old_volume_container.delete())
+    j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop'))
+    j.tools.async.wrappers.sync(old_vdisk_container.delete())
 
 
 def updatedevices(service, client, args):

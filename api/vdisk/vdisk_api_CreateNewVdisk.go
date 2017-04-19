@@ -1,4 +1,4 @@
-package volume
+package vdisk
 
 import (
 	"encoding/json"
@@ -10,10 +10,10 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// CreateNewVolume is the handler for POST /volumes
-// Create a new volume, can be a copy from an existing volume
-func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
-	var reqBody VolumeCreate
+// CreateNewVdisk is the handler for POST /vdisks
+// Create a new vdisk, can be a copy from an existing vdisk
+func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
+	var reqBody VdiskCreate
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -28,9 +28,9 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, resp, _ := api.AysAPI.Ays.GetServiceByName(reqBody.ID, "volume", api.AysRepo, nil, nil)
+	_, resp, _ := api.AysAPI.Ays.GetServiceByName(reqBody.ID, "vdisk", api.AysRepo, nil, nil)
 	if resp.StatusCode != http.StatusNotFound {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A volume with ID %s already exists", reqBody.ID))
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID))
 		return
 	}
 
@@ -38,32 +38,32 @@ func (api VolumesAPI) CreateNewVolume(w http.ResponseWriter, r *http.Request) {
 	bp := struct {
 		Size           int    `yaml:"size" json:"size"`
 		BlockSize      int    `yaml:"blocksize" json:"blocksize"`
-		TemplateVolume string `yaml:"templateVolume" json:"templateVolume"`
+		TemplateVdisk string `yaml:"templateVdisk" json:"templateVdisk"`
 		ReadOnly       bool   `yaml:"readOnly" json:"readOnly"`
 		Type           string `yaml:"type" json:"type"`
 		StorageCluster string `yaml:"storageCluster" json:"storageCluster"`
 	}{
 		Size:           reqBody.Size,
 		BlockSize:      reqBody.Blocksize,
-		TemplateVolume: reqBody.Templatevolume,
+		TemplateVdisk: reqBody.Templatevdisk,
 		ReadOnly:       reqBody.ReadOnly,
-		Type:           string(reqBody.Volumetype),
+		Type:           string(reqBody.Vdisktype),
 		StorageCluster: reqBody.Storagecluster,
 	}
 
-	bpName := fmt.Sprintf("volume__%s", reqBody.ID)
+	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)
 
 	obj := make(map[string]interface{})
 	obj[bpName] = bp
 	obj["actions"] = []tools.ActionBlock{{"action": "install"}}
 
 	// And Execute
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "volume", reqBody.ID, "install", obj); err != nil {
-		log.Errorf("error executing blueprint for volume %s creation : %+v", reqBody.ID, err)
+	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj); err != nil {
+		log.Errorf("error executing blueprint for vdisk %s creation : %+v", reqBody.ID, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/volumes/%s", reqBody.ID))
+	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
 	w.WriteHeader(http.StatusCreated)
 }

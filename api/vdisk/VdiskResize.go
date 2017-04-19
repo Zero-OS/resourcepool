@@ -1,14 +1,14 @@
-package volume
+package vdisk
 
 import (
 	"gopkg.in/validator.v2"
 )
 
-type VolumeResize struct {
+type VdiskResize struct {
 	NewSize int `yaml:"newSize" json:"newSize" validate:"nonzero"`
 }
 
-func (s VolumeResize) Validate() error {
+func (s VdiskResize) Validate() error {
 
 	return validator.Validate(s)
 }

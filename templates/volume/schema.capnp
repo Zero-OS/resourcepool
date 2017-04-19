@@ -3,8 +3,8 @@
 struct Schema {
     size @0 :UInt64;
     blocksize @1 :UInt32;
-    type @2 :VolumeType;
-    templateVolume @3 :Text; # in case it's a copy of another volume
+    type @2 :VdiskType;
+    templateVdisk @3 :Text; # in case it's a copy of another vdisk
     readOnly @4 :Bool;
     status @5 :Status;
 
@@ -17,7 +17,7 @@ struct Schema {
         rollingback @2;
     }
 
-    enum VolumeType {
+    enum VdiskType {
         boot @0;
         db @1;
         cache @2;

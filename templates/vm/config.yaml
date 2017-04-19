@@ -8,8 +8,8 @@ links:
     - auto: false
       min: 0
       max: 9999
-      role: volume
-      argname: volumes
+      role: vdisk
+      argname: vdisks
 
 recurring:
   - action: monitor

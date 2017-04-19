@@ -12,7 +12,7 @@ import (
 )
 
 // CreateSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
-// Create a new readonly filesystem of the current state of the volume
+// Create a new readonly filesystem of the current state of the vdisk
 func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 	filessytem := mux.Vars(r)["filesystemname"]
 	nodeid := mux.Vars(r)["nodeid"]

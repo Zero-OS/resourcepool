@@ -1,21 +1,21 @@
-package volume
+package vdisk
 
 import (
 	"gopkg.in/validator.v2"
 )
 
-type Volume struct {
+type Vdisk struct {
 	Blocksize          int                  `yaml:"blocksize" json:"blocksize" validate:"nonzero"`
 	ID                 string               `yaml:"id" json:"id" validate:"nonzero"`
 	ReadOnly           bool                 `yaml:"readOnly" json:"readOnly,omitempty"`
 	Size               int                  `yaml:"size" json:"size" validate:"nonzero"`
-	Status             EnumVolumeStatus     `yaml:"status" json:"status" validate:"nonzero"`
+	Status             EnumVdiskStatus     `yaml:"status" json:"status" validate:"nonzero"`
 	Storagecluster     string               `yaml:"storagecluster" json:"storagecluster" validate:"nonzero"`
 	TlogStoragecluster string               `yaml:"tlogStoragecluster" json:"tlogStoragecluster" validate:"nonzero"`
-	Volumetype         EnumVolumeVolumetype `yaml:"type" json:"type" validate:"nonzero"`
+	Vdisktype         EnumVdiskVdisktype `yaml:"type" json:"type" validate:"nonzero"`
 }
 
-func (s Volume) Validate() error {
+func (s Vdisk) Validate() error {
 
 	return validator.Validate(s)
 }

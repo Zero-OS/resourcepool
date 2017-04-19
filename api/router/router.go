@@ -10,7 +10,7 @@ import (
 	"github.com/g8os/grid/api/node"
 	"github.com/g8os/grid/api/storagecluster"
 	"github.com/g8os/grid/api/tools"
-	"github.com/g8os/grid/api/volume"
+	"github.com/g8os/grid/api/vdisk"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -59,7 +59,7 @@ func GetRouter(aysURL, aysRepo string) http.Handler {
 
 	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysAPI, cache.New(5*time.Minute, 1*time.Minute)))
 	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysAPI))
-	volume.VolumesInterfaceRoutes(r, volume.NewVolumeAPI(aysRepo, aysAPI))
+	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysAPI))
 
 	router := NewRouter(r)
 	router.Use(LoggingMiddleware)
