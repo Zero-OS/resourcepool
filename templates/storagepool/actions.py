@@ -45,6 +45,9 @@ def install(job):
 
     updateDevices(service, pool, devices)
 
+    # update the mapping between uuid and device name
+    pool.ays.create(service.aysrepo)
+
 
 def delete(job):
     service = job.service
