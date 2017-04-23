@@ -46,8 +46,7 @@ def create_nbdserver_container(service, parent):
         args = {
             'node': parent.name,
             'flist': 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
-            'hostNetworking': True,
-            'storage': 'ardb://hub.gig.tech:16379',
+            'hostNetworking': True
         }
         container = container_actor.serviceCreate(instance=container_name, args=args)
 

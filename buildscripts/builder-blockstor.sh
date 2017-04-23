@@ -20,7 +20,7 @@ export GOPATH=/gopath
 BLOCKSTOR=$GOPATH/src/github.com/g8os/blockstor
 
 go get -v -d github.com/g8os/blockstor/nbdserver
-go get -v -d github.com/g8os/blockstor/cmd/copyvolume
+go get -v -d github.com/g8os/blockstor/cmd/copyvdisk
 
 cd $BLOCKSTOR
 
@@ -30,8 +30,8 @@ git checkout "${branch}" || true
 cd $BLOCKSTOR/nbdserver
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .
 
-cd $BLOCKSTOR/cmd/copyvolume
+cd $BLOCKSTOR/cmd/copyvdisk
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .
 
 mkdir -p /tmp/archives/
-tar -czf "/tmp/archives/blockstor-${branch}.tar.gz" -C $BLOCKSTOR/nbdserver nbdserver -C $BLOCKSTOR/cmd/copyvolume copyvolume
+tar -czf "/tmp/archives/blockstor-${branch}.tar.gz" -C $BLOCKSTOR/nbdserver nbdserver -C $BLOCKSTOR/cmd/copyvdisk copyvdisk
