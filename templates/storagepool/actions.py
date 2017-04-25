@@ -22,20 +22,26 @@ def install(job):
     dataProfile = str(service.model.data.dataProfile)
     metadataProfile = str(service.model.data.metadataProfile)
     mountpoint = str(service.model.data.mountpoint) or None
+    created = False
     try:
         pool = node.storagepools.get(name)
     except ValueError:
         # pool does not exists lets create it
         pool = node.storagepools.create(name, devices, metadataProfile, dataProfile, overwrite=True)
+        created = True
 
     # mount device
-    if mountpoint:
-        if pool.mountpoint:
-            if pool.mountpoint != mountpoint:
-                pool.umount()
-                pool.mount(mountpoint)
-        else:
+    # if pool already mounted and user ask a specific mountpoint, remount to the correct location
+    if pool.mountpoint and mountpoint:
+        if pool.mountpoint != mountpoint:
+            pool.umount()
             pool.mount(mountpoint)
+    # if pool already mounted and not specific endpoint asked, do nothing
+    if pool.mountpoint and not mountpoint:
+        pass
+    # if pool not mounted and no mountpoint specified, use automatic mount
+    elif not pool.mountpoint and not mountpoint:
+        pool.mount()
 
     # lets check if devices need to be added removed and the profile still matches
     if pool.fsinfo['data']['profile'].lower() != dataProfile:
@@ -43,9 +49,9 @@ def install(job):
     if pool.fsinfo['metadata']['profile'].lower() != metadataProfile:
         raise RuntimeError("Metadata profile of storagepool {} does not match".format(name))
 
-    updateDevices(service, pool, devices)
+    if not created:
+        updateDevices(service, pool, devices)
 
-    # update the mapping between uuid and device name
     pool.ays.create(service.aysrepo)
 
 
@@ -81,8 +87,6 @@ def updateDevices(service, pool, devices):
     if removeddevices:
         pool.device_remove(*removeddevices)
 
-    pool.ays.create(service.aysrepo)
-
 
 def processChange(job):
     service = job.service
@@ -100,5 +104,6 @@ def processChange(job):
             pool = node.storagepools.get(service.name)
             devices = [d['device'] for d in args['devices']]
             updateDevices(service, pool, devices)
+            pool.ays.create(service.aysrepo)
         except ValueError:
             job.logger.error("pool {} doesn't exist, cant update devices", service.name)
