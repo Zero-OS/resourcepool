@@ -15,10 +15,20 @@ def combine(ip1, ip2, mask):
     return net
 
 
-def configure(job):
-    """
-    this method will be called from the node.g8os install action.
-    """
+def getAddresses(job):
+    node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
+
+    node_client = j.clients.g8core.get(host=node.model.data.redisAddr,
+                                       port=node.model.data.redisPort,
+                                       password=node.model.data.redisPassword)
+    mgmtaddr, network = getMgmtInfo(job, node, node_client)
+    return {
+        'storageaddr': combine(str(network.ip), mgmtaddr, network.prefixlen),
+        'vxaddr': combine('10.240.0.0', mgmtaddr, network.prefixlen),
+    }
+
+
+def getMgmtInfo(job, node, node_client):
     import netaddr
 
     def get_nic_ip(nics, name):
@@ -27,16 +37,6 @@ def configure(job):
                 for ip in nic['addrs']:
                     return netaddr.IPNetwork(ip['addr'])
                 return
-
-    # if 'node' not in job.model.args:
-    #     raise ValueError("argument node not present in job argument")
-
-    node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
-    job.logger.info("execute network configure on {}".format(node))
-
-    node_client = j.clients.g8core.get(host=node.model.data.redisAddr,
-                                       port=node.model.data.redisPort,
-                                       password=node.model.data.redisPassword)
 
     service = job.service
 
@@ -51,10 +51,31 @@ def configure(job):
     if not mgmtaddr:
         mgmtaddr = node.model.data.redisAddr
 
+    return mgmtaddr, network
+
+
+def configure(job):
+    """
+    this method will be called from the node.g8os install action.
+    """
+    import netaddr
+
+    node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
+    job.logger.info("execute network configure on {}".format(node))
+
+    node_client = j.clients.g8core.get(host=node.model.data.redisAddr,
+                                       port=node.model.data.redisPort,
+                                       password=node.model.data.redisPassword)
+
+    service = job.service
+
+    mgmtaddr, network = getMgmtInfo(job, node, node_client)
+
     storageaddr = combine(str(network.ip), mgmtaddr, network.prefixlen)
     vxaddr = combine('10.240.0.0', mgmtaddr, network.prefixlen)
 
     node_client.timeout = 120
+    nics = node_client.info.nic()
     nics.sort(key=lambda nic: nic['speed'])
     interface = None
     for nic in nics:

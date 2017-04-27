@@ -15,6 +15,27 @@ def init(job):
     storagepool = node.ensure_persistance(poolname)
     storagepool.ays.create(service.aysrepo)
 
+
+def getAddresses(job):
+    import asyncio
+    service = job.service
+    try:
+        loop = asyncio.get_event_loop()
+    except:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    futures = []
+    networks = service.producers.get('network', [])
+    for network in networks:
+        job = network.getJob('getAddresses', args={'node_name': service.name})
+        futures.append(job.execute())
+
+    if futures:
+        return {i.name: j for i, j in zip(networks, loop.run_until_complete(asyncio.gather(*futures)))}
+    else:
+        return {}
+
+
 def install(job):
     import asyncio
 
