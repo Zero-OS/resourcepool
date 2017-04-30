@@ -17,7 +17,7 @@ def is_running(client, key):
     try:
         for process in client.job.list():
             arguments = process['cmd']['arguments']
-            if 'name' in arguments and arguments['name'] == '/nbdserver' and \
+            if 'name' in arguments and arguments['name'] == '/bin/nbdserver' and \
                key in arguments['args']:
                 return process
         return False
@@ -41,7 +41,7 @@ def install(job):
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):
         container.system(
-            '/nbdserver \
+            '/bin/nbdserver \
             -protocol unix \
             -address "{socketpath}" \
             -export {id} \

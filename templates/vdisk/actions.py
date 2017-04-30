@@ -3,6 +3,9 @@ from JumpScale import j
 
 def install(job):
     import random
+    from io import BytesIO
+    import pytoml
+    from urllib.parse import urlparse
     service = job.service
     service.model.data.status = 'halted'
     if service.model.data.templateVdisk:
@@ -19,14 +22,19 @@ def install(job):
             node_client = j.clients.g8core.get(host=target_node.model.data.redisAddr,
                                                port=target_node.model.data.redisPort,
                                                password=target_node.model.data.redisPassword)
+            tomlfd = BytesIO()
+            node_client.filesystem.download('/etc/g8os/g8os.toml', tomlfd)
+            tomlfd.seek(0)
+            config = pytoml.load(tomlfd)
+            masterardb = urlparse(config['globals']['storage']).netloc
             container_client = node_client.container.client(volume_container.model.data.id)
-            CMD = '/copyvdisk -t api -sourcesc {src_storagecluster} -targetsc {dst_storagecluster} {src_name} {dst_name} {grid_addr}'
+            CMD = '/bin/copyvdisk -sourcetype direct -targettype api {src_name} {dst_name} {masterardb} {grid_addr}'
             cmd = CMD.format(dst_name=service.name, src_name=service.model.data.templateVdisk, grid_addr=grid_addr,
-                             src_storagecluster=service.model.data.storageCluster, dst_storagecluster=service.model.data.storageCluster)
+                             masterardb=masterardb)
             print(cmd)
             result = container_client.system(cmd).get()
             if result.state != 'SUCCESS':
-                j.exceptions.RuntimeError("Failed to copyvdisk {} {}".format(result.stdout, result.stderr))
+                raise j.exceptions.RuntimeError("Failed to copyvdisk {} {}".format(result.stdout, result.stderr))
 
         finally:
             destroy_from_template_container(service, target_node)
