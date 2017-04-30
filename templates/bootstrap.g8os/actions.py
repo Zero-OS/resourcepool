@@ -7,12 +7,19 @@ def input(job):
 
     return job.model.args
 
+def node_name(g8client):
+    def get_nic_hwaddr(nics, name):
+        for nic in nics:
+            if nic['name'] == name:
+                return nic['hardwareaddr']
 
-def is_valid_nic(nic):
-    for exclude in ['zt', 'core', 'kvm', 'lo']:
-        if nic['name'].startswith(exclude):
-            return False
-    return True
+    defaultgwdev = g8client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
+    nics = g8client.info.nic()
+    if defaultgwdev:
+        macgwdev = get_nic_hwaddr(nics, defaultgwdev)
+    if not macgwdev:
+        raise AttributeError("name not find")
+    return macgwdev.replace(":", '')
 
 def bootstrap(job):
     from zerotier import client
@@ -69,19 +76,9 @@ def try_authorize(service, logger, netid, member, zerotier):
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
     # read mac Addr of g8os
-    mac = None
-
-    for nic in filter(is_valid_nic, g8.info.nic()):
-        # get mac address and ip of the management interface
-        if len(nic['addrs']) > 0 and nic['addrs'][0]['addr'] != '':
-            mac = nic['hardwareaddr']
-            break
-
-    if mac is None:
-        raise RuntimeError("can't find mac address of the zerotier member ({})".format(member['physicalAddress']))
+    mac = node_name(g8)
 
     # create node.g8os service
-    mac = mac.replace(':', '')
     try:
         node = service.aysrepo.serviceGet(role='node', instance=mac)
         logger.info("service for node {} already exists, updating model".format(mac))
