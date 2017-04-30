@@ -10,5 +10,4 @@ import (
 // Gracefully shutdown the VM
 func (api NodeAPI) ShutdownVM(w http.ResponseWriter, r *http.Request) {
 	tools.ExecuteVMAction(w, r, api.AysRepo, "shutdown")
-	w.WriteHeader(http.StatusNoContent)
 }

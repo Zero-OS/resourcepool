@@ -10,5 +10,4 @@ import (
 // Starts the VM
 func (api NodeAPI) StartVM(w http.ResponseWriter, r *http.Request) {
 	tools.ExecuteVMAction(w, r, api.AysRepo, "start")
-	w.WriteHeader(http.StatusNoContent)
 }

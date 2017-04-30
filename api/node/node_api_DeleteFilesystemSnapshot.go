@@ -18,10 +18,10 @@ func (api NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Reque
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "delete",
-			"actor":   "fssnapshot",
-			"service": name,
-			"force":   true,
+			Action:  "delete",
+			Actor:   "fssnapshot",
+			Service: name,
+			Force:   true,
 		}},
 	}
 

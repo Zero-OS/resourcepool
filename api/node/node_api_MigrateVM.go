@@ -42,8 +42,10 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[decl] = bp
 	obj["actions"] = []tools.ActionBlock{{
-		"action": "migrate",
-		"force":  true,
+		Action:  "migrate",
+		Actor:   "vm",
+		Service: vmID,
+		Force:   true,
 	}}
 
 	// And execute

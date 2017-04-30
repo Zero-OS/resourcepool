@@ -7,13 +7,6 @@ def input(job):
 
     return job.model.args
 
-
-def is_valid_nic(nic):
-    for exclude in ['zt', 'core', 'kvm', 'lo']:
-        if nic['name'].startswith(exclude):
-            return False
-    return True
-
 def bootstrap(job):
     from zerotier import client
 
@@ -68,23 +61,12 @@ def try_authorize(service, logger, netid, member, zerotier):
     else:
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
-    # read mac Addr of g8os
-    mac = None
-
-    for nic in filter(is_valid_nic, g8.info.nic()):
-        # get mac address and ip of the management interface
-        if len(nic['addrs']) > 0 and nic['addrs'][0]['addr'] != '':
-            mac = nic['hardwareaddr']
-            break
-
-    if mac is None:
-        raise RuntimeError("can't find mac address of the zerotier member ({})".format(member['physicalAddress']))
-
     # create node.g8os service
-    mac = mac.replace(':', '')
+    node = j.sal.g8os.get_node(zerotier_ip)
+    name = node.name
     try:
-        node = service.aysrepo.serviceGet(role='node', instance=mac)
-        logger.info("service for node {} already exists, updating model".format(mac))
+        node = service.aysrepo.serviceGet(role='node', instance=name)
+        logger.info("service for node {} already exists, updating model".format(name))
         # mac sure the service has the correct ip in his model.
         # it could happend that a node get a new ip after a reboot
         node.model.data.redisAddr = zerotier_ip
@@ -96,16 +78,16 @@ def try_authorize(service, logger, netid, member, zerotier):
         networks = [n.name for n in service.producers.get('network', [])]
 
         node_args = {
-            'id': mac,
+            'id': name,
             'status': 'running',
             'networks': networks,
             'redisAddr': zerotier_ip,
         }
-        logger.info("create node.g8os service {}".format(mac))
-        node = node_actor.serviceCreate(instance=mac, args=node_args)
+        logger.info("create node.g8os service {}".format(name))
+        node = node_actor.serviceCreate(instance=name, args=node_args)
         try:
 
-            logger.info("install node.g8os service {}".format(mac))
+            logger.info("install node.g8os service {}".format(name))
             j.tools.async.wrappers.sync(node.executeAction('install'))
         except:
             j.tools.async.wrappers.sync(node.delete())

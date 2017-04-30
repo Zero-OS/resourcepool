@@ -16,10 +16,10 @@ func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "start",
-			"actor":   "container",
-			"service": containerID,
-			"force":   true,
+			Action:  "start",
+			Actor:   "container",
+			Service: containerID,
+			Force:   true,
 		}},
 	}
 

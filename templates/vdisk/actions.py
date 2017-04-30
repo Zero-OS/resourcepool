@@ -3,8 +3,6 @@ from JumpScale import j
 
 def install(job):
     import random
-    from io import BytesIO
-    import pytoml
     from urllib.parse import urlparse
     service = job.service
     service.model.data.status = 'halted'
@@ -22,10 +20,7 @@ def install(job):
             node_client = j.clients.g8core.get(host=target_node.model.data.redisAddr,
                                                port=target_node.model.data.redisPort,
                                                password=target_node.model.data.redisPassword)
-            tomlfd = BytesIO()
-            node_client.filesystem.download('/etc/g8os/g8os.toml', tomlfd)
-            tomlfd.seek(0)
-            config = pytoml.load(tomlfd)
+            config = node_client.config.get()
             masterardb = urlparse(config['globals']['storage']).netloc
             container_client = node_client.container.client(volume_container.model.data.id)
             CMD = '/bin/copyvdisk -sourcetype direct -targettype api {src_name} {dst_name} {masterardb} {grid_addr}'

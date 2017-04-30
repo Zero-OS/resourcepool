@@ -10,5 +10,4 @@ import (
 // Stops the VM
 func (api NodeAPI) StopVM(w http.ResponseWriter, r *http.Request) {
 	tools.ExecuteVMAction(w, r, api.AysRepo, "stop")
-	w.WriteHeader(http.StatusNoContent)
 }

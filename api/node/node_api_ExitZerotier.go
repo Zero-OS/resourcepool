@@ -19,10 +19,10 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	// execute the exit action of the zerotier
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "delete",
-			"actor":   "zerotier",
-			"service": fmt.Sprintf("%s_%s", nodeID, zerotierID),
-			"force":   true,
+			Action:  "delete",
+			Actor:   "zerotier",
+			Service: fmt.Sprintf("%s_%s", nodeID, zerotierID),
+			Force:   true,
 		}},
 	}
 
@@ -43,6 +43,12 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 		} else {
 			tools.WriteError(w, http.StatusInternalServerError, err)
 		}
+		return
+	}
+
+	res, err := api.AysAPI.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
+
+	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("Exiting zerotier %s", fmt.Sprintf("%s_%s", nodeID, zerotierID))) {
 		return
 	}
 

@@ -18,10 +18,10 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	// execute the delete action of the snapshot
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "stop",
-			"actor":   "container",
-			"service": containerID,
-			"force":   true,
+			Action:  "stop",
+			Actor:   "container",
+			Service: containerID,
+			Force:   true,
 		}},
 	}
 

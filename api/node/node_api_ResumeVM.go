@@ -10,5 +10,4 @@ import (
 // Resumes the VM
 func (api NodeAPI) ResumeVM(w http.ResponseWriter, r *http.Request) {
 	tools.ExecuteVMAction(w, r, api.AysRepo, "resume")
-	w.WriteHeader(http.StatusNoContent)
 }

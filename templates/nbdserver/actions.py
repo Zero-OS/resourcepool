@@ -29,8 +29,6 @@ def is_running(client, key):
 
 def install(job):
     import time
-    from io import BytesIO
-    import pytoml
     from urllib.parse import urlparse
     service = job.service
 
@@ -42,10 +40,7 @@ def install(job):
 
     container = get_container_client(service)
     node_client = get_node_client(service)
-    tomlfd = BytesIO()
-    node_client.filesystem.download('/etc/g8os/g8os.toml', tomlfd)
-    tomlfd.seek(0)
-    config = pytoml.load(tomlfd)
+    config = node_client.config.get()
     rootardb = urlparse(config['globals']['storage']).netloc
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):

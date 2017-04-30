@@ -16,10 +16,10 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "reboot",
-			"actor":   "node.g8os",
-			"service": nodeId,
-			"force":   true,
+			Action:  "reboot",
+			Actor:   "node.g8os",
+			Service: nodeId,
+			Force:   true,
 		}},
 	}
 

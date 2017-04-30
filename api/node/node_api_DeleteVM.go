@@ -19,10 +19,10 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj["actions"] = []tools.ActionBlock{{
-		"action":  "stop",
-		"actor":   "vm",
-		"service": vmId,
-		"force":   true,
+		Action:  "stop",
+		Actor:   "vm",
+		Service: vmId,
+		Force:   true,
 	}}
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)

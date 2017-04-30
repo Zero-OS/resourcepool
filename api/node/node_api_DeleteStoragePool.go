@@ -18,10 +18,10 @@ func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "delete",
-			"actor":   "storagepool",
-			"service": name,
-			"force":   true,
+			Action:  "delete",
+			Actor:   "storagepool",
+			Service: name,
+			Force:   true,
 		}},
 	}
 

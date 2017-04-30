@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -17,11 +18,16 @@ func (api NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
-	srv, _, err := api.AysAPI.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	srv, resp, err := api.AysAPI.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
 	if err != nil {
 		log.Errorf("Error in getting bridge service %s : %+v", bridge, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Bridge %s does not exist", bridge))
 		return
 	}
 
