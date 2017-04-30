@@ -42,8 +42,10 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid)] = bp
 	obj["actions"] = []tools.ActionBlock{{
-		"action": "install",
-		"force":  true,
+		Action:  "install",
+		Actor:   "zerotier",
+		Service: reqBody.Nwid,
+		Force:   true,
 	}}
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)

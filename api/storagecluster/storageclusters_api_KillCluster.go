@@ -14,31 +14,31 @@ import (
 // Kill cluster
 func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	storage_cluster := vars["label"]
+	storageCluster := vars["label"]
 
 	// execute the delete action
 	blueprint := map[string]interface{}{
-		"actions": []map[string]string{{
-			"action":  "delete",
-			"actor":   "storage_cluster",
-			"service": storage_cluster,
+		"actions": []tools.ActionBlock{{
+			Action:  "delete",
+			Actor:   "storage_cluster",
+			Service: storageCluster,
 		}},
 	}
 
-	_, resp, err := api.AysAPI.Ays.GetServiceByName(storage_cluster, "storage_cluster", api.AysRepo, nil, nil)
+	_, resp, err := api.AysAPI.Ays.GetServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("error executing blueprint for Storage cluster %s deletion : %+v", storage_cluster, err)
+		log.Errorf("error executing blueprint for Storage cluster %s deletion : %+v", storageCluster, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storage_cluster))
+		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster))
 		return
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", storage_cluster, "delete", blueprint)
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		log.Errorf("Error executing blueprint for storage_cluster deletion : %+v", err.Error())
@@ -57,10 +57,10 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	_, err = api.AysAPI.Ays.DeleteServiceByName(storage_cluster, "storage_cluster", api.AysRepo, nil, nil)
+	_, err = api.AysAPI.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("Error in deleting storage_cluster %s : %+v", storage_cluster, err)
+		log.Errorf("Error in deleting storage_cluster %s : %+v", storageCluster, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}

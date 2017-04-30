@@ -55,7 +55,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[bpName] = bp
-	obj["actions"] = []tools.ActionBlock{{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}}
 
 	// And Execute
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj); err != nil {

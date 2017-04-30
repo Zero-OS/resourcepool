@@ -55,7 +55,7 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("container__%s", reqBody.Id)] = container
-	obj["actions"] = []tools.ActionBlock{{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Id, Actor: "container"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Id, "install", obj); err != nil {
 		log.Errorf("error executing blueprint for container %s creation : %+v", reqBody.Id, err)

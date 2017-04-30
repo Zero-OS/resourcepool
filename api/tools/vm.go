@@ -14,10 +14,10 @@ func ExecuteVMAction(w http.ResponseWriter, r *http.Request, repoName, action st
 
 	obj := map[string]interface{}{
 		"actions": []ActionBlock{{
-			"action":  action,
-			"actor":   "vm",
-			"service": vmID,
-			"force":   true,
+			Action:  action,
+			Actor:   "vm",
+			Service: vmID,
+			Force:   true,
 		}},
 	}
 

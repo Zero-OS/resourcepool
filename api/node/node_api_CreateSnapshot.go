@@ -37,7 +37,10 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 
 	blueprint := map[string]interface{}{
 		fmt.Sprintf("fssnapshot__%s", name): bpContent,
-		"actions":                           []tools.ActionBlock{{"action": "install"}},
+		"actions": []tools.ActionBlock{{
+			Action:  "install",
+			Actor:   "fssnapshot",
+			Service: name}},
 	}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", name, "install", blueprint); err != nil {

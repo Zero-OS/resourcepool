@@ -33,10 +33,10 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "delete",
-			"actor":   "vdisk",
-			"service": vdiskID,
-			"force":   true,
+			Action:  "delete",
+			Actor:   "vdisk",
+			Service: vdiskID,
+			Force:   true,
 		}},
 	}
 

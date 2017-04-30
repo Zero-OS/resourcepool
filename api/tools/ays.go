@@ -19,7 +19,12 @@ func SetAYSClient(client *ays.AtYourServiceAPI) {
 	ayscl = client
 }
 
-type ActionBlock map[string]interface{}
+type ActionBlock struct {
+	Action  string `json:"action"`
+	Actor   string `json:"actor"`
+	Service string `json:"service"`
+	Force   bool   `json:"force" validate:"omitempty"`
+}
 
 //ExecuteBlueprint runs ays operations needed to run blueprints, if block is true, the function will block until the run is done
 // create blueprint

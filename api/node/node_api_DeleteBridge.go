@@ -18,10 +18,10 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			"action":  "delete",
-			"actor":   "bridge",
-			"service": bridge,
-			"force":   true,
+			Action:  "delete",
+			Actor:   "bridge",
+			Service: bridge,
+			Force:   true,
 		}},
 	}
 

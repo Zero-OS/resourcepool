@@ -44,7 +44,11 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("storage_cluster__%s", reqBody.Label)] = blueprint
-	obj["actions"] = []map[string]string{map[string]string{"action": "install"}}
+	obj["actions"] = []tools.ActionBlock{{
+		Action:  "install",
+		Actor:   "storage_cluster",
+		Service: reqBody.Label,
+	}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
 		log.Errorf("error executing blueprint for storage_cluster %s creation : %+v", reqBody.Label, err)
