@@ -29,6 +29,9 @@ def is_running(client, key):
 
 def install(job):
     import time
+    from io import BytesIO
+    import pytoml
+    from urllib.parse import urlparse
     service = job.service
 
     services = service.aysrepo.servicesFind(role='grid_config')
@@ -38,6 +41,12 @@ def install(job):
     grid_addr = services[0].model.data.apiURL
 
     container = get_container_client(service)
+    node_client = get_node_client(service)
+    tomlfd = BytesIO()
+    node_client.filesystem.download('/etc/g8os/g8os.toml', tomlfd)
+    tomlfd.seek(0)
+    config = pytoml.load(tomlfd)
+    rootardb = urlparse(config['globals']['storage']).netloc
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):
         container.system(
@@ -45,8 +54,9 @@ def install(job):
             -protocol unix \
             -address "{socketpath}" \
             -export {id} \
+            -rootardb {rootardb} \
             -gridapi {api}'
-            .format(id=service.name, api=grid_addr, socketpath=socketpath)
+            .format(id=service.name, api=grid_addr, socketpath=socketpath, rootardb=rootardb)
         )
     # wait for socket to be created
     start = time.time()
