@@ -175,7 +175,7 @@ func GetContainerConnection(r *http.Request, api API) (client.Client, error) {
 		return nil, err
 	}
 
-	id, err := GetContainerId(r, api)
+	id, err := GetContainerId(r, api, nodeClient)
 	if err != nil {
 		return nil, err
 	}
@@ -185,33 +185,32 @@ func GetContainerConnection(r *http.Request, api API) (client.Client, error) {
 	return container, nil
 }
 
-func GetContainerId(r *http.Request, api API) (int, error) {
+func getContainerWithTag(containers map[int16]client.ContainerResult, tag string) int {
+	for containerID, container := range containers {
+		for _, containertag := range container.Container.Arguments.Tags {
+			if containertag == tag {
+				return int(containerID)
+			}
+		}
+	}
+	return 0
+}
+
+func GetContainerId(r *http.Request, api API, nodeClient client.Client) (int, error) {
 	vars := mux.Vars(r)
 	containerID := vars["containerid"]
 	c := api.ContainerCache()
-	var id int
+	id := 0
 
-	if cachedId, ok := c.Get(containerID); !ok {
-		srv, res, err := api.AysAPIClient().Ays.GetServiceByName(containerID, "container", api.AysRepoName(), nil, nil)
-
+	if cachedID, ok := c.Get(containerID); !ok {
+		containermanager := client.Container(nodeClient)
+		containers, err := containermanager.List()
 		if err != nil {
 			return id, err
 		}
-
-		if res.StatusCode != http.StatusOK {
-			return id, fmt.Errorf("Error getting service %v", id)
-		}
-
-		var cID struct {
-			Id int
-		}
-
-		if err := json.Unmarshal(srv.Data, &cID); err != nil {
-			return id, err
-		}
-		id = cID.Id
+		id = getContainerWithTag(containers, containerID)
 	} else {
-		id = cachedId.(int)
+		id = cachedID.(int)
 	}
 
 	if id == 0 {

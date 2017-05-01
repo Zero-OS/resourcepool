@@ -7,15 +7,14 @@ struct Schema {
     flist @3 :Text; # Url to the root filesystem flist
     initProcesses @4 :List(Process);
     filesystems @5 :List(Text); # pointer to the filesystem to mount into the container
-    bridges @12 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
+    bridges @11 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
     nics @6 :List(Nic); # Configuration of the attached nics to the container
     hostNetworking @7 :Bool;
     # Make host networking available to the guest.
     # If true means that the container will be able participate in the networks available in the host operating system.
     ports @8:List(Text); # List of node to container post mappings. e.g: 8080:80
     storage @9 :Text;
-    id @10: UInt32;
-    mounts @11: List(Mount); # List mount points mapping to the container
+    mounts @10: List(Mount); # List mount points mapping to the container
 
     struct Mount {
         filesystem @0 :Text; # Instance name of a filesystem service
