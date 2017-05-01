@@ -22,12 +22,11 @@ def install(job):
                                                password=target_node.model.data.redisPassword)
             config = node_client.config.get()
             masterardb = urlparse(config['globals']['storage']).netloc
-            container_client = node_client.container.client(volume_container.model.data.id)
             CMD = '/bin/copyvdisk -sourcetype direct -targettype api {src_name} {dst_name} {masterardb} {grid_addr}'
             cmd = CMD.format(dst_name=service.name, src_name=service.model.data.templateVdisk, grid_addr=grid_addr,
                              masterardb=masterardb)
             print(cmd)
-            result = container_client.system(cmd).get()
+            result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
                 raise j.exceptions.RuntimeError("Failed to copyvdisk {} {}".format(result.stdout, result.stderr))
 
@@ -40,6 +39,8 @@ def create_from_template_container(service, parent):
     if not it creates it.
     return the container service
     """
+    from JumpScale.sal.g8os.Container import Container
+    from JumpScale.sal.g8os.Node import Node
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
     try:
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
@@ -48,15 +49,13 @@ def create_from_template_container(service, parent):
     if container:
         container.delete()
 
-    container_actor = service.aysrepo.actorGet('container')
-    args = {
-        'node': parent.name,
-        'flist': 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
-        'hostNetworking': True,
-    }
-    container = container_actor.serviceCreate(instance=container_name, args=args)
-    j.tools.async.wrappers.sync(container.executeAction('install'))
-
+    node = Node.from_ays(parent)
+    container = Container(name=container_name,
+                          flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+                          host_network=True,
+                          node=node)
+    containerservice = container.ays.create(service.aysrepo)
+    j.tools.async.wrappers.sync(containerservice.executeAction('install'))
     return container
 
 

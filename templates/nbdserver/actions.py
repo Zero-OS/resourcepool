@@ -1,21 +1,14 @@
 from JumpScale import j
 
 
-def get_node_client(service):
-    node = service.parent.parent
-    return j.clients.g8core.get(host=node.model.data.redisAddr,
-                                port=node.model.data.redisPort,
-                                password=node.model.data.redisPassword)
+def get_container(service):
+    from JumpScale.sal.g8os.Container import Container
+    return Container.from_ays(service.parent)
 
 
-def get_container_client(service):
-    client = get_node_client(service)
-    return client.container.client(service.parent.model.data.id)
-
-
-def is_running(client, key):
+def is_running(container, key):
     try:
-        for process in client.job.list():
+        for process in container.client.job.list():
             arguments = process['cmd']['arguments']
             if 'name' in arguments and arguments['name'] == '/bin/nbdserver' and \
                key in arguments['args']:
@@ -38,13 +31,12 @@ def install(job):
 
     grid_addr = services[0].model.data.apiURL
 
-    container = get_container_client(service)
-    node_client = get_node_client(service)
-    config = node_client.config.get()
+    container = get_container(service)
+    config = container.node.client.config.get()
     rootardb = urlparse(config['globals']['storage']).netloc
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):
-        container.system(
+        container.client.system(
             '/bin/nbdserver \
             -protocol unix \
             -address "{socketpath}" \
@@ -56,7 +48,7 @@ def install(job):
     # wait for socket to be created
     start = time.time()
     while start + 60 > time.time():
-        if container.filesystem.exists(socketpath):
+        if container.client.filesystem.exists(socketpath):
             break
         else:
             time.sleep(0.2)
@@ -77,16 +69,16 @@ def start(job):
 def stop(job):
     import time
     service = job.service
-    client = get_container_client(service=service)
-    process = is_running(client, service.model.key)
+    container = get_container(service=service)
+    process = is_running(container, service.model.key)
     if process:
         job.logger.info("killing process {}".format(process['cmd']['arguments']['name']))
-        client.process.kill(process['cmd']['id'])
+        container.client.process.kill(process['cmd']['id'])
 
         job.logger.info("wait for nbdserver to stop")
         for i in range(60):
             time.sleep(1)
-            if is_running(client, service.model.key):
+            if is_running(container, service.model.key):
                 continue
             return
         raise j.exceptions.RuntimeError("ardb-server didn't stopped")

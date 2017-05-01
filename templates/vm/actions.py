@@ -12,21 +12,9 @@ def input(job):
     return args
 
 
-def get_node_client(service):
-    node = service.parent
-    return j.clients.g8core.get(host=node.model.data.redisAddr,
-                                port=node.model.data.redisPort,
-                                password=node.model.data.redisPassword)
-
-
-def get_container_root(service, id):
-    client = get_node_client(service)
-    containers_info = client.container.list()
-    id = str(id)
-    if id in containers_info:
-        return containers_info[id]['container']['root']
-
-    raise j.exceptions.RuntimeError("container with id {} doesn't exists".format(id))
+def get_node(service):
+    from JumpScale.sal.g8os.Node import Node
+    return Node.from_ays(service.parent)
 
 
 def create_nbdserver_container(service, parent):
@@ -35,25 +23,26 @@ def create_nbdserver_container(service, parent):
     if not it creates it.
     return the container service
     """
+    from JumpScale.sal.g8os.Container import Container
+    from JumpScale.sal.g8os.Node import Node
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     try:
-        container = service.aysrepo.serviceGet(role='container', instance=container_name)
+        containerservice = service.aysrepo.serviceGet(role='container', instance=container_name)
     except j.exceptions.NotFound:
-        container = None
+        containerservice = None
 
-    if container is None:
-        container_actor = service.aysrepo.actorGet('container')
-        args = {
-            'node': parent.name,
-            'flist': 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
-            'hostNetworking': True
-        }
-        container = container_actor.serviceCreate(instance=container_name, args=args)
+    if containerservice is None:
+        node = Node.from_ays(parent)
+        container = Container(name=container_name,
+                              flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+                              host_network=True,
+                              node=node)
+        containerservice = container.ays.create(service.aysrepo)
 
     # make sure the container has the right parent, the node where this vm runs.
-    container.model.changeParent(service.parent)
+    containerservice.model.changeParent(service.parent)
 
-    return container
+    return containerservice
 
 
 def create_nbd(service, container, vdisk):
@@ -65,7 +54,7 @@ def create_nbd(service, container, vdisk):
     nbd_name = vdisk.name
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role='container', instance=nbd_name)
+        nbdserver = service.aysrepo.serviceGet(role='nbdserver', instance=nbd_name)
     except j.exceptions.NotFound:
         nbdserver = None
 
@@ -95,6 +84,7 @@ def init(job):
 
 
 def install(job):
+    from JumpScale.sal.g8os.Container import Container
     import time
     service = job.service
 
@@ -102,22 +92,20 @@ def install(job):
     medias = []
     for nbdserver in service.producers.get('nbdserver', []):
         # build full path of the nbdserver unix socket on the host filesystem
-        container = nbdserver.parent
-        if container.model.data.id == 0:
+        container = Container.from_ays(nbdserver.parent)
+        if not container.is_running():
             # start container
-            j.tools.async.wrappers.sync(container.executeAction('start'))
-        container_root = get_container_root(service, container.model.data.id)
+            j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
+        container_root = container.info['container']['root']
         socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
         url = 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.name, socket=socket_path)
         medias.append({'url': url})
 
-        # make sure the container is started
-        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
         # make sure the nbdserver is started
         j.tools.async.wrappers.sync(nbdserver.executeAction('start'))
 
     job.logger.info("create vm {}".format(service.name))
-    client = get_node_client(service)
+    node = get_node(service)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -126,7 +114,7 @@ def install(job):
 
     kvm = get_domain(service)
     if not kvm:
-        client.kvm.create(
+        node.client.kvm.create(
             service.name,
             media=medias,
             cpu=service.model.data.cpu,
@@ -152,8 +140,8 @@ def start(job):
 
 
 def get_domain(service):
-    client = get_node_client(service)
-    for kvm in client.kvm.list():
+    node = get_node(service)
+    for kvm in node.client.kvm.list():
         if kvm['name'] == service.name:
             return kvm
             break
@@ -162,10 +150,10 @@ def get_domain(service):
 def stop(job):
     service = job.service
     job.logger.info("stop vm {}".format(service.name))
-    client = get_node_client(service)
+    node = get_node(service)
     kvm = get_domain(service)
     if kvm:
-        client.kvm.destroy(kvm['uuid'])
+        node.client.kvm.destroy(kvm['uuid'])
 
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
@@ -186,20 +174,20 @@ def stop(job):
 def pause(job):
     service = job.service
     job.logger.info("pause vm {}".format(service.name))
-    client = get_node_client(service)
+    node = get_node(service)
     kvm = get_domain(service)
     if kvm:
-        client.kvm.pause(kvm['uuid'])
+        node.client.kvm.pause(kvm['uuid'])
         service.model.data.status = 'paused'
 
 
 def resume(job):
     service = job.service
     job.logger.info("resume vm {}".format(service.name))
-    client = get_node_client(service)
+    node = get_node(service)
     kvm = get_domain(service)
     if kvm:
-        client.kvm.resume(kvm['uuid'])
+        node.client.kvm.resume(kvm['uuid'])
         service.model.data.status = 'running'
 
 
@@ -207,10 +195,10 @@ def shutdown(job):
     import time
     service = job.service
     job.logger.info("shutdown vm {}".format(service.name))
-    client = get_node_client(service)
+    node = get_node(service)
     kvm = get_domain(service)
     if kvm:
-        client.kvm.shutdown(kvm['uuid'])
+        node.client.kvm.shutdown(kvm['uuid'])
         service.model.data.status = 'halting'
         # wait for max 60 seconds for vm to be shutdown
         start = time.time()
@@ -264,7 +252,7 @@ def migrate(job):
     j.tools.async.wrappers.sync(old_vdisk_container.delete())
 
 
-def updatedevices(service, client, args):
+def updatedevices(service, node, args):
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
         j.tools.async.wrappers.sync(service.executeAction('migrate', args={'node': args['node']}))
@@ -273,12 +261,12 @@ def updatedevices(service, client, args):
             if new_disks:
                 new_disks = list(new_disks)
                 for new_disk in new_disks:
-                    client.kvm.attachDisk(service.name, new_disk)
+                    node.client.kvm.attachDisk(service.name, new_disk)
             old_disks = set(service.model.data.disks) - set(args['disks'])
             if old_disks:
                 old_disks = list(old_disks)
                 for old_disk in old_disks:
-                    client.kvm.detachDisk(service.name, old_disk)
+                    node.client.kvm.detachDisk(service.name, old_disk)
 
 # TODO removeNic and addNic not implmented as required code will be added when they are done.
     # if 'nics' in args['nics'] != service.model.data.nics:
@@ -301,7 +289,7 @@ def monitor(job):
     # raise NotADirectoryError()
 
 
-def update_data(job, client, args):
+def update_data(job, args):
     service = job.service
 
     service.model.data.memory = args['memory']
@@ -317,8 +305,8 @@ def processChange(job):
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
-            client = get_node_client(service)
-            update_data(job, client, args)
-            updatedevices(service, client, args)
+            node = get_node(service)
+            update_data(job, args)
+            updatedevices(service, node, args)
         except ValueError:
             job.logger.error("vm {} doesn't exist, cant update devices", service.name)
