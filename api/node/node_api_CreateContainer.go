@@ -31,6 +31,23 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
+	_, res, err := api.AysAPI.Ays.GetServiceByName(reqBody.Name, "container", api.AysRepo, nil, nil)
+
+	if err != nil {
+		log.Errorf("AYS threw error while %+v.\n", err)
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	} else if res.StatusCode == http.StatusOK {
+		err = fmt.Errorf("Container with name %s already exists", reqBody.Name)
+		tools.WriteError(w, http.StatusConflict, err)
+		return
+	}
+	if res.StatusCode != http.StatusNotFound {
+		err = fmt.Errorf("AYS returned status %d while getting service", res.StatusCode)
+		tools.WriteError(w, res.StatusCode, err)
+		return
+	}
+
 	container := struct {
 		Nics           []ContainerNIC `json:"nics" yaml:"nics"`
 		Filesystems    []string       `json:"filesystems" yaml:"filesystems"`
@@ -54,16 +71,16 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("container__%s", reqBody.Id)] = container
-	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Id, Actor: "container"}}
+	obj[fmt.Sprintf("container__%s", reqBody.Name)] = container
+	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Id, "install", obj); err != nil {
-		log.Errorf("error executing blueprint for container %s creation : %+v", reqBody.Id, err)
+	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj); err != nil {
+		log.Errorf("error executing blueprint for container %s creation : %+v", reqBody.Name, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Id))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 
 }

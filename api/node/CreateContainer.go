@@ -10,7 +10,7 @@ type CreateContainer struct {
 	Flist          string         `json:"flist" validate:"nonzero"`
 	HostNetworking bool           `json:"hostNetworking"`
 	Hostname       string         `json:"hostname" validate:"nonzero"`
-	Id             string         `json:"id" validate:"nonzero"`
+	Name           string         `json:"name" validate:"nonzero"`
 	InitProcesses  []CoreSystem   `json:"initProcesses"`
 	Ports          []string       `json:"ports"`
 	Storage        string         `json:"storage"`
