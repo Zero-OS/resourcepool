@@ -47,6 +47,7 @@ def install(job):
     )
     job.logger.info("start cluster {}".format(service.name))
     cluster.start()
+    service.model.data.status = 'ready'
     cluster.ays.create(service.aysrepo)
 
 
