@@ -9,7 +9,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// FileDownload is the handler for GET /nodes/{nodeid}/container/{containerid}/filesystem
+// FileDownload is the handler for GET /nodes/{nodeid}/container/{containername}/filesystem
 // Download file from container
 func (api NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")

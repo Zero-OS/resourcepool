@@ -8,25 +8,25 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// StartContainer is the handler for POST /nodes/{nodeid}/containers/{containerid}/start
+// StartContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/start
 // Start Container instance
 func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	containerID := vars["containerid"]
+	containername := vars["containername"]
 
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			Action:  "start",
 			Actor:   "container",
-			Service: containerID,
+			Service: containername,
 			Force:   true,
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containerID, "start", bp)
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "start", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for starting container %s : %+v", containerID, err.Error())
+		log.Errorf("Error executing blueprint for starting container %s : %+v", containername, err.Error())
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
 		return
 	}

@@ -10,7 +10,6 @@ type Container struct {
 	Flist          string              `json:"flist" validate:"nonzero"`
 	HostNetworking bool                `json:"hostNetworking" validate:"nonzero"`
 	Hostname       string              `json:"hostname" validate:"nonzero"`
-	ContainerId    int                 `json:"containerid" validate:"nonzero"`
 	Initprocesses  []CoreSystem        `json:"initprocesses" validate:"nonzero"`
 	Ports          []string            `json:"ports" validate:"nonzero"`
 	Status         EnumContainerStatus `json:"status" validate:"nonzero"`

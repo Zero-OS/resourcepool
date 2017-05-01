@@ -418,8 +418,8 @@ ContainerNIC:
 ContainerListItem:
   type: object
   properties:
-    id:
-      description: Unique identifier
+    name:
+      description: Unique name
       type: string
     hostname:
       description: Hostname for the Container
@@ -434,9 +434,6 @@ ContainerListItem:
 Container:
   type: object
   properties:
-    containerId:
-      description: The container id given to the container by g8os
-      type: integer
     status:
       enum: [running, halted]
       description: Status of the container
@@ -476,8 +473,8 @@ Container:
 CreateContainer:
   type: object
   properties:
-    id:
-      description: unique identifier
+    name:
+      description: unique name
       type: string
     hostname:
       description: Hostname for the Container

@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containerid}/processes
+// StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/processes
 // Start a new process in this container
 func (api NodeAPI) StartContainerProcess(w http.ResponseWriter, r *http.Request) {
 	var reqBody CoreSystem
@@ -47,7 +47,7 @@ func (api NodeAPI) StartContainerProcess(w http.ResponseWriter, r *http.Request)
 
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
-	containerID := vars["containerid"]
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s/jobs/%s", nodeID, containerID, jobID))
+	containername := vars["containername"]
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s/jobs/%s", nodeID, containername, jobID))
 	w.WriteHeader(http.StatusAccepted)
 }

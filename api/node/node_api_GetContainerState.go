@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// GetContainerState is the handler for GET /nodes/{nodeid}/container/{containerid}/state
+// GetContainerState is the handler for GET /nodes/{nodeid}/container/{containername}/state
 // The aggregated consumption of container + all processes (cpu, memory, etc...)
 func (api NodeAPI) GetContainerState(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)

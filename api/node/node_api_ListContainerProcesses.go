@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// ListContainerProcesses is the handler for GET /nodes/{nodeid}/containers/{containerid}/process
+// ListContainerProcesses is the handler for GET /nodes/{nodeid}/containers/{containername}/process
 // Get running processes in this container
 func (api NodeAPI) ListContainerProcesses(w http.ResponseWriter, r *http.Request) {
 	var respBody []Process

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// GetContainerJob is the handler for GET /nodes/{nodeid}/container/{containerid}/job/{jobid}
+// GetContainerJob is the handler for GET /nodes/{nodeid}/container/{containername}/job/{jobid}
 // Get details of a submitted job on the container
 func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult

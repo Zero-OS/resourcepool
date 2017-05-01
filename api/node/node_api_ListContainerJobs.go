@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// ListContainerJobs is the handler for GET /nodes/{nodeid}/container/{containerid}/job
+// ListContainerJobs is the handler for GET /nodes/{nodeid}/container/{containername}/job
 // List running jobs on the container
 func (api NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)

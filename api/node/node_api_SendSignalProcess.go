@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-// SendSignalProcess is the handler for POST /nodes/{nodeid}/containers/{containerid}/processes/{processid}
+// SendSignalProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Send signal to the process
 func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	var reqBody ProcessSignal

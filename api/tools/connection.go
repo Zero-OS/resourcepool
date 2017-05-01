@@ -198,17 +198,17 @@ func getContainerWithTag(containers map[int16]client.ContainerResult, tag string
 
 func GetContainerId(r *http.Request, api API, nodeClient client.Client) (int, error) {
 	vars := mux.Vars(r)
-	containerID := vars["containerid"]
+	containername := vars["containername"]
 	c := api.ContainerCache()
 	id := 0
 
-	if cachedID, ok := c.Get(containerID); !ok {
+	if cachedID, ok := c.Get(containername); !ok {
 		containermanager := client.Container(nodeClient)
 		containers, err := containermanager.List()
 		if err != nil {
 			return id, err
 		}
-		id = getContainerWithTag(containers, containerID)
+		id = getContainerWithTag(containers, containername)
 	} else {
 		id = cachedID.(int)
 	}
@@ -216,14 +216,14 @@ func GetContainerId(r *http.Request, api API, nodeClient client.Client) (int, er
 	if id == 0 {
 		return id, fmt.Errorf("ContainerID is not known")
 	}
-	c.Set(containerID, id, cache.DefaultExpiration)
+	c.Set(containername, id, cache.DefaultExpiration)
 	return id, nil
 }
 
 func DeleteContainerId(r *http.Request, api API) {
 	vars := mux.Vars(r)
 	c := api.ContainerCache()
-	c.Delete(vars["containerid"])
+	c.Delete(vars["containername"])
 }
 
 func DeleteConnection(r *http.Request) {

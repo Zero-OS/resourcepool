@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// FileDelete is the handler for DELETE /nodes/{nodeid}/container/{containerid}/filesystem
+// FileDelete is the handler for DELETE /nodes/{nodeid}/container/{containername}/filesystem
 // Delete file from container
 func (api NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 	var reqBody DeleteFile

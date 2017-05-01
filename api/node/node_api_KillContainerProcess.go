@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// KillContainerProcess is the handler for DELETE /nodes/{nodeid}/containers/{containerid}/processes/{processid}
+// KillContainerProcess is the handler for DELETE /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Kill Process
 func (api NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

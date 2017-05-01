@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// FileUpload is the handler for POST /node/{nodeid}/container/{containerid}/filesystem
+// FileUpload is the handler for POST /node/{nodeid}/container/{containername}/filesystem
 // Upload file to container
 func (api NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")

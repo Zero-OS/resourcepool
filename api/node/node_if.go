@@ -154,64 +154,64 @@ type NodesInterface interface { // ListNodes is the handler for GET /node
 	// CreateContainer is the handler for POST /node/{nodeid}/containers
 	// Create a new Container
 	CreateContainer(http.ResponseWriter, *http.Request)
-	// GetContainer is the handler for GET /node/{nodeid}/containers/{containerid}
+	// GetContainer is the handler for GET /node/{nodeid}/containers/{containername}
 	// Get Container
 	GetContainer(http.ResponseWriter, *http.Request)
-	// DeleteContainer is the handler for DELETE /node/{nodeid}/containers/{containerid}
+	// DeleteContainer is the handler for DELETE /node/{nodeid}/containers/{containername}
 	// Delete Container instance
 	DeleteContainer(http.ResponseWriter, *http.Request)
-	// StopContainer is the handler for POST /nodes/{nodeid}/containers/{containerid}/stop
+	// StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
 	// Stop Container instance
 	StopContainer(http.ResponseWriter, *http.Request)
-	// StartContainer is the handler for POST /nodes/{nodeid}/containers/{containerid}/start
+	// StartContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/start
 	// Start Container instance
 	StartContainer(http.ResponseWriter, *http.Request)
-	// ListContainerJobs is the handler for GET /node/{nodeid}/containers/{containerid}/jobs
+	// ListContainerJobs is the handler for GET /node/{nodeid}/containers/{containername}/jobs
 	// List running jobs on the container
 	ListContainerJobs(http.ResponseWriter, *http.Request)
-	// SendSignalJob is the handler for POST /node/{nodeid}/containers/{containerid}/jobs/{jobid}
+	// SendSignalJob is the handler for POST /node/{nodeid}/containers/{containername}/jobs/{jobid}
 	// Send signal to the job
 	SendSignalJob(http.ResponseWriter, *http.Request)
-	// KillAllContainerJobs is the handler for DELETE /node/{nodeid}/containers/{containerid}/jobs
+	// KillAllContainerJobs is the handler for DELETE /node/{nodeid}/containers/{containername}/jobs
 	// Kills all running jobs on the container
 	KillAllContainerJobs(http.ResponseWriter, *http.Request)
-	// GetContainerJob is the handler for GET /node/{nodeid}/containers/{containerid}/jobs/{jobid}
+	// GetContainerJob is the handler for GET /node/{nodeid}/containers/{containername}/jobs/{jobid}
 	// Get details of a submitted job on the container
 	GetContainerJob(http.ResponseWriter, *http.Request)
-	// KillContainerJob is the handler for DELETE /node/{nodeid}/containers/{containerid}/jobs/{jobid}
+	// KillContainerJob is the handler for DELETE /node/{nodeid}/containers/{containername}/jobs/{jobid}
 	// Kills the job
 	KillContainerJob(http.ResponseWriter, *http.Request)
-	// PingContainer is the handler for POST /node/{nodeid}/containers/{containerid}/ping
+	// PingContainer is the handler for POST /node/{nodeid}/containers/{containername}/ping
 	// Ping this container
 	PingContainer(http.ResponseWriter, *http.Request)
-	// GetContainerState is the handler for GET /node/{nodeid}/containers/{containerid}/state
+	// GetContainerState is the handler for GET /node/{nodeid}/containers/{containername}/state
 	// The aggregated consumption of container + all processes (cpu, memory, etc...)
 	GetContainerState(http.ResponseWriter, *http.Request)
-	// GetContainerOSInfo is the handler for GET /node/{nodeid}/containers/{containerid}/info
+	// GetContainerOSInfo is the handler for GET /node/{nodeid}/containers/{containername}/info
 	// Get detailed information of the container os
 	GetContainerOSInfo(http.ResponseWriter, *http.Request)
-	// ListContainerProcesses is the handler for GET /node/{nodeid}/containers/{containerid}/processes
+	// ListContainerProcesses is the handler for GET /node/{nodeid}/containers/{containername}/processes
 	// Get running processes in this container
 	ListContainerProcesses(http.ResponseWriter, *http.Request)
-	// StartContainerProcess is the handler for POST /node/{nodeid}/containers/{containerid}/processes
+	// StartContainerProcess is the handler for POST /node/{nodeid}/containers/{containername}/processes
 	// Start a new process in this container
 	StartContainerProcess(http.ResponseWriter, *http.Request)
-	// GetContainerProcess is the handler for GET /node/{nodeid}/containers/{containerid}/processes/{processid}
+	// GetContainerProcess is the handler for GET /node/{nodeid}/containers/{containername}/processes/{processid}
 	// Get process details
 	GetContainerProcess(http.ResponseWriter, *http.Request)
-	// SendSignalProcess is the handler for POST /node/{nodeid}/containers/{containerid}/processes/{processid}
+	// SendSignalProcess is the handler for POST /node/{nodeid}/containers/{containername}/processes/{processid}
 	// Send signal to the process
 	SendSignalProcess(http.ResponseWriter, *http.Request)
-	// KillContainerProcess is the handler for DELETE /node/{nodeid}/containers/{containerid}/processes/{processid}
+	// KillContainerProcess is the handler for DELETE /node/{nodeid}/containers/{containername}/processes/{processid}
 	// Kill Process
 	KillContainerProcess(http.ResponseWriter, *http.Request)
-	// FileDownload is the handler for GET /node/{nodeid}/containers/{containerid}/filesystems
+	// FileDownload is the handler for GET /node/{nodeid}/containers/{containername}/filesystems
 	// Download file from container
 	FileDownload(http.ResponseWriter, *http.Request)
-	// FileUpload is the handler for POST /node/{nodeid}/containers/{containerid}/filesystems
+	// FileUpload is the handler for POST /node/{nodeid}/containers/{containername}/filesystems
 	// Upload file to container
 	FileUpload(http.ResponseWriter, *http.Request)
-	// FileDelete is the handler for DELETE /node/{nodeid}/containers/{containerid}/filesystems
+	// FileDelete is the handler for DELETE /node/{nodeid}/containers/{containername}/filesystems
 	// Delete file from container
 	FileDelete(http.ResponseWriter, *http.Request)
 	// ListNodeProcesses is the handler for GET /node/{nodeid}/processes
@@ -290,26 +290,26 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/zerotiers/{zerotierid}", i.ExitZerotier).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/containers", i.ListContainers).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers", i.CreateContainer).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}", i.GetContainer).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}", i.DeleteContainer).Methods("DELETE")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/start", i.StartContainer).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/stop", i.StopContainer).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/jobs", i.ListContainerJobs).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/jobs", i.KillAllContainerJobs).Methods("DELETE")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/jobs/{jobid}", i.GetContainerJob).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/jobs/{jobid}", i.SendSignalJob).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/jobs/{jobid}", i.KillContainerJob).Methods("DELETE")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/ping", i.PingContainer).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/state", i.GetContainerState).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/info", i.GetContainerOSInfo).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/processes", i.ListContainerProcesses).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/processes", i.StartContainerProcess).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/processes/{processid}", i.GetContainerProcess).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/processes/{processid}", i.SendSignalProcess).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/processes/{processid}", i.KillContainerProcess).Methods("DELETE")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/filesystem", i.FileDownload).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/filesystem", i.FileUpload).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containerid}/filesystem", i.FileDelete).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.GetContainer).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.DeleteContainer).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/start", i.StartContainer).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/stop", i.StopContainer).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs", i.ListContainerJobs).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs", i.KillAllContainerJobs).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.GetContainerJob).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.SendSignalJob).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.KillContainerJob).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/ping", i.PingContainer).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/state", i.GetContainerState).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/info", i.GetContainerOSInfo).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes", i.ListContainerProcesses).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes", i.StartContainerProcess).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.GetContainerProcess).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.SendSignalProcess).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.KillContainerProcess).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDownload).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileUpload).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDelete).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/processes", i.ListNodeProcesses).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/processes/{processid}", i.GetNodeProcess).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/processes/{processid}", i.KillNodeProcess).Methods("DELETE")

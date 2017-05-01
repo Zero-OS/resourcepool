@@ -7,7 +7,7 @@ import (
 type ContainerListItem struct {
 	Flist    string                      `json:"flist" validate:"nonzero"`
 	Hostname string                      `json:"hostname" validate:"nonzero"`
-	Id       string                      `json:"id" validate:"nonzero"`
+	Name     string                      `json:"name" validate:"nonzero"`
 	Status   EnumContainerListItemStatus `json:"status" validate:"nonzero"`
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// PingContainer is the handler for POST /nodes/{nodeid}/containers/{containerid}/ping
+// PingContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/ping
 // Ping this container
 func (api NodeAPI) PingContainer(w http.ResponseWriter, r *http.Request) {
 	var respBody bool

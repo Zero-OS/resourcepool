@@ -44,7 +44,7 @@ func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 
 		container := ContainerListItem{
-			Id:       service.Name,
+			Name:     service.Name,
 			Flist:    data.Flist,
 			Hostname: data.Hostname,
 			Status:   data.Status,

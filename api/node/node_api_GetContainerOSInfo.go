@@ -8,7 +8,7 @@ import (
 	"github.com/g8os/grid/api/tools"
 )
 
-// GetContainerOSInfo is the handler for GET /nodes/{nodeid}/container/{containerid}/info
+// GetContainerOSInfo is the handler for GET /nodes/{nodeid}/container/{containername}/info
 // Get detailed information of the container os
 func (api NodeAPI) GetContainerOSInfo(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)

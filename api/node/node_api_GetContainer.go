@@ -8,12 +8,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// GetContainer is the handler for GET /nodes/{nodeid}/containers/{containerid}
+// GetContainer is the handler for GET /nodes/{nodeid}/containers/{containername}
 // Get Container
 func (api NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	containerID := vars["containerid"]
-	service, res, err := api.AysAPI.Ays.GetServiceByName(containerID, "container", api.AysRepo, nil, nil)
+	containername := vars["containername"]
+	service, res, err := api.AysAPI.Ays.GetServiceByName(containername, "container", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return
@@ -44,7 +44,6 @@ func (api NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 		Status:         containerItem.Status,
 		Ports:          containerItem.Ports,
 		Initprocesses:  containerItem.Initprocesses,
-		ContainerId:    containerItem.ID,
 		Hostname:       containerItem.Hostname,
 		HostNetworking: containerItem.HostNetworking,
 		Flist:          containerItem.Flist,
