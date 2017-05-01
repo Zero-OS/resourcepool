@@ -5,8 +5,8 @@ import (
 )
 
 type HAStorageServer struct {
-	Master StorageServer `yaml:"master" json:"master" validate:"nonzero"`
-	Slave  StorageServer `yaml:"slave" json:"slave,omitempty"`
+	Master *StorageServer `yaml:"master" json:"master" validate:"nonzero"`
+	Slave  *StorageServer `yaml:"slave" json:"slave"`
 }
 
 func (s HAStorageServer) Validate() error {

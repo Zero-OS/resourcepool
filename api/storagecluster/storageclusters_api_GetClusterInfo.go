@@ -91,16 +91,17 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 		}
 		//set relation as master or slave
 		if ardb.Master == "" {
-			relation.Master = storageServer
+			relation.Master = &storageServer
+			relation.Slave = nil
 		} else {
-			relation.Slave = storageServer
+			relation.Slave = &storageServer
 
 			master, _, _, err := getArdb(ardb.Master, api, w)
 			if err != nil {
 				tools.WriteError(w, http.StatusInternalServerError, err)
 				return
 			}
-			relation.Master = master
+			relation.Master = &master
 		}
 
 		//check wether is data or metadata
