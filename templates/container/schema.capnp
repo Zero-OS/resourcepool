@@ -1,4 +1,4 @@
-@0x935023b5e21ba044;
+@0x80386ad31ee4bfb4;
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
