@@ -7,19 +7,13 @@ def input(job):
             raise j.exceptions.Input("{} should not be set as input".format(arg))
 
 
-def get_node(node_service):
-    return j.sal.g8os.get_node(
-        addr=node_service.model.data.redisAddr,
-        port=node_service.model.data.redisPort,
-        password=node_service.model.data.redisPassword or None,
-    )
-
-
 def get_cluster(service):
     from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    from JumpScale.sal.g8os.Node import Node
+
     nodes = []
     for node_service in service.producers['node']:
-        nodes.append(get_node(node_service))
+        nodes.append(Node.from_ays(node_service))
 
     return StorageCluster.from_ays(service)
 
@@ -29,13 +23,14 @@ def init(job):
 
 
 def install(job):
+    from JumpScale.sal.g8os.Node import Node
     service = job.service
 
     job.service.model.data.status = 'deploying'
 
     nodes = []
     for node_service in service.producers['node']:
-        nodes.append(get_node(node_service))
+        nodes.append(Node.from_ays(node_service))
 
     job.logger.info("create cluster {}".format(service.name))
     cluster = j.sal.g8os.create_storagecluster(
