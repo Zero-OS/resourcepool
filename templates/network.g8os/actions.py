@@ -59,6 +59,8 @@ def configure(job):
     this method will be called from the node.g8os install action.
     """
     import netaddr
+    from JumpScale.sal.g8os.Container import Container
+    from JumpScale.sal.g8os.Node import Node
 
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     job.logger.info("execute network configure on {}".format(node))
@@ -89,12 +91,20 @@ def configure(job):
     if interface is None:
         raise j.exceptions.RuntimeError("No interface available")
 
-    containers = node_client.container.find('ovs')
-    if containers:
-        ovs_container_id = int(list(containers)[0])
+    ccontainers = node.producers.get("container", [])
+    for cont_service in ccontainers:
+        if cont_service.name == 'ovs':
+            container_client = Container.from_ays(cont_service).client
+            break
     else:
-        ovs_container_id = int(node_client.container.create('https://hub.gig.tech/gig-official-apps/ovs.flist', host_network=True, tags=['ovs']).get(360).data)
-    container_client = node_client.container.client(ovs_container_id)
+        container = Container(name='ovs',
+                              flist='https://hub.gig.tech/gig-official-apps/ovs.flist',
+                              host_network=True,
+                              node=Node.from_ays(node))
+        cont_service = container.ays.create(service.aysrepo)
+        j.tools.async.wrappers.sync(cont_service.executeAction('install'))
+        container_client = container.client
+
     container_client.json('ovs.bridge-add', {"bridge": "backplane"})
     container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
     node_client.system('ip address add {addr} dev backplane'.format(addr=storageaddr))
