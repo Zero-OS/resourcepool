@@ -6,7 +6,7 @@ import (
 
 // Arguments to create a new filesystem
 type FilesystemCreate struct {
-	Name     string `yaml:"name" json:"name" validate:"nonzero"`
+	Name     string `yaml:"name" json:"name" validate:"nonzero,servicename"`
 	Quota    uint32 `yaml:"quota" json:"quota"`
 	ReadOnly bool   `yaml:"readOnly" json:"readOnly"`
 }

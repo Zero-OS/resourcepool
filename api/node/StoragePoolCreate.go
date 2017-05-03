@@ -9,7 +9,7 @@ type StoragePoolCreate struct {
 	DataProfile     EnumStoragePoolCreateDataProfile     `json:"dataProfile" validate:"nonzero"`
 	Devices         []string                             `json:"devices" validate:"nonzero"`
 	MetadataProfile EnumStoragePoolCreateMetadataProfile `json:"metadataProfile" validate:"nonzero"`
-	Name            string                               `json:"name" validate:"nonzero"`
+	Name            string                               `json:"name" validate:"nonzero,servicename"`
 }
 
 func (s StoragePoolCreate) Validate() error {

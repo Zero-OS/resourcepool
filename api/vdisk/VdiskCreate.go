@@ -5,7 +5,7 @@ import (
 )
 
 type VdiskCreate struct {
-	ID                 string                     `yaml:"-" json:"id" validate:"nonzero"`
+	ID                 string                     `yaml:"-" json:"id" validate:"nonzero,servicename"`
 	Blocksize          int                        `yaml:"blocksize" json:"blocksize" validate:"nonzero"`
 	ReadOnly           bool                       `yaml:"readOnly" json:"readOnly,omitempty"`
 	Size               int                        `yaml:"size" json:"size" validate:"nonzero"`

@@ -1,6 +1,9 @@
 package storagecluster
 
-import ays "github.com/g8os/grid/api/ays-client"
+import (
+	ays "github.com/g8os/grid/api/ays-client"
+	_ "github.com/g8os/grid/api/validators"
+)
 
 // StorageclusterAPI is API implementation of /storagecluster root endpoint
 type StorageclustersAPI struct {

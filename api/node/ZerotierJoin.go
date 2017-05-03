@@ -6,7 +6,7 @@ import (
 
 // Arguments to join a Zerotier network
 type ZerotierJoin struct {
-	Nwid string `json:"nwid" validate:"nonzero"`
+	Nwid string `json:"nwid" validate:"nonzero,servicename"`
 }
 
 func (s ZerotierJoin) Validate() error {

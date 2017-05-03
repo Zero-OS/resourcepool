@@ -2,6 +2,7 @@ package node
 
 import (
 	ays "github.com/g8os/grid/api/ays-client"
+	_ "github.com/g8os/grid/api/validators"
 	"github.com/patrickmn/go-cache"
 )
 
