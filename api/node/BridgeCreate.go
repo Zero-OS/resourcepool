@@ -7,7 +7,7 @@ import (
 // Arguments for a bridge.create job
 type BridgeCreate struct {
 	Hwaddr      string                      `json:"hwaddr,omitempty"`
-	Name        string                      `json:"name" validate:"nonzero"`
+	Name        string                      `json:"name" validate:"nonzero,servicename"`
 	Nat         bool                        `json:"nat"`
 	NetworkMode EnumBridgeCreateNetworkMode `json:"networkMode" validate:"nonzero"`
 	Setting     BridgeCreateSetting         `json:"setting" validate:"nonzero"`

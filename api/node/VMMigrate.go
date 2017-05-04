@@ -5,7 +5,7 @@ import (
 )
 
 type VMMigrate struct {
-	Nodeid string `json:"nodeid" validate:"nonzero"`
+	Nodeid string `json:"nodeid" validate:"nonzero,servicename"`
 }
 
 func (s VMMigrate) Validate() error {

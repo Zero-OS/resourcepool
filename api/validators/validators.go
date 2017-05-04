@@ -8,11 +8,11 @@ import (
 )
 
 func init() {
-	validator.SetValidationFunc("servicename", serviceName)
+	validator.SetValidationFunc("servicename", ServiceName)
 }
 
 // Validates that a string is a valid
-func serviceName(v interface{}, param string) error {
+func ServiceName(v interface{}, param string) error {
 	name := reflect.ValueOf(v)
 	if name.Kind() != reflect.String {
 		return errors.New("servicename only validates strings")

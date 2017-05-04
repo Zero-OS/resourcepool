@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/grid/api/validators"
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
@@ -22,6 +23,11 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&name); err != nil {
+		tools.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := validators.ServiceName(name, ""); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
