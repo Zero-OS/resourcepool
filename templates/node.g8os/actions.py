@@ -66,6 +66,24 @@ def install(job):
         loop.run_until_complete(asyncio.gather(*futures))
 
 
+def monitor(job):
+    import redis
+    service = job.service
+    addr = service.model.data.redisAddr
+    node = j.clients.g8core.get(addr)
+    node.timeout = 15
+    try:
+        state = node.ping()
+    except redis.ConnectionError as e:
+        state = False
+
+    if state:
+        service.model.data.status = 'running'
+    else:
+        service.model.data.status = 'halted'
+    service.saveAll()
+
+
 def reboot(job):
     service = job.service
     job.logger.info("reboot node {}".format(service))

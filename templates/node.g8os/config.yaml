@@ -5,3 +5,7 @@ links:
       max: 9999
       role: network
       argname: networks
+recurring:
+  - action: monitor
+    log: true
+    period: 30s
