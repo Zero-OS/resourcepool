@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+.idea/
 
 # Distribution / packaging
 .Python
@@ -87,3 +88,15 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# nim cache
+src/nim/nimcache
+src/nim/g8os/tests/nimcache
+*.iml
+grid
+
+# windows binaries
+*.exe
+
+.editorconfig
+api/api

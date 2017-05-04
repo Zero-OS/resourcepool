@@ -1,0 +1,7 @@
+links:
+  consume:
+    - auto: false
+      min: 0
+      max: 9999
+      role: network
+      argname: networks

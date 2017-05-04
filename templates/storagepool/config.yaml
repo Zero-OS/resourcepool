@@ -1,0 +1,6 @@
+links:
+  parent:
+    auto: false
+    role: node
+    optional: false
+    argname: node
