@@ -21,7 +21,10 @@ def is_running(container, key):
 
 
 def install(job):
+    from JumpScale.sal.g8os.StorageCluster import StorageCluster
     import time
+    import yaml
+    from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
 
@@ -40,14 +43,33 @@ def install(job):
         rootardb = urlparse(config['globals']['storage']).netloc
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):
+        configpath = "/{}.config".format(service.name)
+        storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster', instance=vdiskservice.model.data.storageCluster)
+        cluster = StorageCluster.from_ays(storageclusterservice)
+        clusterconfig = cluster.get_config()
+        clusterconfig['status'] = storageclusterservice.model.data.status
+        clusterconfig['rootDataStorage'] = rootardb
+        vdiskconfig = {'blocksize': vdiskservice.model.data.blocksize,
+                       'id': vdiskservice.name,
+                       'readOnly': vdiskservice.model.data.readOnly,
+                       'size': vdiskservice.model.data.size,
+                       'status': str(vdiskservice.model.data.status),
+                       'storagecluster': vdiskservice.model.data.storageCluster,
+                       'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
+                       'type': str(vdiskservice.model.data.type)}
+        config = {'storageclusters': {cluster.name: clusterconfig},
+                  'vdisks': {vdiskservice.name: vdiskconfig}}
+        yamlconfig = yaml.dump(config)
+        configstream = BytesIO(yamlconfig.encode('utf8'))
+        configstream.seek(0)
+        container.client.filesystem.upload(configpath, configstream)
+
         container.client.system(
             '/bin/nbdserver \
             -protocol unix \
             -address "{socketpath}" \
-            -export {id} \
-            -rootardb {rootardb} \
-            -gridapi {api}'
-            .format(id=service.name, api=grid_addr, socketpath=socketpath, rootardb=rootardb)
+            -config {config}'
+            .format(id=service.name, api=grid_addr, socketpath=socketpath, config=configpath)
         )
     # wait for socket to be created
     start = time.time()
@@ -59,7 +81,7 @@ def install(job):
     else:
         raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
     # make sure nbd is still running
-    if not is_running(container, service.name):
+    if not is_running(container, configpath):
         raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
 
     service.model.data.socketPath = '/server.socket.{id}'.format(id=service.name)

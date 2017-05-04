@@ -4,16 +4,14 @@ from JumpScale import j
 def install(job):
     import random
     from urllib.parse import urlparse
+    from JumpScale.sal.g8os.StorageCluster import StorageCluster
     service = job.service
     service.model.data.status = 'halted'
     if service.model.data.templateVdisk:
-        services = service.aysrepo.servicesFind(role='grid_config')
-        if len(services) <= 0:
-            raise j.exceptions.NotFound("not grid_config service installed. {} can't get the grid API URL.".format(service))
-
         template = urlparse(service.model.data.templateVdisk)
-        grid_addr = services[0].model.data.apiURL
         storagecluster = service.aysrepo.serviceGet(role='storage_cluster', instance=service.model.data.storageCluster)
+        cluster = StorageCluster.from_ays(storagecluster)
+        clusterardb = cluster.get_config()['metadataStorage']
         target_node = random.choice(storagecluster.producers['node'])
 
         volume_container = create_from_template_container(service, target_node)
@@ -24,8 +22,8 @@ def install(job):
                     masterardb = urlparse(config['globals']['storage']).netloc
                 else:
                     masterardb = template.netloc
-                CMD = '/bin/copyvdisk -sourcetype direct -targettype api {src_name} {dst_name} {masterardb} {grid_addr}'
-                cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), grid_addr=grid_addr,
+                CMD = '/bin/copyvdisk {src_name} {dst_name} {masterardb} {clusterardb}'
+                cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), clusterardb=clusterardb,
                                  masterardb=masterardb)
             else:
                 raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
