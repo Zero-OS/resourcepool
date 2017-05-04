@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -48,9 +49,20 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type mount struct {
+		Filesystem string `json:"filesystem" yaml:"filesystem"`
+		Target     string `json:"target" yaml:"target"`
+	}
+
+	var mounts = make([]mount, len(reqBody.Filesystems))
+	for idx, filesystem := range reqBody.Filesystems {
+		parts := strings.Split(filesystem, ":")
+		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", parts[0], parts[1])}
+	}
+
 	container := struct {
 		Nics           []ContainerNIC `json:"nics" yaml:"nics"`
-		Filesystems    []string       `json:"filesystems" yaml:"filesystems"`
+		Mounts         []mount        `json:"mounts" yaml:"mounts"`
 		Flist          string         `json:"flist" yaml:"flist"`
 		HostNetworking bool           `json:"hostNetworking" yaml:"hostNetworking"`
 		Hostname       string         `json:"hostname" yaml:"hostname"`
@@ -60,7 +72,7 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 		Storage        string         `json:"storage" yaml:"storage"`
 	}{
 		Nics:           reqBody.Nics,
-		Filesystems:    reqBody.Filesystems,
+		Mounts:         mounts,
 		Flist:          reqBody.Flist,
 		HostNetworking: reqBody.HostNetworking,
 		Hostname:       reqBody.Hostname,

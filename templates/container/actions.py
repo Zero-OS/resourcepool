@@ -5,8 +5,9 @@ def input(job):
     # make sure we always consume all the filesystems used in the mounts property
     args = job.model.args
     mounts = args.get('mounts', [])
-    if 'filesystems' not in args:
-        args['filesystems'] = []
+    if 'filesystems' in args:
+        raise j.exceptions.InputError("Filesystem should not be passed from the blueprint")
+    args['filesystems'] = []
     filesystems = args['filesystems']
     for mount in mounts:
         if mount['filesystem'] not in filesystems:
