@@ -21,7 +21,10 @@ def is_running(container, key):
 
 
 def install(job):
+    from JumpScale.sal.g8os.StorageCluster import StorageCluster
     import time
+    import yaml
+    from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
 
@@ -40,14 +43,32 @@ def install(job):
         rootardb = urlparse(config['globals']['storage']).netloc
     socketpath = '/server.socket.{id}'.format(id=service.name)
     if not is_running(container, service.name):
+        configpath = "/{}.config".format(service.name)
+        storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster', instance=vdiskservice.model.data.storageCluster)
+        cluster = StorageCluster.from_ays(storageclusterservice)
+        cluster['status'] = storageclusterservice.model.data.status
+        vdiskconfig = {'blocksize': vdiskservice.model.data.blocksize,
+                       'id': vdiskservice.name,
+                       'readOnly': vdiskservice.model.data.readOnly,
+                       'size': vdiskservice.model.data.size,
+                       'status': vdiskservice.model.data.status,
+                       'storageCluster': vdiskservice.model.data.storageCluster,
+                       'tlogStoragecluster': vdiskservice.model.data.tlogStoragecluster,
+                       'type': vdiskservice.model.data.type}
+        config = {'storageclusters': {cluster.name: cluster.get_config()},
+                  'vdisks': {vdiskservice.name: vdiskconfig}}
+        configstream = BytesIO()
+        yaml.dump(config, configstream)
+        configstream.seek(0)
+        container.client.filesyste.upload(configpath, configstream)
+
         container.client.system(
             '/bin/nbdserver \
             -protocol unix \
             -address "{socketpath}" \
-            -export {id} \
             -rootardb {rootardb} \
-            -gridapi {api}'
-            .format(id=service.name, api=grid_addr, socketpath=socketpath, rootardb=rootardb)
+            -config {config}'
+            .format(id=service.name, api=grid_addr, socketpath=socketpath, rootardb=rootardb, config=configpath)
         )
     # wait for socket to be created
     start = time.time()
