@@ -591,6 +591,46 @@ types:
                   application/json:
                     type:
                       CoreStateResult
+        /cpus:
+          get:
+            (DirectAccess):
+            displayName: GetContainerCPUInfo
+            description: Get detailed information of all CPUs in the container
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: CPUInfo[]
+        /disks:
+          get:
+            (DirectAccess):
+            displayName: GetContainerDiskInfo
+            description: Get detailed information of all the disks in the container
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: DiskInfo[]
+        /mem:
+          get:
+            (DirectAccess):
+            displayName: GetContainerMemInfo
+            description: Get detailed information about the memory in the container
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: MemInfo
+        /nics:
+          get:
+            (DirectAccess):
+            displayName: GetContainerNicInfo
+            description: Get detailed information about the network interfaces in the container
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: NicInfo[]
         /info:
           get:
             (DirectAccess):
