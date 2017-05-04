@@ -2,6 +2,7 @@ package node
 
 import (
 	"gopkg.in/validator.v2"
+	"github.com/g8os/grid/api/validators"
 )
 
 type ContainerNICConfig struct {
@@ -13,12 +14,22 @@ type ContainerNICConfig struct {
 
 type ContainerNIC struct {
 	Config ContainerNICConfig   `json:"config,omitempty" yaml:"config,omitempty"`
-	Hwaddr string               `json:"hwaddr,omitempty" yaml:"hwaddr,omitempty"`
-	Id     string               `json:"id" validate:"nonzero" yaml:"id" validate:"nonzero"`
-	Type   EnumContainerNICType `json:"type" validate:"nonzero" yaml:"type" validate:"nonzero"`
+	Hwaddr string               `json:"hwaddr,omitempty" yaml:"hwaddr,omitempty" validate:"macaddress=empty"`
+	Id     string               `json:"id" yaml:"id" validate:"nonzero"`
+	Type   EnumContainerNICType `json:"type" yaml:"type" validate:"nonzero"`
 }
 
 func (s ContainerNIC) Validate() error {
+	typeEnums := map[interface{}]struct{}{
+		EnumContainerNICTypezerotier: struct{}{},
+		EnumContainerNICTypevxlan:    struct{}{},
+		EnumContainerNICTypevlan:  struct{}{},
+		EnumContainerNICTypedefault: struct {}{},
+	}
+
+	if err := validators.ValidateEnum("Type", s.Type, typeEnums); err != nil {
+		return err
+	}
 
 	return validator.Validate(s)
 }

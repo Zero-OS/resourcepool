@@ -1,6 +1,7 @@
 package node
 
 import (
+	"github.com/g8os/grid/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -13,6 +14,33 @@ type StoragePoolCreate struct {
 }
 
 func (s StoragePoolCreate) Validate() error {
+	dataEnums := map[interface{}]struct{}{
+		EnumStoragePoolCreateDataProfileraid0:  struct{}{},
+		EnumStoragePoolCreateDataProfileraid1:  struct{}{},
+		EnumStoragePoolCreateDataProfileraid5:  struct{}{},
+		EnumStoragePoolCreateDataProfileraid6:  struct{}{},
+		EnumStoragePoolCreateDataProfileraid10: struct{}{},
+		EnumStoragePoolCreateDataProfiledup:    struct{}{},
+		EnumStoragePoolCreateDataProfilesingle: struct{}{},
+	}
+
+	if err := validators.ValidateEnum("DataProfile", s.DataProfile, dataEnums); err != nil {
+		return err
+	}
+
+	metadataEnums := map[interface{}]struct{}{
+		EnumStoragePoolCreateMetadataProfileraid0:  struct{}{},
+		EnumStoragePoolCreateMetadataProfileraid1:  struct{}{},
+		EnumStoragePoolCreateMetadataProfileraid5:  struct{}{},
+		EnumStoragePoolCreateMetadataProfileraid6:  struct{}{},
+		EnumStoragePoolCreateMetadataProfileraid10: struct{}{},
+		EnumStoragePoolCreateMetadataProfiledup:    struct{}{},
+		EnumStoragePoolCreateMetadataProfilesingle: struct{}{},
+	}
+
+	if err := validators.ValidateEnum("MetadataProfile", s.MetadataProfile, metadataEnums); err != nil {
+		return err
+	}
 
 	return validator.Validate(s)
 }

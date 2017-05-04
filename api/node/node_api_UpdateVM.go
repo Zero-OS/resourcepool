@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateVM is the handler for POST /nodes/{nodeid}/vms
-// Creates the VM
+// UpdateVM is the handler for PUT /nodes/{nodeid}/vms/{vmid}
+// Updates the VM
 func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	var reqBody VMUpdate
 

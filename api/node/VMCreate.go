@@ -15,5 +15,10 @@ type VMCreate struct {
 }
 
 func (s VMCreate) Validate() error {
+	for _, nic := range s.Nics {
+		if err := nic.Validate(); err != nil {
+			return err
+		}
+	}
 	return validator.Validate(s)
 }

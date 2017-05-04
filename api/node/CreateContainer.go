@@ -17,6 +17,11 @@ type CreateContainer struct {
 }
 
 func (s CreateContainer) Validate() error {
+	for _, nic := range s.Nics {
+		if err := nic.Validate(); err != nil {
+			return err
+		}
+	}
 
 	return validator.Validate(s)
 }

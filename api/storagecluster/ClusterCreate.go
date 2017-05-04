@@ -1,6 +1,7 @@
 package storagecluster
 
 import (
+	"github.com/g8os/grid/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -13,6 +14,16 @@ type ClusterCreate struct {
 }
 
 func (s ClusterCreate) Validate() error {
+	typeEnums := map[interface{}]struct{}{
+		EnumClusterCreateDriveTypenvme:    struct{}{},
+		EnumClusterCreateDriveTypessd:     struct{}{},
+		EnumClusterCreateDriveTypehdd:     struct{}{},
+		EnumClusterCreateDriveTypearchive: struct{}{},
+	}
+
+	if err := validators.ValidateEnum("DriveType", s.DriveType, typeEnums); err != nil {
+		return err
+	}
 
 	return validator.Validate(s)
 }
