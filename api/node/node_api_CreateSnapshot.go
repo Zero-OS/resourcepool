@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/g8os/grid/api/tools"
-	"github.com/g8os/grid/api/validators"
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
+	"gopkg.in/validator.v2"
 )
 
 // CreateSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
@@ -27,7 +27,7 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validators.ServiceName(name, ""); err != nil {
+	if err := validator.Valid(name, "servicename"); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
