@@ -2,6 +2,7 @@ package validators
 
 import (
 	"errors"
+	"fmt"
 	"gopkg.in/validator.v2"
 	"reflect"
 	"regexp"
@@ -26,4 +27,12 @@ func ServiceName(v interface{}, param string) error {
 	}
 
 	return nil
+}
+
+func ValidateEnum(fieldName string, value interface{}, enums map[interface{}]bool) error {
+	if enums[value] {
+		return nil
+	}
+
+	return fmt.Errorf("%v: %v is not a valid value.", fieldName, value)
 }

@@ -1,6 +1,7 @@
 package node
 
 import (
+	"github.com/g8os/grid/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -14,6 +15,15 @@ type BridgeCreate struct {
 }
 
 func (s BridgeCreate) Validate() error {
+	networkModeEnums := map[interface{}]bool{
+		EnumBridgeCreateNetworkModednsmasq: true,
+		EnumBridgeCreateNetworkModenone:    true,
+		EnumBridgeCreateNetworkModestatic:  true,
+	}
+
+	if err := validators.ValidateEnum("NetworkMode", s.NetworkMode, networkModeEnums); err != nil {
+		return err
+	}
 
 	return validator.Validate(s)
 }
