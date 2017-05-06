@@ -70,6 +70,21 @@ func WaitRunDone(runid, repoName string) error {
 	return nil
 }
 
+// ServiceExists check if an atyourserivce exists
+func ServiceExists(serviceName string, instance string, repoName string) (bool, error) {
+	_, res, err := ayscl.Ays.GetServiceByName(instance, serviceName, repoName, nil, nil)
+	if err != nil {
+		return false, err
+	} else if res.StatusCode == http.StatusOK {
+		return true, nil
+	} else if res.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+	err = fmt.Errorf("AYS returned status %d while getting service", res.StatusCode)
+	return false, err
+
+}
+
 func createBlueprint(repoName string, name string, bp map[string]interface{}) error {
 	bpYaml, err := yaml.Marshal(bp)
 	blueprint := ays.Blueprint{

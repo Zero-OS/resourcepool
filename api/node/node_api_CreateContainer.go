@@ -32,20 +32,14 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	_, res, err := api.AysAPI.Ays.GetServiceByName(reqBody.Name, "container", api.AysRepo, nil, nil)
-
+	// validate container name
+	exists, err := tools.ServiceExists("container", reqBody.Name, api.AysRepo)
 	if err != nil {
-		log.Errorf("AYS threw error while %+v.\n", err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
-	} else if res.StatusCode == http.StatusOK {
+	} else if exists {
 		err = fmt.Errorf("Container with name %s already exists", reqBody.Name)
 		tools.WriteError(w, http.StatusConflict, err)
-		return
-	}
-	if res.StatusCode != http.StatusNotFound {
-		err = fmt.Errorf("AYS returned status %d while getting service", res.StatusCode)
-		tools.WriteError(w, res.StatusCode, err)
 		return
 	}
 
@@ -57,7 +51,28 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	var mounts = make([]mount, len(reqBody.Filesystems))
 	for idx, filesystem := range reqBody.Filesystems {
 		parts := strings.Split(filesystem, ":")
-		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", parts[0], parts[1])}
+		storagepoolname := parts[0]
+		filesystemname := parts[1]
+
+		exists, err := tools.ServiceExists("storagepool", storagepoolname, api.AysRepo)
+		if err != nil {
+			tools.WriteError(w, http.StatusInternalServerError, err)
+			return
+		} else if !exists {
+			err = fmt.Errorf("Storagepool with name %s does not exists", storagepoolname)
+			tools.WriteError(w, http.StatusBadRequest, err)
+			return
+		}
+		exists, err = tools.ServiceExists("filesystem", filesystemname, api.AysRepo)
+		if err != nil {
+			tools.WriteError(w, http.StatusInternalServerError, err)
+			return
+		} else if !exists {
+			err = fmt.Errorf("Filesystem with name %s does not exists", storagepoolname)
+			tools.WriteError(w, http.StatusBadRequest, err)
+			return
+		}
+		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", storagepoolname, filesystemname)}
 	}
 
 	container := struct {
