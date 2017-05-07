@@ -66,9 +66,21 @@ def stop(job):
 
 def delete(job):
     service = job.service
-    cluster = get_cluster(service)
+    ardbs = service.producers.get('ardbs', [])
+    filesystems = service.producers.get('filesystems', [])
+
+    for ardb in ardbs:
+        container = ardb.parent
+        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('delete'))
+        j.tools.async.wrappers.sync(container.delete())
+
+    for fs in filesystems:
+        pool = fs.parent
+        j.tools.async.wrappers.sync(pool.executeAction('delete'))
+        j.tools.async.wrappers.sync(pool.delete())
+
     job.logger.info("stop cluster {}".format(service.name))
-    cluster.stop()
     job.service.model.data.status = 'empty'
 
 
