@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/validator.v2"
+	"net"
 	"reflect"
 	"regexp"
 )
+
+var serviceRegex = regexp.MustCompile(`^[a-zA-Z0-9-._]+$`)
 
 func init() {
 	validator.SetValidationFunc("cidr", cidr)
@@ -22,8 +25,7 @@ func serviceName(v interface{}, param string) error {
 		return errors.New("servicename only validates strings")
 	}
 
-	re, _ := regexp.Compile(`^[a-zA-Z0-9-._]+$`)
-	match := re.FindString(name.String())
+	match := serviceRegex.FindString(name.String())
 
 	if match == "" {
 		return errors.New("string can only contain alphanumeric characters, _, - and .")
@@ -44,10 +46,9 @@ func ip(v interface{}, param string) error {
 		return nil
 	}
 
-	re, _ := regexp.Compile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
-	match := re.FindString(ipValue)
+	match := net.ParseIP(ipValue)
 
-	if match == "" {
+	if match == nil {
 		return errors.New("string is not a valid ip address.")
 	}
 
@@ -66,10 +67,9 @@ func cidr(v interface{}, param string) error {
 		return nil
 	}
 
-	re, _ := regexp.Compile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/([0-9]|[1-2][0-9]|3[0-2]))$`)
-	match := re.FindString(cidrValue)
+	_, _, err := net.ParseCIDR(cidrValue)
 
-	if match == "" {
+	if err != nil {
 		return errors.New("string is not a valid cidr.")
 	}
 
@@ -88,10 +88,9 @@ func macAddress(v interface{}, param string) error {
 		return nil
 	}
 
-	re, _ := regexp.Compile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
-	match := re.FindString(addrValue)
+	_, err := net.ParseMAC(addrValue)
 
-	if match == "" {
+	if err != nil {
 		return errors.New("string is not a valid mac address.")
 	}
 
