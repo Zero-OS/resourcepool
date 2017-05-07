@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/g8os/grid/api/tools"
+	tools "github.com/g8os/resourcepool/api/tools"
 	//"fmt"
 )
 

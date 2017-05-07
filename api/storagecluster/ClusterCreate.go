@@ -1,7 +1,7 @@
 package storagecluster
 
 import (
-	"github.com/g8os/grid/api/validators"
+	"github.com/g8os/resourcepool/api/validators"
 	"gopkg.in/validator.v2"
 )
 

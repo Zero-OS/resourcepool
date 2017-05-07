@@ -9,10 +9,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/codegangsta/cli"
-	ays "github.com/g8os/grid/api/ays-client"
-	"github.com/g8os/grid/api/goraml"
-	"github.com/g8os/grid/api/router"
-	"github.com/g8os/grid/api/tools"
+	ays "github.com/g8os/resourcepool/api/ays-client"
+	"github.com/g8os/resourcepool/api/goraml"
+	"github.com/g8os/resourcepool/api/router"
+	"github.com/g8os/resourcepool/api/tools"
 
 	"fmt"
 

@@ -1,8 +1,8 @@
 package vdisk
 
 import (
-	ays "github.com/g8os/grid/api/ays-client"
-	_ "github.com/g8os/grid/api/validators"
+	ays "github.com/g8os/resourcepool/api/ays-client"
+	_ "github.com/g8os/resourcepool/api/validators"
 )
 
 // VdisksAPI is API implementation of /vdisks root endpoint

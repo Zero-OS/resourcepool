@@ -3,9 +3,9 @@ package storagecluster
 import (
 	"time"
 
-	ays "github.com/g8os/grid/api/ays-client"
+	ays "github.com/g8os/resourcepool/api/ays-client"
 	"github.com/patrickmn/go-cache"
-        _ "github.com/g8os/grid/api/validators"
+        _ "github.com/g8os/resourcepool/api/validators"
 )
 
 // StorageclusterAPI is API implementation of /storagecluster root endpoint

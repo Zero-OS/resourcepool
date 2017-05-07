@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // ListVMs is the handler for GET /node/{nodeid}/vm

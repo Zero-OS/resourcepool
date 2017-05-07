@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	client "github.com/g8os/go-client"
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // ListContainerProcesses is the handler for GET /nodes/{nodeid}/containers/{containername}/process

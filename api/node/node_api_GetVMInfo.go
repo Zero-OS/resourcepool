@@ -10,7 +10,7 @@ import (
 
 	"fmt"
 
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // GetVMInfo is the handler for GET /nodes/{nodeid}/vms/{vmid}/info

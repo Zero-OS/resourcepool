@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/g8os/go-client"
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // KillAllNodeJobs is the handler for DELETE /nodes/{nodeid}/job

@@ -1,7 +1,7 @@
 
 ## How to build
 ```shell
-git clone https://github.com/g8os/grid
+git clone https://github.com/g8os/resourcepool
 cd grid/api
 go build
 ```

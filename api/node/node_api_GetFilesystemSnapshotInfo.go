@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	tools "github.com/g8os/grid/api/tools"
+	tools "github.com/g8os/resourcepool/api/tools"
 )
 
 // GetFilesystemSnapshotInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}

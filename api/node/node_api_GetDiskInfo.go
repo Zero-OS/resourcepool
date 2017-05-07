@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/g8os/go-client"
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 	psdisk "github.com/shirou/gopsutil/disk"
 )
 

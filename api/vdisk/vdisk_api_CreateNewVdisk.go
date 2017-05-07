@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // CreateNewVdisk is the handler for POST /vdisks

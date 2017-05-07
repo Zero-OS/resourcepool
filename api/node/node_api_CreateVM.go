@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/g8os/grid/api/tools"
+	tools "github.com/g8os/resourcepool/api/tools"
 	"github.com/gorilla/mux"
 )
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/g8os/go-client"
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // PingNode is the handler for POST /nodes/{nodeid}/ping

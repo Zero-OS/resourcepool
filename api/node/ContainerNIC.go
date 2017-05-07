@@ -2,7 +2,7 @@ package node
 
 import (
 	"gopkg.in/validator.v2"
-	"github.com/g8os/grid/api/validators"
+	"github.com/g8os/resourcepool/api/validators"
 )
 
 type ContainerNICConfig struct {

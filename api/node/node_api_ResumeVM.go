@@ -3,7 +3,7 @@ package node
 import (
 	"net/http"
 
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // ResumeVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/resume

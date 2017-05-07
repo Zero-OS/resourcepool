@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
-	"github.com/g8os/grid/api/tools"
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // GetBridge is the handler for GET /nodes/{nodeid}/bridges/{bridgeid}
