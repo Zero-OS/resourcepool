@@ -24,6 +24,7 @@ def install(job):
     from JumpScale.sal.g8os.StorageCluster import StorageCluster
     import time
     import yaml
+    import uuid
     from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
@@ -42,19 +43,20 @@ def install(job):
         storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster', instance=vdiskservice.model.data.storageCluster)
         cluster = StorageCluster.from_ays(storageclusterservice)
         clusterconfig = cluster.get_config()
-        clusterconfig['status'] = storageclusterservice.model.data.status
-        clusterconfig['rootDataStorage'] = rootardb
+        rootclustername = str(uuid.uuid4())
+        rootcluster = {'dataStorage': [rootardb], 'metadataStorage': rootardb}
         vdiskconfig = {'blocksize': vdiskservice.model.data.blocksize,
                        'id': vdiskservice.name,
                        'readOnly': vdiskservice.model.data.readOnly,
                        'size': vdiskservice.model.data.size,
-                       'status': str(vdiskservice.model.data.status),
-                       'storagecluster': vdiskservice.model.data.storageCluster,
+                       'storageCluster': vdiskservice.model.data.storageCluster,
+                       'rootStorageCluster': rootclustername,
                        'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
                        'type': str(vdiskservice.model.data.type)}
-        config = {'storageclusters': {cluster.name: clusterconfig},
+        config = {'storageClusters': {cluster.name: clusterconfig,
+                                      rootclustername: rootcluster},
                   'vdisks': {vdiskservice.name: vdiskconfig}}
-        yamlconfig = yaml.dump(config)
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         configstream = BytesIO(yamlconfig.encode('utf8'))
         configstream.seek(0)
         container.client.filesystem.upload(configpath, configstream)
