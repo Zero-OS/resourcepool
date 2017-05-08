@@ -81,6 +81,7 @@ def try_authorize(service, logger, netid, member, zerotier):
             'id': name,
             'status': 'running',
             'networks': networks,
+            'hostname': node.client.info.os()['hostname'],
             'redisAddr': zerotier_ip,
         }
         logger.info("create node.g8os service {}".format(name))
