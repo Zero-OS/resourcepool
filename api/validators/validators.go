@@ -3,10 +3,11 @@ package validators
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/validator.v2"
 	"net"
 	"reflect"
 	"regexp"
+
+	"gopkg.in/validator.v2"
 )
 
 var serviceRegex = regexp.MustCompile(`^[a-zA-Z0-9-._]+$`)
@@ -103,4 +104,12 @@ func ValidateEnum(fieldName string, value interface{}, enums map[interface{}]str
 	}
 
 	return fmt.Errorf("%v: %v is not a valid value.", fieldName, value)
+}
+
+// An extensiotn to omitempty validation, in which omitempty will work on conditional only if base condition is met.
+func ValidateConditional(base1 interface{}, base2 interface{}, conditional interface{}, name string) error {
+	if base1 != base2 && conditional == "" {
+		return fmt.Errorf("%v: nil is not a valid value", name)
+	}
+	return nil
 }

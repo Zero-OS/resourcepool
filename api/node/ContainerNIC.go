@@ -1,8 +1,6 @@
 package node
 
 import (
-	"errors"
-
 	"github.com/g8os/resourcepool/api/validators"
 	"gopkg.in/validator.v2"
 )
@@ -21,16 +19,6 @@ type ContainerNIC struct {
 	Type   EnumContainerNICType `json:"type" yaml:"type" validate:"nonzero"`
 }
 
-func (s ContainerNIC) validateID() error {
-	if s.Type != "default" {
-		if s.Id == "" {
-			return errors.New("validation error on Id of NIC: cannot be empty")
-		}
-		return nil
-	}
-	return nil
-}
-
 func (s ContainerNIC) Validate() error {
 	typeEnums := map[interface{}]struct{}{
 		EnumContainerNICTypezerotier: struct{}{},
@@ -43,7 +31,7 @@ func (s ContainerNIC) Validate() error {
 		return err
 	}
 
-	if err := s.validateID(); err != nil {
+	if err := validators.ValidateConditional(s.Type, EnumContainerNICTypedefault, s.Id, "Id"); err != nil {
 		return err
 	}
 
