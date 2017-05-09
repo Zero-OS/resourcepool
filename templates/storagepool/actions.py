@@ -85,6 +85,9 @@ def updateDevices(service, pool, devices):
     # remove devices
     removeddevices = pooldevices - requireddevices
     if removeddevices:
+        for device in service.model.data.devices:
+            if device.device in removeddevices:
+                device.status = 'removing'
         pool.device_remove(*removeddevices)
 
 

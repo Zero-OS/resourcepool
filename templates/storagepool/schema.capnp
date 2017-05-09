@@ -13,6 +13,13 @@ struct Schema {
     struct PartitionMap {
         device @0 :Text;
         partUUID @1 :Text;
+        status @2: DiskStatus;
+    }
+
+    enum DiskStatus {
+        healthy @0;
+        degraded @1;
+        removing @2;
     }
 
     enum Status {
