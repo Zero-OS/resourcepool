@@ -33,7 +33,7 @@ def install(job):
                 raise j.exceptions.RuntimeError("Failed to copyvdisk {} {}".format(result.stdout, result.stderr))
 
         finally:
-            destroy_from_template_container(service, target_node)
+            volume_container.stop()
 
 
 def create_from_template_container(service, parent):
@@ -44,37 +44,13 @@ def create_from_template_container(service, parent):
     from JumpScale.sal.g8os.Container import Container
     from JumpScale.sal.g8os.Node import Node
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
-    try:
-        container = service.aysrepo.serviceGet(role='container', instance=container_name)
-    except j.exceptions.NotFound:
-        container = None
-    if container:
-        container.delete()
-
     node = Node.from_ays(parent)
     container = Container(name=container_name,
                           flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
                           host_network=True,
                           node=node)
-    containerservice = container.ays.create(service.aysrepo)
-    j.tools.async.wrappers.sync(containerservice.executeAction('install'))
+    container.start()
     return container
-
-
-def destroy_from_template_container(service, parent):
-    """
-    first check if the volumes container for this vm exists.
-    if not it creates it.
-    return the container service
-    """
-    container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
-    try:
-        container = service.aysrepo.serviceGet(role='container', instance=container_name)
-    except j.exceptions.NotFound:
-        container = None
-    else:
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
-        j.tools.async.wrappers.sync(container.delete())
 
 
 def start(job):

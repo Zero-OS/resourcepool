@@ -856,15 +856,6 @@ StorageServer:
       type: string
       enum: [ready, error]
 
-HAStorageServer:
-  properties:
-    master:
-      type: StorageServer
-      required: true
-    slave:
-      type: StorageServer
-      required: false
-
 ClusterCreate:
   properties:
     label: string
@@ -874,9 +865,6 @@ ClusterCreate:
     driveType:
       type: string
       enum: [nvme, ssd, hdd, archive]
-    slaveNodes:
-      type: boolean
-      description: Do we need to have slave backup nodes or no
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
@@ -884,7 +872,6 @@ ClusterCreate:
     label: cluster1
     servers: 256
     driveType: ssd
-    slaveNodes: false
     nodes:
        - node1
        - node2
@@ -902,10 +889,10 @@ Cluster:
       type: string[]
       description: List of node ID on which storage server are deployed for this cluster
     dataStorage:
-      type: HAStorageServer[]
+      type: StorageServer[]
       description: List of data storage servers in the cluster
     metadataStorage:
-      type: HAStorageServer[]
+      type: StorageServer[]
       description: List of metadata storage servers in the cluster
 
 # Vdisks API

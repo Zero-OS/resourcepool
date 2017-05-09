@@ -54,9 +54,8 @@ def monitor(job):
     service = job.service
     from JumpScale.sal.g8os.Container import Container
 
-    container = Container.from_ays(job.service)
-
     if service.model.actionsState['install'] == 'ok':
+        container = Container.from_ays(job.service)
         running = container.is_running()
         if not running and service.model.data.status == 'running':
             try:

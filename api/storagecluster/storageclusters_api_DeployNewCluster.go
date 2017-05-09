@@ -17,27 +17,29 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if reqBody.Servers%len(reqBody.Nodes) != 0 {
+		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Amount of servers is not equally devidable by amount of nodes"))
 		return
 	}
 
 	blueprint := struct {
 		Label    string   `yaml:"label" json:"label"`
 		NrServer int      `yaml:"nrServer" json:"nrServer"`
-		HasSlave bool     `yaml:"hasSlave" json:"hasSlave"`
 		DiskType string   `yaml:"diskType" json:"diskType"`
 		Nodes    []string `yaml:"nodes" json:"nodes"`
 	}{
 		Label:    reqBody.Label,
 		NrServer: reqBody.Servers,
-		HasSlave: reqBody.SlaveNodes,
 		DiskType: string(reqBody.DriveType),
 		Nodes:    reqBody.Nodes,
 	}

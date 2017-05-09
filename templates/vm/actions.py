@@ -23,24 +23,17 @@ def create_nbdserver_container(service, parent):
     if not it creates it.
     return the container service
     """
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.Node import Node
+    actor = service.aysrepo.actorGet("container")
+    args = {
+        'node': parent.name,
+        'flist': 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+        'hostNetworking': True,
+    }
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
-    try:
-        containerservice = service.aysrepo.serviceGet(role='container', instance=container_name)
-    except j.exceptions.NotFound:
-        containerservice = None
-
-    if containerservice is None:
-        node = Node.from_ays(parent)
-        container = Container(name=container_name,
-                              flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
-                              host_network=True,
-                              node=node)
-        containerservice = container.ays.create(service.aysrepo)
-
+    containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
     containerservice.model.changeParent(service.parent)
+    j.tools.async.wrappers.sync(containerservice.executeAction('start'))
 
     return containerservice
 
