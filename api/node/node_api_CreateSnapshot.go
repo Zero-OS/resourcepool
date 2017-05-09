@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
-	"gopkg.in/validator.v2"
 )
 
 // CreateSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
@@ -19,15 +18,16 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 	nodeid := mux.Vars(r)["nodeid"]
 	storagepool := mux.Vars(r)["storagepoolname"]
 
-	var name string
+	var reqBody SnapShotCreate
 
 	// decode request
-	if err := json.NewDecoder(r.Body).Decode(&name); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := validator.Valid(name, "servicename"); err != nil {
+	// validate request
+	if err := reqBody.Validate(); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -38,22 +38,22 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 	}{
 
 		Filesystem: filessytem,
-		Name:       name,
+		Name:       reqBody.Name,
 	}
 
 	blueprint := map[string]interface{}{
-		fmt.Sprintf("fssnapshot__%s", name): bpContent,
+		fmt.Sprintf("fssnapshot__%s", reqBody.Name): bpContent,
 		"actions": []tools.ActionBlock{{
 			Action:  "install",
 			Actor:   "fssnapshot",
-			Service: name}},
+			Service: reqBody.Name}},
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", name, "install", blueprint); err != nil {
+	if _, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint); err != nil {
 		httpErr := err.(tools.HTTPError)
 		log.Errorf("Error executing blueprint for fssnapshot creation : %+v", err.Error())
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
 	}
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s/snapshots/%s", nodeid, storagepool, filessytem, name))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s/snapshots/%s", nodeid, storagepool, filessytem, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 }

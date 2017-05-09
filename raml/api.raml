@@ -358,11 +358,13 @@ types:
                 description: Create a new read-only snapshot of the current state of the vdisk
                 body:
                   application/json:
-                    description: |
-                      Unique identifier for the snapshot
-                      Permitted characters: a-z,-
-                      Max length: 50 characters.
-                    type: string
+                    properties:
+                      name:
+                        type: string
+                        description: |
+                         Unique identifier for the snapshot
+                         Permitted characters: a-z,-, _ and .
+                         Max length: 50 characters.
                 responses:
                   201:
                     description: Snapshot created successfully
