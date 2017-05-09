@@ -14,6 +14,7 @@ from .ContainerNIC import ContainerNIC
 from .CoreStateResult import CoreStateResult
 from .CoreSystem import CoreSystem
 from .CreateContainer import CreateContainer
+from .CreateSnapshotReqBody import CreateSnapshotReqBody
 from .DeleteFile import DeleteFile
 from .DiskInfo import DiskInfo
 from .EnumBridgeCreateNetworkMode import EnumBridgeCreateNetworkMode

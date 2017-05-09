@@ -40,6 +40,24 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def GetContainerCPUInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get detailed information of all CPUs in the container
+        It is method for GET /nodes/{nodeid}/containers/{containername}/cpus
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/cpus"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def GetContainerDiskInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get detailed information of all the disks in the container
+        It is method for GET /nodes/{nodeid}/containers/{containername}/disks
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/disks"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
     def FileDelete(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Delete file from container
@@ -118,6 +136,24 @@ class NodesService:
         It is method for GET /nodes/{nodeid}/containers/{containername}/jobs
         """
         uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/jobs"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def GetContainerMemInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get detailed information about the memory in the container
+        It is method for GET /nodes/{nodeid}/containers/{containername}/mem
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/mem"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def GetContainerNicInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get detailed information about the network interfaces in the container
+        It is method for GET /nodes/{nodeid}/containers/{containername}/nics
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/nics"
         return self.client.get(uri, headers, query_params, content_type)
 
 
