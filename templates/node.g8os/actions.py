@@ -99,10 +99,4 @@ def uninstall(job):
     service = job.service
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.g8os')
     if bootstraps:
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        loop.run_until_complete(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
+        j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
