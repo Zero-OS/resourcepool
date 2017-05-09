@@ -66,13 +66,12 @@ def stop(job):
 
 def delete(job):
     service = job.service
-    ardbs = service.producers.get('ardbs', [])
-    filesystems = service.producers.get('filesystems', [])
+    ardbs = service.producers.get('ardb', [])
+    filesystems = service.producers.get('filesystem', [])
 
     for ardb in ardbs:
         container = ardb.parent
         j.tools.async.wrappers.sync(container.executeAction('stop'))
-        j.tools.async.wrappers.sync(container.executeAction('delete'))
         j.tools.async.wrappers.sync(container.delete())
 
     for fs in filesystems:
