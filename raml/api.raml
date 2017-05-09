@@ -28,6 +28,13 @@ types:
           application/json:
             type: Node[]
   /{nodeid}:
+    delete:
+      (AYSBased):
+      description: Delete a node
+      displayName: DeleteNode
+      responses:
+        204:
+          description: Jobs killed successfully
     get:
       (AYSBased):
       description: Get detailed information of a node

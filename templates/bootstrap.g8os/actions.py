@@ -28,6 +28,34 @@ def bootstrap(job):
             member['config']['authorized'] = False
             zerotier.network.updateMember(member, member['nodeId'], netid)
 
+def delete_node(job):
+    """
+    this method will be called from the node.g8os to remove the node from zerotier
+    """
+    from zerotier import client
+
+    node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
+
+    service = job.service
+    token = service.model.data.zerotierToken
+    netid = service.model.data.zerotierNetID
+
+    zerotier = client.Client()
+    zerotier.set_auth_header('bearer {}'.format(token))
+
+    resp = zerotier.network.listMembers(netid)
+    members = resp.json()
+
+    for member in members:
+        if node.model.data.redisAddr in member['config']['ipAssignments']:
+            try:
+                if member['config']['authorized']:
+                    member['config']['authorized'] = False
+                    zerotier.network.updateMember(member, member['nodeId'], netid)
+            except Exception as err:
+                job.logger.error(str(err))
+            break
+
 def try_authorize(service, logger, netid, member, zerotier):
     import time
 
