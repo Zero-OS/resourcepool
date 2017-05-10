@@ -110,3 +110,19 @@ def processChange(job):
             pool.ays.create(service.aysrepo)
         except ValueError:
             job.logger.error("pool {} doesn't exist, cant update devices", service.name)
+
+
+def monitor(job):
+    service = job.service
+    pservice = service.parent
+    node = j.sal.g8os.get_node(
+        addr=pservice.model.data.redisAddr,
+        port=pservice.model.data.redisPort,
+        password=pservice.model.data.redisPassword or None,
+    )
+
+    try:
+        pool = node.storagepools.get(service.name)
+        pool.ays.monitor(service.aysrepo)
+    except ValueError:
+        job.logger.error("pool {} doesn't exist, cant monitor pool", service.name)
