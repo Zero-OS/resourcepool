@@ -3,7 +3,7 @@ Auto-generated class for Cluster
 """
 from .EnumClusterDriveType import EnumClusterDriveType
 from .EnumClusterStatus import EnumClusterStatus
-from .HAStorageServer import HAStorageServer
+from .StorageServer import StorageServer
 
 from . import client_support
 
@@ -16,10 +16,10 @@ class Cluster(object):
     @staticmethod
     def create(dataStorage, driveType, label, metadataStorage, nodes, status):
         """
-        :type dataStorage: list[HAStorageServer]
+        :type dataStorage: list[StorageServer]
         :type driveType: EnumClusterDriveType
         :type label: str
-        :type metadataStorage: list[HAStorageServer]
+        :type metadataStorage: list[StorageServer]
         :type nodes: list[str]
         :type status: EnumClusterStatus
         :rtype: Cluster
@@ -47,7 +47,7 @@ class Cluster(object):
         property_name = 'dataStorage'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [HAStorageServer]
+            datatypes = [StorageServer]
             try:
                 self.dataStorage = client_support.list_factory(val, datatypes)
             except ValueError as err:
@@ -80,7 +80,7 @@ class Cluster(object):
         property_name = 'metadataStorage'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [HAStorageServer]
+            datatypes = [StorageServer]
             try:
                 self.metadataStorage = client_support.list_factory(val, datatypes)
             except ValueError as err:

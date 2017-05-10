@@ -706,6 +706,15 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def DeleteNode(self, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete a node
+        It is method for DELETE /nodes/{nodeid}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid
+        return self.client.delete(uri, headers, query_params, content_type)
+
+
     def GetNode(self, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Get detailed information of a node

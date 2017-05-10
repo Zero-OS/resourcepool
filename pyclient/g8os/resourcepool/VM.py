@@ -14,7 +14,7 @@ class VM(object):
     """
 
     @staticmethod
-    def create(cpu, disks, id, memory, nics, status):
+    def create(cpu, disks, id, memory, nics, status, vnc):
         """
         :type cpu: int
         :type disks: list[VDiskLink]
@@ -22,6 +22,7 @@ class VM(object):
         :type memory: int
         :type nics: list[NicLink]
         :type status: EnumVMStatus
+        :type vnc: int
         :rtype: VM
         """
 
@@ -32,6 +33,7 @@ class VM(object):
             memory=memory,
             nics=nics,
             status=status,
+            vnc=vnc,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -105,6 +107,17 @@ class VM(object):
             datatypes = [EnumVMStatus]
             try:
                 self.status = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'vnc'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.vnc = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

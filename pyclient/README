@@ -21,3 +21,10 @@ Out[11]:
  {'hostname': '', 'id': '2c600ccd2ad1', 'status': 'running'},
  {'hostname': '', 'id': '2c600cbc23bc', 'status': 'running'}]
 ```
+
+## To update the client from the raml file
+
+```shell
+go-raml client -l python --ramlfile raml/api.raml --dir pyclient/g8os/resourcepool
+```
+

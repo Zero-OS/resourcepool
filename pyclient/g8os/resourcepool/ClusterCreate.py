@@ -12,13 +12,12 @@ class ClusterCreate(object):
     """
 
     @staticmethod
-    def create(driveType, label, nodes, servers, slaveNodes):
+    def create(driveType, label, nodes, servers):
         """
         :type driveType: EnumClusterCreateDriveType
         :type label: str
         :type nodes: list[str]
         :type servers: int
-        :type slaveNodes: bool
         :rtype: ClusterCreate
         """
 
@@ -27,7 +26,6 @@ class ClusterCreate(object):
             label=label,
             nodes=nodes,
             servers=servers,
-            slaveNodes=slaveNodes,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -79,17 +77,6 @@ class ClusterCreate(object):
             datatypes = [int]
             try:
                 self.servers = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'slaveNodes'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [bool]
-            try:
-                self.slaveNodes = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
