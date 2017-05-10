@@ -38,8 +38,9 @@ def init(job):
     cluster = StorageCluster(service.name, nodes, service.model.data.diskType)
     availabledisks = cluster.find_disks()
     diskpernode = int(service.model.data.nrServer / len(nodes))
-
-    # validate amount of disks and remove uneeded disks
+    # validate amount of disks and remove unneeded disks
+    if service.model.data.nrServer % len(nodes) != 0:
+        raise j.exceptions.Input("Amount of servers is not equally devidable by amount of nodes")
     for node, disks in availabledisks.items():
         if len(disks) < diskpernode:
             raise j.exceptions.Input("Not enough available disks on node {}".format(node))
@@ -124,7 +125,6 @@ def start(job):
     cluster = get_cluster(service)
     job.logger.info("start cluster {}".format(service.name))
     cluster.start()
-    cluster.ays.create(service.aysrepo)
     job.service.model.data.status = 'ready'
 
 
@@ -133,7 +133,6 @@ def stop(job):
     cluster = get_cluster(service)
     job.logger.info("stop cluster {}".format(service.name))
     cluster.stop()
-    cluster.ays.create(service.aysrepo)
 
 
 def delete(job):
@@ -147,6 +146,8 @@ def delete(job):
         j.tools.async.wrappers.sync(container.delete())
 
     for fs in filesystems:
+        if not fs.parent:
+            continue
         pool = fs.parent
         j.tools.async.wrappers.sync(pool.executeAction('delete'))
         j.tools.async.wrappers.sync(pool.delete())
