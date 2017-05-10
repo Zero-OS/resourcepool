@@ -22,7 +22,7 @@ func (api NodeAPI) GetStoragePoolDeviceInfo(w http.ResponseWriter, r *http.Reque
 
 	for _, device := range devices {
 		if device.PartUUID == deviceUuid {
-			respBody := StoragePoolDevice{UUID: device.PartUUID, DeviceName: device.Device}
+			respBody := StoragePoolDevice{UUID: device.PartUUID, DeviceName: device.Device, Status: device.Status}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(&respBody)

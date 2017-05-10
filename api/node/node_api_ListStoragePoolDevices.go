@@ -26,7 +26,10 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 	}
 
 	for _, device := range devices {
-		respBody = append(respBody, StoragePoolDevice{UUID: device.PartUUID, DeviceName: device.Device})
+		respBody = append(respBody, StoragePoolDevice{
+			UUID:       device.PartUUID,
+			DeviceName: device.Device,
+			Status:     device.Status})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -35,8 +38,9 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 }
 
 type DeviceInfo struct {
-	Device   string `json:"device"`
-	PartUUID string `json:"partUUID"`
+	Device   string                      `json:"device"`
+	PartUUID string                      `json:"partUUID"`
+	Status   EnumStoragePoolDeviceStatus `json:"status"`
 }
 
 // Get storagepool devices
