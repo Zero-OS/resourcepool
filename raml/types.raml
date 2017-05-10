@@ -306,6 +306,9 @@ VM:
     status:
       enum: [running, halted, paused, halting, migrating]
       description: Status of the VM
+    vnc:
+      type: integer
+      description: The VNC port of the machine
     memory:
       description: Amount of memory in MiB
       type: integer

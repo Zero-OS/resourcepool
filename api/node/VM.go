@@ -11,6 +11,7 @@ type VM struct {
 	Memory int          `json:"memory" validate:"nonzero"`
 	Nics   []NicLink    `json:"nics" validate:"nonzero"`
 	Status EnumVMStatus `json:"status" validate:"nonzero"`
+	Vnc    int          `json:"vnc"`
 }
 
 func (s VM) Validate() error {

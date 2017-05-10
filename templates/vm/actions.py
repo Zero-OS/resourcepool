@@ -138,7 +138,9 @@ def install(job):
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
-            if get_domain(service):
+            domain = get_domain(service)
+            if domain:
+                service.model.data.vnc = domain['vnc']
                 break
             else:
                 time.sleep(3)
@@ -183,6 +185,7 @@ def stop(job):
         job.logger.info("container doesn't exists.")
 
     service.model.data.status = 'halted'
+    service.mode.data.vnc = -1
 
 
 def pause(job):

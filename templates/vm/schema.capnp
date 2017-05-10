@@ -12,6 +12,8 @@ struct Schema {
     userCloudInit @8: Text;
     systemCloudInit @9: Text;
 
+    vnc @10: Int32 = -1; # the vnc port the machine is listening to
+
     enum Status{
         error @0;
         halted @1;
