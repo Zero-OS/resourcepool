@@ -47,7 +47,7 @@ def install(job):
         password=service.model.data.redisPassword or None,
     )
 
-    job.logger.info("mout storage pool for fuse cache")
+    job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
     node.ensure_persistance(poolname)
 

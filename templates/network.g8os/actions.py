@@ -97,13 +97,15 @@ def configure(job):
             container_client = Container.from_ays(cont_service).client
             break
     else:
-        container = Container(name='ovs',
-                              flist='https://hub.gig.tech/gig-official-apps/ovs.flist',
-                              host_network=True,
-                              node=Node.from_ays(node))
-        cont_service = container.ays.create(service.aysrepo)
+        actor = service.aysrepo.actorGet("container")
+        args = {
+            'node': node.name,
+            'flist': 'https://hub.gig.tech/gig-official-apps/ovs.flist',
+            'hostNetworking': True,
+        }
+        cont_service = actor.serviceCreate(instance='ovs', args=args)
         j.tools.async.wrappers.sync(cont_service.executeAction('install'))
-        container_client = container.client
+        container_client = Container.from_ays(cont_service).client
 
     container_client.json('ovs.bridge-add', {"bridge": "backplane"})
     container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
