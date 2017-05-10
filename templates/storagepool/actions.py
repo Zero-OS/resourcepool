@@ -124,6 +124,14 @@ def monitor(job):
 
         try:
             pool = node.storagepools.get(service.name)
-            pool.ays.monitor(service.aysrepo)
+            devices, status = pool.ays.get_devices_and_status()
+
+            service.model.data.init('devices', len(devices))
+            for i, device in enumerate(devices):
+                service.model.data.devices[i] = device
+
+            service.model.data.status = status
+            service.saveAll()
+
         except ValueError:
             job.logger.error("pool {} doesn't exist, cant monitor pool", service.name)
