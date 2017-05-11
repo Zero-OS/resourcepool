@@ -682,7 +682,7 @@ StoragePoolListItem:
     capacity:
       description: The amount of remaining free capacity left in the storagepool
     status:
-      enum: [healthy, degraded, error]
+      enum: [healthy, degraded, error, unknown]
       description: Status of the storage pool
 
 StoragePool:
@@ -695,7 +695,7 @@ StoragePool:
         Permitted characters: a-z,-
       type: string
     status:
-      enum: [healthy, degraded, error]
+      enum: [healthy, degraded, error, unknown]
       description: Status of the storage pool
     totalCapacity:
       description: The amount of storage this storagepool can hold in total in GiB

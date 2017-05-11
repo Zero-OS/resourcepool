@@ -1,4 +1,5 @@
-@0xb65823af76a98818;
+@0xf0888ece407d3f18;
+
 
 struct Schema {
     status @0 :Status;
@@ -20,12 +21,14 @@ struct Schema {
         healthy @0;
         degraded @1;
         removing @2;
+        unknown @3;
     }
 
     enum Status {
         healthy @0;
         degraded @1;
         error @2;
+        unknown @3;
     }
 
     enum Profile {
