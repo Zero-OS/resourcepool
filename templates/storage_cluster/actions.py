@@ -17,12 +17,6 @@ def input(job):
 
 def get_cluster(service):
     from JumpScale.sal.g8os.StorageCluster import StorageCluster
-    from JumpScale.sal.g8os.Node import Node
-
-    nodes = []
-    for node_service in service.producers['node']:
-        nodes.append(Node.from_ays(node_service))
-
     return StorageCluster.from_ays(service)
 
 
@@ -116,6 +110,7 @@ def init(job):
 
 
 def install(job):
+    job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
 
 
