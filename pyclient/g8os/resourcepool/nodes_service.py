@@ -76,7 +76,7 @@ class NodesService:
         return self.client.get(uri, headers, query_params, content_type)
 
 
-    def FileUpload(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+    def FileUpload(self, data, containername, nodeid, headers=None, query_params=None, content_type="multipart/form-data"):
         """
         Upload file to container
         It is method for POST /nodes/{nodeid}/containers/{containername}/filesystem
