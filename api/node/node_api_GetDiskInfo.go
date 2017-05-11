@@ -9,7 +9,6 @@ import (
 
 	"github.com/g8os/go-client"
 	"github.com/g8os/resourcepool/api/tools"
-	psdisk "github.com/shirou/gopsutil/disk"
 )
 
 // GetDiskInfo is the handler for GET /nodes/{nodeid}/disk
@@ -29,16 +28,10 @@ func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := client.Info(cl)
-	mountedDisks, err := info.Disk()
+	mounts, err := info.Disk()
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
-	}
-
-	mountedDisksMap := make(map[string]psdisk.PartitionStat, len(mountedDisks))
-
-	for _, mountedDisk := range mountedDisks {
-		mountedDisksMap[mountedDisk.Mountpoint] = mountedDisk
 	}
 
 	var respBody []DiskInfo
@@ -50,11 +43,13 @@ func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 		diskInfo.Device = strings.Join(device, "/")
 		diskInfo.Fstype = disk.Fstype
 
-		if disk.Mountpoint != "" {
-			diskInfo.Mountpoint = disk.Mountpoint
-			mDisk, ok := mountedDisksMap[disk.Mountpoint]
-			if ok {
-				diskInfo.Opts = mDisk.Opts
+		// disk information reflects info from any partition
+		for _, mount := range mounts {
+			if strings.HasPrefix(mount.Device, diskInfo.Device) {
+				diskInfo.Mountpoint = mount.Mountpoint
+				diskInfo.Opts = mount.Opts
+				diskInfo.Fstype = mount.Fstype
+				break
 			}
 		}
 
