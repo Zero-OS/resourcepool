@@ -267,12 +267,14 @@ NicLink:
   properties:
     id:
       type: string
-      description: VLAN tag or vxlanid
+      description: Required for VLAN tag or vxlanid ommited for default network
+      required: false
     type:
       enum: [vlan, vxlan, default]
       description: Type of NIC
     macaddress:
       type: string
+      required: false
       description: Phyiscal address of the NIC
 
 VDiskLink:

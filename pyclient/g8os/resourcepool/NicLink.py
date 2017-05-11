@@ -12,7 +12,7 @@ class NicLink(object):
     """
 
     @staticmethod
-    def create(id, macaddress, type):
+    def create(type, id=None, macaddress=None):
         """
         :type id: str
         :type macaddress: str
@@ -44,8 +44,6 @@ class NicLink(object):
                 self.id = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'macaddress'
         val = data.get(property_name)
@@ -55,8 +53,6 @@ class NicLink(object):
                 self.macaddress = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'type'
         val = data.get(property_name)
