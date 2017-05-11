@@ -1,17 +1,13 @@
 package storagecluster
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/g8os/resourcepool/api/tools"
 	"github.com/gorilla/mux"
-	cache "github.com/pmylund/go-cache"
 )
 
 // Ardb Struct that is used to map ardb service.
@@ -65,15 +61,6 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 	vars := mux.Vars(r)
 	label := vars["label"]
 
-	cacheKey := fmt.Sprintf("%s:%s", clusterInfoCacheKey, label)
-	if info, found := api.cache.Get(cacheKey); found {
-		log.Debugf("get %s cluster info from cache", label)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(info.([]byte))
-		return
-	}
-
 	//getting cluster service
 	service, res, err := api.AysAPI.Ays.GetServiceByName(label, "storage_cluster", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
@@ -123,13 +110,7 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 		DataStorage:     data,
 	}
 
-	buff := &bytes.Buffer{}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(buff).Encode(&respBody)
-
-	info := buff.Bytes()
-	api.cache.Set(cacheKey, info, cache.DefaultExpiration)
-	w.Write(info)
+	json.NewEncoder(w).Encode(&respBody)
 }
