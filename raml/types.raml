@@ -267,12 +267,20 @@ NicLink:
   properties:
     id:
       type: string
-      description: VLAN tag or vxlanid
+      description: |
+        Id for the specified network type
+          vlan: vlantag for the vlan
+          vxlan: vxlan id
+          default: id can be ommited
+          bridge: name of the bridge to connect to
+
+      required: false
     type:
-      enum: [vlan, vxlan, default]
+      enum: [vlan, vxlan, default, bridge]
       description: Type of NIC
     macaddress:
       type: string
+      required: false
       description: Phyiscal address of the NIC
 
 VDiskLink:
@@ -387,9 +395,15 @@ ContainerNIC:
   properties:
     type:
       description: Type of the interface
-      enum: [zerotier, vxlan, vlan, default]
+      enum: [zerotier, vxlan, vlan, default, bridge]
     id:
-      description: Id specific for interface type either vlantag vxlanid or zerotier networkid
+      description: |
+        Id for the specified network type
+          vlan: vlantag for the vlan
+          vxlan: vxlan id
+          zerotier: Zerotier network id
+          default: id can be ommited
+          bridge: name of the bridge to connect to
       type: string
     hwaddr:
       description: Mac address for the interface. If none, a random MAC address will be assigned

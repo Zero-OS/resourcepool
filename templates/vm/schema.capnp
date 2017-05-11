@@ -1,4 +1,4 @@
-@0x9e3b2bd4c67f73e9;
+@0xa7426da542a1e472;
 
 struct Schema {
     node @0: Text; # pointer to the parent service
@@ -38,6 +38,7 @@ struct Schema {
       default @0;
       vlan @1;
       vxlan @2;
+      bridge @3;
     }
 
 }

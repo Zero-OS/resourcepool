@@ -6,3 +6,4 @@ class EnumContainerNICType(Enum):
     vxlan = "vxlan"
     vlan = "vlan"
     default = "default"
+    bridge = "bridge"

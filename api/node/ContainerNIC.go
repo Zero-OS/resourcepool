@@ -25,6 +25,7 @@ func (s ContainerNIC) Validate() error {
 		EnumContainerNICTypevxlan:    struct{}{},
 		EnumContainerNICTypevlan:     struct{}{},
 		EnumContainerNICTypedefault:  struct{}{},
+		EnumContainerNICTypebridge:   struct{}{},
 	}
 
 	if err := validators.ValidateEnum("Type", s.Type, typeEnums); err != nil {

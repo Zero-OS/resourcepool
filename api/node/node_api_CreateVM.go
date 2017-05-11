@@ -17,15 +17,13 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -35,14 +33,12 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	// Create blueprint
 	userCloudInit, err := json.Marshal(reqBody.UserCloudInit)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	systemCloudInit, err := json.Marshal(reqBody.SystemCloudInit)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 	bp := struct {

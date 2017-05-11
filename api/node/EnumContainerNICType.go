@@ -7,4 +7,5 @@ const (
 	EnumContainerNICTypevxlan    EnumContainerNICType = "vxlan"
 	EnumContainerNICTypevlan     EnumContainerNICType = "vlan"
 	EnumContainerNICTypedefault  EnumContainerNICType = "default"
+	EnumContainerNICTypebridge   EnumContainerNICType = "bridge"
 )
