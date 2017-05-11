@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -51,6 +52,10 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	var mounts = make([]mount, len(reqBody.Filesystems))
 	for idx, filesystem := range reqBody.Filesystems {
 		parts := strings.Split(filesystem, ":")
+		if len(parts) != 2 {
+			tools.WriteError(w, http.StatusBadRequest, errors.New("filesystems format should be: pool:fs"))
+			return
+		}
 		storagepoolname := parts[0]
 		filesystemname := parts[1]
 
