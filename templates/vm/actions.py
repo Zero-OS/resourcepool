@@ -13,8 +13,12 @@ def input(job):
 
 
 def get_node(service):
-    from JumpScale.sal.g8os.Node import Node
-    return Node.from_ays(service.parent)
+    node_service = service.parent
+    return j.sal.g8os.get_node(
+        addr=node_service.model.data.redisAddr,
+        port=node_service.model.data.redisPort,
+        password=node_service.model.data.redisPassword or None
+    )
 
 
 def create_nbdserver_container(service, parent):
@@ -93,13 +97,13 @@ def init(job):
 
 
 def _start_nbds(service):
-    from JumpScale.sal.g8os.Container import Container
+    node = get_node(service)
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
     for nbdserver in service.producers.get('nbdserver', []):
         # build full path of the nbdserver unix socket on the host filesystem
-        container = Container.from_ays(nbdserver.parent)
+        container = node.containers.get(nbdserver.parent.name)
         if not container.is_running():
             # start container
             j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
@@ -283,8 +287,8 @@ def _diff(col1, col2):
 
 
 def updateDisks(job, client, args):
-    from JumpScale.sal.g8os.Container import Container
     service = job.service
+    node = get_node(service)
 
     vdisk_container = create_nbdserver_container(service, service.parent)
     uuid = get_domain(service)['uuid']
@@ -312,7 +316,7 @@ def updateDisks(job, client, args):
         for nbdserver in service.producers.get('nbdserver', []):
             nbdserver_name = nbdserver.name
             if nbdserver_name in old_disks_id:
-                container = Container.from_ays(nbdserver.parent)
+                container = node.containers.get(nbdserver.parent.name)
                 url = _nbd_url(container, nbdserver)
                 client.client.kvm.detach_disk(uuid, {'url': url})
                 j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))

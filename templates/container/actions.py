@@ -22,14 +22,52 @@ def input(job):
 
 
 def install(job):
+    job.logger.info("installing container %s", job.service.name)
     job.service.model.data.status = "halted"
     j.tools.async.wrappers.sync(job.service.executeAction('start'))
 
 
 def start(job):
-    from JumpScale.sal.g8os.Container import Container
+    service = job.service
+    node = j.sal.g8os.get_node(
+        addr=service.model.data.redisAddr,
+        port=service.model.data.redisPort,
+        password=service.model.data.redisPassword or None
+    )
 
-    container = Container.from_ays(job.service)
+    try:
+        container = node.containers.get(service.name)
+        job.logger.info("container %s already running", job.service.name)
+    except LookupError:
+        job.logger.info("creating container %s", job.service.name)
+        ports = {}
+        for portmap in service.model.data.ports:
+            source, dest = portmap.split(':')
+            ports[int(source)] = int(dest)
+
+        nics = [nic.to_dict() for nic in service.model.data.nics]
+
+        mounts = {}
+        for mount in service.model.data.mounts:
+            fs_service = service.aysrepo.serviceGet('filesystem', mount.filesystem)
+            try:
+                sp = node.storagepools.get(fs_service.parent.name)
+                fs = sp.get(fs_service.name)
+            except KeyError:
+                continue
+            mounts[fs.path] = mount.target
+
+        container = node.containers.create(
+            name=service.name,
+            flist=service.model.data.flist,
+            hostname=service.model.data.hostname,
+            mounts=mounts,
+            nics=nics,
+            host_network=service.model.data.hostNetworking,
+            ports=ports,
+            storage=service.model.data.storage,
+            init_processes=[p.to_dict() for p in service.model.data.initProcesses])
+
     container.start()
 
     if container.is_running():
@@ -39,23 +77,37 @@ def start(job):
 
 
 def stop(job):
-    from JumpScale.sal.g8os.Container import Container
+    service = job.service
+    node = j.sal.g8os.get_node(
+        addr=service.model.data.redisAddr,
+        port=service.model.data.redisPort,
+        password=service.model.data.redisPassword or None
+    )
+    try:
+        container = node.containers.get(service.name)
+        job.logger.info("stopping container %s", job.service.name)
+        container.stop()
+        if container.is_running():
+            raise j.exceptions.RuntimeError("container didn't stopped")
+    except LookupError:
+        job.logger.info("container %s already stopped", job.service.name)
+        pass
 
-    container = Container.from_ays(job.service)
-    container.stop()
-
-    if not container.is_running():
-        job.service.model.data.status = "halted"
-    else:
-        raise j.exceptions.RuntimeError("container didn't stopped")
+    job.service.model.data.status = "halted"
 
 
 def monitor(job):
     service = job.service
-    from JumpScale.sal.g8os.Container import Container
 
     if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service)
+        service = job.service
+        node = j.sal.g8os.get_node(
+            addr=service.model.data.redisAddr,
+            port=service.model.data.redisPort,
+            password=service.model.data.redisPassword or None
+        )
+
+        container = node.containers.get(service.name)
         running = container.is_running()
         if not running and service.model.data.status == 'running':
             try:
