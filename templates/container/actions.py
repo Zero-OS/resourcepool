@@ -22,6 +22,7 @@ def input(job):
 
 
 def install(job):
+    job.logger.info("installing container %s", job.service.name)
     job.service.model.data.status = "halted"
     j.tools.async.wrappers.sync(job.service.executeAction('start'))
 
@@ -34,7 +35,39 @@ def start(job):
         password=service.model.data.redisPassword or None
     )
 
-    container = node.containers.get(service.name)
+    try:
+        container = node.containers.get(service.name)
+        job.logger.info("container %s already running", job.service.name)
+    except LookupError:
+        job.logger.info("creating container %s", job.service.name)
+        ports = {}
+        for portmap in service.model.data.ports:
+            source, dest = portmap.split(':')
+            ports[int(source)] = int(dest)
+
+        nics = [nic.to_dict() for nic in service.model.data.nics]
+
+        mounts = {}
+        for mount in service.model.data.mounts:
+            fs_service = service.aysrepo.serviceGet('filesystem', mount.filesystem)
+            try:
+                sp = node.storagepools.get(fs_service.parent.name)
+                fs = sp.get(fs_service.name)
+            except KeyError:
+                continue
+            mounts[fs.path] = mount.target
+
+        container = node.containers.create(
+            name=service.name,
+            flist=service.model.data.flist,
+            hostname=service.model.data.hostname,
+            mounts=mounts,
+            nics=nics,
+            host_network=service.model.data.hostNetworking,
+            ports=ports,
+            storage=service.model.data.storage,
+            init_processes=[p.to_dict() for p in service.model.data.initProcesses])
+
     container.start()
 
     if container.is_running():
@@ -50,14 +83,17 @@ def stop(job):
         port=service.model.data.redisPort,
         password=service.model.data.redisPassword or None
     )
+    try:
+        container = node.containers.get(service.name)
+        job.logger.info("stopping container %s", job.service.name)
+        container.stop()
+        if container.is_running():
+            raise j.exceptions.RuntimeError("container didn't stopped")
+    except LookupError:
+        job.logger.info("container %s already stopped", job.service.name)
+        pass
 
-    container = node.containers.get(service.name)
-    container.stop()
-
-    if not container.is_running():
-        job.service.model.data.status = "halted"
-    else:
-        raise j.exceptions.RuntimeError("container didn't stopped")
+    job.service.model.data.status = "halted"
 
 
 def monitor(job):
