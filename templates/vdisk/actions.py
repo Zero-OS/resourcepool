@@ -41,14 +41,15 @@ def create_from_template_container(service, parent):
     if not it creates it.
     return the container service
     """
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.Node import Node
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
-    node = Node.from_ays(parent)
-    container = Container(name=container_name,
-                          flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
-                          host_network=True,
-                          node=node)
+    node = j.sal.g8os.get_node(
+        addr=parent.model.data.redisAddr,
+        port=parent.model.data.redisPort,
+        password=parent.model.data.redisPassword or None,
+    )
+    container = node.containers.create(name=container_name,
+                                       flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+                                       host_network=True)
     container.start()
     return container
 

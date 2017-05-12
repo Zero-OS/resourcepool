@@ -22,11 +22,14 @@ def get_cluster(service):
 
 def init(job):
     from JumpScale.sal.g8os.StorageCluster import StorageCluster
-    from JumpScale.sal.g8os.Node import Node
     service = job.service
     nodes = []
     for node_service in service.producers['node']:
-        nodes.append(Node.from_ays(node_service))
+        nodes.append(j.sal.g8os.get_node(
+            addr=node_service.model.data.redisAddr,
+            port=node_service.model.data.redisPort,
+            password=node_service.model.data.redisPassword or None
+        ))
     nodemap = {node.name: node for node in nodes}
 
     cluster = StorageCluster(service.name, nodes, service.model.data.diskType)

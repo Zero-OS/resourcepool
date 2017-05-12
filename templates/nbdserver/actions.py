@@ -2,8 +2,13 @@ from JumpScale import j
 
 
 def get_container(service):
-    from JumpScale.sal.g8os.Container import Container
-    return Container.from_ays(service.parent)
+    node_service = service.parent
+    node = j.sal.g8os.get_node(
+        addr=node_service.model.data.redisAddr,
+        port=node_service.model.data.redisPort,
+        password=node_service.model.data.redisPassword or None
+    )
+    return node.containers.get(service.name)
 
 
 def is_running(container, key):

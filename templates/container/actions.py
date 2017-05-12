@@ -27,9 +27,14 @@ def install(job):
 
 
 def start(job):
-    from JumpScale.sal.g8os.Container import Container
+    service = job.service
+    node = j.sal.g8os.get_node(
+        addr=service.model.data.redisAddr,
+        port=service.model.data.redisPort,
+        password=service.model.data.redisPassword or None
+    )
 
-    container = Container.from_ays(job.service)
+    container = node.containers.get(service.name)
     container.start()
 
     if container.is_running():
@@ -39,9 +44,14 @@ def start(job):
 
 
 def stop(job):
-    from JumpScale.sal.g8os.Container import Container
+    service = job.service
+    node = j.sal.g8os.get_node(
+        addr=service.model.data.redisAddr,
+        port=service.model.data.redisPort,
+        password=service.model.data.redisPassword or None
+    )
 
-    container = Container.from_ays(job.service)
+    container = node.containers.get(service.name)
     container.stop()
 
     if not container.is_running():
@@ -52,10 +62,16 @@ def stop(job):
 
 def monitor(job):
     service = job.service
-    from JumpScale.sal.g8os.Container import Container
 
     if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service)
+        service = job.service
+        node = j.sal.g8os.get_node(
+            addr=service.model.data.redisAddr,
+            port=service.model.data.redisPort,
+            password=service.model.data.redisPassword or None
+        )
+
+        container = node.containers.get(service.name)
         running = container.is_running()
         if not running and service.model.data.status == 'running':
             try:
