@@ -99,7 +99,8 @@ def try_authorize(service, logger, netid, member, zerotier):
         # it could happend that a node get a new ip after a reboot
         node.model.data.redisAddr = zerotier_ip
         node.model.data.status = 'running'
-
+        # after reboot we also wonna call install
+        j.tools.async.wrappers.sync(node.executeAction('install'))
     except j.exceptions.NotFound:
         # create and install the node.g8os service
         node_actor = service.aysrepo.actorGet('node.g8os')

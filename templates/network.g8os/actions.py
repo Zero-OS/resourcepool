@@ -91,26 +91,23 @@ def configure(job):
     if interface is None:
         raise j.exceptions.RuntimeError("No interface available")
 
-    ccontainers = node.producers.get("container", [])
-    for cont_service in ccontainers:
-        if cont_service.name == 'ovs':
-            container_client = Container.from_ays(cont_service).client
-            break
-    else:
-        actor = service.aysrepo.actorGet("container")
-        args = {
-            'node': node.name,
-            'flist': 'https://hub.gig.tech/gig-official-apps/ovs.flist',
-            'hostNetworking': True,
-        }
-        cont_service = actor.serviceCreate(instance='ovs', args=args)
-        j.tools.async.wrappers.sync(cont_service.executeAction('install'))
-        container_client = Container.from_ays(cont_service).client
-
-    container_client.json('ovs.bridge-add', {"bridge": "backplane"})
-    container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
-    node_client.system('ip address add {addr} dev backplane'.format(addr=storageaddr))
-    node_client.system('ip link set dev backplane up')
-    container_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
-    node_client.system('ip address add {addr} dev vxbackend'.format(addr=vxaddr))
-    node_client.system('ip link set dev vxbackend up')
+    actor = service.aysrepo.actorGet("container")
+    args = {
+        'node': node.name,
+        'hostname': 'ovs',
+        'flist': 'https://hub.gig.tech/gig-official-apps/ovs.flist',
+        'hostNetworking': True,
+    }
+    cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)
+    j.tools.async.wrappers.sync(cont_service.executeAction('install'))
+    container_client = Container.from_ays(cont_service).client
+    nicmap = {nic['name']: nic for nic in nics}
+    if 'backplane' not in nicmap:
+        container_client.json('ovs.bridge-add', {"bridge": "backplane"})
+        container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
+        node_client.system('ip address add {addr} dev backplane'.format(addr=storageaddr)).get()
+        node_client.system('ip link set dev backplane up').get()
+    if 'vxbackend' not in nicmap:
+        container_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
+        node_client.system('ip address add {addr} dev vxbackend'.format(addr=vxaddr)).get()
+        node_client.system('ip link set dev vxbackend up').get()
