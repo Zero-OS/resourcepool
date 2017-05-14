@@ -12,10 +12,11 @@ class Node(object):
     """
 
     @staticmethod
-    def create(hostname, id, status):
+    def create(hostname, id, ipaddress, status):
         """
         :type hostname: str
         :type id: str
+        :type ipaddress: str
         :type status: EnumNodeStatus
         :rtype: Node
         """
@@ -23,6 +24,7 @@ class Node(object):
         return Node(
             hostname=hostname,
             id=id,
+            ipaddress=ipaddress,
             status=status,
         )
 
@@ -53,6 +55,17 @@ class Node(object):
             datatypes = [str]
             try:
                 self.id = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'ipaddress'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.ipaddress = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
