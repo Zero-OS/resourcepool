@@ -11,7 +11,7 @@ if [ "$1" != "" ]; then
 fi
 
 apt-get update
-apt-get install -y git gcc zlib1g-dev make wget xz-utils libglib2.0-dev
+apt-get install -y git gcc zlib1g-dev make wget xz-utils libglib2.0-dev libaio-dev
 
 
 PERFORMANCE_TEST=/tmp/performance-test
