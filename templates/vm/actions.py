@@ -246,12 +246,12 @@ def migrate(job):
     service = job.service
 
     service.model.data.status = 'migrating'
-
-    args = job.model.args
-    if 'node' not in args:
+    
+    node = job.service.model.data.node
+    if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
-    target_node = service.aysrepo.serviceGet('node', args['node'])
+    target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     old_nbd = service.producers.get('nbdserver', [])
@@ -264,7 +264,6 @@ def migrate(job):
         job.logger.info("start nbd server for migration of vm {}".format(service.name))
         nbdserver = create_nbd(service, vdisk_container, vdisk)
         service.consume(nbdserver)
-        vdisk.model.data.node = target_node.name
 
     # TODO: migrate domain, not impleented yet in core0
 
@@ -380,13 +379,13 @@ def monitor(job):
 
 def update_data(job, args):
     service = job.service
-    service.model.data.memory = args['memory']
-    service.model.data.cpu = args['cpu']
+    service.model.data.node = args.get('node', service.model.data.node)
+    service.model.data.memory = args.get('memory', service.model.data.memory)
+    service.model.data.cpu = args.get('cpu', service.model.data.cpu)
 
 
 def processChange(job):
     service = job.service
-
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
