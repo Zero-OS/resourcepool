@@ -32,8 +32,20 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
-	_, res, err := api.AysAPI.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	srv, res, err := api.AysAPI.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
+		return
+	}
+
+	var vm VM
+	if err := json.Unmarshal(srv.Data, &vm); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if (vm.Memory != reqBody.Memory || vm.Cpu != reqBody.Cpu) && vm.Status != "halted" {
+		err = fmt.Errorf("Can't upate memory or CPU of VM %s while it's running", vm.Id)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
