@@ -380,11 +380,8 @@ def monitor(job):
 
 def update_data(job, args):
     service = job.service
-
     service.model.data.memory = args['memory']
     service.model.data.cpu = args['cpu']
-    stop(job)
-    start(job)
 
 
 def processChange(job):
