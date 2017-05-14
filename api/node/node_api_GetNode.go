@@ -26,14 +26,18 @@ func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var respBody Node
+	var respBody NodeService
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-	respBody.Id = service.Name
+	var node Node
+	node.IPAddress = respBody.RedisAddr
+	node.Status = respBody.Status
+	node.Hostname = respBody.Hostname
+	node.Id = service.Name
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&respBody)
+	json.NewEncoder(w).Encode(&node)
 }

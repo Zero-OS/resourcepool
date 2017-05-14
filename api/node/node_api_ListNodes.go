@@ -12,7 +12,7 @@ import (
 func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := map[string]interface{}{
-		"fields": "hostname,status,id",
+		"fields": "hostname,status,id,redisAddr",
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("node.g8os", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
@@ -21,15 +21,16 @@ func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 
 	var respBody = make([]Node, len(services))
 	for i, service := range services {
-		var node Node
+		var node NodeService
 		if err := json.Unmarshal(service.Data, &node); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err)
 			return
 		}
 
-		node.Id = service.Name
-
-		respBody[i] = node
+		respBody[i].IPAddress = node.RedisAddr
+		respBody[i].Status = node.Status
+		respBody[i].Hostname = node.Hostname
+		respBody[i].Id = service.Name
 	}
 
 	w.Header().Set("Content-Type", "application/json")
