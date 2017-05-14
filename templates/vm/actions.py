@@ -111,6 +111,14 @@ def _start_nbds(service):
     return medias
 
 
+def get_media_for_disk(medias, disk):
+    from urllib.parse import urlparse
+    for media in medias:
+        url = urlparse(media['url'])
+        if disk['vdiskid'] == url.path.lstrip('/'):
+            return media
+
+
 def install(job):
     import time
     service = job.service
@@ -125,6 +133,11 @@ def install(job):
         nic = nic.to_dict()
         nic['hwaddr'] = nic.pop('macaddress', None)
         nics.append(nic)
+    for disk in service.model.data.disks:
+        if disk.maxIOps > 0:
+            media = get_media_for_disk(medias, disk.to_dict())
+            media['iotune'] = {'totaliopssec': disk.maxIOps,
+                               'totaliopssecset': True}
 
     kvm = get_domain(service)
     if not kvm:
@@ -138,9 +151,9 @@ def install(job):
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
-            domain = get_domain(service)
-            if domain:
-                service.model.data.vnc = domain['vnc']
+            kvm = get_domain(service)
+            if kvm:
+                service.model.data.vnc = kvm['vnc']
                 break
             else:
                 time.sleep(3)
@@ -160,7 +173,6 @@ def get_domain(service):
     for kvm in node.client.kvm.list():
         if kvm['name'] == service.name:
             return kvm
-            break
 
 
 def stop(job):
@@ -322,14 +334,12 @@ def updateDisks(job, client, args):
     if new_disks != []:
         _init_nbd_services(job, vdisk_container, service.model.data.vdisks)
         medias = _start_nbds(service)
-        for media in medias:
-            client.client.kvm.attach_disk(uuid, media)
         for disk in new_disks:
-            if disk.maxIOps > 0:
-                client.client.kvm.limit_disk_io(uuid=uuid,
-                                                target=disk['vdiskid'],
-                                                totaliopssecmaxset=True,
-                                                totaliopssecmax=disk['maxIOps'])
+            media = get_media_for_disk(medias, disk)
+            if disk['maxIOps']:
+                media['iotune'] = {'totaliopssec': disk['maxIOps'],
+                                   'totaliopssecset': True}
+            client.client.kvm.attach_disk(uuid, media)
     service.saveAll()
 
 
