@@ -30,7 +30,6 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
     nodes = api.nodes.ListNodes().json()
     logging.info("Found %s ready nodes..." % (len(nodes)))
     nodeInfo = [(node['id'], node['ipaddress']) for node in nodes]
-    _deployCluster(resourcepoolserver, api, storagecluster, vdiskcount, nodeInfo)
 
     # Creating ndb container
     for idx, node in enumerate(nodeInfo):
@@ -213,23 +212,6 @@ def _create_fss(resourcepoolserver, cl, nodeID):
     logging.info(
         "Creating new filesystem...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
     return "{}:{}".format(pool, fs_id)
-
-
-def _deployCluster(resourcepoolserver, cl, cluster_name, vdisk_count, nodesInfo):
-    nodeIDs = [node[0] for node in nodesInfo]
-    test_storage_cluster = resourcepool.ClusterCreate.create(
-        driveType=resourcepool.EnumClusterCreateDriveType.hdd,
-        label=cluster_name,
-        nodes=nodeIDs,
-        servers=1,  # TODO: Get value from configuaration
-    )
-    req = json.dumps(test_storage_cluster.as_dict(), indent=4)
-
-    logging.info("Sending the following request to the resourcepool api:\nPOST /storageclusters\n\n%s" % req)
-
-    res = cl.storageclusters.DeployNewCluster(test_storage_cluster)
-    logging.info(
-        "Storagecluster is deploying.\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
 
 
 if __name__ == "__main__":
