@@ -1,6 +1,7 @@
 package node
 
 import (
+	"github.com/g8os/resourcepool/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -19,6 +20,12 @@ type CreateContainer struct {
 func (s CreateContainer) Validate() error {
 	for _, nic := range s.Nics {
 		if err := nic.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, fs := range s.Filesystems {
+		if err := validators.ValidateContainerFilesystem(fs); err != nil {
 			return err
 		}
 	}

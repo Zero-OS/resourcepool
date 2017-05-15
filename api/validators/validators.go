@@ -6,6 +6,7 @@ import (
 	"net"
 	"reflect"
 	"regexp"
+	"strings"
 
 	"gopkg.in/validator.v2"
 )
@@ -110,6 +111,14 @@ func ValidateEnum(fieldName string, value interface{}, enums map[interface{}]str
 func ValidateConditional(base1 interface{}, base2 interface{}, conditional interface{}, name string) error {
 	if base1 != base2 && conditional == "" {
 		return fmt.Errorf("%v: nil is not a valid value", name)
+	}
+	return nil
+}
+
+func ValidateContainerFilesystem(fs string) error {
+	parts := strings.Split(fs, ":")
+	if len(parts) != 2 {
+		return fmt.Errorf("Invalid Filesystems format")
 	}
 	return nil
 }
