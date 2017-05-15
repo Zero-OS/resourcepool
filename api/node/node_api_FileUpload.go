@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
+
 	client "github.com/g8os/go-client"
 	"github.com/g8os/resourcepool/api/tools"
+	"github.com/gorilla/mux"
 )
 
 // FileUpload is the handler for POST /node/{nodeid}/container/{containername}/filesystem
@@ -47,6 +50,9 @@ func (api NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	fs := client.Filesystem(container)
 
 	if err := fs.Upload(fd, path); err != nil {
+		vars := mux.Vars(r)
+		containerName := vars["containername"]
+		log.Errorf("Error uploading file to container '%s' at path '%s': %+v.\n", containerName, path, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}

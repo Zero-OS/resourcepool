@@ -5,8 +5,11 @@ import (
 
 	"fmt"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/g8os/go-client"
 	"github.com/g8os/resourcepool/api/tools"
+	"github.com/gorilla/mux"
 )
 
 // FileDownload is the handler for GET /nodes/{nodeid}/container/{containername}/filesystem
@@ -20,14 +23,19 @@ func (api NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
+		vars := mux.Vars(r)
+		log.Errorf("Failed to connect to container %v: %v", vars["containername"], err.Error())
 		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	fs := client.Filesystem(container)
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
 	if err := fs.Download(path, w); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
 }
