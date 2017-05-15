@@ -34,6 +34,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
 
     # Creating ndb container
     for idx, node in enumerate(nodeInfo):
+        containers = []
         nodeID = node[0]
         nodeIP = node[1]
 
@@ -42,6 +43,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
 
         # Create block device container and start nbd
         nbdContainer = "nbd_{}".format(str(time.time()).replace('.', ''))
+        containers.append(nbdContainer)
         nbdFlist = "https://hub.gig.tech/gig-official-apps/blockstor-master.flist"
         createContainer(resourcepoolserver, api, nodeID, [fss], nbdFlist, nbdContainer)
         nbdConfig = startNbd(api, nodeID, storagecluster, fss, nbdContainer, vdiskcount, vdisksize, vdisktype)
@@ -49,7 +51,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
         # Create and setup the test container
         fioFlist = "https://hub.gig.tech/gig-official-apps/performance-test.flist"
         createContainer(resourcepoolserver, api, nodeID, [fss], fioFlist, "bptest")
-
+        containers.append("bptest")
         # Load nbd kernel module
         nodeClient = g8core.Client(nodeIP)
         nodeClient.bash("modprobe nbd").get()
@@ -83,6 +85,12 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
                 break
             except:
                 time.sleep(1)
+        cleaningUp(api, nodeID, containers)
+
+
+def cleaningUp(cl, nodeID, containernames):
+    for name in containernames:
+        cl.nodes.DeleteContainer(name, nodeID)
 
 
 def nbdClientConnect(cl, nodeID, containername, nbdConfig):
@@ -123,7 +131,7 @@ def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
     res = cl.nodes.GetContainer(hostname, nodeID).json()
     start = time.time()
     while start + 60 > time.time():
-        time.sleep(1)
+        time.sleep(10)
         if res['status'] == 'running':
             break
         else:
