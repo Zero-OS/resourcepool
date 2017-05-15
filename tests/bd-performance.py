@@ -55,7 +55,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
         nodeClient.bash("modprobe nbd").get()
 
         filenames = nbdClientConnect(api, nodeID, "bptest", nbdConfig)
-        FIOCOMMAND = {
+        fioCommand = {
             'name': '/bin/fio',
             'pwd': '',
             'args': ['--iodepth=4',
@@ -70,12 +70,14 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
                      '--name=test1',
                      '--output-format=json'],
         }
-        api.nodes.StartContainerProcess(data=FIOCOMMAND, containername="bptest", nodeid=nodeID)
+        api.nodes.StartContainerProcess(data=fioCommand, containername="bptest", nodeid=nodeID)
 
         start = time.time()
         while start + (runtime * 2) > time.time():
             try:
-                res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID}).json()
+                res = api.nodes.FileDownload(containername="bptest",
+                                             nodeid=nodeID,
+                                             query_params={"path": '/%s.test.json' % nodeID}).json()
                 with open('%s/%s.test.json' % (resultdir, nodeID), 'w') as outfile:
                     json.dump(res, outfile)
                 break
@@ -87,12 +89,12 @@ def nbdClientConnect(cl, nodeID, containername, nbdConfig):
     filenames = ''
     for idx, val in enumerate(nbdConfig):
         nbdDisk = '/dev/nbd%s' % idx
-        NBDCLIENTCOMMAND = {
+        nbdClientCommand = {
             'name': '/bin/nbd-client',
             'pwd': '',
             'args': ['-N', val['vdiskID'], '-u', val['socketpath'], nbdDisk, '-b', '4096'],
         }
-        cl.nodes.StartContainerProcess(data=NBDCLIENTCOMMAND, containername="bptest", nodeid=nodeID)
+        cl.nodes.StartContainerProcess(data=nbdClientCommand, containername="bptest", nodeid=nodeID)
         filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
     return filenames
 
@@ -165,14 +167,18 @@ def startNbd(cl, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSiz
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         data = {"file": (yamlconfig)}
         time.sleep(1)
-        cl.nodes.FileUpload(containername=containername, nodeid=nodeID, data=data, query_params={"path": configpath})
+        cl.nodes.FileUpload(containername=containername,
+                            nodeid=nodeID,
+                            data=data,
+                            query_params={"path": configpath},
+                            content_type="multipart/form-data")
 
-        NBDCOMMAND = {
+        nbdCommand = {
             'name': '/bin/nbdserver',
             'pwd': '',
             'args': ['-protocol=unix', '-address=%s' % socketpath, '-config=%s' % configpath]
         }
-        cl.nodes.StartContainerProcess(data=NBDCOMMAND,
+        cl.nodes.StartContainerProcess(data=nbdCommand,
                                        containername=containername,
                                        nodeid=nodeID)
         nbdConfig.append({
