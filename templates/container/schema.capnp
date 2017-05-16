@@ -45,8 +45,8 @@ struct Schema {
     }
 
     enum Status{
-        running @0;
-        halted @1;
+        halted @0;
+        running @1;
     }
 
     enum NicType {

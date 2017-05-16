@@ -76,14 +76,13 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
         start = time.time()
         while start + (runtime * 2) > time.time():
             try:
-                res = api.nodes.FileDownload(containername="bptest",
-                                             nodeid=nodeID,
-                                             query_params={"path": '/%s.test.json' % nodeID}).json()
+                res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID}).json()
+            except:
+                time.sleep(1)
+            else:
                 with open('%s/%s.test.json' % (resultdir, nodeID), 'w') as outfile:
                     json.dump(res, outfile)
                 break
-            except:
-                time.sleep(1)
         cleaningUp(api, nodeID, containers)
 
 
@@ -130,10 +129,10 @@ def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
     res = cl.nodes.GetContainer(hostname, nodeID).json()
     start = time.time()
     while start + 60 > time.time():
-        time.sleep(10)
         if res['status'] == 'running':
             break
         else:
+            time.sleep(1)
             res = cl.nodes.GetContainer(hostname, nodeID).json()
 
 
@@ -173,7 +172,6 @@ def startNbd(cl, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSiz
 
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         data = {"file": (yamlconfig)}
-        time.sleep(1)
         cl.nodes.FileUpload(containername=containername,
                             nodeid=nodeID,
                             data=data,
