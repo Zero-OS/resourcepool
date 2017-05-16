@@ -74,15 +74,19 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
         api.nodes.StartContainerProcess(data=fioCommand, containername="bptest", nodeid=nodeID)
 
         start = time.time()
-        while start + (runtime * 2) > time.time():
+        while start + (runtime + 60) > time.time():
             try:
-                res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID}).json()
+                res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID})
+
+                if res.content == b'':
+                    time.sleep(1)
+                    continue
+
+                with open('%s/%s.test.json' % (resultdir, nodeID), 'wb') as outfile:
+                    outfile.write(res.content)
+                break
             except:
                 time.sleep(1)
-            else:
-                with open('%s/%s.test.json' % (resultdir, nodeID), 'w') as outfile:
-                    json.dump(res, outfile)
-                break
         cleaningUp(api, nodeID, containers)
 
 
