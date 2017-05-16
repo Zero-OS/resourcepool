@@ -77,16 +77,16 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
         while start + (runtime + 60) > time.time():
             try:
                 res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID})
-
+            except:
+                time.sleep(1)
+            else:
                 if res.content == b'':
                     time.sleep(1)
                     continue
 
                 with open('%s/%s.test.json' % (resultdir, nodeID), 'wb') as outfile:
                     outfile.write(res.content)
-                break
-            except:
-                time.sleep(1)
+                    break
         cleaningUp(api, nodeID, containers)
 
 
