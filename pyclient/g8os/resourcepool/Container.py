@@ -14,7 +14,7 @@ class Container(object):
     """
 
     @staticmethod
-    def create(filesystems, flist, hostNetworking, hostname, initprocesses, nics, ports, status, storage):
+    def create(filesystems, flist, hostNetworking, hostname, initprocesses, nics, ports, status, storage, name):
         """
         :type filesystems: list[str]
         :type flist: str
@@ -25,6 +25,7 @@ class Container(object):
         :type ports: list[str]
         :type status: EnumContainerStatus
         :type storage: str
+        :type name: str
         :rtype: Container
         """
 
@@ -38,6 +39,7 @@ class Container(object):
             ports=ports,
             status=status,
             storage=storage,
+            name=name,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -67,6 +69,17 @@ class Container(object):
             datatypes = [str]
             try:
                 self.flist = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'name'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.name = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
