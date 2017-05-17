@@ -2,7 +2,7 @@
 
 
 - Requirements:
-
+    * `pip3 install uvloop pyaml`
     * `pip3 install git+https://github.com/g8os/resourcepool.git#subdirectory=pyclient`
     * `pip3 install git+https://github.com/g8os/core0.git#subdirectory=pyclient`
 
@@ -23,5 +23,6 @@ Options:
   --vdiskType TEXT           Type of disk, should be: boot, db, cache, tmp
 
   --resultDir TEXT           Results directory path
+  --cleanup   FLAG           Remove test containers after finishing the test
   --help                     Show this message and exit.
 ```
