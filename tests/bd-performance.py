@@ -28,34 +28,47 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
     api = resourcepool.Client(resourcepoolserver).api
     logging.info("Discovering nodes in the cluster ...")
     nodes = api.nodes.ListNodes().json()
+    vdiskcount = int(vdiskcount / len(nodes))
     logging.info("Found %s ready nodes..." % (len(nodes)))
-    nodeInfo = [(node['id'], node['ipaddress']) for node in nodes]
+    nodeIDs = [node['id'] for node in nodes]
+    nodeIPs = [node['ipaddress'] for node in nodes]
 
-    # Creating ndb container
-    for idx, node in enumerate(nodeInfo):
-        containers = []
-        nodeID = node[0]
-        nodeIP = node[1]
+    deployInfo = deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype)
+    test(api, deployInfo, nodeIDs, runtime)
+    waitForData(api, nodeIDs, deployInfo, runtime, resultdir)
+    cleanUp(api, nodeIDs, deployInfo)
 
-        # Create filesystem to be shared amongst fio and nbd server contianers
-        fss = _create_fss(resourcepoolserver, api, nodeID)
 
-        # Create block device container and start nbd
-        nbdContainer = "nbd_{}".format(str(time.time()).replace('.', ''))
-        containers.append(nbdContainer)
-        nbdFlist = "https://hub.gig.tech/gig-official-apps/blockstor-master.flist"
-        createContainer(resourcepoolserver, api, nodeID, [fss], nbdFlist, nbdContainer)
-        nbdConfig = startNbd(api, nodeID, storagecluster, fss, nbdContainer, vdiskcount, vdisksize, vdisktype)
+def waitForData(api, nodeIDs, deployInfo, runtime, resultdir):
+    os.makedirs(os.path.dirname(resultdir), exist_ok=True)
+    for nodeID in nodeIDs:
+        start = time.time()
+        while start + (runtime + 120) > time.time():
+            try:
+                containername = deployInfo[nodeID]["testContainer"]
+                filepath = '/%s.test.json' % nodeID
+                res = api.nodes.FileDownload(containername=containername,
+                                             nodeid=nodeID,
+                                             query_params={"path": filepath})
+            except:
+                time.sleep(1)
+            else:
+                if res.content == b'':
+                    time.sleep(1)
+                    continue
+                file = '%s/%s.test.json' % (resultdir, nodeID)
+                logging.info("Saving test data in %s ..." % file)
+                with open(file, 'wb') as outfile:
+                    outfile.write(res.content)
+                    break
 
-        # Create and setup the test container
-        fioFlist = "https://hub.gig.tech/gig-official-apps/performance-test.flist"
-        createContainer(resourcepoolserver, api, nodeID, [fss], fioFlist, "bptest")
-        containers.append("bptest")
-        # Load nbd kernel module
-        nodeClient = g8core.Client(nodeIP)
-        nodeClient.bash("modprobe nbd").get()
 
-        filenames = nbdClientConnect(api, nodeID, "bptest", nbdConfig)
+def test(api, deployInfo, nodeIDs, runtime):
+    for nodeID in nodeIDs:
+        containername = deployInfo[nodeID]["testContainer"]
+        nbdConfig = deployInfo[nodeID]["nbdConfig"]
+        filenames = nbdClientConnect(api, nodeID, containername, nbdConfig)
+
         fioCommand = {
             'name': '/bin/fio',
             'pwd': '',
@@ -71,27 +84,66 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
                      '--name=test1',
                      '--output-format=json'],
         }
-        api.nodes.StartContainerProcess(data=fioCommand, containername="bptest", nodeid=nodeID)
-
-        start = time.time()
-        while start + (runtime * 2) > time.time():
-            try:
-                res = api.nodes.FileDownload(containername="bptest", nodeid=nodeID, query_params={"path": '/%s.test.json' % nodeID}).json()
-            except:
-                time.sleep(1)
-            else:
-                with open('%s/%s.test.json' % (resultdir, nodeID), 'w') as outfile:
-                    json.dump(res, outfile)
-                break
-        cleaningUp(api, nodeID, containers)
+        api.nodes.StartContainerProcess(data=fioCommand, containername=containername, nodeid=nodeID)
 
 
-def cleaningUp(cl, nodeID, containernames):
-    for name in containernames:
-        cl.nodes.DeleteContainer(name, nodeID)
+def cleanUp(api, nodeIDs, deployInfo):
+    logging.info("Cleaning up...")
+
+    for nodeID in nodeIDs:
+        nbdConfig = deployInfo[nodeID]["nbdConfig"]
+        nbdContainer = deployInfo[nodeID]["nbdContainer"]
+        testContainer = deployInfo[nodeID]["testContainer"]
+
+        for vdisk in nbdConfig:
+            deleteDiskCommand = {
+                'name': '/bin/g8stor',
+                'pwd': '',
+                'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["datastorage"])],
+            }
+            api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
+            deleteDiskCommand = {
+                'name': '/bin/g8stor',
+                'pwd': '',
+                'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["metadatastorage"])],
+            }
+            api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
+
+        api.nodes.DeleteContainer(nbdContainer, nodeID)
+        api.nodes.DeleteContainer(testContainer, nodeID)
 
 
-def nbdClientConnect(cl, nodeID, containername, nbdConfig):
+def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype):
+    deployInfo = {}
+    for idx, nodeID in enumerate(nodeIDs):
+        # Create filesystem to be shared amongst fio and nbd server contianers
+        fss = _create_fss(resourcepoolserver, api, nodeID)
+
+        # Create block device container and start nbd
+        nbdContainer = "nbd_{}".format(str(time.time()).replace('.', ''))
+        nbdFlist = "https://hub.gig.tech/gig-official-apps/blockstor-master.flist"
+        createContainer(resourcepoolserver, api, nodeID, [fss], nbdFlist, nbdContainer)
+        nbdConfig = startNbd(api, nodeID, storagecluster, fss, nbdContainer, vdiskcount, vdisksize, vdisktype)
+
+        # Create and setup the test container
+        testContainer = "bptest_{}".format(str(time.time()).replace('.', ''))
+        fioFlist = "https://hub.gig.tech/gig-official-apps/performance-test.flist"
+        createContainer(resourcepoolserver, api, nodeID, [fss], fioFlist, testContainer)
+        # Load nbd kernel module
+        nodeClient = g8core.Client(nodeIPs[idx])
+        nodeClient.bash("modprobe nbd").get()
+
+        deployInfo = {
+            nodeID: {
+                "nbdContainer": nbdContainer,
+                "testContainer": testContainer,
+                "nbdConfig": nbdConfig,
+            },
+        }
+    return deployInfo
+
+
+def nbdClientConnect(api, nodeID, containername, nbdConfig):
     filenames = ''
     for idx, val in enumerate(nbdConfig):
         nbdDisk = '/dev/nbd%s' % idx
@@ -100,7 +152,9 @@ def nbdClientConnect(cl, nodeID, containername, nbdConfig):
             'pwd': '',
             'args': ['-N', val['vdiskID'], '-u', val['socketpath'], nbdDisk, '-b', '4096'],
         }
-        cl.nodes.StartContainerProcess(data=nbdClientCommand, containername="bptest", nodeid=nodeID)
+        res = api.nodes.StartContainerProcess(data=nbdClientCommand, containername=containername, nodeid=nodeID)
+
+        logging.info("Executing '/bin/nbd-client'. You can follow here: %s" % (res.headers['Location']))
         filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
     return filenames
 
@@ -113,14 +167,14 @@ def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
                                               initprocesses=[],
                                               nics=[],
                                               ports=[],
-                                              status=resourcepool.EnumContainerStatus.halted,
                                               storage='',
-                                              name=hostname)
+                                              name=hostname,
+                                              status="halted")
 
     req = json.dumps(container.as_dict(), indent=4)
-
     link = "POST /nodes/{nodeid}/containers".format(nodeid=nodeID)
     logging.info("Sending the following request to the /containers api:\n{}\n\n{}".format(link, req))
+
     res = cl.nodes.CreateContainer(nodeid=nodeID, data=container)
     logging.info(
         "Creating new container...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
@@ -150,15 +204,19 @@ def startNbd(cl, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSiz
         }
 
         res = cl.storageclusters.GetClusterInfo(storagecluster).json()
+        datastorages = []
+        metadatastorage = ''
         for storage in res.get('dataStorage', []):
-            clusterconfig['dataStorage'].append("%s:%s" % (storage['ip'], storage['port']))
+            datastorages.append("%s:%s" % (storage['ip'], storage['port']))
+            clusterconfig['dataStorage'].append({"address": "%s:%s" % (storage['ip'], storage['port'])})
 
         for storage in res.get('metadataStorage', []):
-            clusterconfig['metadataStorage'] = "%s:%s" % (storage['ip'], storage['port'])
+            metadatastorage = "%s:%s" % (storage['ip'], storage['port'])
+            clusterconfig['metadataStorage'] = {"address": "%s:%s" % (storage['ip'], storage['port'])}
 
         vdiskID = "testvdisk_{}".format(str(time.time()).replace('.', ''))
         vdiskconfig = {
-            'blocksize': 4096,
+            'blockSize': 4096,
             'id': vdiskID,
             'readOnly': False,
             'size': vdiskSize,
@@ -186,9 +244,12 @@ def startNbd(cl, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSiz
         cl.nodes.StartContainerProcess(data=nbdCommand,
                                        containername=containername,
                                        nodeid=nodeID)
+        logging.info("Starting nbdserver on node: %s", nodeID)
         nbdConfig.append({
             "socketpath": socketpath,
             "vdiskID": vdiskID,
+            "datastorage": datastorages,
+            "metadatastorage": metadatastorage,
         })
 
     return nbdConfig
