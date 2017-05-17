@@ -17,6 +17,7 @@ from .CreateContainer import CreateContainer
 from .CreateSnapshotReqBody import CreateSnapshotReqBody
 from .DeleteFile import DeleteFile
 from .DiskInfo import DiskInfo
+from .DiskPartition import DiskPartition
 from .EnumBridgeCreateNetworkMode import EnumBridgeCreateNetworkMode
 from .EnumBridgeStatus import EnumBridgeStatus
 from .EnumClusterCreateDriveType import EnumClusterCreateDriveType
@@ -57,6 +58,7 @@ from .MemInfo import MemInfo
 from .NicInfo import NicInfo
 from .NicLink import NicLink
 from .Node import Node
+from .NodeMount import NodeMount
 from .OSInfo import OSInfo
 from .Process import Process
 from .ProcessSignal import ProcessSignal

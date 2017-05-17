@@ -1,61 +1,83 @@
 """
-Auto-generated class for DiskInfo
+Auto-generated class for DiskPartition
 """
-from .DiskPartition import DiskPartition
-from .EnumDiskInfoType import EnumDiskInfoType
 
 from . import client_support
 
 
-class DiskInfo(object):
+class DiskPartition(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(device, partitions, size, type):
+    def create(fstype, label, name, partuuid, size):
         """
-        :type device: str
-        :type partitions: list[DiskPartition]
+        :type fstype: str
+        :type label: str
+        :type name: str
+        :type partuuid: str
         :type size: int
-        :type type: EnumDiskInfoType
-        :rtype: DiskInfo
+        :rtype: DiskPartition
         """
 
-        return DiskInfo(
-            device=device,
-            partitions=partitions,
+        return DiskPartition(
+            fstype=fstype,
+            label=label,
+            name=name,
+            partuuid=partuuid,
             size=size,
-            type=type,
         )
 
     def __init__(self, json=None, **kwargs):
         if not json and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'DiskInfo'
+        class_name = 'DiskPartition'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'device'
+        property_name = 'fstype'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.device = client_support.val_factory(val, datatypes)
+                self.fstype = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'partitions'
+        property_name = 'label'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [DiskPartition]
+            datatypes = [str]
             try:
-                self.partitions = client_support.list_factory(val, datatypes)
+                self.label = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'name'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.name = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'partuuid'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.partuuid = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
@@ -67,17 +89,6 @@ class DiskInfo(object):
             datatypes = [int]
             try:
                 self.size = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'type'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [EnumDiskInfoType]
-            try:
-                self.type = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

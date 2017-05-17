@@ -20,14 +20,30 @@ func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	srv, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting info about vdisk %s", vdiskID)) {
+		return
+	}
+
+	var vDisk Vdisk
+	if err := json.Unmarshal(srv.Data, &vDisk); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if vDisk.Size > reqBody.NewSize {
+		err := fmt.Errorf("newSize: %v is smaller than current size %v.", reqBody.NewSize, vDisk.Size)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 

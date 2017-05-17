@@ -109,7 +109,7 @@ def processChange(job):
             updateDevices(service, pool, devices)
             pool.ays.create(service.aysrepo)
         except ValueError:
-            job.logger.error("pool {} doesn't exist, cant update devices", service.name)
+            job.logger.error("pool %s doesn't exist, cant update devices", service.name)
 
 
 def monitor(job):
@@ -134,4 +134,4 @@ def monitor(job):
             service.saveAll()
 
         except ValueError:
-            job.logger.error("pool {} doesn't exist, cant monitor pool", service.name)
+            job.logger.error("pool %s doesn't exist, cant monitor pool", service.name)

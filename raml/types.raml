@@ -1,9 +1,9 @@
 #%RAML 1.0 DataType
 
-# Grid Stateless API types
+# G8OS resource pool API types
 Node:
   type: object
-  description: Node node in the g8os grid
+  description: Node in the G8OS resource pool
   properties:
     id: string
     ipaddress: string
@@ -80,26 +80,57 @@ NicInfo:
 
 DiskInfo:
   type: object
-  description: Information about DiskInfo
+  description: Information about the disks.
   properties:
     device:
       type: string
       description: Name of the device
-    fstype:
-      type: string
-      description: Type of filesystem
-    mountpoint:
-      type: string
-      description: Mount point of the device
-    opts:
-      type: string
-      description: Mount options
     size:
       type: integer
       description: Size of the disk in GiB
     type:
       enum: [ssd, nvme, hdd, archive]
       description: Kind of disk
+    partitions:
+      type: DiskPartition[]
+      description: List of the disk's partitions
+
+DiskPartition:
+  type: object
+  description: Information about the disk partition
+  properties:
+    name:
+      type: string
+      description: Name of the partition e.g. /dev/sda1
+    size:
+      type: integer
+      description: Size of the disk in GiB
+    partuuid:
+      type: string
+      description: PartUUID of the partition
+    label:
+      type: string
+      description: Partition label
+    fstype:
+      type: string
+      description: Partition filesystem type
+
+NodeMount:
+  type: object
+  description: Information about the disk mountpoint
+  properties:
+    mountpoint:
+      type: string
+      description: Mountpoint name
+    device:
+      type: string
+      description: Device name
+    opts:
+      type: string
+      description: Mountpoint options
+    fstype:
+      type: string
+      description: Mountpoint filesystem type
 
 BridgeCreate:
   type: object

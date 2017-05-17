@@ -8,6 +8,7 @@ apt-get install -y debootstrap
 
 mkdir /mnt/ubuntu
 debootstrap --arch amd64 xenial /mnt/ubuntu
+sed -i "s/main/main multiverse universe/" /mnt/ubuntu/etc/apt/sources.list
 
 cd /mnt/ubuntu
 

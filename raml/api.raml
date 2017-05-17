@@ -1,5 +1,5 @@
 #%RAML 1.0
-title: G8OS Stateless GRID
+title: G8OS Resource Pool API Server
 version: v1.1.0-alpha
 mediaType:  application/json
 
@@ -129,6 +129,16 @@ types:
             body:
               application/json:
                 type: DiskInfo[]
+    /mounts:
+      get:
+        (DirectAccess):
+        displayName: GetNodeMounts
+        description: Get detailed information of all the mountpoints on the node
+        responses:
+          200:
+            body:
+              application/json:
+                type: NodeMount[]
     /mem:
       get:
         (DirectAccess):

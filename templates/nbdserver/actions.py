@@ -44,8 +44,8 @@ def install(job):
         cluster = StorageCluster.from_ays(storageclusterservice)
         clusterconfig = cluster.get_config()
         rootclustername = str(uuid.uuid4())
-        rootcluster = {'dataStorage': [rootardb], 'metadataStorage': rootardb}
-        vdiskconfig = {'blocksize': vdiskservice.model.data.blocksize,
+        rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
+        vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
                        'id': vdiskservice.name,
                        'readOnly': vdiskservice.model.data.readOnly,
                        'size': vdiskservice.model.data.size,

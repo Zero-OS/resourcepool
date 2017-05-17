@@ -1,13 +1,15 @@
-# g8os-resourcepool
+# Python Client
 
-g8os-resourcepool is the python client used to talk to [G8OS Resource Pool rest api](https://github.com/g8os/grid)
+g8os-resourcepool is the Python client used to talk to [G8OS Resource Pool API](https://github.com/g8os/resourcepool)
 
-## install
+## Install
+
 ```bash
 pip install g8os-resourcepool
 ```
 
-## How to use:
+## How to use
+
 ```python
 In [9]: from g8os import resourcepool
 
@@ -22,9 +24,8 @@ Out[11]:
  {'hostname': '', 'id': '2c600cbc23bc', 'status': 'running'}]
 ```
 
-## To update the client from the raml file
+## To update the client from the RAML file
 
 ```shell
 go-raml client -l python --ramlfile raml/api.raml --dir pyclient/g8os/resourcepool
 ```
-

@@ -22,7 +22,7 @@ def install(job):
                     masterardb = urlparse(config['globals']['storage']).netloc
                 else:
                     masterardb = template.netloc
-                CMD = '/bin/copyvdisk {src_name} {dst_name} {masterardb} {clusterardb}'
+                CMD = '/bin/g8stor copy deduped {src_name} {dst_name} {masterardb} {clusterardb}'
                 cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), clusterardb=clusterardb,
                                  masterardb=masterardb)
             else:
@@ -30,7 +30,7 @@ def install(job):
             print(cmd)
             result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
-                raise j.exceptions.RuntimeError("Failed to copyvdisk {} {}".format(result.stdout, result.stderr))
+                raise j.exceptions.RuntimeError("Failed to run g8stor copy {} {}".format(result.stdout, result.stderr))
 
         finally:
             volume_container.stop()

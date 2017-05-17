@@ -346,6 +346,15 @@ class NodesService:
         return self.client.get(uri, headers, query_params, content_type)
 
 
+    def GetNodeMounts(self, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get detailed information of all the mountpoints on the node
+        It is method for GET /nodes/{nodeid}/mounts
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/mounts"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
     def GetNicInfo(self, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Get detailed information about the network interfaces in the node
