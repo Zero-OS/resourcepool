@@ -133,14 +133,26 @@ def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount
         nodeClient = g8core.Client(nodeIPs[idx])
         nodeClient.bash("modprobe nbd").get()
 
-        deployInfo = {
-            nodeID: {
+        deployInfo[nodeID] = {
                 "nbdContainer": nbdContainer,
                 "testContainer": testContainer,
                 "nbdConfig": nbdConfig,
-            },
         }
     return deployInfo
+
+
+def waitProcess(cl, command, jobid, nodeID, containername, state="SUCCESS"):
+    res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
+    start = time.time()
+    while start + 10 > time.time():
+        if res["state"] == state:
+            return True
+        elif res["state"] == "ERROR":
+            logging.error("Command %s failed to execute successfully. %s" % (command, res["stderr"]))
+            break
+        else:
+            time.sleep(0.5)
+            res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
 
 
 def nbdClientConnect(api, nodeID, containername, nbdConfig):
@@ -153,8 +165,8 @@ def nbdClientConnect(api, nodeID, containername, nbdConfig):
             'args': ['-N', val['vdiskID'], '-u', val['socketpath'], nbdDisk, '-b', '4096'],
         }
         res = api.nodes.StartContainerProcess(data=nbdClientCommand, containername=containername, nodeid=nodeID)
-
-        logging.info("Executing '/bin/nbd-client'. You can follow here: %s" % (res.headers['Location']))
+        jobid = res.headers["Location"].split("/")[-1]
+        waitProcess(api, nbdClientCommand, jobid, containername, nodeID)
         filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
     return filenames
 
