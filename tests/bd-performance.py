@@ -40,7 +40,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
 
 
 def waitForData(api, nodeIDs, deployInfo, runtime, resultdir):
-    os.makedirs(os.path.dirname(resultdir), exist_ok=True)
+    os.makedirs(resultdir, exist_ok=True)
     for nodeID in nodeIDs:
         start = time.time()
         while start + (runtime + 120) > time.time():
