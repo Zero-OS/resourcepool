@@ -76,7 +76,7 @@ def test(api, deployInfo, nodeIDs, runtime):
                      '--ioengine=libaio',
                      '--size=1000M',
                      '--readwrite=randrw',
-                     '--rwmixwrite=80',
+                     '--rwmixwrite=20',
                      '--filename=%s' % filenames,
                      '--runtime=%s' % runtime,
                      '--output=%s.test.json' % nodeID,
