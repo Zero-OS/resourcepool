@@ -33,10 +33,15 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
     nodeIDs = [node['id'] for node in nodes]
     nodeIPs = [node['ipaddress'] for node in nodes]
 
-    deployInfo = deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype)
-    test(api, deployInfo, nodeIDs, runtime)
-    waitForData(api, nodeIDs, deployInfo, runtime, resultdir)
-    cleanUp(api, nodeIDs, deployInfo)
+    deployInfo = {}
+    try:
+        deployInfo = deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype)
+        test(api, deployInfo, nodeIDs, runtime)
+        waitForData(api, nodeIDs, deployInfo, runtime, resultdir)
+    except Exception as e:
+        raise RuntimeError(e)
+    finally:
+        cleanUp(api, nodeIDs, deployInfo)
 
 
 def waitForData(api, nodeIDs, deployInfo, runtime, resultdir):
@@ -91,26 +96,27 @@ def cleanUp(api, nodeIDs, deployInfo):
     logging.info("Cleaning up...")
 
     for nodeID in nodeIDs:
-        nbdConfig = deployInfo[nodeID]["nbdConfig"]
-        nbdContainer = deployInfo[nodeID]["nbdContainer"]
-        testContainer = deployInfo[nodeID]["testContainer"]
+        if deployInfo.get(nodeID, None):
+            nbdConfig = deployInfo[nodeID]["nbdConfig"]
+            nbdContainer = deployInfo[nodeID]["nbdContainer"]
+            testContainer = deployInfo[nodeID]["testContainer"]
 
-        for vdisk in nbdConfig:
-            deleteDiskCommand = {
-                'name': '/bin/g8stor',
-                'pwd': '',
-                'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["datastorage"])],
-            }
-            api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
-            deleteDiskCommand = {
-                'name': '/bin/g8stor',
-                'pwd': '',
-                'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["metadatastorage"])],
-            }
-            api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
+            for vdisk in nbdConfig:
+                deleteDiskCommand = {
+                    'name': '/bin/g8stor',
+                    'pwd': '',
+                    'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["datastorage"])],
+                }
+                api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
+                deleteDiskCommand = {
+                    'name': '/bin/g8stor',
+                    'pwd': '',
+                    'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["metadatastorage"])],
+                }
+                api.nodes.StartContainerProcess(data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
 
-        api.nodes.DeleteContainer(nbdContainer, nodeID)
-        api.nodes.DeleteContainer(testContainer, nodeID)
+            api.nodes.DeleteContainer(nbdContainer, nodeID)
+            api.nodes.DeleteContainer(testContainer, nodeID)
 
 
 def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype):
@@ -166,22 +172,20 @@ def nbdClientConnect(api, nodeID, containername, nbdConfig):
         }
         res = api.nodes.StartContainerProcess(data=nbdClientCommand, containername=containername, nodeid=nodeID)
         jobid = res.headers["Location"].split("/")[-1]
-        waitProcess(api, nbdClientCommand, jobid, containername, nodeID)
+        waitProcess(api, nbdClientCommand, jobid, nodeID, containername)
         filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
     return filenames
 
 
 def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
-    container = resourcepool.Container.create(filesystems=fs,
-                                              flist=flist,
-                                              hostNetworking=True,
-                                              hostname=hostname,
-                                              initprocesses=[],
-                                              nics=[],
-                                              ports=[],
-                                              storage='',
-                                              name=hostname,
-                                              status="halted")
+    container = resourcepool.CreateContainer.create(filesystems=fs,
+                                                    flist=flist,
+                                                    hostNetworking=True,
+                                                    hostname=hostname,
+                                                    initProcesses=[],
+                                                    nics=[],
+                                                    ports=[],
+                                                    name=hostname)
 
     req = json.dumps(container.as_dict(), indent=4)
     link = "POST /nodes/{nodeid}/containers".format(nodeid=nodeID)
@@ -205,26 +209,26 @@ def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
 def startNbd(cl, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSize, vdiskType):
     # Start nbd servers
     nbdConfig = []
+    res = cl.storageclusters.GetClusterInfo(storagecluster).json()
+    datastorages = []
+    metadatastorage = ''
+
+    clusterconfig = {
+        'dataStorage': [],
+    }
+    for storage in res.get('dataStorage', []):
+        datastorages.append("%s:%s" % (storage['ip'], storage['port']))
+        clusterconfig['dataStorage'].append({"address": "%s:%s" % (storage['ip'], storage['port'])})
+
+    for storage in res.get('metadataStorage', []):
+        metadatastorage = "%s:%s" % (storage['ip'], storage['port'])
+        clusterconfig['metadataStorage'] = {"address": "%s:%s" % (storage['ip'], storage['port'])}
+
     for i in range(vdiskCount):
         # Run nbd
         fs = fs.replace(':', os.sep)
         socketpath = '/fs/{}/server.socket.{}{}'.format(fs, containername, i)
         configpath = "/{}{}.config".format(containername, i)
-
-        clusterconfig = {
-            'dataStorage': [],
-        }
-
-        res = cl.storageclusters.GetClusterInfo(storagecluster).json()
-        datastorages = []
-        metadatastorage = ''
-        for storage in res.get('dataStorage', []):
-            datastorages.append("%s:%s" % (storage['ip'], storage['port']))
-            clusterconfig['dataStorage'].append({"address": "%s:%s" % (storage['ip'], storage['port'])})
-
-        for storage in res.get('metadataStorage', []):
-            metadatastorage = "%s:%s" % (storage['ip'], storage['port'])
-            clusterconfig['metadataStorage'] = {"address": "%s:%s" % (storage['ip'], storage['port'])}
 
         vdiskID = "testvdisk_{}".format(str(time.time()).replace('.', ''))
         vdiskconfig = {
