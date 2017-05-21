@@ -38,13 +38,13 @@ def create_nbdserver_container(service, parent):
     return containerservice
 
 
-def create_nbd(service, container, vdisk):
+def create_nbd(service, container):
     """
-    first check if the nbd server for a specific vdisk exists.
+    first check if the nbd server exists.
     if not it creates it.
     return the nbdserver service
     """
-    nbd_name = vdisk.name
+    nbd_name = service.name
 
     try:
         nbdserver = service.aysrepo.serviceGet(role='nbdserver', instance=nbd_name)
@@ -59,28 +59,20 @@ def create_nbd(service, container, vdisk):
             'container': container.name,
         }
         nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)
-
     return nbdserver
 
 
-def _init_nbd_services(job, vdisk_container, vdisks):
+def _init_nbd_services(job, vdisk_container):
     service = job.service
-    for vdisk in vdisks:
-        if isinstance(vdisk, str):
-            try:
-                vdisk = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
-            except j.exceptions.NotFound:
-                raise j.exceptions.RuntimeError("Service vdisk!{} not found".format(vdisk))
-
-        job.logger.info("creates nbd server for vm {}".format(service.name))
-        nbdserver = create_nbd(service, vdisk_container, vdisk)
-        service.consume(nbdserver)
+    nbdserver = create_nbd(service, vdisk_container)
+    job.logger.info("creates nbd server for vm {}".format(service.name))
+    service.consume(nbdserver)
 
 
-def _nbd_url(container, nbdserver):
+def _nbd_url(container, nbdserver, vdisk):
     container_root = container.info['container']['root']
     socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
-    return 'nbd+unix:///{id}?socket={socket}'.format(id=nbdserver.model.name, socket=socket_path)
+    return 'nbd+unix:///{id}?socket={socket}'.format(id=vdisk, socket=socket_path)
 
 
 def init(job):
@@ -89,7 +81,7 @@ def init(job):
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
     vdisk_container = create_nbdserver_container(service, service.parent)
-    _init_nbd_services(job, vdisk_container, service.producers.get('vdisk', []))
+    _init_nbd_services(job, vdisk_container)
 
 
 def _start_nbds(service):
@@ -97,16 +89,20 @@ def _start_nbds(service):
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    for nbdserver in service.producers.get('nbdserver', []):
-        # build full path of the nbdserver unix socket on the host filesystem
-        container = Container.from_ays(nbdserver.parent)
-        if not container.is_running():
-            # start container
-            j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
+    nbdservers = service.producers.get('nbdserver', None)
+    if not nbdservers:
+        raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
+    nbdserver = nbdservers[0]
+    # build full path of the nbdserver unix socket on the host filesystem
+    container = Container.from_ays(nbdserver.parent)
+    if not container.is_running():
+        # start container
+        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
 
-        # make sure the nbdserver is started
-        j.tools.async.wrappers.sync(nbdserver.executeAction('start'))
-        url = _nbd_url(container, nbdserver)
+    # make sure the nbdserver is started
+    j.tools.async.wrappers.sync(nbdserver.executeAction('start'))
+    for vdisk in service.model.data.vdisks:
+        url = _nbd_url(container, nbdserver, vdisk)
         medias.append({'url': url})
     return medias
 
@@ -273,10 +269,9 @@ def migrate(job):
 
     # start new nbdserver on target node
     vdisk_container = create_nbdserver_container(service, target_node)
-    for vdisk in service.producers.get('vdisk', []):
-        job.logger.info("start nbd server for migration of vm {}".format(service.name))
-        nbdserver = create_nbd(service, vdisk_container, vdisk)
-        service.consume(nbdserver)
+    job.logger.info("start nbd server for migration of vm {}".format(service.name))
+    nbdserver = create_nbd(service, vdisk_container)
+    service.consume(nbdserver)
 
     # TODO: migrate domain, not impleented yet in core0
 
@@ -334,18 +329,16 @@ def updateDisks(job, client, args):
 
     # Detatching and Cleaning old disks
     if old_disks != []:
-        for nbdserver in service.producers.get('nbdserver', []):
-            nbdserver_name = nbdserver.name
-            if nbdserver_name in old_disks_id:
-                container = Container.from_ays(nbdserver.parent)
-                url = _nbd_url(container, nbdserver)
-                client.client.kvm.detach_disk(uuid, {'url': url})
-                j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
-                j.tools.async.wrappers.sync(nbdserver.delete())
+        nbdserver = service.producers.get('nbdserver', [])
+        for old_disk in old_disks:
+            container = Container.from_ays(nbdserver.parent)
+            url = _nbd_url(container, nbdserver, old_disk)
+            client.client.kvm.detach_disk(uuid, {'url': url})
+            j.tools.async.wrappers.sync(nbdserver.executeAction('install'))
 
     # Attaching new disks
     if new_disks != []:
-        _init_nbd_services(job, vdisk_container, service.model.data.vdisks)
+        _init_nbd_services(job, vdisk_container)
         medias = _start_nbds(service)
         for disk in new_disks:
             media = get_media_for_disk(medias, disk)
