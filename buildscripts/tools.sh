@@ -1,3 +1,24 @@
+aptupdate() {
+    force=$1
+    lastupdate=$(stat /var/cache/apt/pkgcache.bin | grep Modify | awk '{print $2}')
+    today=$(date +%Y-%m-%d)
+    if [ "$lastupdate" != "$today" ]; then
+        force=y
+    fi
+    if [ -n "$force" ]; then
+        apt-get update
+    fi
+
+}
+
+aptinstall() {
+    name=$1
+    if ! which $name; then
+        aptupdate
+        apt-get install -y $name
+    fi
+}
+
 copypkg() {
    pkgname=$1
    target=$2
@@ -32,6 +53,8 @@ ensure_lddcopy() {
 }
 
 ensure_go() {
+   aptinstall curl
+   aptinstall git
    if ! which go; then
       curl https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz > /tmp/go1.8.linux-amd64.tar.gz
       tar -C /usr/local -xzf /tmp/go1.8.linux-amd64.tar.gz

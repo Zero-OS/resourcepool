@@ -10,9 +10,6 @@ if [ "$1" != "" ]; then
     branch="$1"
 fi
 
-apt-get update
-apt-get install -y curl git
-
 BLOCKSTOR=$GOPATH/src/github.com/g8os/blockstor
 
 pushd $BLOCKSTOR
