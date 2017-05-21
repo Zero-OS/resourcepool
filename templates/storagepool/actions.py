@@ -93,16 +93,15 @@ def updateDevices(service, pool, devices):
 
 def processChange(job):
     service = job.service
-    pservice = service.parent
-    node = j.sal.g8os.get_node(
-        addr=pservice.model.data.redisAddr,
-        port=pservice.model.data.redisPort,
-        password=pservice.model.data.redisPassword or None,
-    )
-
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema":
+        pservice = service.parent
+        node = j.sal.g8os.get_node(
+            addr=pservice.model.data.redisAddr,
+            port=pservice.model.data.redisPort,
+            password=pservice.model.data.redisPassword or None,
+        )
         try:
             pool = node.storagepools.get(service.name)
             devices = [d['device'] for d in args['devices']]

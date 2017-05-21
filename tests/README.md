@@ -23,5 +23,6 @@ Options:
   --vdiskType TEXT           Type of disk, should be: boot, db, cache, tmp
 
   --resultDir TEXT           Results directory path
+  --nodeLimit                Limit the number of nodes
   --help                     Show this message and exit.
 ```

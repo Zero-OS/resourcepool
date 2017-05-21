@@ -1,4 +1,4 @@
-@0x9c644375c5885f01;
+@0x8fb9cec5b1fd4b11;
 
 struct Schema {
     hwaddr @0 :Text; # Macaddress for the bridge to be created. If none, a random macaddress will be assigned
@@ -17,6 +17,7 @@ struct Schema {
     enum Status {
         up @0;
         down @1;
+        error @2;
     }
 
     struct Setting {
