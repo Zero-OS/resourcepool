@@ -200,6 +200,7 @@ def waitProcess(cl, command, jobid, nodeID, containername, state="SUCCESS", time
         elif res["state"] == "ERROR":
             if raiseError:
                 raise RuntimeError("Command %s failed to execute successfully. %s" % (command, res["stderr"]))
+            break
         else:
             time.sleep(0.5)
             res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
