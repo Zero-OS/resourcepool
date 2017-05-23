@@ -964,13 +964,26 @@ VdiskCreate:
       default: 4096
     type:
       enum: [boot, db, cache, tmp]
-      description: The type of vdisk.
+      description: |
+        - boot: A boot disk is a redundant disk that can be initialized based on a templatevdisk. See templatevdisk property. Boot disks should only be used for the operating system and applications installed on the operating system. Performance of bootdisks is not optimized because that defeats their purpose.
+        - db: A db disk is a redundant disk optimized for performant block storage. DB disks should be used for running reliable high io intensive workloads such as databases, key value stores, ...
+        - cache: A cache disk is a persistent non redundant disk optimized for performant block storage. Cache disks should be used for high io intensive workloads which don't need to be highly reliable.
+        - tmp: A tmp disk is a non persistent non redundant disk optimized for performant block storage. Content in tmp disks is only available while mounted. Tmp disks should be used for swap and mounts in /tmp.
+
+        | disk type | redundant | persistent | template support | rollback | performance optimized |
+        | --------- | --------- | ---------- | ---------------- | -------- | --------------------- |
+        | boot | yes | yes | yes | yes | no |
+        | db | yes | yes | no | yes | yes |
+        | cache | no | yes | no | no | yes |
+        | tmp | no | no | no | no | yes |
       required: true
     templatevdisk:
       type: string
       description: |
         Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
         You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename
+
+        This property can only be used when the disk is of type boot.
       required: false
     readOnly:
       type: boolean
@@ -979,10 +992,13 @@ VdiskCreate:
     storagecluster:
       type: string
       description: the storagecluster used for this vdisk's main storage.
-      required: false
+      required: true
     tlogStoragecluster:
       type: string
-      description: the storagecluster used for this vdisk's transaction logs
+      description: |
+        the storagecluster used for this vdisk's transaction logs
+
+        This property can only be used when the disk is of type boot or db.
       required: false
 
 Vdisk:
