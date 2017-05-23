@@ -2,7 +2,7 @@
 set -e
 pushd api
     echo "Build API"
-    go get .
+    go get ./...
     go build
 popd
 echo "Generate docs"
