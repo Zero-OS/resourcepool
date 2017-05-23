@@ -11,22 +11,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/processes
+// StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/jobs
 // Start a new process in this container
-func (api NodeAPI) StartContainerProcess(w http.ResponseWriter, r *http.Request) {
+func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 	var reqBody CoreSystem
 	var env map[string]string
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 

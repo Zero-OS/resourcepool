@@ -558,6 +558,18 @@ types:
                 body:
                   application/json:
                     type: JobListItem[]
+          post:
+            (DirectAccess):
+            displayName: StartContainerJob
+            description: Start a new job in this container
+            body:
+              application/json:
+                type: CoreSystem
+            responses:
+              202:
+                headers:
+                  Location:
+                    description: URL to the job object handling this request
           delete:
             (DirectAccess):
             displayName: KillAllContainerJobs
@@ -670,18 +682,6 @@ types:
                  body:
                    application/json:
                      type: Process[]
-           post:
-             (DirectAccess):
-             displayName: StartContainerProcess
-             description: Start a new process in this container
-             body:
-               application/json:
-                 type: CoreSystem
-             responses:
-               202:
-                 headers:
-                   Location:
-                     description: URL to the job object handling this request
            /{processid}:
              get:
                (DirectAccess):

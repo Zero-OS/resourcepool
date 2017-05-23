@@ -205,9 +205,9 @@ type NodesInterface interface { // ListNodes is the handler for GET /node
 	// ListContainerProcesses is the handler for GET /node/{nodeid}/containers/{containername}/processes
 	// Get running processes in this container
 	ListContainerProcesses(http.ResponseWriter, *http.Request)
-	// StartContainerProcess is the handler for POST /node/{nodeid}/containers/{containername}/processes
+	// StartContainerProcess is the handler for POST /node/{nodeid}/containers/{containername}/jobs
 	// Start a new process in this container
-	StartContainerProcess(http.ResponseWriter, *http.Request)
+	StartContainerJob(http.ResponseWriter, *http.Request)
 	// GetContainerProcess is the handler for GET /node/{nodeid}/containers/{containername}/processes/{processid}
 	// Get process details
 	GetContainerProcess(http.ResponseWriter, *http.Request)
@@ -312,6 +312,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/stop", i.StopContainer).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs", i.ListContainerJobs).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs", i.KillAllContainerJobs).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs", i.StartContainerJob).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.GetContainerJob).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.SendSignalJob).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/jobs/{jobid}", i.KillContainerJob).Methods("DELETE")
@@ -322,7 +323,6 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/state", i.GetContainerState).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/info", i.GetContainerOSInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes", i.ListContainerProcesses).Methods("GET")
-	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes", i.StartContainerProcess).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.GetContainerProcess).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.SendSignalProcess).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.KillContainerProcess).Methods("DELETE")
