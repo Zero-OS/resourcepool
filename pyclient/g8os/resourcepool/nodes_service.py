@@ -139,6 +139,15 @@ class NodesService:
         return self.client.get(uri, headers, query_params, content_type)
 
 
+    def StartContainerJob(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Start a new job in this container
+        It is method for POST /nodes/{nodeid}/containers/{containername}/jobs
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/jobs"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def GetContainerMemInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Get detailed information about the memory in the container
@@ -200,15 +209,6 @@ class NodesService:
         """
         uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/processes"
         return self.client.get(uri, headers, query_params, content_type)
-
-
-    def StartContainerProcess(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
-        """
-        Start a new process in this container
-        It is method for POST /nodes/{nodeid}/containers/{containername}/processes
-        """
-        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/processes"
-        return self.client.post(uri, data, headers, query_params, content_type)
 
 
     def StartContainer(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
