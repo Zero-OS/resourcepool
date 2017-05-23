@@ -16,6 +16,7 @@ type ContainerNIC struct {
 	Config ContainerNICConfig   `json:"config,omitempty" yaml:"config,omitempty"`
 	Hwaddr string               `json:"hwaddr,omitempty" yaml:"hwaddr,omitempty" validate:"macaddress=empty"`
 	Id     string               `json:"id,omitempty" yaml:"id,omitempty"`
+	Name   string               `json:"name,omitempty" yaml:"name,omitempty"`
 	Type   EnumContainerNICType `json:"type" yaml:"type" validate:"nonzero"`
 }
 

@@ -35,6 +35,7 @@ struct Schema {
         type @0: NicType;
         id @1: Text;
         config @2: NicConfig;
+        name @3: Text;
     }
 
     struct NicConfig {

@@ -437,6 +437,10 @@ ContainerNIC:
           default: id can be ommited
           bridge: name of the bridge to connect to
       type: string
+    name:
+      description: optional name for the nic inside the conatainer
+      required: false
+      type: string
     hwaddr:
       description: Mac address for the interface. If none, a random MAC address will be assigned
       type: string
