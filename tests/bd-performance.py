@@ -59,7 +59,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
 
 
 def startContainerProcess(api, **kwargs):
-    res = api.nodes.StartContainerProcess(**kwargs)
+    res = api.nodes.StartContainerJob(**kwargs)
     return res.headers["Location"].split("/")[-1]
 
 
@@ -111,7 +111,7 @@ def test(api, deployInfo, nodeIDs, runtime):
                      '--direct=1'],
         }
 
-        api.nodes.StartContainerProcess(data=fioCommand, containername=containername, nodeid=nodeID)
+        api.nodes.StartContainerJob(data=fioCommand, containername=containername, nodeid=nodeID)
 
 
 def cleanUp(api, nodeIDs, deployInfo):
@@ -216,7 +216,7 @@ def nbdClientConnect(api, nodeID, containername, nbdConfig):
             'pwd': '',
             'args': ['-N', val['vdiskID'], '-u', val['socketpath'], nbdDisk, '-b', '4096'],
         }
-        res = api.nodes.StartContainerProcess(data=nbdClientCommand, containername=containername, nodeid=nodeID)
+        res = api.nodes.StartContainerJob(data=nbdClientCommand, containername=containername, nodeid=nodeID)
         jobid = res.headers["Location"].split("/")[-1]
         waitProcess(api, nbdClientCommand, jobid, nodeID, containername)
         filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
