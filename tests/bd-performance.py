@@ -98,7 +98,7 @@ def test(api, deployInfo, nodeIDs, runtime):
             'pwd': '',
             'args': ['--iodepth=16',
                      '--ioengine=libaio',
-                     '--size=1000000000M',
+                     '--size=100000000000M',
                      '--readwrite=randrw',
                      '--rwmixwrite=20',
                      '--filename=%s' % filenames,
@@ -107,7 +107,8 @@ def test(api, deployInfo, nodeIDs, runtime):
                      '--numjobs=%s' % (len(filenames.split(":")) * 2),
                      '--name=test1',
                      '--group_reporting',
-                     '--output-format=json'],
+                     '--output-format=json',
+                     '--direct=1'],
         }
 
         api.nodes.StartContainerProcess(data=fioCommand, containername=containername, nodeid=nodeID)
