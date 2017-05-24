@@ -20,10 +20,8 @@ def is_running(container):
 
 
 def install(job):
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
     import time
     import yaml
-    import uuid
     from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
@@ -44,23 +42,21 @@ def install(job):
             conf = container.node.client.config.get()
             rootardb = urlparse(conf['globals']['storage']).netloc
 
-
-        if  vdiskservice.model.data.storageCluster not in config['storageClusters']:
-            storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
-                                                               instance=vdiskservice.model.data.storageCluster)
-            cluster = StorageCluster.from_ays(storageclusterservice)
-            clusterconfig = cluster.get_config()
+        if vdiskservice.model.data.storageCluster not in config['storageClusters']:
+            storagecluster = vdiskservice.model.data.storageCluster
+            clusterconfig = get_storagecluster_config(service, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
+            vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
             vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
                            'id': vdiskservice.name,
                            'readOnly': vdiskservice.model.data.readOnly,
                            'size': vdiskservice.model.data.size,
-                           'storageCluster': vdiskservice.model.data.storageCluster,
+                           'storageCluster': storagecluster,
                            'rootStorageCluster': rootclustername,
                            'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
-                           'type': str(vdiskservice.model.data.type)}
-            config['storageClusters'][cluster.name] = clusterconfig
+                           'type': vdisk_type}
+            config['storageClusters'][storagecluster] = clusterconfig
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
         config['vdisks'][vdiskservice.name] = vdiskconfig
@@ -104,10 +100,42 @@ def start(job):
     j.tools.async.wrappers.sync(service.executeAction('install'))
 
 
+def get_storagecluster_config(service, storagecluster):
+    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+                                                       instance=storagecluster)
+    cluster = StorageCluster.from_ays(storageclusterservice)
+    return cluster.get_config()
+
+
 def stop(job):
     import time
     service = job.service
     container = get_container(service=service)
+
+    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vdisks = vm.producers.get('vdisk', [])
+
+    # Delete tmp
+    clustersData = {}
+    for vdiskservice in vdisks:
+        if vdiskservice.model.data.type == "tmp":
+            storagecluster = vdiskservice.model.data.storageCluster
+            if not clustersData.get(storagecluster, None):
+                clustersData[storagecluster] = get_storagecluster_config(service, storagecluster)
+
+            datastorages = [info["address"] for info in clustersData[storagecluster]["dataStorage"]]
+            # TODO: Change when g8os support proper vdisk deletion
+            for ds in datastorages:
+                container.client.system(
+                    '/bin/g8stor \
+                    delete \
+                    nondeduped \
+                    {vdisk} \
+                    {ip}'
+                    .format(vdisk=vdiskservice.name, ip=ds)
+                )
+
     process = is_running(container)
     if process:
         job.logger.info("killing process {}".format(process['cmd']['arguments']['name']))
