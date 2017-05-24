@@ -28,5 +28,9 @@ func (s VdiskCreate) Validate() error {
 		return err
 	}
 
+	if err := validators.ValidateVdisk(string(s.Vdisktype), s.TlogStoragecluster, s.Templatevdisk); err != nil {
+		return err
+	}
+
 	return validator.Validate(s)
 }
