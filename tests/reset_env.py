@@ -1,4 +1,4 @@
-for node in c.api.nodes.ListNodes().json()
+for node in c.api.nodes.ListNodes().json():
     for container in c.api.nodes.ListContainers(nodeid=node['id']).json():
         if container['flist'].endswith('/performance-test.flist'):
             c.api.nodes.DeleteContainer(nodeid=node['id'], containername=container['name'])
