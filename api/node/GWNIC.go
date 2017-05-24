@@ -1,6 +1,7 @@
 package node
 
 import (
+	"github.com/g8os/resourcepool/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -13,6 +14,20 @@ type GWNIC struct {
 }
 
 func (s GWNIC) Validate() error {
-
+	if s.Config != nil {
+		if err := s.Config.Validate(); err != nil {
+			return err
+		}
+	}
+	if s.Dhcpserver != nil && s.Dhcpserver.Hosts != nil {
+		if err := s.Dhcpserver.Validate(); err != nil {
+			return err
+		}
+		for _, host := range s.Dhcpserver.Hosts {
+			if err := validators.ValidateIpInRange(s.Config.Cidr, host.Ipaddress); err != nil {
+				return err
+			}
+		}
+	}
 	return validator.Validate(s)
 }

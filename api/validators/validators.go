@@ -122,3 +122,31 @@ func ValidateContainerFilesystem(fs string) error {
 	}
 	return nil
 }
+
+func ValidateIpInRange(cidr string, ip string) error {
+	_, subnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return fmt.Errorf("%v: is not a valid cidr", cidr)
+	}
+	clientip := net.ParseIP(ip)
+	if subnet.Contains(clientip) {
+		return nil
+	}
+	return fmt.Errorf("%v: ip is not in valid range for cidr %v ", ip, cidr)
+}
+
+func ValidateIp4(ip string) error {
+	clientip := net.ParseIP(ip)
+	if clientip.To4() == nil {
+		return fmt.Errorf("%v: is not a valid ipv4", ip)
+	}
+	return nil
+}
+
+func ValidateIp6(ip string) error {
+	clientip := net.ParseIP(ip)
+	if clientip.To16() == nil {
+		return fmt.Errorf("%v: is not a valid ipv6", ip)
+	}
+	return nil
+}

@@ -13,6 +13,20 @@ type GWCreate struct {
 }
 
 func (s GWCreate) Validate() error {
-
+	for _, proxy := range s.Httpproxies {
+		if err := proxy.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, nic := range s.Nics {
+		if err := nic.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, portforward := range s.Portforwards {
+		if err := portforward.Validate(); err != nil {
+			return err
+		}
+	}
 	return validator.Validate(s)
 }

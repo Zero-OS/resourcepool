@@ -10,6 +10,10 @@ type DHCP struct {
 }
 
 func (s DHCP) Validate() error {
-
+	for _, host := range s.Hosts {
+		if err := host.Validate(); err != nil {
+			return err
+		}
+	}
 	return validator.Validate(s)
 }

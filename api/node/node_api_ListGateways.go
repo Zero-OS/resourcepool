@@ -35,12 +35,7 @@ func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		gateway := GW{
-			Nics:         data.Nics,
-			Portforwards: data.Portforwards,
-			Httpproxies:  data.Httpproxies,
-		}
-		respBody[i] = gateway
+		respBody[i] = data
 	}
 
 	w.Header().Set("Content-Type", "application/json")
