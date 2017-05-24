@@ -77,13 +77,32 @@ def updateDevices(service, pool, devices):
     pooldevices = set(pool.devices)
     requireddevices = set(devices)
 
+    def in_pool(device):
+        for pooldevice in pooldevices:
+            if pooldevice.startswith(device):
+                return True
+        return False
+
+    def in_devices(pooldevice):
+        for device in requireddevices:
+            if pooldevice.startswith(device):
+                return True
+        return False
+
     # add extra devices
-    extradevices = requireddevices - pooldevices
+    extradevices = set()
+    for device in requireddevices:
+        if not in_pool(device):
+            extradevices.add(device)
     if extradevices:
         pool.device_add(*extradevices)
 
     # remove devices
-    removeddevices = pooldevices - requireddevices
+    removeddevices = set()
+    for pooldevice in pooldevices:
+        if not in_devices(pooldevice):
+            removeddevices.add(pooldevice)
+
     if removeddevices:
         for device in service.model.data.devices:
             if device.device in removeddevices:
