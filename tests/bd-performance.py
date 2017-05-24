@@ -29,6 +29,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
     api = resourcepool.Client(resourcepoolserver).api
     logging.info("Discovering nodes in the cluster ...")
     nodes = api.nodes.ListNodes().json()
+    nodes = [node for node in nodes if node["state"] == "running"]
 
     nodelimit = nodelimit if nodelimit is None or nodelimit <= len(nodes) else len(nodes)
 
