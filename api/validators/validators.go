@@ -131,7 +131,7 @@ func ValidateVdisk(vtype string, tlog string, template string) error {
 	}
 
 	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
-		return fmt.Errorf("Vdisks of type %v can't be persistent", vtype)
+		return fmt.Errorf("Vdisks of type %v can't be redundant", vtype)
 	}
 	return nil
 }
