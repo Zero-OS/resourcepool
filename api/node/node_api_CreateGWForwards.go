@@ -17,7 +17,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 

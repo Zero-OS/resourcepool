@@ -27,7 +27,7 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -37,7 +37,7 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gateway := CreateGWBP {
+	gateway := CreateGWBP{
 		Node:         nodeID,
 		Domain:       reqBody.Domain,
 		Nics:         reqBody.Nics,

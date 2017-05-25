@@ -3,6 +3,8 @@ package vdisk
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/g8os/resourcepool/api/tools"
 )
 
 // RollbackVdisk is the handler for POST /vdisks/{vdiskid}/rollback
@@ -12,14 +14,13 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
