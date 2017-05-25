@@ -23,18 +23,18 @@ func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var respBody = make([]GW, len(services))
+	var respBody = make([]GWCreate, len(services))
 	for i, serviceData := range services {
 		service, res, err := api.AysAPI.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
 		if !tools.HandleAYSResponse(err, res, w, "listing gatways") {
 			return
 		}
-		var data GW
+		var data GWCreate
 		if err := json.Unmarshal(service.Data, &data); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err)
 			return
 		}
-
+		data.Name = service.Name
 		respBody[i] = data
 	}
 
