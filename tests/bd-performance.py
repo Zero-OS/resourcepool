@@ -29,7 +29,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
     api = resourcepool.Client(resourcepoolserver).api
     logging.info("Discovering nodes in the cluster ...")
     nodes = api.nodes.ListNodes().json()
-    nodes = [node for node in nodes if node["state"] == "running"]
+    nodes = [node for node in nodes if node["status"] == "running"]
 
     nodelimit = nodelimit if nodelimit is None or nodelimit <= len(nodes) else len(nodes)
 
@@ -79,7 +79,7 @@ def waitForData(api, nodeIDs, deployInfo, runtime, resultdir):
                 time.sleep(1)
             else:
                 if res.content == b'':
-                    time.sleep(1)
+                    time.sleep(5)
                     continue
                 file = '%s/%s.test.json' % (resultdir, nodeID)
                 logging.info("Saving test data in %s ..." % file)
@@ -135,21 +135,13 @@ def cleanUp(api, nodeIDs, deployInfo):
                 jobId = startContainerProcess(api, data=disconnectDiskCommand, containername=testContainer, nodeid=nodeID)
                 waitProcess(api, disconnectDiskCommand, jobId, nodeID, testContainer)
 
-            for vdisk in nbdConfig:
-                deleteDiskCommand = {
-                    'name': '/bin/g8stor',
-                    'pwd': '',
-                    'args': ['delete', 'deduped', vdisk['vdiskID'], " ".join(vdisk["datastorage"])],
-                }
-                jobId = startContainerProcess(api, data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
-                waitProcess(api, deleteDiskCommand, jobId, nodeID, nbdContainer, raiseError=False)
-                deleteDiskCommand = {
-                    'name': '/bin/g8stor',
-                    'pwd': '',
-                    'args': ['delete', 'deduped', vdisk['vdiskID'], vdisk["metadatastorage"]],
-                }
-                jobId = startContainerProcess(api, data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
-                waitProcess(api, deleteDiskCommand, jobId, nodeID, nbdContainer, raiseError=False)
+            deleteDiskCommand = {
+                'name': '/bin/g8stor',
+                'pwd': '',
+                'args': ['delete', 'vdisks', '--config', nbdConfig["configpath"]],
+            }
+            jobId = startContainerProcess(api, data=deleteDiskCommand, containername=nbdContainer, nodeid=nodeID)
+            waitProcess(api, deleteDiskCommand, jobId, nodeID, nbdContainer)
 
             api.nodes.DeleteContainer(nbdContainer, nodeID)
             api.nodes.DeleteContainer(testContainer, nodeID)
@@ -193,67 +185,6 @@ def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount
     return deployInfo
 
 
-def waitProcess(cl, command, jobid, nodeID, containername, state="SUCCESS", timeout=10, raiseError=True):
-    res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
-    start = time.time()
-    while start + timeout > time.time():
-        if res["state"] == state:
-            return True
-        elif res["state"] == "ERROR":
-            if raiseError:
-                raise RuntimeError("Command %s failed to execute successfully. %s" % (command, res["stderr"]))
-            break
-        else:
-            time.sleep(0.5)
-            res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
-
-
-def nbdClientConnect(api, nodeID, containername, nbdConfig):
-    filenames = ''
-    for idx, val in enumerate(nbdConfig):
-        nbdDisk = '/dev/nbd%s' % idx
-        nbdClientCommand = {
-            'name': '/bin/nbd-client',
-            'pwd': '',
-            'args': ['-N', val['vdiskID'], '-u', val['socketpath'], nbdDisk, '-b', '4096'],
-        }
-        res = api.nodes.StartContainerJob(data=nbdClientCommand, containername=containername, nodeid=nodeID)
-        jobid = res.headers["Location"].split("/")[-1]
-        waitProcess(api, nbdClientCommand, jobid, nodeID, containername)
-        filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
-    return filenames
-
-
-def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
-    container = resourcepool.CreateContainer.create(filesystems=fs,
-                                                    flist=flist,
-                                                    hostNetworking=True,
-                                                    hostname=hostname,
-                                                    initProcesses=[],
-                                                    nics=[],
-                                                    ports=[],
-                                                    name=hostname)
-
-    req = json.dumps(container.as_dict(), indent=4)
-    link = "POST /nodes/{nodeid}/containers".format(nodeid=nodeID)
-    logging.info("Sending the following request to the /containers api:\n{}\n\n{}".format(link, req))
-    res = cl.nodes.CreateContainer(nodeid=nodeID, data=container)
-    logging.info(
-        "Creating new container...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
-
-    # wait for container to be running
-    res = cl.nodes.GetContainer(hostname, nodeID).json()
-    start = time.time()
-    while start + 60 > time.time():
-        if res['status'] == 'running':
-            break
-        else:
-            time.sleep(1)
-            res = cl.nodes.GetContainer(hostname, nodeID).json()
-    if res['status'] != 'running':
-        raise RuntimeError("Failed to create container %s on node %s" % (hostname, nodeID))
-
-
 def getStorageClusterInfo(api, storagecluster):
     logging.info("Getting storagecluster info...")
     storageclusterInfo = api.storageclusters.GetClusterInfo(storagecluster).json()
@@ -280,58 +211,120 @@ def getStorageClusterInfo(api, storagecluster):
 
 def startNbd(api, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSize, vdiskType, storageclusterInfo):
     # Start nbd servers
-    nbdConfig = []
+    fs = fs.replace(':', os.sep)
+    socketpath = '/fs/{}/server.socket.{}'.format(fs, containername)
+    configpath = "/{}.config".format(containername)
+
+    config = {
+        'storageClusters': {storagecluster: storageclusterInfo["clusterconfig"]},
+        'vdisks': {},
+    }
+    vdiskIDs = []
     for i in range(vdiskCount):
         # Run nbd
-        fs = fs.replace(':', os.sep)
-        socketpath = '/fs/{}/server.socket.{}{}'.format(fs, containername, i)
-        configpath = "/{}{}.config".format(containername, i)
 
         vdiskID = "testvdisk_{}".format(str(time.time()).replace('.', ''))
+        vdiskIDs.append(vdiskID)
         vdiskconfig = {
             'blockSize': 4096,
-            'id': vdiskID,
             'readOnly': False,
             'size': vdiskSize,
             'storageCluster': storagecluster,
             'type': vdiskType
         }
-        config = {
-            'storageClusters': {storagecluster: storageclusterInfo["clusterconfig"]},
-            'vdisks': {vdiskID: vdiskconfig}
-        }
+        config['vdisks'][vdiskID] = vdiskconfig
 
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        data = {"file": (yamlconfig)}
-        api.nodes.FileUpload(containername=containername,
-                             nodeid=nodeID,
-                             data=data,
-                             query_params={"path": configpath},
-                             content_type="multipart/form-data")
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    data = {"file": (yamlconfig)}
+    api.nodes.FileUpload(containername=containername,
+                         nodeid=nodeID,
+                         data=data,
+                         query_params={"path": configpath},
+                         content_type="multipart/form-data")
 
-        nbdCommand = {
-            'name': '/bin/nbdserver',
-            'pwd': '',
-            'args': ['-protocol=unix', '-address=%s' % socketpath, '-config=%s' % configpath]
-        }
+    nbdCommand = {
+        'name': '/bin/nbdserver',
+        'pwd': '',
+        'args': ['-protocol=unix', '-address=%s' % socketpath, '-config=%s' % configpath]
+    }
 
-        jobId = startContainerProcess(api, data=nbdCommand, containername=containername, nodeid=nodeID)
-        logging.info("Starting nbdserver on node: %s", nodeID)
-        nbdConfig.append({
-            "socketpath": socketpath,
-            "vdiskID": vdiskID,
-            "datastorage": storageclusterInfo["datastorage"],
-            "metadatastorage": storageclusterInfo["metadatastorage"],
-            "pid": jobId
-        })
+    jobId = startContainerProcess(api, data=nbdCommand, containername=containername, nodeid=nodeID)
+    logging.info("Starting nbdserver on node: %s", nodeID)
+    nbdConfig = {
+        "socketpath": socketpath,
+        "datastorage": storageclusterInfo["datastorage"],
+        "metadatastorage": storageclusterInfo["metadatastorage"],
+        "pid": jobId,
+        "vdisks": vdiskIDs,
+        "configpath": configpath,
+    }
 
     logging.info("Waiting for 10 seconds to evaluate nbdserver processes")
     time.sleep(10)
-    for nbd in nbdConfig:
-        res = api.nodes.GetContainerJob(nbd['pid'], containername, nodeID).json()
-        if res["state"].upper() != "RUNNING":
-            raise ValueError("nbd server %s for vdisk %s is not in a valid state: %s" % (nbd['pid'], nbd['vdiskID'], res["state"]))
+    res = api.nodes.GetContainerJob(jobId, containername, nodeID).json()
+    if res["state"].upper() != "RUNNING":
+        raise ValueError("nbd server on node %s is not in a valid state: %s" % (nodeID, res["state"]))
     return nbdConfig
+
+
+def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
+    container = resourcepool.CreateContainer.create(filesystems=fs,
+                                                    flist=flist,
+                                                    hostNetworking=True,
+                                                    hostname=hostname,
+                                                    initProcesses=[],
+                                                    nics=[],
+                                                    ports=[],
+                                                    name=hostname)
+
+    req = json.dumps(container.as_dict(), indent=4)
+    link = "POST /nodes/{nodeid}/containers".format(nodeid=nodeID)
+    logging.info("Sending the following request to the /containers api:\n{}\n\n{}".format(link, req))
+    res = cl.nodes.CreateContainer(nodeid=nodeID, data=container)
+    logging.info(
+        "Creating new container...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
+
+    # wait for container to be running
+    res = cl.nodes.GetContainer(hostname, nodeID).json()
+    start = time.time()
+    while start + 100 > time.time():
+        if res['status'] == 'running':
+            break
+        else:
+            time.sleep(1)
+            res = cl.nodes.GetContainer(hostname, nodeID).json()
+    if res['status'] != 'running':
+        raise RuntimeError("Failed to create container %s on node %s" % (hostname, nodeID))
+
+
+def waitProcess(cl, command, jobid, nodeID, containername, state="SUCCESS", timeout=10, raiseError=True):
+    res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
+    start = time.time()
+    while start + timeout > time.time():
+        if res["state"] == state:
+            return True
+        elif res["state"] == "ERROR":
+            if raiseError:
+                raise RuntimeError("Command %s failed to execute successfully. %s" % (command, res["stderr"]))
+            break
+        else:
+            time.sleep(0.5)
+            res = cl.nodes.GetContainerJob(jobid, containername, nodeID).json()
+
+
+def nbdClientConnect(api, nodeID, containername, nbdConfig):
+    filenames = ''
+    for idx, val in enumerate(nbdConfig["vdisks"]):
+        nbdDisk = '/dev/nbd%s' % idx
+        nbdClientCommand = {
+            'name': '/bin/nbd-client',
+            'pwd': '',
+            'args': ['-N', val, '-u', nbdConfig['socketpath'], nbdDisk, '-b', '4096'],
+        }
+        jobid = startContainerProcess(api, data=nbdClientCommand, containername=containername, nodeid=nodeID)
+        waitProcess(api, nbdClientCommand, jobid, nodeID, containername)
+        filenames = nbdDisk if filenames == '' else '%s:%s' % (filenames, nbdDisk)
+    return filenames
 
 
 def _create_fss(resourcepoolserver, cl, nodeID):
