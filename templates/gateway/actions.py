@@ -120,3 +120,30 @@ def processChange(job):
         http_args = {'httpproxies': args["httpproxies"], 'nics': args.get('nics', service.model.data.nics)}
         j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
         service.model.data.httpproxies = args['httpproxies']
+
+def uninstall(job):
+    service = job.service
+    container = service.producers.get('container')[0]
+    if container:
+        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.delete())
+
+def start(job):
+    service = job.service
+    container = service.producers.get('container')[0]
+    http = container.consumers.get('http')[0]
+    dhcp = container.consumers.get('dhcp')[0]
+    cloudinit = container.consumers.get('cloudinit')[0]
+    firewall = container.consumers.get('firewall')[0]
+
+    j.tools.async.wrappers.sync(container.executeAction('start'))
+    j.tools.async.wrappers.sync(http.executeAction('install'))
+    j.tools.async.wrappers.sync(dhcp.executeAction('install'))
+    j.tools.async.wrappers.sync(firewall.executeAction('install'))
+    j.tools.async.wrappers.sync(cloudinit.executeAction('install'))
+
+def stop(job):
+    service = job.service
+    container = service.producers.get('container')[0]
+    if container:
+        j.tools.async.wrappers.sync(container.executeAction('stop'))
