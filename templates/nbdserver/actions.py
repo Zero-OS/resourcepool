@@ -119,14 +119,15 @@ def stop(job):
     # Delete tmp vdisks
     configpath = "/{}.config".format(service.name)
     vdisks = [vdiskservice.name for vdiskservice in vdisks if vdiskservice.model.data.type == "tmp"]
-    container.client.system(
-        '/bin/g8stor \
-        delete \
-        vdisks \
-        {vdisks} \
-        --config {configpath}'
-        .format(vdisks=" ".join(vdisks), configpath=configpath)
-    )
+    if vdisks != []:
+        container.client.system(
+            '/bin/g8stor \
+            delete \
+            vdisks \
+            {vdisks} \
+            --config {configpath}'
+            .format(vdisks=" ".join(vdisks), configpath=configpath)
+        )
 
     nbdjob = is_running(container)
     if nbdjob:
