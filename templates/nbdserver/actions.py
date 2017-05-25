@@ -116,25 +116,17 @@ def stop(job):
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
 
-    # Delete tmp
-    clustersData = {}
-    for vdiskservice in vdisks:
-        if vdiskservice.model.data.type == "tmp":
-            storagecluster = vdiskservice.model.data.storageCluster
-            if not clustersData.get(storagecluster, None):
-                clustersData[storagecluster] = get_storagecluster_config(service, storagecluster)
-
-            datastorages = [info["address"] for info in clustersData[storagecluster]["dataStorage"]]
-            # TODO: Change when g8os support proper vdisk deletion
-            for ds in datastorages:
-                container.client.system(
-                    '/bin/g8stor \
-                    delete \
-                    nondeduped \
-                    {vdisk} \
-                    {ip}'
-                    .format(vdisk=vdiskservice.name, ip=ds)
-                )
+    # Delete tmp vdisks
+    configpath = "/{}.config".format(service.name)
+    vdisks = [vdiskservice.name for vdiskservice in vdisks if vdiskservice.model.data.type == "tmp"]
+    container.client.system(
+        '/bin/g8stor \
+        delete \
+        vdisks \
+        {vdisks} \
+        --config {configpath}'
+        .format(vdisks=" ".join(vdisks), configpath=configpath)
+    )
 
     nbdjob = is_running(container)
     if nbdjob:
