@@ -136,10 +136,10 @@ def stop(job):
                     .format(vdisk=vdiskservice.name, ip=ds)
                 )
 
-    job = is_running(container)
-    if job:
-        job.logger.info("killing job {}".format(job['cmd']['arguments']['name']))
-        container.client.job.kill(job['cmd']['id'])
+    nbdjob = is_running(container)
+    if nbdjob:
+        job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
+        container.client.job.kill(nbdjob['cmd']['id'])
 
         job.logger.info("wait for nbdserver to stop")
         for i in range(60):
@@ -147,4 +147,4 @@ def stop(job):
             if is_running(container):
                 continue
             return
-        raise j.exceptions.RuntimeError("ardb-server didn't stopped")
+        raise j.exceptions.RuntimeError("nbdserver didn't stopped")
