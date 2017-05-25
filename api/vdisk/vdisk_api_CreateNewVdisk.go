@@ -17,7 +17,6 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
