@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-setup (
+setup(
     name='g8os-resourcepool',
     version='1.1.0.a',
     description='G8OS resource pool client',
@@ -19,5 +19,5 @@ setup (
     author_email='christophe@gig.tech',
     license='Apache 2.0',
     packages=find_packages(),
-    install_requires=[],
+    install_requires=['python-dateutil'],
 )
