@@ -47,18 +47,19 @@ def install(job):
             clusterconfig = get_storagecluster_config(service, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
-            vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
-            vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
-                           'id': vdiskservice.name,
-                           'readOnly': vdiskservice.model.data.readOnly,
-                           'size': vdiskservice.model.data.size,
-                           'storageCluster': storagecluster,
-                           'rootStorageCluster': rootclustername,
-                           'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
-                           'type': vdisk_type}
             config['storageClusters'][storagecluster] = clusterconfig
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
+
+        vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
+        vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
+                       'id': vdiskservice.name,
+                       'readOnly': vdiskservice.model.data.readOnly,
+                       'size': vdiskservice.model.data.size,
+                       'storageCluster': vdiskservice.model.data.storageCluster,
+                       'rootStorageCluster': rootclustername,
+                       'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
+                       'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)

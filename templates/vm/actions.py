@@ -247,7 +247,6 @@ def shutdown(job):
     else:
         service.model.data.status = 'halted'
 
-    
     service.saveAll()
 
 
@@ -255,7 +254,7 @@ def migrate(job):
     service = job.service
 
     service.model.data.status = 'migrating'
-    
+
     node = job.service.model.data.node
     if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
@@ -306,7 +305,6 @@ def updateDisks(job, client, args):
     from JumpScale.sal.g8os.Container import Container
     service = job.service
 
-    vdisk_container = create_nbdserver_container(service, service.parent)
     uuid = get_domain(service)['uuid']
 
     # mean we want to migrate vm from a node to another
@@ -321,27 +319,30 @@ def updateDisks(job, client, args):
     if new_disks == [] and old_disks == []:
         return
 
-    old_disks_id = [disk['vdiskid'] for disk in old_disks]
-
     # Set model to new data
     service.model.data.disks = args['disks']
-    service.model.data.vdisks = [disk['vdiskid'] for disk in args['disks']]
+    vdisk_container = create_nbdserver_container(service, service.parent)
+    container = Container.from_ays(vdisk_container)
 
     # Detatching and Cleaning old disks
     if old_disks != []:
-        nbdserver = service.producers.get('nbdserver', [])
+        nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
-            container = Container.from_ays(nbdserver.parent)
-            url = _nbd_url(container, nbdserver, old_disk)
+            url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
             j.tools.async.wrappers.sync(nbdserver.executeAction('install'))
 
     # Attaching new disks
     if new_disks != []:
         _init_nbd_services(job, vdisk_container)
-        medias = _start_nbds(service)
         for disk in new_disks:
-            media = get_media_for_disk(medias, disk)
+            diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
+            service.consume(diskservice)
+        service.saveAll()
+        _start_nbds(service)
+        nbdserver = service.producers.get('nbdserver', [])[0]
+        for disk in new_disks:
+            media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
             if disk['maxIOps']:
                 media['iotune'] = {'totaliopssec': disk['maxIOps'],
                                    'totaliopssecset': True}
