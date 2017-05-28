@@ -123,7 +123,7 @@ func ValidateContainerFilesystem(fs string) error {
 	return nil
 }
 
-func ValidateVdisk(vtype string, tlog string, template string) error {
+func ValidateVdisk(vtype string, tlog string, template string, size int) error {
 	if template != "" {
 		if vtype != "boot" {
 			return fmt.Errorf("Vdisks of type %v do not have template support", vtype)
@@ -132,6 +132,10 @@ func ValidateVdisk(vtype string, tlog string, template string) error {
 
 	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
 		return fmt.Errorf("Vdisks of type %v can't be redundant", vtype)
+	}
+
+	if (size % 512) != 0 {
+		return fmt.Errorf("Invalid block size")
 	}
 	return nil
 }
