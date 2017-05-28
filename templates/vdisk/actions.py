@@ -4,29 +4,50 @@ from JumpScale import j
 def install(job):
     import random
     from urllib.parse import urlparse
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    import yaml
+
     service = job.service
     service.model.data.status = 'halted'
+
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
-        storagecluster = service.aysrepo.serviceGet(role='storage_cluster', instance=service.model.data.storageCluster)
-        cluster = StorageCluster.from_ays(storagecluster)
-        clusterardb = cluster.get_config()['metadataStorage']['address']
-        target_node = random.choice(storagecluster.producers['node'])
+        targetconfig = get_storagecluster_config(service)
+        target_node = random.choice(targetconfig['nodes'])
+        storagecluster = service.model.data.storageCluster
 
         volume_container = create_from_template_container(service, target_node)
         try:
-            if template.scheme in ('', 'ardb'):
-                if template.scheme == '' or template.netloc == '':
-                    config = volume_container.node.client.config.get()
-                    masterardb = urlparse(config['globals']['storage']).netloc
-                else:
-                    masterardb = template.netloc
-                CMD = '/bin/g8stor copy deduped {src_name} {dst_name} {masterardb} {clusterardb}'
-                cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), clusterardb=clusterardb,
-                                 masterardb=masterardb)
-            else:
-                raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
+            srcardb = get_srcardb(volume_container, template)
+            configpath = "/config.yml"
+            disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
+            config = {
+                "storageClusters": {
+                    storagecluster: targetconfig['config'],
+                    "srccluster": {
+                        "metadataStorage": {
+                            "address": srcardb
+                        },
+                        "dataStorage": [
+                            {"address": srcardb},
+                        ],
+                    },
+                },
+                "vdisks": {
+                    template.path.lstrip('/'): {
+                        "blockSize": service.model.data.blocksize,  # Random value needed only to complete the config
+                        "readOnly": service.model.data.readOnly,  # Random value needed only to complete the config
+                        "size": service.model.data.size,  # Random value needed only to complete the config
+                        "storageCluster": "srccluster",
+                        "type": disktype,
+                    }
+                }
+            }
+            yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+            volume_container.upload_content(configpath, yamlconfig)
+
+            CMD = '/bin/g8stor copy vdisk {src_name} {dst_name} {tgtcluster}'
+            cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), tgtcluster=storagecluster)
+
             print(cmd)
             result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
@@ -34,6 +55,62 @@ def install(job):
 
         finally:
             volume_container.stop()
+
+
+def delete(job):
+    import random
+    import yaml
+
+    service = job.service
+    storagecluster = service.model.data.storageCluster
+    clusterconfig = get_storagecluster_config(service)
+    node = random.choice(clusterconfig['nodes'])
+    container = create_from_template_container(service, node)
+    configpath = "/config.yaml"
+    disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
+    config = {
+                "storageClusters": {
+                    storagecluster: clusterconfig['config']
+                },
+                "vdisks": {
+                    service.name: {
+                        "blockSize": service.model.data.blocksize,
+                        "readOnly": service.model.data.readOnly,
+                        "size": service.model.data.size,
+                        "storageCluster": storagecluster,
+                        "type": disktype,
+                    }
+                }
+            }
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    container.upload_content(configpath, yamlconfig)
+
+    cmd = '/bin/g8stor delete vdisks --config {}'.format(configpath)
+    print(cmd)
+    result = container.client.system(cmd).get()
+    if result.state != 'SUCCESS':
+        raise j.exceptions.RuntimeError("Failed to run g8stor delete {} {}".format(result.stdout, result.stderr))
+
+
+def get_srcardb(container, template):
+    from urllib.parse import urlparse
+
+    if template.scheme in ('', 'ardb'):
+        if template.scheme == '' or template.netloc == '':
+            config = container.node.client.config.get()
+            return urlparse(config['globals']['storage']).netloc
+        return template.netloc
+    else:
+        raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
+
+
+def get_storagecluster_config(service):
+    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    storagecluster = service.model.data.storageCluster
+    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+                                                       instance=storagecluster)
+    cluster = StorageCluster.from_ays(storageclusterservice)
+    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"]}
 
 
 def create_from_template_container(service, parent):
