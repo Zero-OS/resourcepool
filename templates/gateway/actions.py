@@ -89,8 +89,8 @@ def init(job):
 
 
 def install(job):
-    # nothing to do here all our children will be created by ays automagic
-    pass
+    service  = job.service
+    j.tools.async.wrappers.sync(service.executeAction('start'))
 
 
 def processChange(job):
@@ -120,6 +120,9 @@ def processChange(job):
         http_args = {'httpproxies': args["httpproxies"], 'nics': args.get('nics', service.model.data.nics)}
         j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
         service.model.data.httpproxies = args['httpproxies']
+
+    if args.get("advanced", None):
+        service.model.data.advanced = args["advanced"]
 
 def uninstall(job):
     service = job.service

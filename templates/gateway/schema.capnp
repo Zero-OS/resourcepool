@@ -10,6 +10,7 @@ struct Schema {
     httpproxies @5 :List(HTTPProxy);
     container @6 :Text; # Container spawned by this service
     domain @7: Text;
+    advanced @8: Bool; # flag to check if http config has been set manually
 
     struct Nic {
         type @0: NicType;

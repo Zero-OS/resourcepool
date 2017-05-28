@@ -582,9 +582,7 @@ types:
           /http:
             get:
               displayName: GetGWHTTPConfig
-              description: |
-                Get current HTTP config
-                Once used you can not use gw.httpproxxies any longer
+              description: Get current HTTP config
               responses:
                 200:
                   body:
@@ -592,7 +590,9 @@ types:
                       type: string
             post:
               displayName: SetGWHTTPConfig
-              description: Set HTTP config
+              description: |
+                Set HTTP config
+                Once used you can not use gw.httpproxxies any longer
               body:
                 text/plain:
                   type: string
@@ -600,9 +600,7 @@ types:
           /firewall:
             get:
               displayName: GetGWFWConfig
-              description: |
-                Get current FW config
-                Once used you can not use gw.portforwards any longer
+              description: Get current FW config
               responses:
                 200:
                   body:
@@ -610,7 +608,9 @@ types:
                       type: string
             post:
               displayName: SetGWFWConfig
-              description: Set FW config
+              description: |
+                Set FW config
+                Once used you can not use gw.portforwards any longer
               body:
                 text/plain:
                   type: string

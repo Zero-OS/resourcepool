@@ -175,7 +175,7 @@ func GetContainerConnection(r *http.Request, api API) (client.Client, error) {
 		return nil, err
 	}
 
-	id, err := GetContainerId(r, api, nodeClient)
+	id, err := GetContainerId(r, api, nodeClient, "")
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +196,11 @@ func getContainerWithTag(containers map[int16]client.ContainerResult, tag string
 	return 0
 }
 
-func GetContainerId(r *http.Request, api API, nodeClient client.Client) (int, error) {
+func GetContainerId(r *http.Request, api API, nodeClient client.Client, containername string) (int, error) {
 	vars := mux.Vars(r)
-	containername := vars["containername"]
+	if containername == "" {
+		containername = vars["containername"]
+	}
 	c := api.ContainerCache()
 	id := 0
 

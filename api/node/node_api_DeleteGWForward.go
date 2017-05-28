@@ -36,6 +36,12 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if data.Advanced {
+		errMessage := fmt.Errorf("Advanced options enabled: cannot delete forwards for gateway")
+		tools.WriteError(w, http.StatusForbidden, errMessage)
+		return
+	}
+
 	var updatedForwards []PortForward
 	// Check if this forwardid exists
 	var exists bool

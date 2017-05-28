@@ -48,6 +48,12 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if data.Advanced {
+		errMessage := fmt.Errorf("Advanced options enabled: cannot add forwards for gateway")
+		tools.WriteError(w, http.StatusForbidden, errMessage)
+		return
+	}
+
 	// Check if this portforward exists and return a bad request if the combination exists
 	// or update the protocols list if the protocol doesn't exist
 	var exists bool

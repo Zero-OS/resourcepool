@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"reflect"
+
+	"github.com/g8os/blockstor/log"
 	"github.com/g8os/resourcepool/api/tools"
 	"github.com/gorilla/mux"
 )
@@ -27,6 +29,27 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	if err := reqBody.Validate(); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
 		return
+	}
+
+	service, res, err := api.AysAPI.Ays.GetServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
+		return
+	}
+
+	var data CreateGWBP
+	if err := json.Unmarshal(service.Data, &data); err != nil {
+		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gwID, err)
+		log.Error(errMessage)
+		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		return
+	}
+
+	if data.Advanced {
+		if !reflect.DeepEqual(data.Httpproxies, reqBody.Httpproxies) {
+			errMessage := fmt.Errorf("Advanced options enabled: cannot adjust httpproxies for gateway")
+			tools.WriteError(w, http.StatusForbidden, errMessage)
+			return
+		}
 	}
 
 	obj := make(map[string]interface{})

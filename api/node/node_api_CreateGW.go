@@ -15,6 +15,7 @@ type CreateGWBP struct {
 	Nics         []GWNIC       `json:"nics" yaml:"nics"`
 	Httpproxies  []HTTPProxy   `json:"httpproxies" yaml:"httpproxies"`
 	Portforwards []PortForward `json:"portforwards" yaml:"portforwards"`
+	Advanced     bool          `json:"advanced" yaml:"advanced"`
 }
 
 // CreateGW is the handler for POST /nodes/{nodeid}/gws
@@ -43,6 +44,7 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		Nics:         reqBody.Nics,
 		Httpproxies:  reqBody.Httpproxies,
 		Portforwards: reqBody.Portforwards,
+		Advanced:     false,
 	}
 
 	obj := make(map[string]interface{})
