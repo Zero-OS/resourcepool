@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='g8os-resourcepool',
+    name='0-rest-api',
     version='1.1.0.a',
     description='G8OS resource pool client',
     long_description=long_description,
@@ -19,5 +19,6 @@ setup(
     author_email='christophe@gig.tech',
     license='Apache 2.0',
     packages=find_packages(),
-    install_requires=['python-dateutil'],
+    namespace_packages=['zeroos'],
+    install_requires=['python-dateutil', 'Jinja2'],
 )
