@@ -1,5 +1,4 @@
 def install(job):
-
     gateway = job.service.parent.consumers['gateway'][0]
     gwdata = gateway.model.data.to_dict()
     httpproxies = gwdata.get('httpproxies', [])
@@ -9,8 +8,8 @@ def install(job):
 
 def apply_rules(job, httpproxies=None, nics=None):
     import ipaddress
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.gateway.http import HTTPServer
+    from zeroos.restapi.sal.Container import Container
+    from zeroos.restapi.sal.gateway.htto import HTTPServer
 
     container = Container.from_ays(job.service.parent)
 
@@ -34,4 +33,3 @@ def apply_rules(job, httpproxies=None, nics=None):
 
 def update(job):
     apply_rules(job, job.model.args["httpproxies"], job.model.args["nics"])
-

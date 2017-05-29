@@ -9,13 +9,10 @@ def input(job):
 
 
 def install(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     pservice = service.parent
-    node = j.sal.g8os.get_node(
-        addr=pservice.model.data.redisAddr,
-        port=pservice.model.data.redisPort,
-        password=pservice.model.data.redisPassword or None,
-    )
+    node = Node.from_ays(pservice)
 
     devices = [d.device for d in service.model.data.devices]
     name = service.name
@@ -56,13 +53,10 @@ def install(job):
 
 
 def delete(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     pservice = service.parent
-    node = j.sal.g8os.get_node(
-        addr=pservice.model.data.redisAddr,
-        port=pservice.model.data.redisPort,
-        password=pservice.model.data.redisPassword or None,
-    )
+    node = Node.from_ays(pservice)
     name = service.name
 
     try:
@@ -111,16 +105,13 @@ def updateDevices(service, pool, devices):
 
 
 def processChange(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema":
         pservice = service.parent
-        node = j.sal.g8os.get_node(
-            addr=pservice.model.data.redisAddr,
-            port=pservice.model.data.redisPort,
-            password=pservice.model.data.redisPassword or None,
-        )
+        node = Node.from_ays(pservice)
         try:
             pool = node.storagepools.get(service.name)
             devices = [d['device'] for d in args['devices']]
@@ -131,14 +122,11 @@ def processChange(job):
 
 
 def monitor(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     if service.model.actionsState['install'] == 'ok':
         pservice = service.parent
-        node = j.sal.g8os.get_node(
-            addr=pservice.model.data.redisAddr,
-            port=pservice.model.data.redisPort,
-            password=pservice.model.data.redisPassword or None,
-        )
+        node = Node.from_ays(pservice)
 
         try:
             pool = node.storagepools.get(service.name)

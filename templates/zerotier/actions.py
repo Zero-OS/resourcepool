@@ -1,7 +1,6 @@
 def _get_client(parent):
-    return j.clients.g8core.get(host=parent.model.data.redisAddr,
-                                port=parent.model.data.redisPort or 6379,
-                                password=parent.model.data.redisPassword or '')
+    from zeroos.restapi.sal.Node import Node
+    return Node.from_ays(parent).client
 
 
 def _get_network(service):
@@ -44,6 +43,7 @@ def install(job):
     service.model.data.routes = net['routes']
     service.model.data.status = net['status']
     service.model.data.type = net['type'].lower()
+
 
 def delete(job):
     service = job.service

@@ -5,8 +5,8 @@ def install(job):
 
 
 def apply_rules(job, gwdata=None):
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.gateway.firewall import Firewall, Network
+    from zeroos.restapi.sal.Container import Container
+    from zeroos.restapi.sal.gateway.firewall import Firewall, Network
 
     gwdata = {} if gwdata is None else gwdata
     container = Container.from_ays(job.service.parent)

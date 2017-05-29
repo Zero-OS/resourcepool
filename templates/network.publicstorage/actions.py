@@ -3,7 +3,7 @@ def configure(job):
     For packet.net we just rename the public interface to storage so the rest of the config deals with it
     this method will be called from the node.g8os install action.
     """
-    from JumpScale.sal.g8os.Node import Node
+    from zeroos.restapi.sal.Node import Node
 
     nodeservice = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     node = Node.from_ays(nodeservice)

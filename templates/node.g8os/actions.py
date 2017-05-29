@@ -2,13 +2,9 @@ from JumpScale import j
 
 
 def init(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
-    node = j.sal.g8os.get_node(
-        addr=service.model.data.redisAddr,
-        port=service.model.data.redisPort,
-        password=service.model.data.redisPassword or None,
-    )
-
+    node = Node.from_ays(service)
     job.logger.info("create storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
 
@@ -27,14 +23,10 @@ def getAddresses(job):
 
 
 def install(job):
+    from zeroos.restapi.sal.Node import Node
     # at each boot recreate the complete state in the system
     service = job.service
-    node = j.sal.g8os.get_node(
-        addr=service.model.data.redisAddr,
-        port=service.model.data.redisPort,
-        password=service.model.data.redisPassword or None,
-    )
-
+    node = Node.from_ays(service)
     job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
     node.ensure_persistance(poolname)
@@ -46,14 +38,15 @@ def install(job):
 
 
 def monitor(job):
+    from zeroos.restapi.sal.Node import Node
     import redis
     service = job.service
-    addr = service.model.data.redisAddr
-    node = j.clients.g8core.get(addr, testConnectionAttempts=0)
-    node.timeout = 15
+    node = Node.from_ays(service)
+    node.client.testConnectionAttempts = 0
+    node.client.timeout = 15
     try:
-        state = node.ping()
-    except redis.ConnectionError as e:
+        state = node.client.ping()
+    except redis.ConnectionError:
         state = False
 
     if state:
@@ -64,13 +57,10 @@ def monitor(job):
 
 
 def reboot(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     job.logger.info("reboot node {}".format(service))
-    node = j.sal.g8os.get_node(
-        addr=service.model.data.redisAddr,
-        port=service.model.data.redisPort,
-        password=service.model.data.redisPassword or None,
-    )
+    node = Node.from_ays(service)
     node.client.raw('core.reboot', {})
 
 

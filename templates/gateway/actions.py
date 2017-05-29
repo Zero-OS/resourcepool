@@ -124,7 +124,6 @@ def processChange(job):
     if args.get("domain", None):
         service.model.data.domain = args["domain"]
 
-
     if args.get("advanced", None):
         service.model.data.advanced = args["advanced"]
 

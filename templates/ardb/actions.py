@@ -6,7 +6,7 @@ def install(job):
 
 
 def start(job):
-    from JumpScale.sal.g8os.ARDB import ARDB
+    from zeroos.restapi.sal.ARDB import ARDB
 
     service = job.service
     ardb = ARDB.from_ays(service)
@@ -14,7 +14,7 @@ def start(job):
 
 
 def stop(job):
-    from JumpScale.sal.g8os.ARDB import ARDB
+    from zeroos.restapi.sal.ARDB import ARDB
 
     service = job.service
     ardb = ARDB.from_ays(service)
@@ -22,7 +22,7 @@ def stop(job):
 
 
 def monitor(job):
-    from JumpScale.sal.g8os.ARDB import ARDB
+    from zeroos.restapi.sal.ARDB import ARDB
 
     service = job.service
 

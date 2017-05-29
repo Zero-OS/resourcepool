@@ -16,13 +16,13 @@ def input(job):
 
 
 def get_cluster(service):
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    from zeroos.restapi.sal.StorageCluster import StorageCluster
     return StorageCluster.from_ays(service)
 
 
 def init(job):
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
-    from JumpScale.sal.g8os.Node import Node
+    from zeroos.restapi.sal.StorageCluster import StorageCluster
+    from zeroos.restapi.sal.Node import Node
     service = job.service
     nodes = []
     for node_service in service.producers['node']:

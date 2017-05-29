@@ -6,8 +6,8 @@ def install(job):
 
 def apply_config(job, gwdata=None):
     import ipaddress
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.gateway.dhcp import DHCP
+    from zeroos.restapi.sal.Container import Container
+    from zeroos.restapi.sal.gateway.dhcp import DHCP
 
     container = Container.from_ays(job.service.parent)
 

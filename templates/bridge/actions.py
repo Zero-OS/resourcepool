@@ -1,22 +1,20 @@
 
 def install(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
 
     # Get g8core client
-    node = service.parent
-    cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                              port=node.model.data.redisPort,
-                              password=node.model.data.redisPassword)
+    node = Node.from_ays(service.parent)
 
     # Create bridge
     network = None if str(service.model.data.networkMode) == "none" else str(service.model.data.networkMode)
 
     try:
-       cl.bridge.create(service.name,
-                        hwaddr=service.model.data.hwaddr or None,
-                        network=network,
-                        nat=service.model.data.nat,
-                        settings=service.model.data.setting.to_dict())
+        node.client.bridge.create(service.name,
+                                  hwaddr=service.model.data.hwaddr or None,
+                                  network=network,
+                                  nat=service.model.data.nat,
+                                  settings=service.model.data.setting.to_dict())
     except RuntimeError as e:
         service.model.data.status = 'error'
         raise e
@@ -25,17 +23,15 @@ def install(job):
 
 
 def delete(job):
+    from zeroos.restapi.sal.Node import Node
     service = job.service
 
-    # Get g8core client
-    node = service.parent
-    cl = j.clients.g8core.get(host=node.model.data.redisAddr,
-                              port=node.model.data.redisPort,
-                              password=node.model.data.redisPassword)
+    # Get node client
+    node = Node.from_ays(service.parent)
 
     if service.model.data.status == 'error':
-        if service.name not in cl.bridge.list():
+        if service.name not in node.client.bridge.list():
             return
-    
-    cl.bridge.delete(service.name)
+
+    node.client.bridge.delete(service.name)
     service.model.data.status = 'down'

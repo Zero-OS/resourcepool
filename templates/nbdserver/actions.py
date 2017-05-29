@@ -2,7 +2,7 @@ from JumpScale import j
 
 
 def get_container(service):
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.Container import Container
     return Container.from_ays(service.parent)
 
 
@@ -102,7 +102,7 @@ def start(job):
 
 
 def get_storagecluster_config(service, storagecluster):
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    from zeroos.restapi.sal.StorageCluster import StorageCluster
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice)

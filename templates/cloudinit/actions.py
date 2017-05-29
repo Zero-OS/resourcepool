@@ -9,8 +9,8 @@ def install(job):
 
 def config_cloud_init(job, nics=None):
     import json
-    from JumpScale.sal.g8os.gateway.cloudinit import CloudInit
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.gateway.cloudinit import CloudInit
+    from zeroos.restapi.sal.Container import Container
 
     container = Container.from_ays(job.service.parent)
     nics = nics or []

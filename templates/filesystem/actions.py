@@ -9,13 +9,10 @@ def input(job):
 
 
 def get_pool(service):
+    from zeroos.restapi.sal.Node import Node
     nodeservice = service.parent.parent
     poolname = service.parent.name
-    node = j.sal.g8os.get_node(
-        addr=nodeservice.model.data.redisAddr,
-        port=nodeservice.model.data.redisPort,
-        password=nodeservice.model.data.redisPassword or None,
-    )
+    node = Node.from_ays(nodeservice)
     return node.storagepools.get(poolname)
 
 

@@ -105,7 +105,7 @@ def get_srcardb(container, template):
 
 
 def get_storagecluster_config(service):
-    from JumpScale.sal.g8os.StorageCluster import StorageCluster
+    from zeroos.restapi.sal.StorageCluster import StorageCluster
     storagecluster = service.model.data.storageCluster
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
@@ -118,8 +118,8 @@ def create_from_template_container(service, parent):
     if not it creates it.
     return the container service
     """
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.Node import Node
+    from zeroos.restapi.sal.Container import Container
+    from zeroos.restapi.sal.Node import Node
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
     node = Node.from_ays(parent)
     container = Container(name=container_name,

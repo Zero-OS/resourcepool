@@ -27,7 +27,7 @@ def install(job):
 
 
 def start(job):
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.Container import Container
 
     container = Container.from_ays(job.service)
     container.start()
@@ -39,7 +39,7 @@ def start(job):
 
 
 def stop(job):
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.Container import Container
 
     container = Container.from_ays(job.service)
     container.stop()
@@ -51,8 +51,8 @@ def stop(job):
 
 
 def monitor(job):
+    from zeroos.restapi.sal.Container import Container
     service = job.service
-    from JumpScale.sal.g8os.Container import Container
 
     if service.model.actionsState['install'] == 'ok':
         container = Container.from_ays(job.service)

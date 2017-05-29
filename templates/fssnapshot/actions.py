@@ -1,5 +1,6 @@
 from JumpScale import j
 
+
 def init_actions_(service, args):
     return {
         'init': [],
@@ -7,20 +8,18 @@ def init_actions_(service, args):
         'delete': [],
     }
 
+
 def input(job):
     if job.model.args.get("path", "") != "":
         raise j.exceptions.Input("path should not be set as input")
 
 
 def get_filesystem(service):
+    from zeroos.restapi.sal.Node import Node
     nodeservice = service.parent.parent.parent
     poolname = service.parent.parent.name
     fsname = str(service.parent.model.data.name)
-    node = j.sal.g8os.get_node(
-        addr=nodeservice.model.data.redisAddr,
-        port=nodeservice.model.data.redisPort,
-        password=nodeservice.model.data.redisPassword or None,
-    )
+    node = Node.from_ays(nodeservice)
     pool = node.storagepools.get(poolname)
     return pool.get(fsname)
 

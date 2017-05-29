@@ -1,11 +1,13 @@
 from JumpScale import j
 
+
 def input(job):
     for required in['zerotierNetID', 'zerotierToken']:
         if not job.model.args.get(required):
             raise j.exceptions.Input("{} cannot be empty".format(required))
 
     return job.model.args
+
 
 def bootstrap(job):
     from zerotier import client
@@ -27,6 +29,7 @@ def bootstrap(job):
             job.logger.error(str(err))
             member['config']['authorized'] = False
             zerotier.network.updateMember(member, member['nodeId'], netid)
+
 
 def delete_node(job):
     """
@@ -56,8 +59,10 @@ def delete_node(job):
                 job.logger.error(str(err))
             break
 
+
 def try_authorize(service, logger, netid, member, zerotier):
     import time
+    from zeroos.restapi.sal.Node import Node
 
     if not member['online'] or member['config']['authorized']:
         return
@@ -90,7 +95,7 @@ def try_authorize(service, logger, netid, member, zerotier):
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
     # create node.g8os service
-    node = j.sal.g8os.get_node(zerotier_ip)
+    node = Node(zerotier_ip)
     name = node.name
     try:
         node = service.aysrepo.serviceGet(role='node', instance=name)
@@ -122,6 +127,7 @@ def try_authorize(service, logger, netid, member, zerotier):
         except:
             j.tools.async.wrappers.sync(node.delete())
             raise
+
 
 def processChange(job):
     service = job.service

@@ -13,7 +13,7 @@ def input(job):
 
 
 def get_node(service):
-    from JumpScale.sal.g8os.Node import Node
+    from zeroos.restapi.sal.Node import Node
     return Node.from_ays(service.parent)
 
 
@@ -302,7 +302,7 @@ def _diff(col1, col2):
 
 
 def updateDisks(job, client, args):
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.Container import Container
     service = job.service
 
     uuid = get_domain(service)['uuid']
@@ -355,8 +355,8 @@ def updateNics(job, client, args):
     uuid = get_domain(service)['uuid']
 
     # Get new and old disks
-    new_nics = _diff(args.get('nics',[]), service.model.data.nics)
-    old_nics = _diff(service.model.data.nics, args.get('nics',[]))
+    new_nics = _diff(args.get('nics', []), service.model.data.nics)
+    old_nics = _diff(service.model.data.nics, args.get('nics', []))
     # Do nothing if no nic change
     if new_nics == [] and old_nics == []:
         return
@@ -376,7 +376,7 @@ def updateNics(job, client, args):
                                      id=nic['id'] or None,
                                      hwaddr=nic['macaddress'] or None)
 
-    service.model.data.nics = args.get('nics',[])
+    service.model.data.nics = args.get('nics', [])
     service.saveAll()
 
 

@@ -16,12 +16,11 @@ def combine(ip1, ip2, mask):
 
 
 def getAddresses(job):
+    from zeroos.restapi.sal.Node import Node
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
 
-    node_client = j.clients.g8core.get(host=node.model.data.redisAddr,
-                                       port=node.model.data.redisPort,
-                                       password=node.model.data.redisPassword)
-    mgmtaddr, network = getMgmtInfo(job, node, node_client)
+    node_client = Node.from_ays(node)
+    mgmtaddr, network = getMgmtInfo(job, node, node_client.client)
     return {
         'storageaddr': combine(str(network.ip), mgmtaddr, network.prefixlen),
         'vxaddr': combine('10.240.0.0', mgmtaddr, network.prefixlen),
@@ -59,25 +58,21 @@ def configure(job):
     this method will be called from the node.g8os install action.
     """
     import netaddr
-    from JumpScale.sal.g8os.Container import Container
-    from JumpScale.sal.g8os.Node import Node
+    from zeroos.restapi.sal.Node import Node
+    from zeroos.restapi.sal.Container import Container
 
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     job.logger.info("execute network configure on {}".format(node))
 
-    node_client = j.clients.g8core.get(host=node.model.data.redisAddr,
-                                       port=node.model.data.redisPort,
-                                       password=node.model.data.redisPassword)
-
+    node_client = Node.from_ays(node)
     service = job.service
 
-    mgmtaddr, network = getMgmtInfo(job, node, node_client)
+    mgmtaddr, network = getMgmtInfo(job, node, node_client.client)
 
     storageaddr = combine(str(network.ip), mgmtaddr, network.prefixlen)
     vxaddr = combine('10.240.0.0', mgmtaddr, network.prefixlen)
 
-    node_client.timeout = 120
-    nics = node_client.info.nic()
+    nics = node_client.client.info.nic()
     nics.sort(key=lambda nic: nic['speed'])
     interface = None
     for nic in nics:
@@ -105,9 +100,9 @@ def configure(job):
     if 'backplane' not in nicmap:
         container_client.json('ovs.bridge-add', {"bridge": "backplane"})
         container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
-        node_client.system('ip address add {addr} dev backplane'.format(addr=storageaddr)).get()
-        node_client.system('ip link set dev backplane up').get()
+        node_client.client.system('ip address add {addr} dev backplane'.format(addr=storageaddr)).get()
+        node_client.client.system('ip link set dev backplane up').get()
     if 'vxbackend' not in nicmap:
         container_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
-        node_client.system('ip address add {addr} dev vxbackend'.format(addr=vxaddr)).get()
-        node_client.system('ip link set dev vxbackend up').get()
+        node_client.client.system('ip address add {addr} dev vxbackend'.format(addr=vxaddr)).get()
+        node_client.client.system('ip link set dev vxbackend up').get()
