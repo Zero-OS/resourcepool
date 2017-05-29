@@ -312,15 +312,15 @@ def updateDisks(job, client, args):
         j.tools.async.wrappers.sync(service.executeAction('migrate', args={'node': args['node']}))
 
     # Get new and old disks
-    new_disks = _diff(args['disks'], service.model.data.disks)
-    old_disks = _diff(service.model.data.disks, args['disks'])
+    new_disks = _diff(args.get('disks', []), service.model.data.disks)
+    old_disks = _diff(service.model.data.disks, args.get('disks', []))
 
     # Do nothing if no disk change
     if new_disks == [] and old_disks == []:
         return
 
     # Set model to new data
-    service.model.data.disks = args['disks']
+    service.model.data.disks = args.get('disks', [])
     vdisk_container = create_nbdserver_container(service, service.parent)
     container = Container.from_ays(vdisk_container)
 
@@ -355,8 +355,8 @@ def updateNics(job, client, args):
     uuid = get_domain(service)['uuid']
 
     # Get new and old disks
-    new_nics = _diff(args['nics'], service.model.data.nics)
-    old_nics = _diff(service.model.data.nics, args['nics'])
+    new_nics = _diff(args.get('nics',[]), service.model.data.nics)
+    old_nics = _diff(service.model.data.nics, args.get('nics',[]))
     # Do nothing if no nic change
     if new_nics == [] and old_nics == []:
         return
@@ -376,7 +376,7 @@ def updateNics(job, client, args):
                                      id=nic['id'] or None,
                                      hwaddr=nic['macaddress'] or None)
 
-    service.model.data.nics = args['nics']
+    service.model.data.nics = args.get('nics',[])
     service.saveAll()
 
 

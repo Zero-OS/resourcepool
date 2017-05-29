@@ -73,19 +73,23 @@ def init(job):
 
     # create firewall
     fwactor = service.aysrepo.actorGet('firewall')
-    fwactor.serviceCreate(instance=service.name, args=args)
+    fw_service = fwactor.serviceCreate(instance=service.name, args=args)
+    fw_service.consume(cont_service)
 
     # create http
     httpactor = service.aysrepo.actorGet('http')
-    httpactor.serviceCreate(instance=service.name, args=args)
+    http_service = httpactor.serviceCreate(instance=service.name, args=args)
+    http_service.consume(cont_service)
 
     # create dhcp
     dhcpactor = service.aysrepo.actorGet('dhcp')
-    dhcpactor.serviceCreate(instance=service.name, args=args)
+    dhcp_service = dhcpactor.serviceCreate(instance=service.name, args=args)
+    dhcp_service.consume(cont_service)
 
     # Start cloudinit
     cloudinitactor = service.aysrepo.actorGet("cloudinit")
-    cloudinitactor.serviceCreate(instance=service.name, args=args)
+    cloudinit_service = cloudinitactor.serviceCreate(instance=service.name, args=args)
+    cloudinit_service.consume(cont_service)
 
 
 def install(job):
