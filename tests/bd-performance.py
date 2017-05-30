@@ -7,7 +7,7 @@ import time
 import yaml
 
 import g8core
-from g8os import resourcepool
+from zeroos.restapi import  client
 
 os.environ['LC_ALL'] = 'C.UTF-8'
 os.environ['LANG'] = 'C.UTF-8'
@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @click.command()
-@click.option('--resourcepoolserver', required=True, help='Resourcepool api server endpoint. Eg http://192.168.193.212:8080')
+@click.option('--restapiserver', required=True, help='0-rest-api api server endpoint. Eg http://192.168.193.212:8080')
 @click.option('--storagecluster', required=True, help='Name of the storage cluster in which the vdisks need to be created')
 @click.option('--vdiskCount', required=True, type=int, help='Number of vdisks that need to be created')
 @click.option('--vdiskSize', required=True, type=int, help='Size of disks in GB')
@@ -24,9 +24,9 @@ logging.basicConfig(level=logging.INFO)
 @click.option('--vdiskType', required=True, type=click.Choice(['boot', 'db', 'cache', 'tmp']), help='Type of disk')
 @click.option('--resultDir', required=True, help='Results directory path')
 @click.option('--nodeLimit', type=int, help='Limit the number of nodes')
-def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runtime, vdisktype, resultdir, nodelimit):
-    """Creates a storagecluster on all the nodes in the resourcepool"""
-    api = resourcepool.Client(resourcepoolserver).api
+def test_fio_nbd(restapiserver, storagecluster, vdiskcount, vdisksize, runtime, vdisktype, resultdir, nodelimit):
+    """Creates a storagecluster on all the nodes in the 0-rest-api"""
+    api = client.Client(restapiserver).api
     logging.info("Discovering nodes in the cluster ...")
     nodes = api.nodes.ListNodes().json()
     nodes = [node for node in nodes if node["status"] == "running"]
@@ -50,7 +50,7 @@ def test_fio_nbd(resourcepoolserver, storagecluster, vdiskcount, vdisksize, runt
 
     deployInfo = {}
     try:
-        deployInfo = deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype)
+        deployInfo = deploy(api, nodeIDs, nodeIPs, restapiserver, storagecluster, vdiskcount, vdisksize, vdisktype)
         test(api, deployInfo, nodeIDs, runtime)
         waitForData(api, nodeIDs, deployInfo, runtime, resultdir)
     except Exception as e:
@@ -153,18 +153,18 @@ def cleanUp(api, nodeIDs, deployInfo):
             api.nodes.DeleteContainer(testContainer, nodeID)
 
 
-def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount, vdisksize, vdisktype):
+def deploy(api, nodeIDs, nodeIPs, restapiserverserver, storagecluster, vdiskcount, vdisksize, vdisktype):
     deployInfo = {}
     storageclusterInfo = getStorageClusterInfo(api, storagecluster)
     for idx, nodeID in enumerate(nodeIDs):
         # Create filesystem to be shared amongst fio and nbd server contianers
-        fss = _create_fss(resourcepoolserver, api, nodeID)
+        fss = _create_fss(restapiserverserver, api, nodeID)
 
         # Create block device container and start nbd
         nbdContainer = "nbd_{}".format(str(time.time()).replace('.', ''))
         nbdFlist = "https://hub.gig.tech/gig-official-apps/blockstor-master.flist"
         nodeClient = g8core.Client(nodeIPs[idx])
-        createContainer(resourcepoolserver, api, nodeID, [fss], nbdFlist, nbdContainer)
+        createContainer(restapiserverserver, api, nodeID, [fss], nbdFlist, nbdContainer)
 
         nbdConfig = startNbd(api=api,
                              nodeID=nodeID,
@@ -179,7 +179,7 @@ def deploy(api, nodeIDs, nodeIPs, resourcepoolserver, storagecluster, vdiskcount
         # Create and setup the test container
         testContainer = "bptest_{}".format(str(time.time()).replace('.', ''))
         fioFlist = "https://hub.gig.tech/gig-official-apps/performance-test.flist"
-        createContainer(resourcepoolserver, api, nodeID, [fss], fioFlist, testContainer)
+        createContainer(restapiserverserver, api, nodeID, [fss], fioFlist, testContainer)
         # Load nbd kernel module
         nodeClient.bash("modprobe nbd").get()
 
@@ -273,22 +273,22 @@ def startNbd(api, nodeID, storagecluster, fs, containername, vdiskCount, vdiskSi
     return nbdConfig
 
 
-def createContainer(resourcepoolserver, cl, nodeID, fs, flist, hostname):
-    container = resourcepool.CreateContainer.create(filesystems=fs,
-                                                    flist=flist,
-                                                    hostNetworking=True,
-                                                    hostname=hostname,
-                                                    initProcesses=[],
-                                                    nics=[],
-                                                    ports=[],
-                                                    name=hostname)
+def createContainer(restapiserverserver, cl, nodeID, fs, flist, hostname):
+    container = restapiserver.CreateContainer.create(filesystems=fs,
+                                                     flist=flist,
+                                                     hostNetworking=True,
+                                                     hostname=hostname,
+                                                     initProcesses=[],
+                                                     nics=[],
+                                                     ports=[],
+                                                     name=hostname)
 
     req = json.dumps(container.as_dict(), indent=4)
     link = "POST /nodes/{nodeid}/containers".format(nodeid=nodeID)
     logging.info("Sending the following request to the /containers api:\n{}\n\n{}".format(link, req))
     res = cl.nodes.CreateContainer(nodeid=nodeID, data=container)
     logging.info(
-        "Creating new container...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
+        "Creating new container...\n You can follow here: %s%s" % (restapiserverserver, res.headers['Location']))
 
     # wait for container to be running
     res = cl.nodes.GetContainer(hostname, nodeID).json()
@@ -336,12 +336,12 @@ def nbdClientConnect(api, nodeID, containername, nbdConfig):
     return {"filenames": filenames, "client_pids": client_pids}
 
 
-def _create_fss(resourcepoolserver, cl, nodeID):
+def _create_fss(restapiserverserver, cl, nodeID):
     pool = "{}_fscache".format(nodeID)
     fs_id = "fs_{}".format(str(time.time()).replace('.', ''))
-    fs = resourcepool.FilesystemCreate.create(name=fs_id,
-                                              quota=0,
-                                              readOnly=False)
+    fs = restapiserver.FilesystemCreate.create(name=fs_id,
+                                               quota=0,
+                                               readOnly=False)
 
     req = json.dumps(fs.as_dict(), indent=4)
 
@@ -350,7 +350,7 @@ def _create_fss(resourcepoolserver, cl, nodeID):
     res = cl.nodes.CreateFilesystem(nodeid=nodeID, storagepoolname=pool, data=fs)
 
     logging.info(
-        "Creating new filesystem...\n You can follow here: %s%s" % (resourcepoolserver, res.headers['Location']))
+        "Creating new filesystem...\n You can follow here: %s%s" % (restapiserverserver, res.headers['Location']))
     return "{}:{}".format(pool, fs_id)
 
 

@@ -3,7 +3,7 @@
 All steps:
 1. Create a ZeroTier network
 2. [Setup the AYS Server](#ays-server)
-3. [Setup the Resource Pool API Server](#resourcepool-api)
+3. [Setup the Resource Pool API Server](#0-rest-api)
 4. [Start the Bootstrap Service, using an AYS blueprint](#bootstrap-service)
 5. [Format all hard disks](#format-disks)
 6. [Boot the G8OS nodes](#boot-nodes)
@@ -98,8 +98,8 @@ pip3 install zerotier
 
   ```shell
   cd /opt/code/
-  git clone https://github.com/g8os/resourcepool/
-  cd resourcepool
+  git clone https://github.com/zero-os/0-rest-api/
+  cd 0-rest-api
   git checkout 1.1.0-alpha
   ```
 
@@ -123,7 +123,7 @@ pip3 install zerotier
   - **{git-server}**: https address of your repository on a Git server, e.g. `http://github.com/user/repo`
 
 
-<a id="resourcepool-api"></a>
+<a id="0-rest-api"></a>
 ## Setup the Resource Pool API Server
 
 * Build the resource pool API server
@@ -131,8 +131,8 @@ pip3 install zerotier
   If not already done before, first clone the resource pool server repository, and then build the server:
 
   ```shell
-  git clone https://github.com/g8os/resourcepool
-  cd resourcepool/api
+  git clone https://github.com/zero-os/0-rest-api
+  cd 0-rest-api/api
   git checkout 1.1.0-alpha
   go build
   ```
@@ -155,7 +155,7 @@ pip3 install zerotier
 Add the following blueprint in the `blueprints` directory of your AYS repository:
 
 ```
-bootstrap.g8os__resourcepool1:
+bootstrap.g8os__0-rest-api1:
   zerotierNetID: {ZeroTier-Network-ID}
   zerotierToken: '{ZeroTier-API-Token}'
 
@@ -200,12 +200,12 @@ From with in the JumpScale 8.2 he Docker container execute:
 
 ```
 #!/usr/bin/env python3
-from g8os import resourcepool
+from zeroos.restapi import  client
 import g8core
 import argparse
 
 def main(url):
-    api = resourcepool.APIClient(base_uri=url)
+    api = 0-rest-api.APIClient(base_uri=url)
     for node in ['x.x.x.x','x.x.x.x']:     #nodes_MGMT_ip's
         print('Wiping node {}'.format(node))
         nodeclient = g8core.Client(node)

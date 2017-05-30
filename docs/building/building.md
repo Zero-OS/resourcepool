@@ -1,8 +1,8 @@
 # Building the Resource Pool API Server
 
 ```
-git clone https://github.com/g8os/resourcepool
-cd grid/api
+git clone https://github.com/zero-os/0-rest-api
+cd 0-rest-api/api
 go build
 ```
 

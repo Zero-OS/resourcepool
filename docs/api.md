@@ -2,7 +2,7 @@
 
 The Resource Pool API Server exposes all the APIs to manage the resource pool.
 
-This [link](https://rawgit.com/g8os/resourcepool/master/raml/api.html) shows all the available endpoints in the resource pool API and the different calls that can be done on each endpoint along with the expected request body and response.
+This [link](https://rawgit.com/zero-os/0-rest-api/master/raml/api.html) shows all the available endpoints in the resource pool API and the different calls that can be done on each endpoint along with the expected request body and response.
 
 The APIs are split into two categories:
 
