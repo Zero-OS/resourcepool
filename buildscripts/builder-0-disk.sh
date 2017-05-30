@@ -10,9 +10,12 @@ if [ "$1" != "" ]; then
     branch="$1"
 fi
 
-BLOCKSTOR=$GOPATH/src/github.com/g8os/blockstor
+go get -u -v -d github.com/zero-os/0-disk/nbdserver
+go get -u -v -d github.com/zero-os/0-disk/g8stor/cmd/copyvdisk
 
-pushd $BLOCKSTOR
+DISK0=$GOPATH/src/github.com/zero-os/0-disk/
+
+pushd $DISK0
 git fetch origin
 git checkout -B "${branch}" origin/${branch}
 rm -rf bin/*
@@ -20,4 +23,4 @@ make
 popd
 
 mkdir -p /tmp/archives/
-tar -czf "/tmp/archives/blockstor-${branch}.tar.gz" -C $BLOCKSTOR/ bin
+tar -czf "/tmp/archives/0-disk-${branch}.tar.gz" -C $DISK0/ bin

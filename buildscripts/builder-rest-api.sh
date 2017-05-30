@@ -13,12 +13,12 @@ fi
 apt-get update
 apt-get install -y curl git
 
-git clone -b "${branch}" https://github.com/g8os/grid.git $GOPATH/src/github.com/g8os/grid
+git clone -b "${branch}" https://github.com/github.com/zero-os/0-rest-api.git $GOPATH/src/github.com/github.com/zero-os/0-rest-api
 
-cd $GOPATH/src/github.com/g8os/grid/api
+cd $GOPATH/src/github.com/github.com/zero-os/0-rest-api/api
 go get -v
 
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .
 
 mkdir -p /tmp/archives/
-tar -czf "/tmp/archives/grid-api-${branch}.tar.gz" api
+tar -czf "/tmp/archives/rest-api-${branch}.tar.gz" api

@@ -10,7 +10,7 @@ if [ "$1" != "" ]; then
     branch="$1"
 fi
 
-CLOUDINIT=github.com/g8os/cloud-init-server
+CLOUDINIT=github.com/zero-os/cloud-init-server
 
 go get -v -d $CLOUDINIT
 
