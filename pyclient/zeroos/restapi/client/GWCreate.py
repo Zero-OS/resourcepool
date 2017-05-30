@@ -1,72 +1,64 @@
 """
-Auto-generated class for ContainerNIC
+Auto-generated class for GWCreate
 """
-from .EnumContainerNICStatus import EnumContainerNICStatus
-from .EnumContainerNICType import EnumContainerNICType
+from .GWNIC import GWNIC
+from .HTTPProxy import HTTPProxy
+from .PortForward import PortForward
 
 from . import client_support
 
 
-class ContainerNIC(object):
+class GWCreate(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(id, status, type, config=None, hwaddr=None, name=None):
+    def create(domain, httpproxies, name, nics, portforwards):
         """
-        :type config: str
-        :type hwaddr: str
-        :type id: str
+        :type domain: str
+        :type httpproxies: list[HTTPProxy]
         :type name: str
-        :type status: EnumContainerNICStatus
-        :type type: EnumContainerNICType
-        :rtype: ContainerNIC
+        :type nics: list[GWNIC]
+        :type portforwards: list[PortForward]
+        :rtype: GWCreate
         """
 
-        return ContainerNIC(
-            config=config,
-            hwaddr=hwaddr,
-            id=id,
+        return GWCreate(
+            domain=domain,
+            httpproxies=httpproxies,
             name=name,
-            status=status,
-            type=type,
+            nics=nics,
+            portforwards=portforwards,
         )
 
     def __init__(self, json=None, **kwargs):
         if not json and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'ContainerNIC'
+        class_name = 'GWCreate'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'config'
+        property_name = 'domain'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.config = client_support.val_factory(val, datatypes)
+                self.domain = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'hwaddr'
+        property_name = 'httpproxies'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [str]
+            datatypes = [HTTPProxy]
             try:
-                self.hwaddr = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'id'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.id = client_support.val_factory(val, datatypes)
+                self.httpproxies = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
@@ -80,24 +72,26 @@ class ContainerNIC(object):
                 self.name = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'status'
+        property_name = 'nics'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [EnumContainerNICStatus]
+            datatypes = [GWNIC]
             try:
-                self.status = client_support.val_factory(val, datatypes)
+                self.nics = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'type'
+        property_name = 'portforwards'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [EnumContainerNICType]
+            datatypes = [PortForward]
             try:
-                self.type = client_support.val_factory(val, datatypes)
+                self.portforwards = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

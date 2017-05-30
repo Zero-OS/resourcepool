@@ -292,6 +292,161 @@ class NodesService:
         return self.client.get(uri, headers, query_params, content_type)
 
 
+    def GetGWFWConfig(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get current FW config
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/advanced/firewall
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/advanced/firewall"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def SetGWFWConfig(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Set FW config
+        Once used you can not use gw.portforwards any longer
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/advanced/firewall"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def GetGWHTTPConfig(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get current HTTP config
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/advanced/http
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/advanced/http"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def SetGWHTTPConfig(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Set HTTP config
+        Once used you can not use gw.httpproxxies any longer
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/advanced/http
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/advanced/http"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def DeleteDHCPHost(self, macaddress, interface, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete dhcp host
+        It is method for DELETE /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts/{macaddress}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/dhcp/"+interface+"/hosts/"+macaddress
+        return self.client.delete(uri, headers, query_params, content_type)
+
+
+    def ListGWDHCPHosts(self, interface, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        List DHCPHosts for specified interface
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/dhcp/"+interface+"/hosts"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def AddGWDHCPHost(self, data, interface, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Add a dhcp host to a specified interface
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/dhcp/"+interface+"/hosts"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def DeleteGWForward(self, forwardid, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete portforward, forwardid = srcip:srcport
+        It is method for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/firewall/forwards/"+forwardid
+        return self.client.delete(uri, headers, query_params, content_type)
+
+
+    def GetGWForwards(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get list for IPv4 Forwards
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/firewall/forwards
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/firewall/forwards"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def CreateGWForwards(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Create a new Portforwarding
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/firewall/forwards"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def StartGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Start Gateway instance
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/start
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/start"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def StopGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Stop gateway instance
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/stop
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/stop"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def DeleteGateway(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete gateway instance
+        It is method for DELETE /nodes/{nodeid}/gws/{gwname}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname
+        return self.client.delete(uri, headers, query_params, content_type)
+
+
+    def GetGateway(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get gateway
+        It is method for GET /nodes/{nodeid}/gws/{gwname}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def UpdateGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Update Gateway
+        It is method for PUT /nodes/{nodeid}/gws/{gwname}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname
+        return self.client.put(uri, data, headers, query_params, content_type)
+
+
+    def ListGateways(self, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        List running gateways
+        It is method for GET /nodes/{nodeid}/gws
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def CreateGW(self, data, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Create a new gateway
+        It is method for POST /nodes/{nodeid}/gws
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def GetNodeOSInfo(self, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Get detailed information of the OS of the node

@@ -12,7 +12,7 @@ class VdiskCreate(object):
     """
 
     @staticmethod
-    def create(blocksize, id, size, type, readOnly=None, storagecluster=None, templatevdisk=None, tlogStoragecluster=None):
+    def create(blocksize, id, size, storagecluster, type, readOnly=None, templatevdisk=None, tlogStoragecluster=None):
         """
         :type blocksize: int
         :type id: str
@@ -96,6 +96,8 @@ class VdiskCreate(object):
                 self.storagecluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'templatevdisk'
         val = data.get(property_name)
