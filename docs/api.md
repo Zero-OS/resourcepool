@@ -1,15 +1,15 @@
-# Resource Pool API
+# 0 Rest API
 
-The Resource Pool API Server exposes all the APIs to manage the resource pool.
+The 0 Rest API Server exposes all the APIs to manage the 0 Rest API.
 
-This [link](https://rawgit.com/zero-os/0-rest-api/master/raml/api.html) shows all the available endpoints in the resource pool API and the different calls that can be done on each endpoint along with the expected request body and response.
+This [link](https://rawgit.com/zero-os/0-rest-api/master/raml/api.html) shows all the available endpoints in the 0 Rest API and the different calls that can be done on each endpoint along with the expected request body and response.
 
 The APIs are split into two categories:
 
 - APIs that use **Direct Access** to return data/perform actions: this is done by using the [Go Client](https://github.com/g8os/go-client) of core0 to directly talk to the nodes and containers
 - APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://rawgit.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
 
-The following are some examples on how to use the resource pool API, all using the direct access method:
+The following are some examples on how to use the 0 Rest API, all using the direct access method:
 
 - [List core0 nodes](#list-nodes)
 - [Get memory information of a node](#memory-info)
@@ -21,12 +21,12 @@ The following are some examples on how to use the resource pool API, all using t
 - [List processes on a container](#list-processes)
 - [Start a process on a container](#start-process)
 
-In all below examples we will assume that the resource pool API server is listening on 127.0.0.1:8080.
+In all below examples we will assume that the 0 Rest API server is listening on 127.0.0.1:8080.
 
 <a id="list-nodes"></a>
 ## List nodes
 
-Using the resource pool API server listening on 127.0.0.1:8080:
+Using the 0 Rest API server listening on 127.0.0.1:8080:
 ```
 GET http://127.0.0.1:8080/nodes
 ```

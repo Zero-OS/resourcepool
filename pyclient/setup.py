@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='0-rest-api',
     version='1.1.0.a',
-    description='G8OS resource pool client',
+    description='Zero-OS Rest API client',
     long_description=long_description,
     url='https://github.com/g8os/grid',
     author='Christophe de Carvalho',

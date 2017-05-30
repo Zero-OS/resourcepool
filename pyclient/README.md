@@ -1,6 +1,6 @@
 # Python Client
 
-0-rest-api is the Python client used to talk to [G8OS Resource Pool API](https://github.com/zero-os/0-rest-api)
+0-rest-api is the Python client used to talk to [G8OS 0 Rest API](https://github.com/zero-os/0-rest-api)
 
 ## Install
 
@@ -27,5 +27,5 @@ Out[11]:
 ## To update the client from the RAML file
 
 ```shell
-go-raml client -l python --ramlfile raml/api.raml --dir pyclient/zero-os/0-rest-api
+go-raml client -l python --ramlfile raml/api.raml --dir pyclient/zeroos/restapi/client
 ```

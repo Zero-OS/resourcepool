@@ -1,9 +1,9 @@
-# Resource Pool Development Setup
+#0 Rest API Development Setup
 
 All steps:
 1. Create a ZeroTier network
 2. [Setup the AYS Server](#ays-server)
-3. [Setup the Resource Pool API Server](#0-rest-api)
+3. [Setup the 0 Rest API Server](#0-rest-api)
 4. [Start the Bootstrap Service, using an AYS blueprint](#bootstrap-service)
 5. [Format all hard disks](#format-disks)
 6. [Boot the G8OS nodes](#boot-nodes)
@@ -12,7 +12,7 @@ The first step is pretty straight forward, go to https://my.zerotier.com/ and cr
 
 For the next 3 steps you have two options:
 - Do it all manually as documented here below in the linked sections
-- Or run the AYS Server, the Resource Pool Server and the Bootstrap service in a Docker container, leveraging two bash scripts that automate all this
+- Or run the AYS Server, the 0 Rest API Server and the Bootstrap service in a Docker container, leveraging two bash scripts that automate all this
 
 The automated setup is documented below in the two first sections:
 - [Create and start the Docker container](#docker-container)
@@ -92,7 +92,7 @@ pip3 install zerotier
 
 * Get the AYS actor templates for setting up a resource pool
 
-  The AYS actor templates for setting up all the resource pool server components are available in the `templates` directory of the resource pool server repository on GitHub.
+  The AYS actor templates for setting up all the0 Rest APIserver components are available in the `templates` directory of the0 Rest APIserver repository on GitHub.
 
   In order to clone this repository execute:
 
@@ -124,11 +124,11 @@ pip3 install zerotier
 
 
 <a id="0-rest-api"></a>
-## Setup the Resource Pool API Server
+## Setup the 0 Rest API Server
 
-* Build the resource pool API server
+* Build the 0 Rest API server
 
-  If not already done before, first clone the resource pool server repository, and then build the server:
+  If not already done before, first clone the0 Rest APIserver repository, and then build the server:
 
   ```shell
   git clone https://github.com/zero-os/0-rest-api
@@ -137,7 +137,7 @@ pip3 install zerotier
   go build
   ```
 
-* Run the resource pool API server
+* Run the 0 Rest API server
 
   Execute:
 
@@ -146,7 +146,7 @@ pip3 install zerotier
   Options:
   - `--bind :8080` makes the server listen on all interfaces on port 8080
   - `--ays-url` needed to point to the AYS REST API
-  - `--ays-repo` is the name of the AYS repository the resource pool API need to use. It should be the repo you created in step 1.
+  - `--ays-repo` is the name of the AYS repository the 0 Rest API need to use. It should be the repo you created in step 1.
 
 
 <a id="bootstrap-service"></a>
@@ -155,7 +155,7 @@ pip3 install zerotier
 Add the following blueprint in the `blueprints` directory of your AYS repository:
 
 ```
-bootstrap.g8os__0-rest-api1:
+bootstrap.g8os__restapi1:
   zerotierNetID: {ZeroTier-Network-ID}
   zerotierToken: '{ZeroTier-API-Token}'
 
@@ -171,7 +171,7 @@ You get both values from the ZeroTier web portal: https://my.zerotier.com/
 
 This blueprint will install the **auto discovery service** which will auto discover all G8OS nodes that were setup to connect to the same ZeroTier network.
 
-Alternatively you can also manually add a G8OS node to the resource pool with following blueprint:
+Alternatively you can also manually add a G8OS node to the 0 Rest AP Iwith following blueprint:
 
 ```
 node.g8os__525400123456:
@@ -194,21 +194,21 @@ ays run create --follow
 <a id="format-disks"></a>
 ## Format all hard disks
 
-In order to prepare for the [setup of storage clusters](../storagecluster/setup.md) it is highly recommended to format all hard disks as part of the resource pool setup. This is achieved by using the resource pool Python client, as follows.
+In order to prepare for the [setup of storage clusters](../storagecluster/setup.md) it is highly recommended to format all hard disks as part of the 0 Rest API setup. This is achieved by using the 0 Rest API Python client, as follows.
 
 From with in the JumpScale 8.2 he Docker container execute:
 
 ```
 #!/usr/bin/env python3
 from zeroos.restapi import  client
-import g8core
+from zeroos.core0 import  client
 import argparse
 
 def main(url):
-    api = 0-rest-api.APIClient(base_uri=url)
+    api = client.APIClient(base_uri=url)
     for node in ['x.x.x.x','x.x.x.x']:     #nodes_MGMT_ip's
         print('Wiping node {}'.format(node))
-        nodeclient = g8core.Client(node)
+        nodeclient = client.Client(node)
         for disk in nodeclient.disk.list()['blockdevices']:
             if not disk['mountpoint'] :
                 print('   * Wiping disk {kname}'.format(**disk))

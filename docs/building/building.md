@@ -1,4 +1,4 @@
-# Building the Resource Pool API Server
+# Building the 0 Rest API Server
 
 ```
 git clone https://github.com/zero-os/0-rest-api

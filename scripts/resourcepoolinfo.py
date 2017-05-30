@@ -25,6 +25,6 @@ def main(url):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--url', help='URL of client api')
+    parser.add_argument('-u', '--url', help='URL of 0 rest api')
     options = parser.parse_args()
     main(options.url)

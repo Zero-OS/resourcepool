@@ -1,12 +1,12 @@
 # Zero-OS Rest API
 
-A Zero-oS resource pool is a cluster of G8OS nodes, exposing its services through a Zero-OS API Server.
+A Zero-OS 0 Rest API is a cluster of Zero-OS nodes, exposing its services through a Zero-OS API Server.
 
 This repository includes:
-- RAML definition of the resource pool API: [raml](/raml)
+- RAML definition of the 0 Rest API: [raml](/raml)
 - Zero-OS Rest API Server implementation: [api](/api)
 - AYS templates for deploying a resource pool: [templates](/templates)
-- Python client to the resource pool API: [pyclient](/pyclient)
+- Python client to the 0 Rest API: [pyclient](/pyclient)
 - Block device performance test script: [tests](/tests)
 - Some helper scripts: [scripts][/scripts]
 - Build scripts: [buildscripts](/buildscripts)
