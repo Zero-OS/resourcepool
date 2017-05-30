@@ -28,7 +28,9 @@ bash install.sh
 mkdir -p /opt/code/github/
 git clone -b "${branch}" https://github.com/github.com/zero-os/0-rest-api.git /opt/code/github/github.com/zero-os/0-rest-api
 
-pip3 install zeroos
+pip3 install git+https://github.com/zero-os/0-rest-api.git@"${branch}"#subdirectory=pyclient -U
+pip3 install git+https://github.com/zero-os/0-core.git@"${branch}"#subdirectory=pyclient -U
+
 pip3 install zerotier
 
 js 'x = j.tools.cuisine.local; x.apps.atyourservice.install()'
