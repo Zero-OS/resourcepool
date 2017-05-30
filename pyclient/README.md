@@ -1,19 +1,19 @@
 # Python Client
 
-g8os-resourcepool is the Python client used to talk to [G8OS Resource Pool API](https://github.com/g8os/resourcepool)
+0-rest-api is the Python client used to talk to [G8OS 0 Rest API](https://github.com/zero-os/0-rest-api)
 
 ## Install
 
 ```bash
-pip install g8os-resourcepool
+pip install 0-rest-api
 ```
 
 ## How to use
 
 ```python
-In [9]: from g8os import resourcepool
+In [9]: from zeroos.restapi import  client
 
-In [10]: c = resourcepool.Client('http://192.168.193.212:8080')
+In [10]: c = client.Client('http://192.168.193.212:8080')
 
 In [11]: c.api.nodes.ListNodes().json()
 Out[11]:
@@ -27,5 +27,5 @@ Out[11]:
 ## To update the client from the RAML file
 
 ```shell
-go-raml client -l python --ramlfile raml/api.raml --dir pyclient/g8os/resourcepool
+go-raml client -l python --ramlfile raml/api.raml --dir pyclient/zeroos/restapi/client
 ```

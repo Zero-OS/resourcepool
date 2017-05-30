@@ -43,6 +43,7 @@ copypkg() {
 }
 
 ensure_lddcopy() {
+   aptinstall git
    if ! which lddcopy; then
       pushd /tmp
       git clone --depth=1 https://github.com/maxux/lddcopy.git

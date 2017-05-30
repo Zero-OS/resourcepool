@@ -1,9 +1,9 @@
-from g8os import resourcepool
+from zeroos.restapi import  client
 import prettytable
 
 
 def main(url):
-    api = resourcepool.APIClient(url)
+    api = client.APIClient(url)
     table = prettytable.PrettyTable(["Node", "VMS", "Containers"])
     for node in api.nodes.ListNodes().json():
         runningcontainers = 0
@@ -25,6 +25,6 @@ def main(url):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--url', help='URL of resourcepool api')
+    parser.add_argument('-u', '--url', help='URL of 0 rest api')
     options = parser.parse_args()
     main(options.url)

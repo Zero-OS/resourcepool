@@ -8,9 +8,9 @@ apt-get install -y openvswitch-switch
 ensure_lddcopy
 ensure_go
 
-OVSPLUGIN=$GOPATH/src/github.com/g8os/ovs-plugin
+OVSPLUGIN=$GOPATH/src/github.com/zero-os/openvswitch-plugin
 
-go get -u -v -d github.com/g8os/ovs-plugin
+go get -u -v -d github.com/zero-os/openvswitch-plugin
 
 
 TARGET=/tmp/target-ovs

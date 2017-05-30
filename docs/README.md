@@ -1,19 +1,19 @@
 # Zero-OS 0-rest-api
 
-A Zero-OS resource pool is a cluster of Zero-OS nodes, exposing its services through a Zero-OS Rest API Server.
+A Zero-OS 0 Rest API is a cluster of Zero-OS nodes, exposing its services through a Zero-OS Rest API Server.
 
-In the below picture you see a resource pool of 5 physical nodes, all connected through a ZeroTier network.
+In the below picture you see a 0 Rest API of 5 physical nodes, all connected through a ZeroTier network.
 
 ![Architecture](resource-pool.png)
 
-Next to the the G8OS nodes, a G8OS resource pool includes the following components:
+Next to the the G8OS nodes, a Zero-OS Rest API includes the following components:
 - One **Zero-OS Rest API Server**, exposing all the APIs to manage and interacting with the resource pool
-- One **AYS Server**, for managing the full lifecycle of both the resource pool and the actual workloads (applications)
-- One **iPXE Server** from which all G8OS nodes boot
+- One **AYS Server**, for managing the full lifecycle of both the 0 Rest API and the actual workloads (applications)
+- One **iPXE Server** from which all Zero-OS nodes boot
 
-Both the **Zero-OS Rest API Server**, the **AYS Server** and the **iPXE Server** run in a container on one of the G8OS resource pool nodes, or on any other local or remote host, connected to the same ZeroTier network as the other G8OS nodes in the resource pool.
+Both the **Zero-OS Rest API Server**, the **AYS Server** and the **iPXE Server** run in a container on one of the Zero-OS Rest API nodes, or on any other local or remote host, connected to the same ZeroTier network as the other Zero-OS nodes in the resource pool.
 
-In addition a G8OS resource pool typically includes one or more **Storage Clusters**, implemented as clusters of (ARDB) key-value stores running in containers hosted on the G8OS resource pool nodes. In the above picture two storage clusters are shown:
+In addition a Zero-OS Rest API typically includes one or more **Storage Clusters**, implemented as clusters of (ARDB) key-value stores running in containers hosted on the Zero-OS Rest API nodes. In the above picture two storage clusters are shown:
 - One for implementing a block storage backend, exposed through NBD servers, one for each each virtual machine using virtual disks from the block storage backend
 - Another one implementing the backend for the TLOG server, needed by the NBD servers
 
