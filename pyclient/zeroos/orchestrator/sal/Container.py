@@ -1,6 +1,5 @@
 import json
 from io import BytesIO
-from js9 import j
 
 import logging
 logging.basicConfig(level=logging.INFO)
