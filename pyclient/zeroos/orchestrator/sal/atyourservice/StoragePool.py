@@ -1,5 +1,5 @@
 from ..abstracts import AYSable
-from JumpScale import j
+from js9 import j
 
 
 class StoragePoolAys(AYSable):

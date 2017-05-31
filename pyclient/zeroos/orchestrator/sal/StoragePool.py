@@ -1,11 +1,15 @@
-from JumpScale import j
+from js9 import j
 from .abstracts import Mountable
 import os
 import time
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def _prepare_device(node, devicename):
-    j.sal.g8os.logger.debug("prepare device %s", devicename)
+    logger.debug("prepare device %s", devicename)
     ss = devicename.split('/')
     if len(ss) < 3:
         raise RuntimeError("bad device name: {}".format(devicename))
@@ -57,7 +61,7 @@ class StoragePools:
 
     def create(self, name, devices, metadata_profile, data_profile, overwrite=False):
         label = 'sp_{}'.format(name)
-        j.sal.g8os.logger.debug("create storagepool %s", label)
+        logger.debug("create storagepool %s", label)
 
         device_names = []
         for device in devices:
@@ -136,7 +140,7 @@ class StoragePool(Mountable):
             if self.is_device_used(device):
                 continue
             part = _prepare_device(self.node, device)
-            j.sal.g8os.logger.debug("add device %s to %s", device, self)
+            logger.debug("add device %s to %s", device, self)
             to_add.append(part.devicename)
 
         self._client.btrfs.device_add(self._get_mountpoint(), *to_add)
@@ -146,7 +150,7 @@ class StoragePool(Mountable):
         self._client.btrfs.device_remove(self._get_mountpoint(), *devices)
         for device in devices:
             if device in self.devices:
-                j.sal.g8os.logger.debug("remove device %s to %s", device, self)
+                logger.debug("remove device %s to %s", device, self)
                 self.devices.remove(device)
 
     @property
@@ -246,7 +250,7 @@ class StoragePool(Mountable):
         """
         Create filesystem
         """
-        j.sal.g8os.logger.debug("Create filesystem %s on %s", name, self)
+        logger.debug("Create filesystem %s on %s", name, self)
         mountpoint = self._get_mountpoint()
         fspath = os.path.join(mountpoint, 'filesystems')
         self._client.filesystem.mkdir(fspath)
@@ -342,7 +346,7 @@ class FileSystem:
         """
         Create snapshot
         """
-        j.sal.g8os.logger.debug("create snapshot %s on %s", name, self.pool)
+        logger.debug("create snapshot %s on %s", name, self.pool)
         snapshot = Snapshot(name, self)
         if self.exists(name):
             raise RuntimeError("Snapshot path {} exists.")
