@@ -27,9 +27,25 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, resp, _ := api.AysAPI.Ays.GetServiceByName(reqBody.ID, "vdisk", api.AysRepo, nil, nil)
-	if resp.StatusCode != http.StatusNotFound {
+	exists, err := tools.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
+	if err != nil {
+		log.Errorf("error getting vdisk service by name : %+v", reqBody.ID, err)
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if exists {
 		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID))
+		return
+	}
+
+	exists, err = tools.ServiceExists("storage_cluster", reqBody.Storagecluster, api.AysRepo)
+	if err != nil {
+		log.Errorf("error getting storage cluster service by name : %+v", reqBody.Storagecluster, err)
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !exists {
+		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.Storagecluster))
 		return
 	}
 

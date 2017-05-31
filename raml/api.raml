@@ -1058,8 +1058,8 @@ types:
         headers:
           Location:
             description: URL to the created vdisk resource
-      404:
-        description: The template vdisk or storagecluster do not exist
+      400:
+        description: The storagecluster does not exist
       409:
         description: A vdisk with this ID already exists
   /{vdiskid}:
