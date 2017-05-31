@@ -82,12 +82,13 @@ def try_authorize(service, logger, netid, member, zerotier):
     zerotier_ip = member['config']['ipAssignments'][0]
 
     # test if we can connect to the new member
-    g8 = j.clients.g8core.get(zerotier_ip, testConnectionAttempts=0)
-    g8.timeout = 10
+    node = Node(zerotier_ip)
+    node.client.testConnectionAttempts = 0
+    node.client.timeout = 10
     for attempt in range(5):
         try:
             logger.info("connection to g8os with IP: {}".format(zerotier_ip))
-            g8.ping()
+            node.client.ping()
             break
         except:
             continue
@@ -95,7 +96,6 @@ def try_authorize(service, logger, netid, member, zerotier):
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
     # create node.g8os service
-    node = Node(zerotier_ip)
     name = node.name
     try:
         node = service.aysrepo.serviceGet(role='node', instance=name)

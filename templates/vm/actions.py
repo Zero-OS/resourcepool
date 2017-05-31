@@ -85,7 +85,7 @@ def init(job):
 
 
 def _start_nbds(service):
-    from JumpScale.sal.g8os.Container import Container
+    from zeroos.restapi.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
