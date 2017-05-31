@@ -1,4 +1,4 @@
-# Building the 0 Rest API Server
+# Building the Zero-OS Orchestrator
 
 ```
 git clone https://github.com/zero-os/0-rest-api
