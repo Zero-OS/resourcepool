@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 
 	log "github.com/Sirupsen/logrus"
 )

@@ -1,8 +1,8 @@
 package node
 
 import (
-	ays "github.com/zero-os/0-rest-api/api/ays-client"
-	_ "github.com/zero-os/0-rest-api/api/validators"
+	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	_ "github.com/zero-os/0-orchestrator/api/validators"
 	"github.com/patrickmn/go-cache"
 )
 

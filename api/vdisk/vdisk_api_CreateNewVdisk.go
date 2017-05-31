@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateNewVdisk is the handler for POST /vdisks

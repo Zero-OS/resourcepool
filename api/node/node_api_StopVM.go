@@ -3,7 +3,7 @@ package node
 import (
 	"net/http"
 
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StopVM is the handler for POST /node/{nodeid}/vm/{vmid}/stop

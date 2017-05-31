@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/zero-os/0-rest-api/api/tools"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 	//"fmt"
 )
 

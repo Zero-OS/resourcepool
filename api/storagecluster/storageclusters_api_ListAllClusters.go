@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListAllClusters is the handler for GET /storageclusters

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	tools "github.com/zero-os/0-rest-api/api/tools"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetFilesystemSnapshotInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}

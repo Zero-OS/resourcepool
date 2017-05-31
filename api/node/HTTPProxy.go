@@ -2,7 +2,7 @@ package node
 
 import (
 	"gopkg.in/validator.v2"
-	"github.com/zero-os/0-rest-api/api/validators"
+	"github.com/zero-os/0-orchestrator/api/validators"
 )
 
 type HTTPProxy struct {

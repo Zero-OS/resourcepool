@@ -8,7 +8,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	ays "github.com/zero-os/0-rest-api/api/ays-client"
+	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 )
 
 var (

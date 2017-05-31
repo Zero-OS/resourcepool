@@ -10,7 +10,7 @@ import (
 
 	"fmt"
 
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetVMInfo is the handler for GET /nodes/{nodeid}/vms/{vmid}/info

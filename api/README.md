@@ -1,7 +1,7 @@
 
 ## How to build
 ```shell
-git clone https://github.com/zero-os/0-rest-api
+git clone https://github.com/zero-os/0-orchestrator
 cd grid/api
 go build
 ```

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/go-client"
-	"github.com/zero-os/0-rest-api/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
 
 	log "github.com/Sirupsen/logrus"
