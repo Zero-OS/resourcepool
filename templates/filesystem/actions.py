@@ -9,7 +9,7 @@ def input(job):
 
 
 def get_pool(service):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     nodeservice = service.parent.parent
     poolname = service.parent.name
     node = Node.from_ays(nodeservice)

@@ -284,7 +284,7 @@ class StoragePool(Mountable):
     @property
     def ays(self):
         if self._ays is None:
-            from JumpScale.sal.g8os.atyourservice.StoragePool import StoragePoolAys
+            from zeroos.orchestrator.sal.atyourservice.StoragePool import StoragePoolAys
             self._ays = StoragePoolAys(self)
         return self._ays
 

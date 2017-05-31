@@ -1,6 +1,6 @@
 
 def install(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
 
     # Get g8core client
@@ -23,7 +23,7 @@ def install(job):
 
 
 def delete(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
 
     # Get node client

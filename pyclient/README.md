@@ -1,17 +1,17 @@
 # Python Client
 
-0-rest-api is the Python client used to talk to [G8OS 0 Rest API](https://github.com/zero-os/0-rest-api)
+O-orchestrator is the Python client used to talk to [Zero-OS 0 Rest API](https://github.com/zero-os/0-orchestrator)
 
 ## Install
 
 ```bash
-pip install 0-rest-api
+pip install 0-orchestrator
 ```
 
 ## How to use
 
 ```python
-In [9]: from zeroos.restapi import  client
+In [9]: from zeroos.orchestrator import  client
 
 In [10]: c = client.Client('http://192.168.193.212:8080')
 
@@ -27,5 +27,5 @@ Out[11]:
 ## To update the client from the RAML file
 
 ```shell
-go-raml client -l python --ramlfile raml/api.raml --dir pyclient/zeroos/restapi/client
+go-raml client -l python --ramlfile raml/api.raml --dir pyclient/zeroos/orchestrator/client
 ```

@@ -8,8 +8,8 @@ def install(job):
 
 def apply_rules(job, httpproxies=None, nics=None):
     import ipaddress
-    from zeroos.restapi.sal.Container import Container
-    from zeroos.restapi.sal.gateway.http import HTTPServer
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.gateway.http import HTTPServer
 
     container = Container.from_ays(job.service.parent)
 

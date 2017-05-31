@@ -7,7 +7,7 @@ import time
 import yaml
 
 from zeroos.core0.client import Client as Client0
-from zeroos.restapi import client as apiclient
+from zeroos.orchestrator import client as apiclient
 
 os.environ['LC_ALL'] = 'C.UTF-8'
 os.environ['LANG'] = 'C.UTF-8'

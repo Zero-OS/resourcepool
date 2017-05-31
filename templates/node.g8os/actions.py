@@ -2,7 +2,7 @@ from JumpScale import j
 
 
 def init(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     node = Node.from_ays(service)
     job.logger.info("create storage pool for fuse cache")
@@ -23,7 +23,7 @@ def getAddresses(job):
 
 
 def install(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service)
@@ -38,7 +38,7 @@ def install(job):
 
 
 def monitor(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     import redis
     service = job.service
     node = Node.from_ays(service)
@@ -57,7 +57,7 @@ def monitor(job):
 
 
 def reboot(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     job.logger.info("reboot node {}".format(service))
     node = Node.from_ays(service)

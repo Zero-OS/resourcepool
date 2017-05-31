@@ -62,7 +62,7 @@ def delete_node(job):
 
 def try_authorize(service, logger, netid, member, zerotier):
     import time
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
 
     if not member['online'] or member['config']['authorized']:
         return

@@ -16,7 +16,7 @@ def combine(ip1, ip2, mask):
 
 
 def getAddresses(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
 
     node_client = Node.from_ays(node)
@@ -58,8 +58,8 @@ def configure(job):
     this method will be called from the node.g8os install action.
     """
     import netaddr
-    from zeroos.restapi.sal.Node import Node
-    from zeroos.restapi.sal.Container import Container
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.Container import Container
 
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     job.logger.info("execute network configure on {}".format(node))

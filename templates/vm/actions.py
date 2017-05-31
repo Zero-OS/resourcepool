@@ -13,7 +13,7 @@ def input(job):
 
 
 def get_node(service):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     return Node.from_ays(service.parent)
 
 
@@ -85,7 +85,7 @@ def init(job):
 
 
 def _start_nbds(service):
-    from zeroos.restapi.sal.Container import Container
+    from zeroos.orchestrator.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
@@ -302,7 +302,7 @@ def _diff(col1, col2):
 
 
 def updateDisks(job, client, args):
-    from zeroos.restapi.sal.Container import Container
+    from zeroos.orchestrator.sal.Container import Container
     service = job.service
 
     uuid = get_domain(service)['uuid']

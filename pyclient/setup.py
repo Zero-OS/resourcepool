@@ -10,9 +10,9 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='0-rest-api',
+    name='0-orchestrator',
     version='1.1.0.a',
-    description='Zero-OS Rest API client',
+    description='Zero-OS Orchestrator',
     long_description=long_description,
     url='https://github.com/g8os/grid',
     author='Christophe de Carvalho',

@@ -9,7 +9,7 @@ def input(job):
 
 
 def install(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     pservice = service.parent
     node = Node.from_ays(pservice)
@@ -53,7 +53,7 @@ def install(job):
 
 
 def delete(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     pservice = service.parent
     node = Node.from_ays(pservice)
@@ -105,7 +105,7 @@ def updateDevices(service, pool, devices):
 
 
 def processChange(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
@@ -122,7 +122,7 @@ def processChange(job):
 
 
 def monitor(job):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     if service.model.actionsState['install'] == 'ok':
         pservice = service.parent

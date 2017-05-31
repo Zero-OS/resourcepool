@@ -1,4 +1,4 @@
-from . import exceptions
+from JumpScale import j
 
 
 class Mountable:
@@ -63,5 +63,5 @@ class AYSable:
         """
         try:
             return aysrepo.serviceGet(role=self.role, instance=self.name)
-        except exceptions.NotFound:
+        except j.exceptions.NotFound:
             raise ValueError("Could not find {} with name {}".format(self.role, self.name))

@@ -1,5 +1,5 @@
 def _get_client(parent):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     return Node.from_ays(parent).client
 
 

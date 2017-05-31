@@ -1,4 +1,4 @@
-from zeroos.restapi import  client
+from zeroos.orchestrator import  client
 import prettytable
 
 

@@ -16,13 +16,13 @@ def input(job):
 
 
 def get_cluster(service):
-    from zeroos.restapi.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     return StorageCluster.from_ays(service)
 
 
 def init(job):
-    from zeroos.restapi.sal.StorageCluster import StorageCluster
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     nodes = []
     for node_service in service.producers['node']:

@@ -200,7 +200,7 @@ From with in the JumpScale 8.2 he Docker container execute:
 
 ```
 #!/usr/bin/env python3
-from zeroos.restapi import  client
+from zeroos.orchestrator import  client
 from zeroos.core0 import  client
 import argparse
 

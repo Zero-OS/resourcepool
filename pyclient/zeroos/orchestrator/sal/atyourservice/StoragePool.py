@@ -1,5 +1,5 @@
 from ..abstracts import AYSable
-from .. import exceptions
+from JumpScale import j
 
 
 class StoragePoolAys(AYSable):
@@ -11,7 +11,7 @@ class StoragePoolAys(AYSable):
     def create(self, aysrepo):
         try:
             service = aysrepo.serviceGet(role='storagepool', instance=self._obj.name)
-        except exceptions.NotFound:
+        except j.exceptions.NotFound:
             service = None
 
         device_map, pool_status = self._obj.get_devices_and_status()

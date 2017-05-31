@@ -15,7 +15,7 @@ def input(job):
 
 
 def get_filesystem(service):
-    from zeroos.restapi.sal.Node import Node
+    from zeroos.orchestrator.sal.Node import Node
     nodeservice = service.parent.parent.parent
     poolname = service.parent.parent.name
     fsname = str(service.parent.model.data.name)
