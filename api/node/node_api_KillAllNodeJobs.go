@@ -3,7 +3,7 @@ package node
 import (
 	"net/http"
 
-	"github.com/zero-os/go-client"
+	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
