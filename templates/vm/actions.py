@@ -54,8 +54,6 @@ def create_nbd(service, container):
     if nbdserver is None:
         nbd_actor = service.aysrepo.actorGet('nbdserver')
         args = {
-            # 'backendControllerUrl': '', # FIXME
-            # 'vdiskControllerUrl': '', # FIXME
             'container': container.name,
         }
         nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	g8client "github.com/zero-os/go-client"
+	g8client "github.com/zero-os/0-core/client/go-client"
 	"github.com/gorilla/mux"
 
 	"fmt"

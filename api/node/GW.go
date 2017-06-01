@@ -6,7 +6,7 @@ import (
 
 type GW struct {
 	Domain       string        `json:"domain" yaml:"domain" validate:"nonzero"`
-	Httpproxies  []HTTPProxy   `json:"httpproxies" yaml:"httpproxies" validate:"nonzero"`
+	Httpproxies  []HTTPProxy   `json:"httpproxies" yaml:"httpproxies"`
 	Nics         []GWNIC       `json:"nics" yaml:"nics" validate:"nonzero"`
 	Portforwards []PortForward `json:"portforwards,omitempty"`
 }
