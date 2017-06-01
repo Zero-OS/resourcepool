@@ -1,9 +1,9 @@
-#0 Rest API Development Setup
+# Development Setup of a Zero-OS Cluster
 
 All steps:
 1. Create a ZeroTier network
 2. [Setup the AYS Server](#ays-server)
-3. [Setup the 0 Rest API Server](#0-rest-api)
+3. [Setup the Orchestrator](#orchestrator)
 4. [Start the Bootstrap Service, using an AYS blueprint](#bootstrap-service)
 5. [Format all hard disks](#format-disks)
 6. [Boot the G8OS nodes](#boot-nodes)
@@ -12,7 +12,7 @@ The first step is pretty straight forward, go to https://my.zerotier.com/ and cr
 
 For the next 3 steps you have two options:
 - Do it all manually as documented here below in the linked sections
-- Or run the AYS Server, the 0 Rest API Server and the Bootstrap service in a Docker container, leveraging two bash scripts that automate all this
+- Or run the AYS Server, the Orchestrator and the Bootstrap service in a Docker container, leveraging two bash scripts that automate all this
 
 The automated setup is documented below in the two first sections:
 - [Create and start the Docker container](#docker-container)
@@ -90,16 +90,15 @@ So skip all other sections here below, which are about the manual setup.
 pip3 install zerotier
 ```
 
-* Get the AYS actor templates for setting up a resource pool
+* Get the AYS templates for setting up a Zero-OS cluster
 
-  The AYS actor templates for setting up all the0 Rest APIserver components are available in the `templates` directory of the0 Rest APIserver repository on GitHub.
+  The AYS templates for setting up all the Zero-OS cluster components are available in the `templates` directory of the [zero-os/0-orchestrator](https://github.com/zero-os/0-orchestrator/) repository on GitHub.
 
   In order to clone this repository execute:
-
   ```shell
   cd /opt/code/
-  git clone https://github.com/zero-os/0-rest-api/
-  cd 0-rest-api
+  git clone https://github.com/zero-os/0-orchestrator/
+  cd 0-orchestrator
   git checkout 1.1.0-alpha
   ```
 
@@ -112,7 +111,7 @@ pip3 install zerotier
 
 * Create a new AYS repository
 
-  This is the AYS repository that you will use for the blueprints to setup the resource pool.
+  This is the AYS repository that you will use for the blueprints to setup the Zero-OS cluster.
 
   ```shell
   ays repo create --name {repo-name} --git {git-server}
@@ -123,30 +122,32 @@ pip3 install zerotier
   - **{git-server}**: https address of your repository on a Git server, e.g. `http://github.com/user/repo`
 
 
-<a id="0-rest-api"></a>
-## Setup the 0 Rest API Server
+<a id="orchestrator"></a>
+## Setup the Orchestrator
 
-* Build the 0 Rest API server
+* Build the Zero-OS Orchestrator
 
-  If not already done before, first clone the0 Rest APIserver repository, and then build the server:
+  If not already done before, first clone the [zero-os/0-orchestrator](https://github.com/zero-os/0-orchestrator) repository, and then build the server:
 
   ```shell
-  git clone https://github.com/zero-os/0-rest-api
-  cd 0-rest-api/api
-  git checkout 1.1.0-alpha
+  VERSION="1.1.0-alpha"
+  git clone https://github.com/zero-os/0-orchestrator
+  cd 0-orchestrator
+  git checkout $VERSION
   go build
   ```
 
-* Run the 0 Rest API server
+* Run the Zero-OS Orchestrator
 
   Execute:
-
-  `./api --bind :8080 --ays-url http://localhost:5000 --ays-repo {repo-name}`
+  ```bash
+  ./api --bind :8080 --ays-url http://localhost:5000 --ays-repo {repo-name}
+  ```
 
   Options:
   - `--bind :8080` makes the server listen on all interfaces on port 8080
   - `--ays-url` needed to point to the AYS REST API
-  - `--ays-repo` is the name of the AYS repository the 0 Rest API need to use. It should be the repo you created in step 1.
+  - `--ays-repo` is the name of the AYS repository the Orchestrator needs to use. It should be the repo you created in the previous step.
 
 
 <a id="bootstrap-service"></a>
@@ -171,7 +172,7 @@ You get both values from the ZeroTier web portal: https://my.zerotier.com/
 
 This blueprint will install the **auto discovery service** which will auto discover all G8OS nodes that were setup to connect to the same ZeroTier network.
 
-Alternatively you can also manually add a G8OS node to the 0 Rest AP Iwith following blueprint:
+Alternatively you can also manually add a Zero-OS node to the Zero-OS cluster with following blueprint:
 
 ```
 node.g8os__525400123456:
@@ -181,7 +182,7 @@ actions:
  - action: install
 ```
 
-In the above example `525400123456` is the MAC address of the G8OS node with the ':' removed and the `redisAddr` is the IP address of the node.
+In the above example `525400123456` is the MAC address of the Zero-OS node with the ':' removed and the `redisAddr` is the IP address of the node.
 
 After creating both blueprints, run the following commands to execute the blueprints and have the actions executed:
 
@@ -194,7 +195,7 @@ ays run create --follow
 <a id="format-disks"></a>
 ## Format all hard disks
 
-In order to prepare for the [setup of storage clusters](../storagecluster/setup.md) it is highly recommended to format all hard disks as part of the 0 Rest API setup. This is achieved by using the 0 Rest API Python client, as follows.
+In order to prepare for the [setup of storage clusters](../storagecluster/setup.md) it is highly recommended to format all hard disks as part of the Zero-OS cluster setup. This is achieved by using the Zero-OS Orchestrator REST API Python client, as follows.
 
 From with in the JumpScale 8.2 he Docker container execute:
 

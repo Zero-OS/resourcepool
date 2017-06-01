@@ -41,13 +41,16 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     import redis
     service = job.service
-    node = Node.from_ays(service)
-    node.client.testConnectionAttempts = 0
-    node.client.timeout = 15
+
     try:
+        node = Node.from_ays(service, timeout=15)
+        node.client.testConnectionAttempts = 0
         state = node.client.ping()
+    except RuntimeError:
+        state = False
     except redis.ConnectionError:
         state = False
+
 
     if state:
         service.model.data.status = 'running'

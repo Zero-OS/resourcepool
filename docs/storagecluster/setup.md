@@ -1,10 +1,10 @@
 # Setup a Storage Cluster
 
-Setting up a storage cluster is achieved through the Rest API exposed by the 0 Rest API Server.
+Setting up a storage cluster is achieved through the REST API exposed by the Zero-OS Orchestrator.
 
-So you first need to setup a Zero-OS  0 Rest API, as documented in [G8OS0 Rest APISetup](/docs/setup/setup.md).
+So you first need to setup a Zero-OS cluster, as documented in [Setup a Zero-OS Cluster](/docs/setup/setup.md).
 
-Once the0 Rest APIis setup, following storage cluster API endpoint is exposed by the 0 Rest API Server:
+Once the Zero-OS cluster is setup, following storage cluster API endpoint is exposed by the Orchestrator:
 
 ![](storageclusterapi.png)
 

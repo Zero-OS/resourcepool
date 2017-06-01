@@ -9,7 +9,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/zero-os/go-client"
+	"github.com/zero-os/0-core/client/go-client"
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"

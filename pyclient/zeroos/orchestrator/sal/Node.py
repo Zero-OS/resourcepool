@@ -12,9 +12,9 @@ Mount = namedtuple('Mount', ['device', 'mountpoint', 'fstype', 'options'])
 class Node:
     """Represent a G8OS Server"""
 
-    def __init__(self, addr, port=6379, password=None):
+    def __init__(self, addr, port=6379, password=None, timeout=120):
         # g8os client to talk to the node
-        self._client = Client(host=addr, port=port, password=password, timeout=120)
+        self._client = Client(host=addr, port=port, password=password, timeout=timeout)
         self._storageAddr = None
         self.addr = addr
         self.port = port
@@ -23,11 +23,12 @@ class Node:
         self.containers = Containers(self)
 
     @classmethod
-    def from_ays(cls, service):
+    def from_ays(cls, service, timeout=120):
         return cls(
             addr=service.model.data.redisAddr,
             port=service.model.data.redisPort,
-            password=service.model.data.redisPassword or None
+            password=service.model.data.redisPassword or None,
+            timeout=timeout
         )
 
     @property

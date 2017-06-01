@@ -6,7 +6,7 @@ import (
 	"net/http"
 	str "strings"
 
-	client "github.com/zero-os/go-client"
+	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
 )

@@ -1,12 +1,12 @@
-# Zero-OS Rest API
+# Zero-OS Orchestrator
 
-A Zero-OS 0 Rest API is a cluster of Zero-OS nodes, exposing its services through a Zero-OS API Server.
+The Zero-OS Orchestrator exposes all services of a cluster of Zero-OS nodes through a REST API.
 
 This repository includes:
-- RAML definition of the 0 Rest API: [raml](/raml)
-- Zero-OS Rest API Server implementation: [api](/api)
-- AYS templates for deploying a resource pool: [templates](/templates)
-- Python client to the 0 Rest API: [pyclient](/pyclient)
+- RAML definition of the Zero-OS REST API: [raml](/raml)
+- Zero-OS Orchestrator REST API implementation: [api](/api)
+- AYS templates for deploying Zero-OS cluster: [templates](/templates)
+- Python client to the REST API: [pyclient](/pyclient)
 - Block device performance test script: [tests](/tests)
 - Some helper scripts: [scripts][/scripts]
 - Build scripts: [buildscripts](/buildscripts)
