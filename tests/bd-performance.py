@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 @click.option('--nodeLimit', type=int, help='Limit the number of nodes')
 def test_fio_nbd(restapiserver, storagecluster, vdiskcount, vdisksize, runtime, vdisktype, resultdir, nodelimit):
     """Creates a storagecluster on all the nodes in the resourcepool"""
-    api = apiclient.APIClient(restapiserver).api
+    api = apiclient.APIClient(restapiserver)
     logging.info("Discovering nodes in the cluster ...")
     nodes = api.nodes.ListNodes().json()
     nodes = [node for node in nodes if node["status"] == "running"]
