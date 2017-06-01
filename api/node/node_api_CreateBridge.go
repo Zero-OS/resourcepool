@@ -27,10 +27,15 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check that service exists
-	_, _, err := api.AysAPI.Ays.GetServiceByName(reqBody.Name, "bridge", api.AysRepo, nil, nil)
-	if err == nil {
+	flag, err := tools.ServiceExists("bridge", reqBody.Name, api.AysRepo)
+	if flag == true {
 		err = fmt.Errorf("Bridge already exists")
 		tools.WriteError(w, http.StatusConflict, err)
+		return
+	}
+
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
