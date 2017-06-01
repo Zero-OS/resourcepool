@@ -92,7 +92,7 @@ def install(job):
         job = is_running(container)
         container.client.job.kill(job['cmd']['id'], signal=1)
 
-    service.model.data.socketPath = '/server.socket.{id}'.format(id=service.name)
+    service.model.data.socketPath = socketpath
     service.saveAll()
 
 

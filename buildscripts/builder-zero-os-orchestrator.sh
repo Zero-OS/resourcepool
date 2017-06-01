@@ -26,16 +26,16 @@ bash install.sh
 
 # install grid actor template
 mkdir -p /opt/code/github/
-git clone -b "${branch}" https://github.com/github.com/zero-os/0-rest-api.git /opt/code/github/github.com/zero-os/0-rest-api
+git clone -b "${branch}" https://github.com/github.com/zero-os/0-orchestrator.git /opt/code/github/github.com/zero-os/0-orchestrator
 
-pip3 install git+https://github.com/zero-os/0-rest-api.git@"${branch}"#subdirectory=pyclient -U
-pip3 install git+https://github.com/zero-os/0-core.git@"${branch}"#subdirectory=pyclient -U
+pip3 install git+https://github.com/zero-os/0-orchestrator.git@"${branch}"#subdirectory=pyclient -U
+pip3 install git+https://github.com/zero-os/0-core.git@"${branch}"#subdirectory=client/py-client -U
 
-pip3 install zerotier
+pip3 install zerotier -U
 
 js 'x = j.tools.cuisine.local; x.apps.atyourservice.install()'
 js 'x = j.tools.cuisine.local; x.apps.caddy.build(); x.apps.caddy.install()'
 
 cd /
 mkdir /tmp/archives
-tar -czf /tmp/archives/grid.tar.gz --exclude tmp/archives --exclude sys --exclude dev --exclude proc *
+tar -czf /tmp/archives/orchestrator.tar.gz --exclude tmp/archives --exclude sys --exclude dev --exclude proc *
