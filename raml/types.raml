@@ -1144,6 +1144,11 @@ GWNIC:
           default: id can be ommited
           bridge: name of the bridge to connect to
       type: string
+    zerotierbridge:
+      description: |
+        Zerotier NetworkId we want to use to bridge the private network to.
+        This makes it possible to bridge your private network with a private network of an other gateway
+      type: string
     config:
       required: false
       properties:
@@ -1152,7 +1157,9 @@ GWNIC:
            type: string
          gateway:
            type: string
-           description: Gateway for the the container
+           description: |
+             Gateway for the the container
+             When adding a gateway to a Nic it's considered a public interface
            required: false
       description: Optional IP address configuration for this interface, only allowed for interfaces of type vxlan and vlan
     name:
