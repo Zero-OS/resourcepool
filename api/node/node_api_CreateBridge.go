@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
@@ -23,6 +23,19 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	// validate request
 	if err := reqBody.Validate(); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// check that service exists
+	flag, err := tools.ServiceExists("bridge", reqBody.Name, api.AysRepo)
+	if flag == true {
+		err = fmt.Errorf("Bridge already exists")
+		tools.WriteError(w, http.StatusConflict, err)
+		return
+	}
+
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
