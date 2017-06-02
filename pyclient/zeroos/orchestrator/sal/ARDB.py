@@ -1,6 +1,9 @@
 import io
 import time
-from JumpScale import j
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class ARDB:
@@ -20,7 +23,7 @@ class ARDB:
 
     @classmethod
     def from_ays(cls, service):
-        j.sal.g8os.logger.debug("create ardb from service (%s)", service)
+        logger.debug("create ardb from service (%s)", service)
         from .Container import Container
 
         container = Container.from_ays(service.parent)
@@ -39,7 +42,7 @@ class ARDB:
         )
 
     def _configure(self):
-        j.sal.g8os.logger.debug("configure ardb")
+        logger.debug("configure ardb")
         buff = io.BytesIO()
         self.container.client.filesystem.download('/etc/ardb.conf', buff)
         content = buff.getvalue().decode()
@@ -65,7 +68,7 @@ class ARDB:
         running, _ = self.is_running()
         if running:
             return
-        j.sal.g8os.logger.debug('start %s', self)
+        logger.debug('start %s', self)
 
         self._configure()
 
@@ -90,7 +93,7 @@ class ARDB:
         if not is_running:
             return
 
-        j.sal.g8os.logger.debug('stop %s', self)
+        logger.debug('stop %s', self)
 
         self.container.client.job.kill(job['cmd']['id'])
 
