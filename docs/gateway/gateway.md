@@ -10,7 +10,7 @@ Discussed here:
 - [V(x)Lan to V(x)Lan bridge](#vxlan-to-vxlan-bridge)
 
 ## What is the Gateway?
-![Gateway](Gateway.png)
+![Gateway](gateway.png)
 The Gateway is the networking Swiss army knife of the Zero-OS stack. It provides the following functions towards private V(X)LANs:
 - DHCP service for handing out networking configuration to containers and virtual machines
 - A firewalled public IP address
@@ -26,7 +26,7 @@ A Gateway supports a mix of up to 100 network interfaces on VXLANs, VLANs, ZeroT
 
 ## Creating a Gateway
 Creating a Zero-OS Gateway is actually fairly easy. By submitting a POST request to the Zero-OS Orchestrator as specified in the API docs, Gateways are created instantaneously:
-See [../../raml/api.html#nodes_nodeid_gws_post](http://htmlpreview.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
+See [../../raml/api.html#nodes_nodeid_gws_post](https://fastgeert.github.io/htmlpreview.github.com/?../../raml/api.html#nodes__nodeid__gws_post)
 
 ## DHCP service
 After the Gateway has been created, additional hosts can be added using the RESTful API of the Orchestrator. See https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post to find out what needs to be posted to the Orchestrator for adding and removing hosts.
