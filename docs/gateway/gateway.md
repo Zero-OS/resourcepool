@@ -26,7 +26,7 @@ A Gateway supports a mix of up to 100 network interfaces on VXLANs, VLANs, ZeroT
 
 ## Creating a Gateway
 Creating a Zero-OS Gateway is actually fairly easy. By submitting a POST request to the Zero-OS Orchestrator as specified in the API docs, Gateways are created instantaneously:
-See [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.com/?../../raml/api.html#nodes__nodeid__gws_post)
+See [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
 
 ## DHCP service
 After the Gateway has been created, additional hosts can be added using the RESTful API of the Orchestrator. See https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post to find out what needs to be posted to the Orchestrator for adding and removing hosts.
