@@ -24,7 +24,7 @@ For more details see:
 * [Zero-OS Orchestrator REST API](api.md)
 * [Storage Cluster](storagecluster/storagecluster.md)
 * [Block Storage](blockstorage/blockstorage.md)
-* [Gateway](gateway/README.md)
+* [Gateway](gateway/gateway.md)
 
 Or see the full [table of contents](SUMMARY.md) for other topics.
 

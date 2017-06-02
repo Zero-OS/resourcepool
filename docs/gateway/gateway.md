@@ -29,10 +29,10 @@ Creating a Zero-OS Gateway is actually fairly easy. By submitting a POST request
 See [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
 
 ## DHCP service
-After the Gateway has been created, additional hosts can be added using the RESTful API of the Orchestrator. See https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post to find out what needs to be posted to the Orchestrator for adding and removing hosts.
+After the Gateway has been created, additional hosts can be added using the RESTful API of the Orchestrator. See [../../raml/api.html#nodes_nodeid_gws_gwname_dhcp_interface_hosts_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post) to find out what needs to be posted to the Orchestrator for adding and removing hosts.
 
 ## Port forwarding
-Exposing TCP/UDP based services hosted in the connected V(X)LAN networks is achieved via the port forwarding service of the Gateway. See https://rawgit.com/g8os/grid/master/raml/api.html#nodes__nodeid__gws__gwname__firewall_forwards_post to find out what needs to be posted to the Orchestrator for adding and removing port forwards.
+Exposing TCP/UDP based services hosted in the connected V(X)LAN networks is achieved via the port forwarding service of the Gateway. See [../../raml/api.html#nodes_nodeid_gws_gwname_firewall_forwards_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__firewall_forwards_post) to find out what needs to be posted to the Orchestrator for adding and removing port forwards.
 
 ## Reverse proxying
 The reverse proxy service in the Gateway can be used to expose HTTP(s) services hosted in the connected V(X)LANs. It can do SSL-offloading and act as a load balancer towards multiple HTTP servers.
@@ -54,4 +54,4 @@ Advanced reverse proxy configuration can be configured by uploading the [Caddy](
 
 ## V(X)LAN to V(X)LAN bridge
 Probably the coolest feature of the Gateway is this function. It allows to connect V(X)LANs in remote sites into one logical L2 network using a specially configured ZeroTier network. See https://github.com/zero-os/0-orchestrator/blob/master/docs/Network/spec_inter-vxlan-ZeroTier.md for detailed information on how to configure the ZeroTier network.
-The bridge can be configured by setting the `ZeroTierbridge` property of the V(x)LAN interface of the Gateway. For more information how to create the bridge, see file:///C:/Users/geert/gig/code/github/g8os/resourcepool/raml/api.html#nodes__nodeid__gws_post
+The bridge can be configured by setting the `ZeroTierbridge` property of the V(x)LAN interface of the Gateway. For more information how to create the bridge, see [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
