@@ -42,12 +42,12 @@ The reverse proxy service in the Gateway can be used to expose HTTP(s) services 
 ### nftables
 Advanced firewall rules can be configured by just posting the [nftables](https://en.wikipedia.org/wiki/Nftables) configuration file that will be used in the Gateway.
 
-> **Important** to note is that when the advanced firewall configuration is set the port forwarding API as discussed above will no longer function. See https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html#nodes__nodeid__gws__gwname__advanced_firewall_post to find how to use the advanced firewall modus.
+> **Important** to note is that when the advanced firewall configuration is set the port forwarding API as discussed above will no longer function. See [../../raml/api.html#nodes_nodeid_gws_gwname_advanced_firewall_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__advanced_firewall_post) to find how to use the advanced firewall modus.
 
 ### Caddy
 Advanced reverse proxy configuration can be configured by uploading the [Caddy](https://caddyserver.com/) configuration file onto the Orchestrator API.
 
-> **Important** to note is that when the advanced reverse proxy configuration is set the reverse proxy API as discussed above will no longer function. See https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html#nodes__nodeid__gws__gwname__advanced_http_post to find out how to use the advanced reverse proxying modus.
+> **Important** to note is that when the advanced reverse proxy configuration is set the reverse proxy API as discussed above will no longer function. See [../../raml/api.html#nodes_nodeid_gws_gwname_advanced_http_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__advanced_http_post) to find out how to use the advanced reverse proxying modus.
 
 ## Cloud-init
 @todo: Complete this with Jo.
