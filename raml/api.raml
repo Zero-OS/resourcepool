@@ -13,12 +13,16 @@ annotationTypes:
     allowedTargets: [Resource, Method]
     description: Mark the call as going directly to the G8OS node
 
+traits:
+  paginated: !include https://raw.githubusercontent.com/Jumpscale-Cockpit/raml-definitions/master/traits/pagination.raml
+
 types:
   !include types.raml
 
 
 /nodes:
   get:
+    is: [ paginated ]
     (AYSBased):
     description: List all nodes
     displayName: ListNodes
@@ -47,6 +51,7 @@ types:
     /jobs:
       description: List all jobs of this node
       get:
+        is: [ paginated ]
         (DirectAccess):
         displayName: ListNodeJobs
         description: List running jobs
@@ -171,6 +176,7 @@ types:
                 type: OSInfo
     /processes:
        get:
+         is: [ paginated ]
          (DirectAccess):
          displayName: ListNodeProcesses
          description: Get processes
@@ -212,6 +218,7 @@ types:
               Location:
                 description: URL to the created bridge resource
       get:
+        is: [ paginated ]
         (AYSBased):
         displayName: ListBridges
         description: List bridges
@@ -239,6 +246,7 @@ types:
               description: Bridge removed successfully
     /storagepools:
       get:
+        is: [ paginated ]
         (AYSBased):
         displayName: ListStoragePools
         description: List storage pools present in the node
@@ -278,6 +286,7 @@ types:
               description: Storage pool deleted successfully
         /devices:
           get:
+            is: [ paginated ]
             (AYSBased):
             displayName: ListStoragePoolDevices
             description: List the devices in the storage pool
@@ -320,6 +329,7 @@ types:
                       description: URL to the storage pool device resource being removed
         /filesystems:
           get:
+            is: [ paginated ]
             (AYSBased):
             displayName: ListFilesystems
             description: List all file systems
@@ -360,6 +370,7 @@ types:
                   description: File system deleted successfully
             /snapshots:
               get:
+                is: [ paginated ]
                 (AYSBased):
                 displayName: ListFilesystemSnapshots
                 description: List snapshots of this file system
@@ -415,6 +426,7 @@ types:
                         description: Snapshot rollbacked successfully
     /zerotiers:
       get:
+        is: [ paginated ]
         (AYSBased):
         displayName: ListZerotier
         description: List running ZeroTier networks
@@ -455,6 +467,7 @@ types:
               description: ZeroTier network exited successfully
     /gws:
       get:
+        is: [ paginated ]
         (AYSBased):
         displayName: ListGateways
         description: List running gateways
@@ -546,6 +559,7 @@ types:
           /{interface}:
             /hosts:
               get:
+                is: [ paginated ]
                 displayName: ListGWDHCPHosts
                 description: List DHCPHosts for specified interface
                 responses:
@@ -633,6 +647,7 @@ types:
                 description: Gateway stopped successfully
     /containers:
       get:
+        is: [ paginated ]
         (AYSBased):
         displayName: ListContainers
         description: List running containers
@@ -728,6 +743,7 @@ types:
                 description: File deleted successfully
         /jobs:
           get:
+            is: [ paginated ]
             (DirectAccess):
             displayName: ListContainerJobs
             description: List running jobs on the container
@@ -852,6 +868,7 @@ types:
                     type: OSInfo
         /processes:
            get:
+             is: [ paginated ]
              (DirectAccess):
              displayName: ListContainerProcesses
              description: Get running processes in this container
@@ -887,6 +904,7 @@ types:
                    type: ProcessSignal
     /vms:
       get:
+        is: [ paginated ]
         (AYSBased):
         description: List all virtual machines
         displayName: ListVMs
@@ -1011,6 +1029,7 @@ types:
           Location:
             description: URL to newly created storage cluster resource
   get:
+    is: [ paginated ]
     (AYSBased):
     displayName: ListAllClusters
     description: List all running clusters
@@ -1038,6 +1057,7 @@ types:
           description: Storage cluster destroyed successfully
 /vdisks:
   get:
+    is: [ paginated ]
     (AYSBased):
     displayName: ListVdisks
     description: List vdisks
