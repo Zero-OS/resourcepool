@@ -1090,10 +1090,15 @@ CloudInit:
   properties:
     userdata:
       type: string
-      description: userdata for cloud-init
+      description: |
+        userdata for cloud-init ini YAML format
+        For more detauled information [see](https://cloudinit.readthedocs.io/en/latest/topics/examples.html)
+
     metadata:
       type: string
-      description: metadata for cloud-init
+      description: |
+        metadata for cloud-init ini YAML format mainly used for setting hostname
+        For more details [see](http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/virtual_machines.html#user-data-and-meta-data)
 
 GWHost:
   properties:

@@ -8,6 +8,7 @@ def install(job):
 
 
 def config_cloud_init(job, nics=None):
+    import yaml
     import json
     from zeroos.orchestrator.sal.gateway.cloudinit import CloudInit
     from zeroos.orchestrator.sal.Container import Container
@@ -23,8 +24,8 @@ def config_cloud_init(job, nics=None):
         for host in nic["dhcpserver"].get("hosts", []):
             if host.get("cloudinit"):
                 if host["cloudinit"]["userdata"] and host["cloudinit"]["metadata"]:
-                    userdata = json.loads(host["cloudinit"]["userdata"])
-                    metadata = json.loads(host["cloudinit"]["metadata"])
+                    userdata = yaml.load(host["cloudinit"]["userdata"])
+                    metadata = yaml.load(host["cloudinit"]["metadata"])
                     config[host['macaddress'].lower()] = json.dumps({
                         "meta-data": metadata,
                         "user-data": userdata,
