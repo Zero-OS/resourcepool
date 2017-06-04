@@ -6,11 +6,12 @@ import (
 )
 
 type GWNIC struct {
-	Config     *GWNICConfig  `json:"config,omitempty" yaml:"config,omitempty"`
-	Dhcpserver *DHCP         `json:"dhcpserver,omitempty" yaml:"dhcpserver,omitempty"`
-	Id         string        `json:"id"   yaml:"id"   validate:"nonzero"`
-	Name       string        `json:"name" yaml:"name" validate:"nonzero"`
-	Type       EnumGWNICType `json:"type" yaml:"type" validate:"nonzero"`
+	Config         *GWNICConfig  `json:"config,omitempty" yaml:"config,omitempty"`
+	Dhcpserver     *DHCP         `json:"dhcpserver,omitempty" yaml:"dhcpserver,omitempty"`
+	Id             string        `json:"id"   yaml:"id"   validate:"nonzero"`
+	Name           string        `json:"name" yaml:"name" validate:"nonzero"`
+	Type           EnumGWNICType `json:"type" yaml:"type" validate:"nonzero"`
+	ZerotierBridge string        `json:"zerotierbridge" yaml:"zerotierbridge"`
 }
 
 func (s GWNIC) Validate() error {
@@ -33,9 +34,9 @@ func (s GWNIC) Validate() error {
 	nicTypes := map[interface{}]struct{}{
 		EnumGWNICTypezerotier: struct{}{},
 		EnumGWNICTypevxlan:    struct{}{},
-		EnumGWNICTypevlan:  struct{}{},
+		EnumGWNICTypevlan:     struct{}{},
 		EnumGWNICTypedefault:  struct{}{},
-		EnumGWNICTypebridge: struct {}{},
+		EnumGWNICTypebridge:   struct{}{},
 	}
 
 	if err := validators.ValidateEnum("Type", s.Type, nicTypes); err != nil {
