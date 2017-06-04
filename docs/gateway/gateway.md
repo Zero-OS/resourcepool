@@ -50,8 +50,12 @@ Advanced reverse proxy configuration can be configured by uploading the [Caddy](
 > **Important** to note is that when the advanced reverse proxy configuration is set the reverse proxy API as discussed above will no longer function. See [../../raml/api.html#nodes_nodeid_gws_gwname_advanced_http_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__advanced_http_post) to find out how to use the advanced reverse proxying modus.
 
 ## Cloud-init
-@todo: Complete this with Jo.
+The gateway also acts as a cloud-init server over HTTP. For more information on cloud-init see https://cloud-init.io/ && https://cloudinit.readthedocs.io.
+The gateway implements the [Apache Cloudstack](https://cloudinit.readthedocs.io/en/latest/topics/datasources/cloudstack.html) datasource.
 
-## V(X)LAN to V(X)LAN bridge
-Probably the coolest feature of the Gateway is this function. It allows to connect V(X)LANs in remote sites into one logical L2 network using a specially configured ZeroTier network. See https://github.com/zero-os/0-orchestrator/blob/master/docs/Network/spec_inter-vxlan-ZeroTier.md for detailed information on how to configure the ZeroTier network.
-The bridge can be configured by setting the `ZeroTierbridge` property of the V(x)LAN interface of the Gateway. For more information how to create the bridge, see [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
+See [../../raml/api.html#nodes_nodeid_gws_gwname_dhcp_interface_hosts_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post) to learn how to configure cloud-init user-data and meta-data when adding hosts to a connected network of a gateway. Posting the cloud-init data needs to be done in **YAML** format. Many configuration examples can be found here: https://cloudinit.readthedocs.io/en/latest/topics/examples.html
+
+
+## V(x)LAN to V(x)LAN bridge
+Probably the coolest feature of the Gateway is this function. It allows to connect V(x)LANs in remote sites into one logical L2 network using a specially configured ZeroTier network. See https://github.com/zero-os/0-orchestrator/blob/master/docs/Network/spec_inter-vxlan-ZeroTier.md for detailed information on how to configure the ZeroTier network.
+The bridge can be configured by setting the `zerotierbridge` property of the V(x)LAN interface of the Gateway. For more information how to create the bridge, see [../../raml/api.html#nodes_nodeid_gws_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws_post)
