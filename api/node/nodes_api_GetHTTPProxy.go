@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-disk/log"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
