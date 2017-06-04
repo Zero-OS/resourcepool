@@ -18,6 +18,7 @@ struct Schema {
         config @2: NicConfig;
         name @3: Text;
         dhcpserver @4: DHCP;
+        zerotierbridge @5: Text;
     }
 
     struct CloudInit {
