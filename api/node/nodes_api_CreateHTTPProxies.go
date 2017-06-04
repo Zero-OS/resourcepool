@@ -18,7 +18,7 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -57,23 +57,18 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if this proxy exists
-	var updatedProxies []HTTPProxy
 
-	if len(data.Httpproxies) > 0 {
-		for _, proxy := range data.Httpproxies {
-			if proxy.Host == reqBody.Host {
-				errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
-				log.Error(errMessage)
-				tools.WriteError(w, http.StatusConflict, errMessage)
-				return
-			}
-			updatedProxies = append(updatedProxies, reqBody)
+	for _, proxy := range data.Httpproxies {
+		if proxy.Host == reqBody.Host {
+			errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
+			log.Error(errMessage)
+			tools.WriteError(w, http.StatusConflict, errMessage)
+			return
 		}
-	} else {
-		updatedProxies = append(updatedProxies, reqBody)
 	}
 
-	data.Httpproxies = updatedProxies
+	var updatedProxies []HTTPProxy
+	data.Httpproxies = append(updatedProxies, reqBody)
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
