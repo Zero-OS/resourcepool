@@ -115,7 +115,7 @@ def processChange(job):
 
         service.model.data.nics = args['nics']
 
-    if args.get("httpproxies", None):
+    if args.get("httpproxies", None) is not None:
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
         http_args = {'httpproxies': args["httpproxies"], 'nics': args.get('nics', service.model.data.nics)}
         j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))

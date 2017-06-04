@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
-
-	log "github.com/Sirupsen/logrus"
 )
 
-// DeleteGWForward is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
-// Delete portforward, forwardid = srcip:srcport
-func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
+// DeleteHTTPProxies is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/httpproxies
+// Delete HTTP proxy
+func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
-	forwardID := vars["forwardid"]
+	proxyID := vars["proxyid"]
 
 	queryParams := map[string]interface{}{
 		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
@@ -37,29 +37,31 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.Advanced {
-		errMessage := fmt.Errorf("Advanced options enabled: cannot delete forwards for gateway")
+		errMessage := fmt.Errorf("Advanced options enabled: cannot delete http proxy for gateway")
+		log.Errorf("%v: %v", errMessage, gateway)
 		tools.WriteError(w, http.StatusForbidden, errMessage)
 		return
 	}
 
-	var updatedForwards []PortForward
-	// Check if this forwardid exists
+	var updatedProxies []HTTPProxy
+	// Check if this proxy exists
 	var exists bool
-	for _, portforward := range data.Portforwards {
-		portforwadID := fmt.Sprintf("%v:%v", portforward.Srcip, portforward.Srcport)
-		if portforwadID == forwardID {
+	for _, proxy := range data.Httpproxies {
+		if proxy.Host == proxyID {
 			exists = true
 		} else {
-			updatedForwards = append(updatedForwards, portforward)
+			updatedProxies = append(updatedProxies, proxy)
 		}
 	}
 
 	if !exists {
-		w.WriteHeader(http.StatusNotFound)
+		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
+		log.Error(errMessage)
+		tools.WriteError(w, http.StatusNotFound, errMessage)
 		return
 	}
 
-	data.Portforwards = updatedForwards
+	data.Httpproxies = updatedProxies
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data

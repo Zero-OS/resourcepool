@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type CreateGWBP struct {
@@ -52,7 +54,7 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj); err != nil {
-		fmt.Errorf("error executing blueprint for gateway %s creation : %+v", reqBody.Name, err)
+		log.Errorf("error executing blueprint for gateway %s creation : %+v", reqBody.Name, err)
 		tools.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
