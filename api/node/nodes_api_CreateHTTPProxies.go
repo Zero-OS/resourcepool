@@ -58,6 +58,7 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	// Check if this proxy exists
 
+	var updatedProxies []HTTPProxy
 	for _, proxy := range data.Httpproxies {
 		if proxy.Host == reqBody.Host {
 			errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
@@ -65,9 +66,9 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 			tools.WriteError(w, http.StatusConflict, errMessage)
 			return
 		}
+		updatedProxies = append(updatedProxies, proxy)
 	}
 
-	var updatedProxies []HTTPProxy
 	data.Httpproxies = append(updatedProxies, reqBody)
 
 	obj := make(map[string]interface{})
