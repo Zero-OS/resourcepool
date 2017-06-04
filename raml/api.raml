@@ -651,6 +651,11 @@ types:
             responses:
               201:
                 description: Succesfully created a new resource
+                headers:
+                  Location:
+                    description: Location of the newly created resource
+                    type: string
+                    required: false
           /{proxyid}:
             get:
               (AYSBased):
