@@ -7,6 +7,7 @@
   * [Development Setup](setup/dev.md)
   * [Production Setup](setup/prod.md)
 * [Zero-OS Orchestrator REST API](api.md)
+* [Zero-OS Gateway](gateway/gateway.md)
 * [Zero-OS Storage Cluster](storagecluster/storagecluster.md)
   * [Setup a Storage Cluster](storagecluster/setup.md)
 * [Block Storage](blockstorage/blockstorage.md)
