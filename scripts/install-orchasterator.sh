@@ -1,16 +1,20 @@
 #!/bin/bash
 
-function valid () {
-  if [ $? -ne 0 ]; then
-      cat /tmp/lastcommandoutput.txt
-      if [ -z $1 ]; then
-        echo "Error in last step"
-      else
-        echo $1
-      fi
-      exit $?
-  fi
+
+error_handler() {
+    EXITCODE=$?
+
+    if [ -z $2 ]; then
+        echo "[-] line $1: unexpected error"
+        exit ${EXITCODE}
+    else
+        echo $2
+    fi
+
+    exit 1
 }
+
+trap 'error_handler $LINENO' ERR
 
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -30,10 +34,8 @@ BRANCH=$1
 ZEROTIERNWID=$2
 ZEROTIERTOKEN=$3
 
-CODEDIR=/opt/code
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
-valid
 ztinit="/etc/my_init.d/10_zerotier.sh"
 
 echo '#!/bin/bash -x' > ${ztinit}
@@ -42,46 +44,35 @@ echo 'while ! zerotier-cli info > /dev/null 2>&1; do sleep 0.1; done' >> ${ztini
 echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 
 chmod +x ${ztinit} > ${logfile} 2>&1
-valid
 bash $ztinit > ${logfile} 2>&1
-valid
 
 echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client" > ${logfile} 2>&1
-valid
 pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${BRANCH}#subdirectory=pyclient" > ${logfile} 2>&1
-valid
 pip3 install -U zerotier > ${logfile} 2>&1
-valid
 python3 -c "from js9 import j; j.tools.prefab.local.development.golang.install()" > ${logfile} 2>&1
-valid
 mkdir -p /usr/local/go > ${logfile} 2>&1
-valid
 
 echo "[+] Updating AYS orchestrator server"
-pushd ${CODEDIR}/github
+mkdir -p ${GIGDIR}/github > ${logfile} 2>&1
+pushd ${GIGDIR}/github
 mkdir -p zero-os > ${logfile} 2>&1
-valid
 pushd zero-os
 
 if [ ! -d "0-orchestrator" ]; then
     git clone https://github.com/zero-os/0-orchestrator.git > ${logfile} 2>&1
-    valid
 fi
 pushd 0-orchestrator
 git pull
 git checkout ${BRANCH} > ${logfile} 2>&1
-valid
 popd
 
 if [ ! -d "0-core" ]; then
     git clone https://github.com/zero-os/0-core.git > ${logfile} 2>&1
-    valid
 fi
 pushd 0-core
 git pull
 git checkout ${BRANCH} > ${logfile} 2>&1
-valid
 popd
 
 echo "[+] Start AtYourService server"
@@ -90,26 +81,19 @@ aysinit="/etc/my_init.d/10_ays.sh"
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
-chmod +x ${aysinit}
-valid
-bash $aysinit
-valid
+chmod +x ${aysinit} > ${logfile} 2>&1
+bash $aysinit > ${logfile} 2>&1
 
 echo "[+] Building orchestrator api server"
 mkdir -p /opt/go/proj/src/github.com > ${logfile} 2>&1
-valid
 if [ ! -d /opt/go/proj/src/github.com/zero-os ]; then
     ln -sf /opt/code/github/zero-os /opt/go/proj/src/github.com/zero-os > ${logfile} 2>&1
-    valid
 fi
 cd /opt/go/proj/src/github.com/zero-os/0-orchestrator/api
 GOPATH=/opt/go/proj GOROOT=/opt/go/root/ /opt/go/root/bin/go get -d ./... > ${logfile} 2>&1
-valid
 GOPATH=/opt/go/proj GOROOT=/opt/go/root/ /opt/go/root/bin/go build -o /usr/local/bin/orchestratorapiserver > ${logfile} 2>&1
-valid
 if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
     ays repo create -n orchestrator-server -g js9 > ${logfile} 2>&1
-    valid
 fi
 
 echo "[+] Starting orchestrator api server"
@@ -127,17 +111,13 @@ echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
-chmod +x ${orchinit}
-valid
-bash $orchinit
-valid
+chmod +x ${orchinit} > ${logfile} 2>&1
+bash $orchinit > ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
 echo -e "bootstrap.g8os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
 cd /optvar/cockpit_repos/orchestrator-server; ays blueprint > ${logfile} 2>&1
-valid
 cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y > ${logfile} 2>&1
-valid
 
 echo "Your ays server is ready to bootstrap nodes into your zerotier network."
 echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID} and boot up your nodes!"
