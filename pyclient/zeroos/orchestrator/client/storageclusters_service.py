@@ -10,7 +10,7 @@ class StorageclustersService:
         It is method for DELETE /storageclusters/{label}
         """
         uri = self.client.base_url + "/storageclusters/"+label
-        return self.client.delete(uri, headers, query_params, content_type)
+        return self.client.delete(uri, None, headers, query_params, content_type)
 
 
     def GetClusterInfo(self, label, headers=None, query_params=None, content_type="application/json"):
@@ -19,7 +19,7 @@ class StorageclustersService:
         It is method for GET /storageclusters/{label}
         """
         uri = self.client.base_url + "/storageclusters/"+label
-        return self.client.get(uri, headers, query_params, content_type)
+        return self.client.get(uri, None, headers, query_params, content_type)
 
 
     def ListAllClusters(self, headers=None, query_params=None, content_type="application/json"):
@@ -28,7 +28,7 @@ class StorageclustersService:
         It is method for GET /storageclusters
         """
         uri = self.client.base_url + "/storageclusters"
-        return self.client.get(uri, headers, query_params, content_type)
+        return self.client.get(uri, None, headers, query_params, content_type)
 
 
     def DeployNewCluster(self, data, headers=None, query_params=None, content_type="application/json"):

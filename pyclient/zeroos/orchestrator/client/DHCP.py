@@ -12,22 +12,20 @@ class DHCP(object):
     """
 
     @staticmethod
-    def create(hosts, domain=None, nameservers=None):
+    def create(hosts, nameservers=None):
         """
-        :type domain: str
         :type hosts: list[GWHost]
         :type nameservers: list[str]
         :rtype: DHCP
         """
 
         return DHCP(
-            domain=domain,
             hosts=hosts,
             nameservers=nameservers,
         )
 
     def __init__(self, json=None, **kwargs):
-        if not json and not kwargs:
+        if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
         class_name = 'DHCP'
@@ -35,15 +33,6 @@ class DHCP(object):
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
-
-        property_name = 'domain'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.domain = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'hosts'
         val = data.get(property_name)

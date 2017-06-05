@@ -27,18 +27,6 @@ class Client:
         ''' set authorization header value'''
         self.session.headers.update({"Authorization": val})
 
-    def get(self, uri, headers, params, content_type):
-        headers = self._get_headers(headers, content_type)
-        res = self.session.get(uri, headers=headers, params=params)
-        res.raise_for_status()
-        return res
-
-    def delete(self, uri, headers, params, content_type):
-        headers = self._get_headers(headers, content_type)
-        res = self.session.delete(uri, headers=headers, params=params)
-        res.raise_for_status()
-        return res
-
     def _get_headers(self, headers, content_type):
         if content_type:
             contentheader = {"Content-Type": content_type}
@@ -58,6 +46,8 @@ class Client:
             # as requests will set this itself with correct boundary
             headers.pop('Content-Type')
             res = method(uri, files=data, headers=headers, params=params)
+        elif data is None:
+            res = method(uri, headers=headers, params=params)
         elif type(data) is str:
             res = method(uri, data=data, headers=headers, params=params)
         else:
@@ -73,3 +63,9 @@ class Client:
 
     def patch(self, uri, data, headers, params, content_type):
         return self._handle_data(uri, data, headers, params, content_type, self.session.patch)
+
+    def get(self, uri, data, headers, params, content_type):
+        return self._handle_data(uri, data, headers, params, content_type, self.session.get)
+
+    def delete(self, uri, data, headers, params, content_type):
+        return self._handle_data(uri, data, headers, params, content_type, self.session.delete)
