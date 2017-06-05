@@ -33,6 +33,7 @@ bash $ztinit
 echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client" > ${logfile} 2>&1
 pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${BRANCH}#subdirectory=pyclient" > ${logfile} 2>&1
+pip3 install -U zerotier > ${logfile} 2>&1
 python3 -c "from js9 import j; j.tools.prefab.local.development.golang.install()" > ${logfile} 2>&1
 mkdir -p /usr/local/go > ${logfile} 2>&1
 
