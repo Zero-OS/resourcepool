@@ -28,7 +28,7 @@ class VdisksService:
         It is method for DELETE /vdisks/{vdiskid}
         """
         uri = self.client.base_url + "/vdisks/"+vdiskid
-        return self.client.delete(uri, None, headers, query_params, content_type)
+        return self.client.delete(uri, headers, query_params, content_type)
 
 
     def GetVdiskInfo(self, vdiskid, headers=None, query_params=None, content_type="application/json"):
@@ -37,7 +37,7 @@ class VdisksService:
         It is method for GET /vdisks/{vdiskid}
         """
         uri = self.client.base_url + "/vdisks/"+vdiskid
-        return self.client.get(uri, None, headers, query_params, content_type)
+        return self.client.get(uri, headers, query_params, content_type)
 
 
     def ListVdisks(self, headers=None, query_params=None, content_type="application/json"):
@@ -46,7 +46,7 @@ class VdisksService:
         It is method for GET /vdisks
         """
         uri = self.client.base_url + "/vdisks"
-        return self.client.get(uri, None, headers, query_params, content_type)
+        return self.client.get(uri, headers, query_params, content_type)
 
 
     def CreateNewVdisk(self, data, headers=None, query_params=None, content_type="application/json"):

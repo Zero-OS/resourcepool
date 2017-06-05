@@ -24,7 +24,7 @@ class VDiskLink(object):
         )
 
     def __init__(self, json=None, **kwargs):
-        if json is None and not kwargs:
+        if not json and not kwargs:
             raise ValueError('No data or kwargs present')
 
         class_name = 'VDiskLink'

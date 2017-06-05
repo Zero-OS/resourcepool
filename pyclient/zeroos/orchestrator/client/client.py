@@ -1,12 +1,12 @@
 import requests
 
-from .nodes_service import NodesService 
-from .storageclusters_service import StorageclustersService 
-from .vdisks_service import VdisksService 
+from .nodes_service import  NodesService 
+from .storageclusters_service import  StorageclustersService 
+from .vdisks_service import  VdisksService 
 
 
 class Client:
-    def __init__(self, base_uri=""):
+    def __init__(self, base_uri = ""):
         self.base_url = base_uri
         self.session = requests.Session()
         
@@ -25,47 +25,52 @@ class Client:
 
     def set_auth_header(self, val):
         ''' set authorization header value'''
-        self.session.headers.update({"Authorization": val})
+        self.session.headers.update({"Authorization":val})
 
-    def _get_headers(self, headers, content_type):
-        if content_type:
-            contentheader = {"Content-Type": content_type}
-            if headers is None:
-                headers = contentheader
-            else:
-                headers.update(contentheader)
-        return headers
-
-    def _handle_data(self, uri, data, headers, params, content_type, method):
-        headers = self._get_headers(headers, content_type)
-        if self.is_goraml_class(data):
-            data = data.as_json()
-
-        if content_type == "multipart/form-data":
-            # when content type is multipart/formdata remove the content-type header
-            # as requests will set this itself with correct boundary
-            headers.pop('Content-Type')
-            res = method(uri, files=data, headers=headers, params=params)
-        elif data is None:
-            res = method(uri, headers=headers, params=params)
-        elif type(data) is str:
-            res = method(uri, data=data, headers=headers, params=params)
-        else:
-            res = method(uri, json=data, headers=headers, params=params)
+    def get(self, uri, headers, params, content_type):
+        self.session.headers.update({"Content-Type": content_type})
+        res = self.session.get(uri, headers=headers, params=params)
         res.raise_for_status()
         return res
 
     def post(self, uri, data, headers, params, content_type):
-        return self._handle_data(uri, data, headers, params, content_type, self.session.post)
+        self.session.headers.update({"Content-Type": content_type})
+        if self.is_goraml_class(data):
+            data=data.as_json()
+
+        if content_type == "multipart/form-data":
+            res = self.session.post(uri, files=data, headers=headers, params=params)
+        elif type(data) is str:
+            res = self.session.post(uri, data=data, headers=headers, params=params)
+        else:
+            res = self.session.post(uri, json=data, headers=headers, params=params)
+        res.raise_for_status()
+        return res
 
     def put(self, uri, data, headers, params, content_type):
-        return self._handle_data(uri, data, headers, params, content_type, self.session.put)
+        self.session.headers.update({"Content-Type": content_type})
+        if self.is_goraml_class(data):
+            data=data.as_json()
+
+        if content_type == "multipart/form-data":
+            res = self.session.put(uri, files=data, headers=headers, params=params)
+        elif type(data) is str:
+            res = self.session.put(uri, data=data, headers=headers, params=params)
+        else:
+            res = self.session.put(uri, json=data, headers=headers, params=params)
+        res.raise_for_status()
+        return res
 
     def patch(self, uri, data, headers, params, content_type):
-        return self._handle_data(uri, data, headers, params, content_type, self.session.patch)
+        self.session.headers.update({"Content-Type": content_type})
+        if self.is_goraml_class(data):
+            data=data.as_json()
 
-    def get(self, uri, data, headers, params, content_type):
-        return self._handle_data(uri, data, headers, params, content_type, self.session.get)
-
-    def delete(self, uri, data, headers, params, content_type):
-        return self._handle_data(uri, data, headers, params, content_type, self.session.delete)
+        if content_type == "multipart/form-data":
+            res = self.session.patch(uri, files=data, headers=headers, params=params)
+        elif type(data) is str:
+            res = self.session.patch(uri, data=data, headers=headers, params=params)
+        else:
+            res = self.session.patch(uri, json=data, headers=headers, params=params)
+        res.raise_for_status()
+        return res
