@@ -40,6 +40,17 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	exists, err := tools.ServiceExists("gateway", reqBody.Name, api.AysRepo)
+	if err != nil {
+		log.Errorf("error getting gateway service by name : %+v", reqBody.Name, err)
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if exists {
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name))
+		return
+	}
+
 	gateway := CreateGWBP{
 		Node:         nodeID,
 		Domain:       reqBody.Domain,
