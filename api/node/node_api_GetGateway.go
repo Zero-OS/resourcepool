@@ -11,7 +11,7 @@ import (
 // GetGateway is the handler for GET /nodes/{nodeid}/gws/{gwname}
 // Get gateway
 func (api NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
-	var gateway GW
+	var gateway GetGW
 
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]

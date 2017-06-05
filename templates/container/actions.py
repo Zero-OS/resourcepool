@@ -27,16 +27,34 @@ def install(job):
 
 
 def start(job):
+    import time
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service)
+    service = job.service
+    container = Container.from_ays(service)
     container.start()
 
     if container.is_running():
-        job.service.model.data.status = "running"
+        service.model.data.status = "running"
     else:
         raise j.exceptions.RuntimeError("container didn't started")
 
+    def wait_for_interface():
+        start = time.time()
+        while start + 60 > time.time():
+            for link in container.client.ip.link.list():
+                if link['type'] == 'tun':
+                    return
+            time.sleep(0.5)
+        raise j.exceptions.RuntimeError("Could not find zerotier network interface")
+
+    for nic in service.model.data.nics:
+        if nic.type == 'zerotier':
+            wait_for_interface()
+            service.model.data.zerotiernodeid = container.client.zerotier.info()['address']
+            break
+
+    service.saveAll()
 
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container

@@ -147,7 +147,7 @@ def start(job):
     container = service.producers.get('container')[0]
 
     # setup zerotiers bridges
-    containerobj = Container.from_ays(service.producers.get('container')[0])
+    containerobj = Container.from_ays(container)
     nics = service.model.data.to_dict()['nics']  # get dict version of nics
 
     def get_zerotier_nic(zerotierid):
@@ -198,6 +198,9 @@ def start(job):
             ip.link.up(nicname)
             ip.link.up(linkname)
             ip.link.up(zerotiername)
+
+    service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
+    service.saveAll()
 
     # start services
     http = container.consumers.get('http')[0]

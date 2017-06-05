@@ -462,7 +462,7 @@ types:
           200:
             body:
               application/json:
-                type: GWCreate[]
+                type: ListGW[]
       post:
         (AYSBased):
         displayName: CreateGW
@@ -476,6 +476,8 @@ types:
             headers:
               Location:
                 description: URL to the created gateway resource
+          409:
+            description: A gateway with this name already exists
       /{gwname}:
         delete:
           (AYSBased):
@@ -492,7 +494,7 @@ types:
             200:
               body:
                 application/json:
-                  type: GW
+                  type: GetGW
         put:
           (AYSBased):
           displayName: UpdateGateway

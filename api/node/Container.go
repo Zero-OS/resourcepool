@@ -13,7 +13,7 @@ type Container struct {
 	Initprocesses  []CoreSystem        `json:"initprocesses" validate:"nonzero"`
 	Ports          []string            `json:"ports" validate:"nonzero"`
 	Status         EnumContainerStatus `json:"status" validate:"nonzero"`
-	Zerotier       string              `json:"zerotier,omitempty"`
+	ZerotierNodeId string              `json:"zerotiernodeid,omitempty"`
 	Storage        string              `json:"storage,omitempty"`
 }
 

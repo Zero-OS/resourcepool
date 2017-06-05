@@ -1,4 +1,4 @@
-@0x80386ad31ee4bfb4;
+@0xc608ef518325ae58;
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
@@ -7,7 +7,6 @@ struct Schema {
     flist @3 :Text; # Url to the root filesystem flist
     initProcesses @4 :List(Process);
     filesystems @5 :List(Text); # pointer to the filesystem to mount into the container, automaticly filled don't pass in blueprint
-    bridges @11 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
     nics @6 :List(Nic); # Configuration of the attached nics to the container
     hostNetworking @7 :Bool;
     # Make host networking available to the guest.
@@ -15,6 +14,8 @@ struct Schema {
     ports @8:List(Text); # List of node to container post mappings. e.g: 8080:80
     storage @9 :Text;
     mounts @10: List(Mount); # List mount points mapping to the container
+    bridges @11 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
+    zerotiernodeid @12:Text;
 
     struct Mount {
         filesystem @0 :Text; # Instance name of a filesystem service

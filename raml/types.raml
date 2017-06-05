@@ -493,6 +493,10 @@ Container:
     hostname:
       description: Hostname for the Container
       type: string
+    zerotiernodeid:
+      description: Zerotier id if the container has a nic of type zerotier
+      type: string
+      required: false
     flist:
       type: string
       description: Url to the root filesystem flist
@@ -1146,7 +1150,7 @@ GWNIC:
           bridge: name of the bridge to connect to
       type: string
     zerotierbridge:
-      optional: true
+      required: false
       description: |
         Zerotier NetworkId we want to use to bridge the private network to.
         This makes it possible to bridge your private network with a private network of an other gateway
@@ -1186,9 +1190,35 @@ GWCreate:
     portforwards:
       type: PortForward[]
       description: List of portfowardings
+      required: false
     httpproxies:
       type: HTTPProxy[]
       description: List of HTTPProxy
+      required: false
+
+ListGW:
+  properties:
+    name:
+      type: string
+      description: Name of gateway
+    domain:
+      type: string
+      description: Name of domain
+    nics:
+      type: GWNIC[]
+      description: List of gateway nics
+    portforwards:
+      type: PortForward[]
+      description: List of portfowardings
+      required: false
+    httpproxies:
+      type: HTTPProxy[]
+      description: List of HTTPProxy
+      required: false
+    zerotiernodeid:
+      type: string
+      description: id of the zerotier daemon
+      required: false
 
 GW:
   properties:
@@ -1201,6 +1231,29 @@ GW:
     portforwards:
       type: PortForward[]
       description: List of portfowardings
+      required: false
     httpproxies:
       type: HTTPProxy[]
       description: List of HTTPProxy
+      required: false
+
+GetGW:
+  properties:
+    domain:
+      type: string
+      description: Name of domain
+    nics:
+      type: GWNIC[]
+      description: List of gateway nics
+    portforwards:
+      type: PortForward[]
+      description: List of portfowardings
+      required: false
+    httpproxies:
+      type: HTTPProxy[]
+      description: List of HTTPProxy
+      required: false
+    zerotiernodeid:
+      type: string
+      description: id of the zerotier daemon
+      required: false
