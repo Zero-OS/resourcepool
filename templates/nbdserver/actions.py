@@ -121,7 +121,6 @@ def stop(job):
     for vdiskservice in vdisks:
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete'))
-            j.tools.async.wrappers.sync(vdiskservice.delete())
 
     nbdjob = is_running(container)
     if nbdjob:
