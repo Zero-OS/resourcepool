@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @click.command()
-@click.option('--orchestratorserver', required=True, help='0-rest-api api server endpoint. Eg http://192.168.193.212:8080')
+@click.option('--orchestratorserver', required=True, help='0-orchestrator api server endpoint. Eg http://192.168.193.212:8080')
 @click.option('--storagecluster', required=True, help='Name of the storage cluster in which the vdisks need to be created')
 @click.option('--vdiskCount', required=True, type=int, help='Number of vdisks that need to be created')
 @click.option('--vdiskSize', required=True, type=int, help='Size of disks in GB')
