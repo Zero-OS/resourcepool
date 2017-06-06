@@ -126,7 +126,7 @@ def create_from_template_container(service, parent):
     node = Node.from_ays(parent)
     config = get_configuration(job.service.aysrepo)
     container = Container(name=container_name,
-                          flist=config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist'),
+                          flist=config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
                           host_network=True,
                           node=node)
     container.start()

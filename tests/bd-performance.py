@@ -162,7 +162,7 @@ def deploy(api, nodeIDs, nodeIPs, restapiserver, storagecluster, vdiskcount, vdi
 
         # Create block device container and start nbd
         nbdContainer = "nbd_{}".format(str(time.time()).replace('.', ''))
-        nbdFlist = "https://hub.gig.tech/gig-official-apps/blockstor-master.flist"
+        nbdFlist = "https://hub.gig.tech/gig-official-apps/0-disk-master.flist"
         nodeClient = Client0(nodeIPs[idx])
         createContainer(restapiserver, api, nodeID, [fss], nbdFlist, nbdContainer)
 

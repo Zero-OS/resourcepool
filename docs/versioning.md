@@ -1,4 +1,4 @@
-# Versioning 
+# Versioning
 
 Versioning in the Orchestrator is done through the `configuration` ays service.
 
@@ -23,5 +23,5 @@ The following are the available keys:
 * `0-core-branch`: specifies the branch used to build the core0 node. If it is not configured, any branch will be allowed.
 * `0-core-revision`: specifies the revision used to build the core0 node. If it is not configured, any revision will be allowed.
 * `rocksdb-flist`: specifies the flist used for the rocksdb container. Defaults to 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'.
-* `blockstor-flist`: specifies the flist containing the 0-disk utilities (nbd and g8os-store). Defaults to 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist'.
+* `0-disk-flist`: specifies the flist containing the 0-disk utilities (nbd and g8os-store). Defaults to 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'.
 

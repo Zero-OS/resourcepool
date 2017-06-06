@@ -29,7 +29,7 @@ def create_nbdserver_container(service, parent):
     actor = service.aysrepo.actorGet("container")
     args = {
         'node': parent.name,
-        'flist': config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist'),
+        'flist': config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
         'hostNetworking': True,
     }
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
