@@ -195,8 +195,8 @@ For alpha-3, add the following blueprint in the `blueprint` directory of your AY
    configurations:
    - key: '0-core-version'
      value: 'v1.1.0-alpha-3'
-    - key: 'js-version'
-      value: 'master'
+   - key: 'js-version'
+     value: 'master'
  ```
 After creating the blueprint, run the following commands to execute the blueprints:
 
