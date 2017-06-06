@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -41,12 +42,6 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[decl] = bp
-	obj["actions"] = []tools.ActionBlock{{
-		Action:  "migrate",
-		Actor:   "vm",
-		Service: vmID,
-		Force:   true,
-	}}
 
 	// And execute
 

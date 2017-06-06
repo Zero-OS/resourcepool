@@ -85,9 +85,15 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
 
 
 def _nbd_url(container, nbdserver, vdisk):
+    from zeroos.orchestrator.sal.Node import Node
     container_root = container.info['container']['root']
-    socket_path = j.sal.fs.joinPaths(container_root, nbdserver.model.data.socketPath.lstrip('/'))
-    return 'nbd+unix:///{id}?socket={socket}'.format(id=vdisk, socket=socket_path)
+    node = Node.from_ays(nbdserver.parent.parent)._client
+    node.filesystem.mkdir("/var/run/nbd-servers/")
+    endpoint = nbdserver.model.data.socketPath.lstrip('/')
+    socket_path = j.sal.fs.joinPaths(container_root, endpoint)
+    link = j.sal.fs.joinPaths("/var/run/nbd-servers/", endpoint)
+    node.system("ln -s %s /var/run/nbd-servers/" % socket_path)
+    return 'nbd+unix:///{id}?socket={socket}'.format(id=vdisk, socket=link)
 
 
 def init(job):
@@ -249,6 +255,7 @@ def destroy(job):
 def cleanupzerodisk(job):
     service = job.service
     for nbdserver in service.producers.get('nbdserver', []):
+        node._client.filesystem.remove("/var/run/ndb-servers/%s" % nbdserver.model.data.socketPath.lstrip('/'))
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
@@ -330,6 +337,7 @@ def shutdown(job):
 
 
 def migrate(job):
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
 
     service.model.data.status = 'migrating'
@@ -353,8 +361,15 @@ def migrate(job):
 
     # TODO: migrate domain, not impleented yet in core0
 
+    from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
     service.model.changeParent(target_node)
     service.model.data.status = 'running'
+    node_client = Node.from_ays(service.aysrepo.serviceGet('node', job.model.args["node"]))._client
+    for vm in node_client.kvm.list():
+        if vm["name"] == service.name:
+            uuid = vm["uuid"]
+            node_client.kvm.migrate(uuid, "qemu+tcp://%s/system" % target_node.model.data.redisAddr)
+            break
 
     # delete current nbd services and volue container
     job.logger.info("delete current nbd services and vdisk container")
@@ -466,14 +481,22 @@ def monitor(job):
 
 def update_data(job, args):
     service = job.service
-    service.model.data.node = args.get('node', service.model.data.node)
+    # mean we want to migrate vm from a node to another
+    if 'node' in args and args['node'] != service.model.data.node:
+        from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
+        job = service.getJob('migrate', args={'node': service.model.data.node})
+        j.tools.async.wrappers.sync(job.execute())
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
 
 
 def processChange(job):
+<<<<<<< 8fc8b94d2a3a8ee577c9e7299935e2fbb38ac2f7
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
+=======
+    from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
+>>>>>>> WIP : for the migrate vm code
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
