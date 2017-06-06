@@ -92,8 +92,8 @@ After creating this blueprint, issue the following command to AYS to install it:
 ## Boot your Zero-OS nodes
 The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
 
-Via ipxe from the following URL: `https://bootstrap.gig.tech/ipxe/1.1.0-alpha-3/<Your ZeroTier network id>`
+Via ipxe from the following URL: `https://bootstrap.gig.tech/ipxe/1.1.0-alpha-3-0-core-6d11a464/<Your ZeroTier network id>`
 
-Or download your ISO from the following url: `https://bootstrap.gig.tech/iso/1.1.0-alpha-3/<Your ZeroTier network id>`
+Or download your ISO from the following url: `https://bootstrap.gig.tech/iso/1.1.0-alpha-3-0-core-6d11a464/<Your ZeroTier network id>`
 
 Refer to the 0-core repository documentation for more information on booting Zero-OS.
