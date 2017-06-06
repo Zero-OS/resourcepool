@@ -124,7 +124,7 @@ def create_from_template_container(service, parent):
 
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
     node = Node.from_ays(parent)
-    config = get_configuration(job.service.aysrepo)
+    config = get_configuration(service.aysrepo)
     container = Container(name=container_name,
                           flist=config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
                           host_network=True,
