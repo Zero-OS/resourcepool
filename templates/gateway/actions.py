@@ -56,7 +56,7 @@ def init(job):
 
     args = {
         'node': service.model.data.node,
-        'flist': config.get('gw-flist', 'https://hub.gig.tech/gig-official-apps/g8osgw.flist'),
+        'flist': config.get('gw-flist', 'https://hub.gig.tech/gig-official-apps/zero-os-gw-master.flist'),
         'nics': nics,
         'hostname': service.model.data.hostname,
         'hostNetworking': False,
