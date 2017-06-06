@@ -1,5 +1,6 @@
 from js9 import j
 
+
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_configuration
@@ -13,10 +14,11 @@ def input(job):
     core0_version = config.get('0-core-version')
     core0_revision = config.get('0-core-revision')
 
-    if (core0_version and core0_version != version['branch']) or (
-                core0_revision and core0_revision != version['revision']):
+    if (core0_version and core0_version != version['branch']) or \
+            (core0_revision and core0_revision != version['revision']):
         raise RuntimeError("Node with IP {} has a wrong version. Found version {}@{} and expected version {}@{} ".format(ip, version['branch'], version['revision'], core0_version, core0_revision))
-        
+
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
@@ -57,6 +59,8 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     import redis
     service = job.service
+    if service.model.actionsState['install'] != 'ok':
+        return
 
     try:
         node = Node.from_ays(service, timeout=15)
@@ -66,7 +70,6 @@ def monitor(job):
         state = False
     except redis.ConnectionError:
         state = False
-
 
     if state:
         service.model.data.status = 'running'
