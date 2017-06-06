@@ -55,7 +55,7 @@ def getMgmtInfo(job, node, node_client):
 
 def configure(job):
     """
-    this method will be called from the node.g8os install action.
+    this method will be called from the node.zero-os install action.
     """
     import netaddr
     from zeroos.orchestrator.configuration import get_configuration

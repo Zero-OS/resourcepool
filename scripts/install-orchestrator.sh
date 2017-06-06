@@ -39,6 +39,17 @@ if [ "$GIGDIR" != "" ]; then
     CODEDIR="$GIGDIR/code"
 fi
 
+echo "[+] Waiting for zerotier connectivity"
+if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
+    echo "[-] ZeroTier interface zt0 does not have an ipaddress."
+    echo "[-] Make sure you authorized this docker into your ZeroTier network"
+    echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
+
+    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+        sleep 0.2
+    done
+fi
+
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
 ztinit="/etc/my_init.d/10_zerotier.sh"
@@ -120,7 +131,7 @@ chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
-echo -e "bootstrap.g8os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
+echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
 cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
 cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 

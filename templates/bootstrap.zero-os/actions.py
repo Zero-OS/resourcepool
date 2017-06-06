@@ -33,7 +33,7 @@ def bootstrap(job):
 
 def delete_node(job):
     """
-    this method will be called from the node.g8os to remove the node from zerotier
+    this method will be called from the node.zero-os to remove the node from zerotier
     """
     from zerotier import client
 
@@ -95,7 +95,7 @@ def try_authorize(service, logger, netid, member, zerotier):
     else:
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
-    # create node.g8os service
+    # create node.zero-os service
     name = node.name
     try:
         node = service.aysrepo.serviceGet(role='node', instance=name)
@@ -107,8 +107,8 @@ def try_authorize(service, logger, netid, member, zerotier):
         # after reboot we also wonna call install
         j.tools.async.wrappers.sync(node.executeAction('install'))
     except j.exceptions.NotFound:
-        # create and install the node.g8os service
-        node_actor = service.aysrepo.actorGet('node.g8os')
+        # create and install the node.zero-os service
+        node_actor = service.aysrepo.actorGet('node.zero-os')
         networks = [n.name for n in service.producers.get('network', [])]
 
         node_args = {
@@ -118,11 +118,11 @@ def try_authorize(service, logger, netid, member, zerotier):
             'hostname': node.client.info.os()['hostname'],
             'redisAddr': zerotier_ip,
         }
-        logger.info("create node.g8os service {}".format(name))
+        logger.info("create node.zero-os service {}".format(name))
         node = node_actor.serviceCreate(instance=name, args=node_args)
         try:
 
-            logger.info("install node.g8os service {}".format(name))
+            logger.info("install node.zero-os service {}".format(name))
             j.tools.async.wrappers.sync(node.executeAction('install'))
         except:
             j.tools.async.wrappers.sync(node.delete())
