@@ -10,10 +10,10 @@ if [ "$1" != "" ]; then
     branch="$1"
 fi
 
-go get -u -v -d github.com/zero-os/0-disk/nbdserver
-go get -u -v -d github.com/zero-os/0-disk/zeroctl
+go get -u -v -d github.com/zero-os/0-Disk/nbdserver
+go get -u -v -d github.com/zero-os/0-Disk/zeroctl
 
-DISK0=$GOPATH/src/github.com/zero-os/0-disk/
+DISK0=$GOPATH/src/github.com/zero-os/0-Disk/
 
 pushd $DISK0
 git fetch origin
