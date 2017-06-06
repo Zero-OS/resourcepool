@@ -14,6 +14,8 @@ def input(job):
             break
 
     installed_version = j.core.state.versions.get('JumpScale9')
+    if js_version and not js_version.startswith('v') and installed_version.startswith('v'):
+        installed_version = installed_version[1:]
     if js_version and js_version != installed_version:
         raise j.exceptions.RuntimeError('Required jumpscale version is %s but installed version is %s.' % (js_version, installed_version))
 
