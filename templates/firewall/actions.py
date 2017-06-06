@@ -21,8 +21,9 @@ def apply_rules(job, gwdata=None):
                 publicnetwork = Network(nic["name"], nic["config"]["cidr"])
             else:
                 privatenetworks.append(Network(nic["name"], nic["config"]["cidr"]))
-    firewall = Firewall(container, publicnetwork, privatenetworks, portforwards)
-    firewall.apply_rules()
+    if publicnetwork:
+        firewall = Firewall(container, publicnetwork, privatenetworks, portforwards)
+        firewall.apply_rules()
 
 
 def update(job):

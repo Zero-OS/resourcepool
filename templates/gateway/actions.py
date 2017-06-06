@@ -9,8 +9,6 @@ def input(job):
         raise j.exceptions.Input('Domain cannot be empty.')
 
     nics = job.model.args.get('nics', [])
-    publicnetwork = False
-    privatenetwork = False
     for nic in nics:
         config = nic.get('config', {})
         name = nic.get('name')
@@ -22,11 +20,8 @@ def input(job):
 
         if config:
             if config.get('gateway'):
-                publicnetwork = True
                 if dhcp:
                     raise j.exceptions.Input('DHCP can only be defined for private networks')
-            else:
-                privatenetwork = True
 
         if dhcp:
             if not cidr:
@@ -42,10 +37,6 @@ def input(job):
                 if not ip or not ipaddress.ip_address(ip) in subnet:
                     raise j.exceptions.Input('Dhcp host ipaddress should be within cidr subnet.')
 
-    if not publicnetwork:
-        raise j.exceptions.Input("Gateway should have at least one Public Address (gw defined)")
-    if not privatenetwork:
-        raise j.exceptions.Input("Gateway should have at least one Private Address (no gw defined)")
     return job.model.args
 
 
