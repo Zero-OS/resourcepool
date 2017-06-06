@@ -18,13 +18,13 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			Action:  "uninstall",
-			Actor:   "node.g8os",
+			Actor:   "node.zero-os",
 			Service: nodeID,
 			Force:   true,
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "node.g8os", nodeID, "uninstall", bp)
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "node.zero-os", nodeID, "uninstall", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		log.Errorf("Error executing blueprint for node uninstallation : %+v", err.Error())
@@ -43,7 +43,7 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := api.AysAPI.Ays.DeleteServiceByName(nodeID, "node.g8os", api.AysRepo, nil, nil)
+	res, err := api.AysAPI.Ays.DeleteServiceByName(nodeID, "node.zero-os", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "deleting service") {
 		return
 	}

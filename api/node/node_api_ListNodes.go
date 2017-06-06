@@ -14,7 +14,7 @@ func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 	queryParams := map[string]interface{}{
 		"fields": "hostname,status,id,redisAddr",
 	}
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("node.g8os", api.AysRepo, nil, queryParams)
+	services, res, err := api.AysAPI.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
 		return
 	}

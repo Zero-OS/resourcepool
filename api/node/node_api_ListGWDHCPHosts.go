@@ -19,7 +19,7 @@ func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 	nicInterface := vars["interface"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeId),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
 		"fields": "nics",
 	}
 

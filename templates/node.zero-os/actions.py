@@ -85,6 +85,6 @@ def reboot(job):
 
 def uninstall(job):
     service = job.service
-    bootstraps = service.aysrepo.servicesFind(actor='bootstrap.g8os')
+    bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
         j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())

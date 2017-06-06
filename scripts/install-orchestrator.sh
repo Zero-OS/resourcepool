@@ -120,7 +120,7 @@ chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
-echo -e "bootstrap.g8os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
+echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
 cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
 cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 

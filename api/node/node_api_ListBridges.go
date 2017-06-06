@@ -17,7 +17,7 @@ func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 	nodeid := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeid),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "setting,status",
 	}
 	services, resp, err := api.AysAPI.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
