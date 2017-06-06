@@ -39,6 +39,11 @@ if [ "$GIGDIR" != "" ]; then
     CODEDIR="$GIGDIR/code"
 fi
 
+echo "[+] Waiting for zerotier connectivity (network: ${ZEROTIERNWID})"
+while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+    sleep 0.2;
+done
+
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
 ztinit="/etc/my_init.d/10_zerotier.sh"
