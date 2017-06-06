@@ -2,12 +2,12 @@
 
 The Zero-OS Orchestrator exposes all the REST APIs to manage the Zero-OS cluster.
 
-This [link](https://rawgit.com/zero-os/0-rest-api/master/raml/api.html) shows all the available REST API endpoints exposed by the Zero-OS Orchestrator and the different calls that can be done on each endpoint along with the expected request body and response.
+This [link](https://htmlpreviewer.github.io/?./raml/api.html) shows all the available REST API endpoints exposed by the Zero-OS Orchestrator and the different calls that can be done on each endpoint along with the expected request body and response.
 
 The APIs are split into two categories:
 
 - APIs that use **Direct Access** to return data/perform actions: this is done by using the [Go Client](https://github.com/g8os/go-client) of core0 to directly talk to the nodes and containers
-- APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://rawgit.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
+- APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://htmlpreviewer.github.io/?https://rawgit.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
 
 The following are some examples on how to use the REST API:
 
@@ -141,7 +141,7 @@ Payload:
   "ports":[
 
   ]
-}  
+}
 ```
 
 Response: `204 No Content`

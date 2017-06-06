@@ -127,7 +127,7 @@ pip3 install zerotier
 
 * Get the AYS templates for setting up a Zero-OS cluster
 
-  The AYS templates for setting up all the Zero-OS cluster components are available in the `templates` directory of the [zero-os/0-orchestrator](https://github.com/zero-os/0-orchestrator/) repository on GitHub.
+  The AYS templates for setting up all the Zero-OS cluster components are available in the `templates` directory of the [zero-os/0-orchestrator](../../README.md) repository on GitHub.
 
   In order to clone this repository execute:
   ```shell
@@ -162,7 +162,7 @@ pip3 install zerotier
 
 * Build the Zero-OS Orchestrator
 
-  If not already done before, first clone the [zero-os/0-orchestrator](https://github.com/zero-os/0-orchestrator) repository, and then build the server:
+  If not already done before, first clone the [zero-os/0-orchestrator](../../README.md) repository, and then build the server:
 
   ```shell
   VERSION="1.1.0-alpha"
