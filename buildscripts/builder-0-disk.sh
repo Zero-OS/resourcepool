@@ -11,7 +11,7 @@ if [ "$1" != "" ]; then
 fi
 
 go get -u -v -d github.com/zero-os/0-disk/nbdserver
-go get -u -v -d github.com/zero-os/0-disk/g8stor/cmd/copyvdisk
+go get -u -v -d github.com/zero-os/0-disk/zeroctl
 
 DISK0=$GOPATH/src/github.com/zero-os/0-disk/
 

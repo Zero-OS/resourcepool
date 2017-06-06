@@ -142,7 +142,7 @@ def cleanUp(api, nodeIDs, deployInfo):
                     api.nodes.KillContainerJob(client_pids[idx], testContainer, nodeID)
 
             deleteDiskCommand = {
-                'name': '/bin/g8stor',
+                'name': '/bin/zeroctl',
                 'pwd': '',
                 'args': ['delete', 'vdisks', '--config', nbdConfig["configpath"]],
             }

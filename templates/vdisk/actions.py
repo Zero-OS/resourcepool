@@ -45,13 +45,13 @@ def install(job):
             yamlconfig = yaml.safe_dump(config, default_flow_style=False)
             volume_container.upload_content(configpath, yamlconfig)
 
-            CMD = '/bin/g8stor copy vdisk {src_name} {dst_name} {tgtcluster}'
+            CMD = '/bin/zeroctl copy vdisk {src_name} {dst_name} {tgtcluster}'
             cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), tgtcluster=storagecluster)
 
             print(cmd)
             result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
-                raise j.exceptions.RuntimeError("Failed to run g8stor copy {} {}".format(result.stdout, result.stderr))
+                raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
 
         finally:
             volume_container.stop()
@@ -85,11 +85,11 @@ def delete(job):
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     container.upload_content(configpath, yamlconfig)
 
-    cmd = '/bin/g8stor delete vdisks --config {}'.format(configpath)
+    cmd = '/bin/zeroctl delete vdisks --config {}'.format(configpath)
     print(cmd)
     result = container.client.system(cmd).get()
     if result.state != 'SUCCESS':
-        raise j.exceptions.RuntimeError("Failed to run g8stor delete {} {}".format(result.stdout, result.stderr))
+        raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
 
 
 def get_srcardb(container, template):
