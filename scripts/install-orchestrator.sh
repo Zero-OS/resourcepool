@@ -39,17 +39,6 @@ if [ "$GIGDIR" != "" ]; then
     CODEDIR="$GIGDIR/code"
 fi
 
-echo "[+] Waiting for zerotier connectivity"
-if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
-    echo "[-] ZeroTier interface zt0 does not have an ipaddress."
-    echo "[-] Make sure you authorized this docker into your ZeroTier network"
-    echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
-
-    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
-        sleep 0.2
-    done
-fi
-
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
 ztinit="/etc/my_init.d/10_zerotier.sh"
@@ -61,6 +50,17 @@ echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 
 chmod +x ${ztinit} >> ${logfile} 2>&1
 bash $ztinit >> ${logfile} 2>&1
+
+echo "[+] Waiting for zerotier connectivity"
+if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
+    echo "[-] ZeroTier interface zt0 does not have an ipaddress."
+    echo "[-] Make sure you authorized this docker into your ZeroTier network"
+    echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
+
+    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+        sleep 0.2
+    done
+fi
 
 echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
