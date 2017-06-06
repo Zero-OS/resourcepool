@@ -7,7 +7,7 @@ This [link](https://htmlpreviewer.github.io/?./raml/api.html) shows all the avai
 The APIs are split into two categories:
 
 - APIs that use **Direct Access** to return data/perform actions: this is done by using the [Go Client](https://github.com/g8os/go-client) of core0 to directly talk to the nodes and containers
-- APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://htmlpreviewer.github.io/?https://rawgit.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
+- APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://htmlpreviewer.github.io/?https://raw.githubusercontent.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
 
 The following are some examples on how to use the REST API:
 
