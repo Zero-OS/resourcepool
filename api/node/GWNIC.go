@@ -8,7 +8,7 @@ import (
 type GWNIC struct {
 	Config         *GWNICConfig  `json:"config,omitempty" yaml:"config,omitempty"`
 	Dhcpserver     *DHCP         `json:"dhcpserver,omitempty" yaml:"dhcpserver,omitempty"`
-	Id             string        `json:"id"   yaml:"id"   validate:"nonzero"`
+	Id             string        `json:"id,omitempty"   yaml:"id,omitempty"`
 	Name           string        `json:"name" yaml:"name" validate:"nonzero"`
 	Type           EnumGWNICType `json:"type" yaml:"type" validate:"nonzero"`
 	ZerotierBridge string        `json:"zerotierbridge" yaml:"zerotierbridge"`
@@ -40,6 +40,10 @@ func (s GWNIC) Validate() error {
 	}
 
 	if err := validators.ValidateEnum("Type", s.Type, nicTypes); err != nil {
+		return err
+	}
+
+	if err := validators.ValidateConditional(s.Type, EnumGWNICTypedefault, s.Id, "Id"); err != nil {
 		return err
 	}
 
