@@ -16,7 +16,7 @@ func (api NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
 	// Only zerotiers with the node from the request as parent
 	queryParams := map[string]interface{}{
 		"fields": "nwid,status,type",
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("zerotier", api.AysRepo, nil, queryParams)

@@ -17,7 +17,7 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	nodeid := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeid),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "status,freeCapacity",
 	}
 	services, _, err := api.AysAPI.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)

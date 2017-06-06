@@ -16,7 +16,7 @@ func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 
 	query := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("gateway", api.AysRepo, nil, query)
 	if !tools.HandleAYSResponse(err, res, w, "listing gateways") {

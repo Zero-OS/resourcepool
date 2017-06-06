@@ -19,7 +19,7 @@ func (api NodeAPI) ListHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "httpproxies",
 	}
 

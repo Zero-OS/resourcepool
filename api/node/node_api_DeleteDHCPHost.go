@@ -20,7 +20,7 @@ func (api NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 	macaddress := vars["macaddress"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeId),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
 	}
 
 	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)

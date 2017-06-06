@@ -16,7 +16,7 @@ func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 
 	query := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "flist,hostname,status",
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("container", api.AysRepo, nil, query)

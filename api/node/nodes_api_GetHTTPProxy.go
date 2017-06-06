@@ -20,7 +20,7 @@ func (api NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
 	proxyID := vars["proxyid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "httpproxies",
 	}
 

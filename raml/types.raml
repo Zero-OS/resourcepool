@@ -137,8 +137,11 @@ BridgeCreate:
   description: Arguments for a bridge.create job
   properties:
     name:
-      description: Name for the bridge to be created
+      description: |
+        Name for the bridge to be created.
+        The name can't be "default".
       type: string
+      maxLength: 15
     hwaddr:
       description: MAC address for the bridge to be created. If none, a random MAC address will be assigned.
       type: string

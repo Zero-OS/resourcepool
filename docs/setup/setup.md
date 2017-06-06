@@ -190,7 +190,7 @@ pip3 install zerotier
 Add the following blueprint in the `blueprints` directory of your AYS repository:
 
 ```
-bootstrap.g8os__restapi1:
+bootstrap.zero-os__restapi1:
   zerotierNetID: {ZeroTier-Network-ID}
   zerotierToken: '{ZeroTier-API-Token}'
 
@@ -209,7 +209,7 @@ This blueprint will install the **auto discovery service** which will auto disco
 Alternatively you can also manually add a Zero-OS node to the Zero-OS cluster with following blueprint:
 
 ```
-node.g8os__525400123456:
+node.zero-os__525400123456:
   redisAddr: 172.17.0.1
 
 actions:

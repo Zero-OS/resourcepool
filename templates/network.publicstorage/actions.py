@@ -1,7 +1,7 @@
 def configure(job):
     """
     For packet.net we just rename the public interface to storage so the rest of the config deals with it
-    this method will be called from the node.g8os install action.
+    this method will be called from the node.zero-os install action.
     """
     from zeroos.orchestrator.sal.Node import Node
 
