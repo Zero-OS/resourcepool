@@ -1,6 +1,6 @@
 from JumpScale.sal.g8os.Node import Node
 from JumpScale.sal.g8os.StorageCluster import StorageCluster
-from JumpScale import j
+from js9 import j
 
 class G8OSFactory(object):
     """Factory for G8OS SAL"""
@@ -34,7 +34,7 @@ class G8OSFactory(object):
 
 
 if __name__ == '__main__':
-    from JumpScale import j
+    from js9 import j
     node1 = j.sal.g8os.get_node('172.20.0.91')
     node2 = j.sal.g8os.get_node('172.20.0.92')
     cluster = j.sal.g8os.create_storagecluster('cluster1',[node1, node2],'hdd', 2, False)

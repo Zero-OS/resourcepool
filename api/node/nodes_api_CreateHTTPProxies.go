@@ -6,18 +6,19 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// CreateGWForwards is the handler for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
-// Create a new Portforwarding
-func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
-	var reqBody PortForward
+// CreateHTTPProxies is the handler for POST /nodes/{nodeid}/gws/{gwname}/httpproxies
+// Create new HTTP proxies
+func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
+	var reqBody HTTPProxy
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -49,34 +50,23 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.Advanced {
-		errMessage := fmt.Errorf("Advanced options enabled: cannot add forwards for gateway")
+		errMessage := fmt.Errorf("Advanced options enabled: cannot add HTTp proxy for gateway")
+		log.Error(errMessage)
 		tools.WriteError(w, http.StatusForbidden, errMessage)
 		return
 	}
 
-	// Check if this portforward exists and return a bad request if the combination exists
-	// or update the protocols list if the protocol doesn't exist
-	var exists bool
-	for i, portforward := range data.Portforwards {
-		if portforward.Srcip == reqBody.Srcip && portforward.Srcport == reqBody.Srcport {
-			for _, protocol := range portforward.Protocols {
-				for _, reqProtocol := range reqBody.Protocols {
-					if protocol == reqProtocol {
-						err := fmt.Errorf("This protocol, srcip and srcport combination already exists")
-						log.Error(err)
-						tools.WriteError(w, http.StatusBadRequest, err)
-						return
-					}
-				}
-			}
-			exists = true
-			data.Portforwards[i].Protocols = append(data.Portforwards[i].Protocols, reqBody.Protocols...)
+	// Check if this proxy exists
+	for _, proxy := range data.Httpproxies {
+		if proxy.Host == reqBody.Host {
+			errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
+			log.Error(errMessage)
+			tools.WriteError(w, http.StatusConflict, errMessage)
+			return
 		}
 	}
 
-	if !exists {
-		data.Portforwards = append(data.Portforwards, reqBody)
-	}
+	data.Httpproxies = append(data.Httpproxies, reqBody)
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
@@ -87,6 +77,6 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gateway, reqBody.Srcip, reqBody.Srcport))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/httpproxies/%v", nodeID, gateway, reqBody.Host))
 	w.WriteHeader(http.StatusCreated)
 }

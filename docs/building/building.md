@@ -13,4 +13,4 @@ GOOS=linux
 go build -a -ldflags '-extldflags "-static"' .
 ```
 
-See [Starting AYS, the API Server and the bootstrap service](/docs/setup/dev.md#start-services) on how to use the `g8os_grid_installer82.sh` script from [Jumpscale/developer](https://github.com/Jumpscale/developer) to build and run the API server in a JumpScale 8.2 development Docker container.
+See [Starting AYS, the API Server and the bootstrap service](/docs/setup/setup.md#start-services) on how to use the `g8os_grid_installer82.sh` script from [Jumpscale/developer](https://github.com/Jumpscale/developer) to build and run the API server in a JumpScale 8.2 development Docker container.

@@ -1,5 +1,21 @@
-from JumpScale import j
+from js9 import j
 
+def input(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_configuration
+
+    args = job.model.args
+    ip = args.get('redisAddr')
+    node = Node(ip, args.get('redisPort'), args.get('redisPassword'))
+
+    config = get_configuration(job.service.aysrepo)
+    version = node.client.info.version()
+    core0_branch = config.get('0-core-branch')
+    core0_revision = config.get('0-core-revision')
+
+    if (core0_branch and core0_branch != version['branch']) or (
+                core0_revision and core0_revision != version['revision']):
+        raise RuntimeError("Node with IP {} has a wrong version".format(ip))
 
 def init(job):
     from zeroos.orchestrator.sal.Node import Node

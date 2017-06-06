@@ -384,6 +384,42 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def DeleteHTTPProxies(self, proxyid, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete HTTP proxy
+        It is method for DELETE /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/httpproxies/"+proxyid
+        return self.client.delete(uri, headers, query_params, content_type)
+
+
+    def GetHTTPProxy(self, proxyid, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get info of HTTP proxy
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/httpproxies/"+proxyid
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def ListHTTPProxies(self, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        List for HTTP proxies
+        It is method for GET /nodes/{nodeid}/gws/{gwname}/httpproxies
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/httpproxies"
+        return self.client.get(uri, headers, query_params, content_type)
+
+
+    def CreateHTTPProxies(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Create new HTTP proxies
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/httpproxies
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/httpproxies"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def StartGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Start Gateway instance

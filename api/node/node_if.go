@@ -285,6 +285,18 @@ type NodesInterface interface { // ListNodes is the handler for GET /node
 	// CreateGWForwards is the handler for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 	// Create a new Portforwarding
 	CreateGWForwards(http.ResponseWriter, *http.Request)
+	// GetHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
+	// Get HTTP proxy
+	GetHTTPProxy(http.ResponseWriter, *http.Request)
+	// DeleteHTTPProxies is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
+	// Delete HTTP proxy
+	DeleteHTTPProxies(http.ResponseWriter, *http.Request)
+	// ListHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies
+	// List for HTTP proxies
+	ListHTTPProxies(http.ResponseWriter, *http.Request)
+	// CreateHTTPProxies is the handler for POST /nodes/{nodeid}/gws/{gwname}/httpproxies
+	// Create new HTTP proxies
+	CreateHTTPProxies(http.ResponseWriter, *http.Request)
 	// StartGateway is the handler for POST /nodes/{nodeid}/gws/{gwname}/start
 	// Start Gateway instance
 	StartGateway(http.ResponseWriter, *http.Request)
@@ -398,9 +410,13 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts/{macaddress}", i.DeleteDHCPHost).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts", i.ListGWDHCPHosts).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts", i.AddGWDHCPHost).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}", i.DeleteGWForward ).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}", i.DeleteGWForward).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/firewall/forwards", i.GetGWForwards).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/firewall/forwards", i.CreateGWForwards).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}", i.DeleteHTTPProxies).Methods("DELETE")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}", i.GetHTTPProxy).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.ListHTTPProxies).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.CreateHTTPProxies).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/start", i.StartGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/stop", i.StopGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}", i.DeleteGateway).Methods("DELETE")

@@ -1,4 +1,4 @@
-from JumpScale import j
+from js9 import j
 
 
 def install(job):
@@ -118,12 +118,15 @@ def create_from_template_container(service, parent):
     if not it creates it.
     return the container service
     """
+    from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
+
     container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
     node = Node.from_ays(parent)
+    config = get_configuration(job.service.aysrepo)
     container = Container(name=container_name,
-                          flist='https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+                          flist=config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist'),
                           host_network=True,
                           node=node)
     container.start()

@@ -1,4 +1,4 @@
-from JumpScale import j
+from js9 import j
 
 
 def combine(ip1, ip2, mask):
@@ -58,6 +58,7 @@ def configure(job):
     this method will be called from the node.g8os install action.
     """
     import netaddr
+    from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.Container import Container
 
@@ -87,10 +88,11 @@ def configure(job):
         raise j.exceptions.RuntimeError("No interface available")
 
     actor = service.aysrepo.actorGet("container")
+    config = get_configuration(service.aysrepo)
     args = {
         'node': node.name,
         'hostname': 'ovs',
-        'flist': 'https://hub.gig.tech/gig-official-apps/ovs.flist',
+        'flist': config.get('ovs-flist', 'https://hub.gig.tech/gig-official-apps/ovs.flist'),
         'hostNetworking': True,
     }
     cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)

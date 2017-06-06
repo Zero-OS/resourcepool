@@ -13,9 +13,9 @@ fi
 apt-get update
 apt-get install -y curl git
 
-git clone -b "${branch}" https://github.com/github.com/zero-os/0-rest-api.git $GOPATH/src/github.com/github.com/zero-os/0-rest-api
+git clone -b "${branch}" https://github.com/github.com/zero-os/0-orchestrator.git $GOPATH/src/github.com/github.com/zero-os/0-orchestrator
 
-cd $GOPATH/src/github.com/github.com/zero-os/0-rest-api/api
+cd $GOPATH/src/github.com/github.com/zero-os/0-orchestrator/api
 go get -v
 
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .

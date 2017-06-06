@@ -1,4 +1,4 @@
-from JumpScale import j
+from js9 import j
 
 
 def init_actions_(service, args):

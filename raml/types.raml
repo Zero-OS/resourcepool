@@ -493,6 +493,10 @@ Container:
     hostname:
       description: Hostname for the Container
       type: string
+    zerotiernodeid:
+      description: Zerotier id if the container has a nic of type zerotier
+      type: string
+      required: false
     flist:
       type: string
       description: Url to the root filesystem flist
@@ -1090,10 +1094,15 @@ CloudInit:
   properties:
     userdata:
       type: string
-      description: userdata for cloud-init
+      description: |
+        userdata for cloud-init ini YAML format
+        For more detauled information [see](https://cloudinit.readthedocs.io/en/latest/topics/examples.html)
+
     metadata:
       type: string
-      description: metadata for cloud-init
+      description: |
+        metadata for cloud-init ini YAML format mainly used for setting hostname
+        For more details [see](http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/virtual_machines.html#user-data-and-meta-data)
 
 GWHost:
   properties:
@@ -1124,10 +1133,6 @@ DHCP:
     hosts:
       type: GWHost[]
       description: List of dhcpshosts
-    domain:
-      type: string
-      description: Domain for dhcp
-      required: false
 
 GWNIC:
   type: object
@@ -1144,6 +1149,12 @@ GWNIC:
           default: id can be ommited
           bridge: name of the bridge to connect to
       type: string
+    zerotierbridge:
+      required: false
+      description: |
+        Zerotier NetworkId we want to use to bridge the private network to.
+        This makes it possible to bridge your private network with a private network of an other gateway
+      type: string
     config:
       required: false
       properties:
@@ -1152,7 +1163,9 @@ GWNIC:
            type: string
          gateway:
            type: string
-           description: Gateway for the the container
+           description: |
+             Gateway for the the container
+             When adding a gateway to a Nic it's considered a public interface
            required: false
       description: Optional IP address configuration for this interface, only allowed for interfaces of type vxlan and vlan
     name:
@@ -1177,9 +1190,35 @@ GWCreate:
     portforwards:
       type: PortForward[]
       description: List of portfowardings
+      required: false
     httpproxies:
       type: HTTPProxy[]
       description: List of HTTPProxy
+      required: false
+
+ListGW:
+  properties:
+    name:
+      type: string
+      description: Name of gateway
+    domain:
+      type: string
+      description: Name of domain
+    nics:
+      type: GWNIC[]
+      description: List of gateway nics
+    portforwards:
+      type: PortForward[]
+      description: List of portfowardings
+      required: false
+    httpproxies:
+      type: HTTPProxy[]
+      description: List of HTTPProxy
+      required: false
+    zerotiernodeid:
+      type: string
+      description: id of the zerotier daemon
+      required: false
 
 GW:
   properties:
@@ -1192,6 +1231,29 @@ GW:
     portforwards:
       type: PortForward[]
       description: List of portfowardings
+      required: false
     httpproxies:
       type: HTTPProxy[]
       description: List of HTTPProxy
+      required: false
+
+GetGW:
+  properties:
+    domain:
+      type: string
+      description: Name of domain
+    nics:
+      type: GWNIC[]
+      description: List of gateway nics
+    portforwards:
+      type: PortForward[]
+      description: List of portfowardings
+      required: false
+    httpproxies:
+      type: HTTPProxy[]
+      description: List of HTTPProxy
+      required: false
+    zerotiernodeid:
+      type: string
+      description: id of the zerotier daemon
+      required: false

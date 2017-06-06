@@ -1,4 +1,4 @@
-from JumpScale import j
+from js9 import j
 
 
 def input(job):
@@ -23,10 +23,13 @@ def create_nbdserver_container(service, parent):
     if not it creates it.
     return the container service
     """
+    from zeroos.orchestrator.configuration import get_configuration
+
+    config = get_configuration(service.aysrepo)
     actor = service.aysrepo.actorGet("container")
     args = {
         'node': parent.name,
-        'flist': 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist',
+        'flist': config.get('blockstor-flist', 'https://hub.gig.tech/gig-official-apps/blockstor-master.flist'),
         'hostNetworking': True,
     }
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
@@ -54,8 +57,6 @@ def create_nbd(service, container):
     if nbdserver is None:
         nbd_actor = service.aysrepo.actorGet('nbdserver')
         args = {
-            # 'backendControllerUrl': '', # FIXME
-            # 'vdiskControllerUrl': '', # FIXME
             'container': container.name,
         }
         nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)

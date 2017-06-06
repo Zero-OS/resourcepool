@@ -3,8 +3,8 @@
 
 - Requirements:
 
-    * `pip3 install git+https://github.com/zero-os/0-rest-api.git#subdirectory=pyclient`
-    * `pip3 install git+https://github.com/zero-os/0-core.git#subdirectory=pyclient`
+    * `pip3 install git+https://github.com/zero-os/0-orchestrator.git#subdirectory=pyclient`
+    * `pip3 install git+https://github.com/zero-os/0-core.git#subdirectory=client/py-client`
 
 - Run [bd-performance.py](./bd-performance.py)
 

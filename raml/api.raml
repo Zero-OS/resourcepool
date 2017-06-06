@@ -475,7 +475,7 @@ types:
           200:
             body:
               application/json:
-                type: GWCreate[]
+                type: ListGW[]
       post:
         (AYSBased):
         displayName: CreateGW
@@ -489,6 +489,8 @@ types:
             headers:
               Location:
                 description: URL to the created gateway resource
+          409:
+            description: A gateway with this name already exists
       /{gwname}:
         delete:
           (AYSBased):
@@ -505,7 +507,7 @@ types:
             200:
               body:
                 application/json:
-                  type: GW
+                  type: GetGW
         put:
           (AYSBased):
           displayName: UpdateGateway
@@ -645,6 +647,50 @@ types:
             responses:
               204:
                 description: Gateway stopped successfully
+        /httpproxies:
+          get:
+              (AYSBased):
+              displayName: ListHTTPProxies
+              description: List for HTTP proxies
+              responses:
+                200:
+                  body:
+                    application/json:
+                      type: HTTPProxy[]
+          post:
+            (AYSBased):
+            displayName: CreateHTTPProxies
+            description: Create new HTTP proxies
+            body:
+              application/json:
+                type: HTTPProxy
+            responses:
+              201:
+                description: Succesfully created a new resource
+                headers:
+                  Location:
+                    description: Location of the newly created resource
+                    type: string
+                    required: false
+          /{proxyid}:
+            get:
+              (AYSBased):
+              displayName: GetHTTPProxy
+              description: Get info of HTTP proxy
+              responses:
+                200:
+                  body:
+                    application/json:
+                      type: HTTPProxy
+            delete:
+                (AYSBased):
+                displayName: DeleteHTTPProxies
+                description: Delete HTTP proxy
+                responses:
+                  204:
+                    description: Succesfully deleted resource
+                  404:
+                    description: Proxy is not found in this gateway
     /containers:
       get:
         is: [ paginated ]

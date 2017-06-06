@@ -13,13 +13,14 @@ class GWNIC(object):
     """
 
     @staticmethod
-    def create(id, name, type, config=None, dhcpserver=None):
+    def create(id, name, type, zerotierbridge, config=None, dhcpserver=None):
         """
         :type config: str
         :type dhcpserver: DHCP
         :type id: str
         :type name: str
         :type type: EnumGWNICType
+        :type zerotierbridge: str
         :rtype: GWNIC
         """
 
@@ -29,6 +30,7 @@ class GWNIC(object):
             id=id,
             name=name,
             type=type,
+            zerotierbridge=zerotierbridge,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -87,6 +89,17 @@ class GWNIC(object):
             datatypes = [EnumGWNICType]
             try:
                 self.type = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'zerotierbridge'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerotierbridge = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

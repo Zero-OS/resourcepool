@@ -1,4 +1,4 @@
-from JumpScale import j
+from js9 import j
 
 
 def input(job):
@@ -21,8 +21,10 @@ def get_cluster(service):
 
 
 def init(job):
+    from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.sal.Node import Node
+
     service = job.service
     nodes = []
     for node_service in service.producers['node']:
@@ -70,11 +72,13 @@ def init(job):
             'name': containername,
         }
         filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
+        config = get_configuration(job.service.aysrepo)
+
         # create containers
         args = {
             'node': node.name,
             'hostname': containername,
-            'flist': 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist',
+            'flist': config.get('rocksdb-flist', 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'),
             'mounts': [{'filesystem': containername, 'target': '/mnt/data'}],
             'hostNetworking': True
         }
