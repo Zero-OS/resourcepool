@@ -15,8 +15,8 @@ def input(job):
 
     if (core0_version and core0_version != version['branch']) or (
                 core0_revision and core0_revision != version['revision']):
-        raise RuntimeError("Node with IP {} has a wrong version".format(ip))
-
+        raise RuntimeError("Node with IP {} has a wrong version. Found version {}@{} and expected version {}@{} ".format(ip, version['branch'], version['revision'], core0_version, core0_revision))
+        
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
