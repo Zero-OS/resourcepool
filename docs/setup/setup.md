@@ -99,7 +99,7 @@ bootstrap.zero-os__grid1:
 ```
 Now issue the following commands to reinstall the updated bootstrap service:
 ```shell
-(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays service delete -n grid1
+(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays service delete -n grid1 -y
 (gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays blueprint bootstrap.bp
 (gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays run create -y
 ```
