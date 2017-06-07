@@ -89,6 +89,21 @@ After creating this blueprint, issue the following command to AYS to install it:
 (gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays run create -y
 ```
 
+Then we need to update the bootstrap service so that is deploys the storage network when bootstrapping the nodes. So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp` as follows:
+```yaml
+bootstrap.zero-os__grid1:
+  zerotierNetID: '<Your ZeroTier network id>'
+  zerotierToken: '<Your ZeroTier token>'
+  networks:
+    - storage
+```
+Now issue the following commands to reinstall the updated bootstrap service:
+```shell
+(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays service delete -n grid1
+(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays blueprint bootstrap.bp
+(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays run create -y
+```
+
 ## Boot your Zero-OS nodes
 The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
 
