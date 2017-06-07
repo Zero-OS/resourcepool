@@ -1,3 +1,6 @@
+from js9 import j
+
+
 def input(job):
     ays_repo = job.service.aysrepo
     services = ays_repo.servicesFind(actor=job.service.model.dbobj.actorName)
@@ -6,7 +9,10 @@ def input(job):
         raise j.exceptions.RuntimeError('Repo can\'t contain multiple configuration services')
 
     configs = job.model.args.get('configurations', [])
+    validate_configs(configs)
 
+
+def validate_configs(configs):
     js_version = None
     for config in configs:
         if config.get('key') == 'js-version':
@@ -25,5 +31,8 @@ def processChange(job):
     args = job.model.args
     category = args.pop('changeCategory')
     if category == 'dataschema':
-        service.model.data.configurations = args.get('configurations', service.model.data.configurations)
-        service.saveAll()
+        configs = args.get('configurations')
+        if configs:
+            validate_configs(configs)
+            service.model.data.configurations = args.get('configurations', service.model.data.configurations)
+            service.saveAll()
