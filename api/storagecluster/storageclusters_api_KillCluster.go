@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-disk/log"
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -20,12 +21,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 		"consume": fmt.Sprintf("storage_cluster!%s", storageCluster),
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, query)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
+	if !tools.HandleAYSResponse(err, res, w, "listing vdisks") {
 		return
 	}
 
