@@ -43,5 +43,9 @@ func (s BridgeCreate) Validate() error {
 		}
 	}
 
+	if err := s.Setting.Validate(); err != nil {
+		return err
+	}
+
 	return validator.Validate(s)
 }
