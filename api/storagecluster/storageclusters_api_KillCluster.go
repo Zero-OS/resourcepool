@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
-
-	log "github.com/Sirupsen/logrus"
+	"github.com/zero-os/0-disk/log"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // KillCluster is the handler for DELETE /storageclusters/{label}
@@ -15,6 +14,26 @@ import (
 func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	storageCluster := vars["label"]
+
+	// Prevent deletion of nonempty clusters
+	query := map[string]interface{}{
+		"consume": fmt.Sprintf("storage_cluster!%s", storageCluster),
+	}
+	services, res, err := api.AysAPI.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, query)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if res.StatusCode != http.StatusOK {
+		w.WriteHeader(res.StatusCode)
+		return
+	}
+
+	if len(services) > 0 {
+		err := fmt.Errorf("Can't kill nonempty storage clusters")
+		tools.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
 
 	// execute the delete action
 	blueprint := map[string]interface{}{
