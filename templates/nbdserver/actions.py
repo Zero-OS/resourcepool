@@ -92,7 +92,12 @@ def install(job):
         else:
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
         # make sure nbd is still running
-        if not is_running(container):
+        running = is_running(container)
+        for vdisk in vdisks:
+            if running:
+                vdisk.model.data.status = 'running'
+                vdisk.saveAll()
+        if not running:
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
@@ -126,6 +131,8 @@ def stop(job):
 
     # Delete tmp vdisks
     for vdiskservice in vdisks:
+        vdiskservice.model.data.status = 'halted'
+        vdiskservice.saveAll()
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete'))
 
@@ -141,3 +148,19 @@ def stop(job):
                 continue
             return
         raise j.exceptions.RuntimeError("nbdserver didn't stopped")
+
+
+def monitor(job):
+    service = job.service
+    if not service.model.actionsState['install'] == 'ok':
+        return
+    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vdisks = vm.producers.get('vdisk', [])
+    running = is_running(get_container(service))
+    for vdisk in vdisks:
+        if running:
+            vdisk.model.data.status = 'running'
+        else:
+            vdisk.model.data.status = 'halted'
+    vdisk.saveAll()
+
