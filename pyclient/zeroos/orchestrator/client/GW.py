@@ -14,7 +14,7 @@ class GW(object):
     """
 
     @staticmethod
-    def create(domain, httpproxies, nics, portforwards):
+    def create(domain, nics, httpproxies=None, portforwards=None):
         """
         :type domain: str
         :type httpproxies: list[HTTPProxy]
@@ -59,8 +59,6 @@ class GW(object):
                 self.httpproxies = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'nics'
         val = data.get(property_name)
@@ -81,8 +79,6 @@ class GW(object):
                 self.portforwards = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
     def __str__(self):
         return self.as_json(indent=4)

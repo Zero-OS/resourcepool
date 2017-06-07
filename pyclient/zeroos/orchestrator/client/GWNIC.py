@@ -13,7 +13,7 @@ class GWNIC(object):
     """
 
     @staticmethod
-    def create(id, name, type, zerotierbridge, config=None, dhcpserver=None):
+    def create(id, name, type, config=None, dhcpserver=None, zerotierbridge=None):
         """
         :type config: str
         :type dhcpserver: DHCP
@@ -102,8 +102,6 @@ class GWNIC(object):
                 self.zerotierbridge = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
     def __str__(self):
         return self.as_json(indent=4)

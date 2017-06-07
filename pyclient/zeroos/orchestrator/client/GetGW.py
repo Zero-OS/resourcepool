@@ -1,5 +1,5 @@
 """
-Auto-generated class for GWCreate
+Auto-generated class for GetGW
 """
 from .GWNIC import GWNIC
 from .HTTPProxy import HTTPProxy
@@ -8,35 +8,35 @@ from .PortForward import PortForward
 from . import client_support
 
 
-class GWCreate(object):
+class GetGW(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(domain, name, nics, httpproxies=None, portforwards=None):
+    def create(domain, nics, httpproxies=None, portforwards=None, zerotiernodeid=None):
         """
         :type domain: str
         :type httpproxies: list[HTTPProxy]
-        :type name: str
         :type nics: list[GWNIC]
         :type portforwards: list[PortForward]
-        :rtype: GWCreate
+        :type zerotiernodeid: str
+        :rtype: GetGW
         """
 
-        return GWCreate(
+        return GetGW(
             domain=domain,
             httpproxies=httpproxies,
-            name=name,
             nics=nics,
             portforwards=portforwards,
+            zerotiernodeid=zerotiernodeid,
         )
 
     def __init__(self, json=None, **kwargs):
         if not json and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'GWCreate'
+        class_name = 'GetGW'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
@@ -62,17 +62,6 @@ class GWCreate(object):
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
-        property_name = 'name'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.name = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
         property_name = 'nics'
         val = data.get(property_name)
         if val is not None:
@@ -90,6 +79,15 @@ class GWCreate(object):
             datatypes = [PortForward]
             try:
                 self.portforwards = client_support.list_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+        property_name = 'zerotiernodeid'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerotiernodeid = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
