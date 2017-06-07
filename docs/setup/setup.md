@@ -30,7 +30,7 @@ So:
 (gig) root@js9:/root$ export BRANCH="1.1.0-alpha-3"
 (gig) root@js9:/root$ export ZEROTIERNWID="<Your ZeroTier network id>"
 (gig) root@js9:/root$ export ZEROTIERTOKEN="<Your ZeroTier token>"
-(gig) root@js9:/root$ curl -o install-orchestrator.sh https://github.com/zero-os/0-orchestrator/blob/${BRANCH}/scripts/install-orchestrator.sh
+(gig) root@js9:/root$ curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
 (gig) root@js9:/root$ bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN
 ```
 > **Important:**
