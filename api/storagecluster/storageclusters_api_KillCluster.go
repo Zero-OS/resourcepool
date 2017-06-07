@@ -27,7 +27,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 
 	if len(services) > 0 {
 		err := fmt.Errorf("Can't kill nonempty storage clusters")
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
