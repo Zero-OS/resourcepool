@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateVM is the handler for POST /nodes/{nodeid}/vms
@@ -64,8 +64,9 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Service: reqBody.Id, Actor: "vm", Action: "install"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for vm %s creation : %+v", reqBody.Id, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

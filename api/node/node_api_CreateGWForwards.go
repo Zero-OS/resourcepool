@@ -82,8 +82,9 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		errMessage := fmt.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage)
 		return
 	}
 

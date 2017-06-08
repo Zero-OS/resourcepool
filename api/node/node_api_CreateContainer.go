@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateContainer is the handler for POST /nodes/{nodeid}/containers
@@ -102,8 +102,9 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for container %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

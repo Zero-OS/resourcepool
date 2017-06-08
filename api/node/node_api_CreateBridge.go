@@ -66,8 +66,9 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
 	if err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for bridge %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

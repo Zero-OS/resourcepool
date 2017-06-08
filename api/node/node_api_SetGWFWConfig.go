@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // SetGWFWConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
@@ -57,8 +57,9 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		fmt.Errorf("error executing blueprint for gateway %s creation : %+v", gwname, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

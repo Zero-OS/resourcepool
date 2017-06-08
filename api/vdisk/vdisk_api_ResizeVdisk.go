@@ -7,8 +7,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
@@ -61,8 +61,9 @@ func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// And execute
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for vdisk %s resize : %+v", vdiskID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 
