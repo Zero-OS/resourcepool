@@ -72,8 +72,11 @@ def install(job):
                        'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
                        'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
-        storagecluster_storage_ips += [storage['address'] for storage in clusterconfig['dataStorage']]
-    start_tlog(service, container, storagecluster_storage_ips)
+        if str(vdiskservice.model.data.type) in ["boot", "db"]:
+            storagecluster_storage_ips += [storage['address'] for storage in clusterconfig['dataStorage']]
+
+    if storagecluster_storage_ips:
+        start_tlog(service, container, storagecluster_storage_ips)
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     configstream = BytesIO(yamlconfig.encode('utf8'))

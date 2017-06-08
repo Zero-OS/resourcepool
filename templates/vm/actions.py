@@ -184,7 +184,7 @@ def stop(job):
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
 
-    for nbdserver in service.producers.get('nbdserver', []):
+    for nbdserver in service.producers.get('diskorchestrator', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
@@ -263,7 +263,7 @@ def migrate(job):
     target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
-    old_nbd = service.producers.get('nbdserver', [])
+    old_nbd = service.producers.get('diskorchestrator', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
@@ -327,7 +327,7 @@ def updateDisks(job, client, args):
 
     # Detatching and Cleaning old disks
     if old_disks != []:
-        nbdserver = service.producers.get('nbdserver', [])[0]
+        nbdserver = service.producers.get('diskorchestrator', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
@@ -341,7 +341,7 @@ def updateDisks(job, client, args):
             service.consume(diskservice)
         service.saveAll()
         _start_nbds(service)
-        nbdserver = service.producers.get('nbdserver', [])[0]
+        nbdserver = service.producers.get('diskorchestrator', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
             if disk['maxIOps']:
