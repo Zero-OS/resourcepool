@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/validators"
 )
 
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
@@ -52,9 +53,15 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name))
 			return
 		}
-		if reqBody.Setting.Cidr != "" && bridge.Setting.Cidr == reqBody.Setting.Cidr {
+
+		overlaps, err := validators.ValidateCIDROverlap(reqBody.Setting.Cidr, bridge.Setting.Cidr)
+		if err != nil {
+			tools.WriteError(w, http.StatusBadRequest, err)
+			return
+		}
+		if overlaps {
 			tools.WriteError(w, http.StatusConflict,
-				fmt.Errorf("Bridge with cidr %v already exists", reqBody.Setting.Cidr))
+				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr))
 			return
 		}
 	}
