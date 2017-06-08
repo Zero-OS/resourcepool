@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteStoragePoolDevice is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/device/{deviceuuid}
@@ -22,12 +22,19 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var exists bool
 	// remove device from list of current devices
 	updatedDevices := []DeviceInfo{}
 	for _, device := range devices {
 		if device.PartUUID != toDeleteUUID {
 			updatedDevices = append(updatedDevices, DeviceInfo{Device: device.Device})
+		} else {
+			exists = true
 		}
+	}
+	if !exists {
+		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID))
+		return
 	}
 
 	bpContent := struct {

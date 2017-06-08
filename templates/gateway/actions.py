@@ -98,25 +98,33 @@ def processChange(job):
     if category != 'dataschema':
         return
 
-    service.model.data.portforwards = args.get('portforwards', service.model.data.portforwards)
+    gatewaydata = service.model.data.to_dict()
+    nicchanges = gatewaydata['nics'] != args.get('nics')
+    httproxychanges = gatewaydata['httpproxies'] != args.get('httpproxies')
+    portforwardchanges = gatewaydata['portforwards'] != args.get('portforwards')
 
-    if service.model.data.nics != args.get('nics', service.model.data.nics):
+    if nicchanges:
         cloudInitServ = service.aysrepo.serviceGet(role='cloudinit', instance=service.name)
         j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', args={'nics': args['nics']}))
-
-        firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args={'data': args}))
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
         j.tools.async.wrappers.sync(dhcpServ.executeAction('update', args={'data': args}))
 
         service.model.data.nics = args['nics']
 
-    if args.get("httpproxies", None) is not None:
+    if nicchanges or portforwardchanges:
+        firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
+        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args={'data': args}))
+
+    if portforwardchanges:
+        service.model.data.portforwards = args.get('portforwards', [])
+
+    if httproxychanges:
+        httpproxies = args.get('httpproxies', [])
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
-        http_args = {'httpproxies': args["httpproxies"], 'nics': args.get('nics', service.model.data.nics)}
+        http_args = {'httpproxies': httpproxies, 'nics': args.get('nics', gatewaydata['nics'])}
         j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
-        service.model.data.httpproxies = args['httpproxies']
+        service.model.data.httpproxies = httpproxies
 
     if args.get("domain", None):
         service.model.data.domain = args["domain"]

@@ -211,6 +211,9 @@ types:
             headers:
               Location:
                 description: URL to the created bridge resource
+          409:
+            description: A bridge with the same name or settings.cidr already exists.
+
       get:
         (AYSBased):
         displayName: ListBridges
@@ -318,6 +321,8 @@ types:
                   headers:
                     Location:
                       description: URL to the storage pool device resource being removed
+                404:
+                  description: Device not found.
         /filesystems:
           get:
             (AYSBased):

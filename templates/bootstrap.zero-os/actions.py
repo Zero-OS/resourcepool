@@ -60,6 +60,30 @@ def delete_node(job):
             break
 
 
+def wipedisks(node):
+    print('Wiping node {hostname}'.format(**node.client.info.os()))
+    mounteddevices = {mount['device']: mount for mount in node.client.info.disk()}
+
+    def getmountpoint(device):
+        for mounteddevice, mount in mounteddevices.items():
+            if mounteddevice.startswith(device):
+                return mount
+
+    jobs = []
+    for disk in node.client.disk.list()['blockdevices']:
+        devicename = '/dev/{}'.format(disk['kname'])
+        mount = getmountpoint(devicename)
+        if not mount:
+            print('   * Wiping disk {kname}'.format(**disk))
+            jobs.append(node.client.system('dd if=/dev/zero of={} bs=1M count=50'.format(devicename)))
+        else:
+            print('   * Not wiping {device} mounted at {mountpoint}'.format(device=devicename, mountpoint=mount['mountpoint']))
+
+    # wait for wiping to complete
+    for job in jobs:
+        job.get()
+
+
 def try_authorize(service, logger, netid, member, zerotier):
     import time
     from zeroos.orchestrator.sal.Node import Node
@@ -98,16 +122,19 @@ def try_authorize(service, logger, netid, member, zerotier):
     # create node.zero-os service
     name = node.name
     try:
-        node = service.aysrepo.serviceGet(role='node', instance=name)
+        nodeservice = service.aysrepo.serviceGet(role='node', instance=name)
         logger.info("service for node {} already exists, updating model".format(name))
         # mac sure the service has the correct ip in his model.
         # it could happend that a node get a new ip after a reboot
-        node.model.data.redisAddr = zerotier_ip
-        node.model.data.status = 'running'
+        nodeservice.model.data.redisAddr = zerotier_ip
+        nodeservice.model.data.status = 'running'
         # after reboot we also wonna call install
-        j.tools.async.wrappers.sync(node.executeAction('install'))
+        j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
     except j.exceptions.NotFound:
         # create and install the node.zero-os service
+        if service.model.data.wipedisks:
+            wipedisks(node)
+
         node_actor = service.aysrepo.actorGet('node.zero-os')
         networks = [n.name for n in service.producers.get('network', [])]
 
@@ -119,13 +146,13 @@ def try_authorize(service, logger, netid, member, zerotier):
             'redisAddr': zerotier_ip,
         }
         logger.info("create node.zero-os service {}".format(name))
-        node = node_actor.serviceCreate(instance=name, args=node_args)
+        nodeservice = node_actor.serviceCreate(instance=name, args=node_args)
         try:
 
             logger.info("install node.zero-os service {}".format(name))
-            j.tools.async.wrappers.sync(node.executeAction('install'))
+            j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
         except:
-            j.tools.async.wrappers.sync(node.delete())
+            j.tools.async.wrappers.sync(nodeservice.delete())
             raise
 
 

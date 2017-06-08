@@ -8,12 +8,15 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/validators"
 )
 
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
 func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	var reqBody BridgeCreate
+	vars := mux.Vars(r)
+	nodeId := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err)
@@ -26,21 +29,42 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check that service exists
-	flag, err := tools.ServiceExists("bridge", reqBody.Name, api.AysRepo)
-	if flag == true {
-		err = fmt.Errorf("Bridge already exists")
-		tools.WriteError(w, http.StatusConflict, err)
+	queryParams := map[string]interface{}{
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+		"fields": "setting",
+	}
+	services, resp, err := api.AysAPI.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 		return
 	}
 
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
+	for _, service := range services {
+		bridge := Bridge{
+			Name: service.Name,
+		}
 
-	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
+		if err := json.Unmarshal(service.Data, &bridge); err != nil {
+			log.Errorf("Error in decoding bridges: %+v\n", err)
+			tools.WriteError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		if bridge.Name == reqBody.Name {
+			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name))
+			return
+		}
+
+		overlaps, err := validators.ValidateCIDROverlap(reqBody.Setting.Cidr, bridge.Setting.Cidr)
+		if err != nil {
+			tools.WriteError(w, http.StatusBadRequest, err)
+			return
+		}
+		if overlaps {
+			tools.WriteError(w, http.StatusConflict,
+				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr))
+			return
+		}
+	}
 
 	// Create blueprint
 	bp := struct {
@@ -54,7 +78,7 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Nat:         reqBody.Nat,
 		NetworkMode: reqBody.NetworkMode,
 		Setting:     reqBody.Setting,
-		Node:        nodeid,
+		Node:        nodeId,
 	}
 
 	obj := make(map[string]interface{})
@@ -82,6 +106,6 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeid, reqBody.Name))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 }

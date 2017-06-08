@@ -9,3 +9,4 @@
 * [Zero-OS Storage Cluster](storagecluster/storagecluster.md)
   * [Setup a Storage Cluster](storagecluster/setup.md)
 * [Block Storage](blockstorage/blockstorage.md)
+* [Gateway](gateway/gateway.md)

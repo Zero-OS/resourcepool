@@ -58,12 +58,14 @@ from .GW import GW
 from .GWCreate import GWCreate
 from .GWHost import GWHost
 from .GWNIC import GWNIC
+from .GetGW import GetGW
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .IPProtocol import IPProtocol
 from .Job import Job
 from .JobListItem import JobListItem
 from .JobResult import JobResult
+from .ListGW import ListGW
 from .MemInfo import MemInfo
 from .NicInfo import NicInfo
 from .NicLink import NicLink

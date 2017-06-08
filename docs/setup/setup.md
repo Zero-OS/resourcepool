@@ -92,6 +92,7 @@ Then we need to update the bootstrap service so that is deploys the storage netw
 bootstrap.zero-os__grid1:
   zerotierNetID: '<Your ZeroTier network id>'
   zerotierToken: '<Your ZeroTier token>'
+  wipedisks: true # indicate you want to wipe the disks of the nodes when adding them
   networks:
     - storage
 ```
