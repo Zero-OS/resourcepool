@@ -17,7 +17,7 @@ func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 	service, res, err := api.AysAPI.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -28,7 +28,7 @@ func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 
 	var respBody NodeService
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	var node Node

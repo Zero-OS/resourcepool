@@ -19,7 +19,7 @@ func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -39,7 +39,7 @@ func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	// Check if the job has finished

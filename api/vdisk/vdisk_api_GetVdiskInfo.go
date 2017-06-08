@@ -21,7 +21,7 @@ func (api VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
 
 	var respBody Vdisk
 	if err := json.Unmarshal(serv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	respBody.ID = serv.Name

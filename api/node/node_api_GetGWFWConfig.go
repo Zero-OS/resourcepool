@@ -22,7 +22,7 @@ func (api NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	node, err := tools.GetConnection(r, api)
 	containerID, err := tools.GetContainerId(r, api, node, gwname)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -30,7 +30,7 @@ func (api NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	err = client.Filesystem(containerClient).Download("/etc/nftables.conf", &config)
 	if err != nil {
 		fmt.Errorf("Error getting  file from container '%s' at path '%s': %+v.\n", gwname, "/etc/nftables.conf", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

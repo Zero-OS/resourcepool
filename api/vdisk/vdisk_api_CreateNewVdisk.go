@@ -17,35 +17,35 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	exists, err := tools.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
 	if err != nil {
 		log.Errorf("error getting vdisk service by name : %+v", reqBody.ID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID))
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID), "")
 		return
 	}
 
 	exists, err = tools.ServiceExists("storage_cluster", reqBody.Storagecluster, api.AysRepo)
 	if err != nil {
 		log.Errorf("error getting storage cluster service by name : %+v", reqBody.Storagecluster, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.Storagecluster))
+		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.Storagecluster), "")
 		return
 	}
 
@@ -76,7 +76,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for vdisk %s creation : %+v", reqBody.ID, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, "")
 		return
 	}
 

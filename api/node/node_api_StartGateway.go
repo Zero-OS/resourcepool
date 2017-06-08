@@ -28,7 +28,7 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		fmt.Errorf("Error executing blueprint for starting gateway %s : %+v", gwID, err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		return
 	}
 
@@ -36,9 +36,9 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 		}
 		return
 	}

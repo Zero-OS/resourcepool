@@ -22,7 +22,7 @@ func (api NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
 
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	vm.Id = srv.Name

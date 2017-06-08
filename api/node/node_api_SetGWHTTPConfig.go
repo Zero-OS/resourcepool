@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/gorilla/mux"
 )
 
 // SetGWHTTPConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/http
@@ -21,7 +21,7 @@ func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	node, err := tools.GetConnection(r, api)
 	containerID, err := tools.GetContainerId(r, api, node, gwname)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -29,7 +29,7 @@ func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	err = client.Filesystem(containerClient).Upload(r.Body, "/etc/caddy.conf")
 	if err != nil {
 		fmt.Errorf("Error uploading file to container '%s' at path '%s': %+v.\n", gwname, "/etc/caddy.conf", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -40,7 +40,7 @@ func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(service.Data, &gatewayBase); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -58,8 +58,8 @@ func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		fmt.Errorf("error executing blueprint for gateway %s creation : %+v", gwname, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
+		tools.WriteError(w, http.Resp.StatusCode, err, errmsg)
 		return
 	}
 

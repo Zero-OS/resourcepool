@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListFilesystems is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
@@ -23,8 +22,8 @@ func (api NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 
 	services, _, err := api.AysAPI.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
 	if err != nil {
-		log.Errorf("Error listing storagepool services : %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := "Error listing storagepool services"
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

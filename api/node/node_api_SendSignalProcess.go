@@ -18,13 +18,13 @@ func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -32,7 +32,7 @@ func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -41,14 +41,14 @@ func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	// Get container connection
 	cl, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
 	// Send signal to the container process
 	core := client.Core(cl)
 	if err := core.KillProcess(processId, syscall.Signal(reqBody.Signal)); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

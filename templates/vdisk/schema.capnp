@@ -8,8 +8,7 @@ struct Schema {
     readOnly @4 :Bool;
     status @5 :Status;
 
-    storageCluster @6 :Text; # consume
-    tlogStoragecluster @7 :Text; # consume
+    tlogStoragecluster @6 :Text; # consume
 
     enum Status {
         halted @0;

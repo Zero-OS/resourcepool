@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -30,9 +29,8 @@ func (api NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
@@ -42,7 +40,7 @@ NicsLoop:
 		if nic.Name == nicInterface {
 			if nic.Dhcpserver == nil {
 				err = fmt.Errorf("Interface %v has no dhcp.", nicInterface)
-				tools.WriteError(w, http.StatusNotFound, err)
+				tools.WriteError(w, http.StatusNotFound, err, "")
 				return
 			}
 
@@ -56,14 +54,14 @@ NicsLoop:
 				}
 			}
 			err = fmt.Errorf("Dhcp has no host with macaddress %v", macaddress)
-			tools.WriteError(w, http.StatusNotFound, err)
+			tools.WriteError(w, http.StatusNotFound, err, "")
 			return
 		}
 	}
 
 	if !exists {
 		err = fmt.Errorf("Interface %v not found", nicInterface)
-		tools.WriteError(w, http.StatusNotFound, err)
+		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
@@ -72,8 +70,8 @@ NicsLoop:
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		fmt.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err. errmsg)
 		return
 	}
 

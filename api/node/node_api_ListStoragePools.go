@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePools is the handler for GET /node/{nodeid}/storagepool
@@ -22,8 +21,8 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	}
 	services, _, err := api.AysAPI.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
 	if err != nil {
-		log.Errorf("Error listing storagepool services : %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := "Error listing storagepool services"
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -38,7 +37,7 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 
 		data := schema{}
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 

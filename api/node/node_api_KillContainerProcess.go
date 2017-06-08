@@ -14,7 +14,7 @@ func (api NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request) 
 
 	cl, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

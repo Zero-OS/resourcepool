@@ -31,7 +31,7 @@ func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 		}
 		var data ListGW
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 		data.Name = service.Name

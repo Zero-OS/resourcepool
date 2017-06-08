@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-
 	"github.com/zero-os/0-orchestrator/api/tools"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // KillCluster is the handler for DELETE /storageclusters/{label}
@@ -27,8 +27,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 
 	if len(services) > 0 {
 		err := fmt.Errorf("Can't delete storage clusters with attached vdisks")
-		log.Error(err)
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -45,12 +44,12 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		log.Errorf("error executing blueprint for Storage cluster %s deletion : %+v", storageCluster, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster))
+		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster), "")
 		return
 	}
 
@@ -58,7 +57,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		log.Errorf("Error executing blueprint for storage_cluster deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		return
 	}
 
@@ -66,9 +65,9 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 		}
 		return
 	}
@@ -77,7 +76,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		log.Errorf("Error in deleting storage_cluster %s : %+v", storageCluster, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

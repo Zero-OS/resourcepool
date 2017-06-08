@@ -16,13 +16,13 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	conn, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -31,7 +31,7 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	process, err := core.Process(processID)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

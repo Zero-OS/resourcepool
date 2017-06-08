@@ -78,7 +78,7 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 	}{}
 
 	if err := json.Unmarshal(service.Data, &clusterItem); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -87,7 +87,7 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 		//getting all ardb disk services relating to this cluster to get more info on each ardb
 		storageServer, nameInfo, err := getArdb(ardbName, api, w)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 

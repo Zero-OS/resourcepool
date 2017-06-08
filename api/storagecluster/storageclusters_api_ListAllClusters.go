@@ -19,7 +19,7 @@ func (api StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Req
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -30,7 +30,7 @@ func (api StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Req
 	for _, service := range services {
 		Data := data{}
 		if err := json.Unmarshal(service.Data, &Data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 		respBody = append(respBody, Data.Label)

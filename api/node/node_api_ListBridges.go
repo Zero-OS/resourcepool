@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
@@ -32,8 +31,8 @@ func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.Unmarshal(service.Data, &bridge); err != nil {
-			log.Errorf("Error in listing bridges: %+v\n", err)
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			errmsg := "Error in listing bridges"
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return
 		}
 

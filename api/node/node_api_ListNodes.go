@@ -23,7 +23,7 @@ func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var node NodeService
 		if err := json.Unmarshal(service.Data, &node); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 

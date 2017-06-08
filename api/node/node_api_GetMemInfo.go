@@ -13,7 +13,7 @@ import (
 func (api NodeAPI) GetMemInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -21,7 +21,7 @@ func (api NodeAPI) GetMemInfo(w http.ResponseWriter, r *http.Request) {
 	result, err := info.Mem()
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

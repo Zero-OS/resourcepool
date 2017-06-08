@@ -28,7 +28,7 @@ func (api NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var vm VMListItem
 		if err := json.Unmarshal(service.Data, &vm); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 		vm.Id = service.Name

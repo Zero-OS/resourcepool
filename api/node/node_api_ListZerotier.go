@@ -28,7 +28,7 @@ func (api NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
 	for i, serv := range services {
 		var data ZerotierListItem
 		if err := json.Unmarshal(serv.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 

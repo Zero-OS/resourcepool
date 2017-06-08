@@ -17,7 +17,7 @@ func (api NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
 	jobID := client.JobId(vars["jobid"])
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

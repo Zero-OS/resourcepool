@@ -17,13 +17,13 @@ func (api NodeAPI) KillContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	core := client.Core(container)
 
 	if err := core.KillJob(jobID, syscall.SIGKILL); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

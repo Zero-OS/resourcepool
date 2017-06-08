@@ -21,7 +21,7 @@ func (api NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 
 	var respBody Container
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

@@ -22,7 +22,7 @@ func (api NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(service.Data, &gateway); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

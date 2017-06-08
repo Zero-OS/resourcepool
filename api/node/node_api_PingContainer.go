@@ -14,7 +14,7 @@ func (api NodeAPI) PingContainer(w http.ResponseWriter, r *http.Request) {
 	var respBody bool
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 

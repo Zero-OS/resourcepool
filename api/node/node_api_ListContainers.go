@@ -21,7 +21,7 @@ func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 	services, res, err := api.AysAPI.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -39,7 +39,7 @@ func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var data containerItem
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "")
 			return
 		}
 

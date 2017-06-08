@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePoolDevices is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/devices
@@ -56,9 +55,8 @@ func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.Respon
 	}
 
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal storagepool service '%s' data: %+v", storagePool, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal storagepool service '%s'", storagePool)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return nil, true
 	}
 
