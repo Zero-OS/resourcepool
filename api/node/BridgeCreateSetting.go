@@ -25,13 +25,13 @@ type BridgeCreateSetting struct {
 }
 
 func (s BridgeCreateSetting) Validate() error {
-	if s.Cidr != "" && s.Start != "" {
+	if  s.Start != "" {
 		if err := validators.ValidateIpInRange(s.Cidr, s.Start); err != nil {
 			return err
 		}
 	}
 
-	if s.Cidr != "" && s.End != "" {
+	if s.End != "" {
 		if err := validators.ValidateIpInRange(s.Cidr, s.End); err != nil {
 			return err
 		}
