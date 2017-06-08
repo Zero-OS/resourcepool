@@ -27,5 +27,4 @@ def apply_rules(job, gwdata=None):
 
 
 def update(job):
-    if job.model.args.get("nics", None):
-        apply_rules(job, job.model.args)
+    apply_rules(job, job.model.args)
