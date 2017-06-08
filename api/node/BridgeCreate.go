@@ -1,9 +1,10 @@
 package node
 
 import (
+	"fmt"
+
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
-	"fmt"
 )
 
 // Arguments for a bridge.create job
@@ -26,6 +27,23 @@ func (s BridgeCreate) Validate() error {
 	}
 
 	if err := validators.ValidateEnum("NetworkMode", s.NetworkMode, networkModeEnums); err != nil {
+		return err
+	}
+
+	if (s.NetworkMode == EnumBridgeCreateNetworkModestatic || s.NetworkMode == EnumBridgeCreateNetworkModednsmasq) && s.Setting.Cidr == "" {
+		return fmt.Errorf("Settings.Cidr: zero value")
+	}
+
+	if s.NetworkMode == EnumBridgeCreateNetworkModednsmasq {
+		if s.Setting.Start == "" {
+			return fmt.Errorf("Settings.Start: zero value")
+		}
+		if s.Setting.End == "" {
+			return fmt.Errorf("Settings.End: zero value")
+		}
+	}
+
+	if err := s.Setting.Validate(); err != nil {
 		return err
 	}
 
