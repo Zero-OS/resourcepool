@@ -17,7 +17,7 @@ def get_node(service):
     return Node.from_ays(service.parent)
 
 
-def create_nbdserver_container(service, parent):
+def create_diskorchestrator_container(service, parent):
     """
     first check if the vdisks container for this vm exists.
     if not it creates it.
@@ -50,12 +50,12 @@ def create_nbd(service, container):
     nbd_name = service.name
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role='nbdserver', instance=nbd_name)
+        nbdserver = service.aysrepo.serviceGet(role='diskorchestrator', instance=nbd_name)
     except j.exceptions.NotFound:
         nbdserver = None
 
     if nbdserver is None:
-        nbd_actor = service.aysrepo.actorGet('nbdserver')
+        nbd_actor = service.aysrepo.actorGet('diskorchestrator')
         args = {
             'container': container.name,
         }
@@ -81,7 +81,7 @@ def init(job):
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    vdisk_container = create_nbdserver_container(service, service.parent)
+    vdisk_container = create_diskorchestrator_container(service, service.parent)
     _init_nbd_services(job, vdisk_container)
 
 
@@ -90,7 +90,7 @@ def _start_nbds(service):
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = service.producers.get('nbdserver', None)
+    nbdservers = service.producers.get('diskorchestrator', None)
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
@@ -268,7 +268,7 @@ def migrate(job):
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
-    vdisk_container = create_nbdserver_container(service, target_node)
+    vdisk_container = create_diskorchestrator_container(service, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
     nbdserver = create_nbd(service, vdisk_container)
     service.consume(nbdserver)
@@ -322,7 +322,7 @@ def updateDisks(job, client, args):
 
     # Set model to new data
     service.model.data.disks = args.get('disks', [])
-    vdisk_container = create_nbdserver_container(service, service.parent)
+    vdisk_container = create_diskorchestrator_container(service, service.parent)
     container = Container.from_ays(vdisk_container)
 
     # Detatching and Cleaning old disks

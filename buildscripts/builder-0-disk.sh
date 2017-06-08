@@ -12,6 +12,7 @@ fi
 
 go get -u -v -d github.com/zero-os/0-Disk/nbdserver
 go get -u -v -d github.com/zero-os/0-Disk/zeroctl
+go get -u -v -d github.com/zero-os/0-Disk/tlog/tlogserver
 
 DISK0=$GOPATH/src/github.com/zero-os/0-Disk/
 

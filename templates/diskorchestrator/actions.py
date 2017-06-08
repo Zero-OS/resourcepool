@@ -6,11 +6,11 @@ def get_container(service):
     return Container.from_ays(service.parent)
 
 
-def is_running(container):
+def is_job_running(container, cmd='/bin/nbdserver'):
     try:
         for job in container.client.job.list():
             arguments = job['cmd']['arguments']
-            if 'name' in arguments and arguments['name'] == '/bin/nbdserver':
+            if 'name' in arguments and arguments['name'] == cmd:
                 return job
         return False
     except Exception as err:
@@ -41,6 +41,9 @@ def install(job):
     }
     socketpath = '/server.socket.{id}'.format(id=service.name)
     configpath = "/{}.config".format(service.name)
+
+    storagecluster_storage_ips = []
+
     for vdiskservice in vdisks:
         template = urlparse(vdiskservice.model.data.templateVdisk)
         if template.scheme == 'ardb' and template.netloc:
@@ -55,6 +58,7 @@ def install(job):
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
+
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
 
@@ -68,13 +72,15 @@ def install(job):
                        'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
                        'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
+        storagecluster_storage_ips += [storage['address'] for storage in clusterconfig['dataStorage']]
+    start_tlog(service, container, storagecluster_storage_ips)
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     configstream = BytesIO(yamlconfig.encode('utf8'))
     configstream.seek(0)
     container.client.filesystem.upload(configpath, configstream)
 
-    if not is_running(container):
+    if not is_job_running(container):
         container.client.system(
             '/bin/nbdserver \
             -protocol unix \
@@ -92,7 +98,7 @@ def install(job):
         else:
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
         # make sure nbd is still running
-        running = is_running(container)
+        running = is_job_running(container)
         for vdisk in vdisks:
             if running:
                 vdisk.model.data.status = 'running'
@@ -101,11 +107,19 @@ def install(job):
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
-        job = is_running(container)
+        job = is_job_running(container)
         container.client.job.kill(job['cmd']['id'], signal=1)
 
     service.model.data.socketPath = socketpath
     service.saveAll()
+
+
+def start_tlog(service, container, storage_ips):
+    if not is_job_running(container, cmd='/bin/tlogserver'):
+        storage_ips = ','.join(set(storage_ips))
+        container.client.system('/bin/tlogserver -storage-addresses={}'.format(storage_ips))
+        if not is_job_running(container, cmd='/bin/tlogserver'):
+            raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
 
 
 def start(job):
@@ -136,7 +150,7 @@ def stop(job):
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete'))
 
-    nbdjob = is_running(container)
+    nbdjob = is_job_running(container)
     if nbdjob:
         job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
         container.client.job.kill(nbdjob['cmd']['id'])
@@ -144,7 +158,7 @@ def stop(job):
         job.logger.info("wait for nbdserver to stop")
         for i in range(60):
             time.sleep(1)
-            if is_running(container):
+            if is_job_running(container):
                 continue
             return
         raise j.exceptions.RuntimeError("nbdserver didn't stopped")
@@ -156,7 +170,7 @@ def monitor(job):
         return
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    running = is_running(get_container(service))
+    running = is_job_running(get_container(service))
     for vdisk in vdisks:
         if running:
             vdisk.model.data.status = 'running'
