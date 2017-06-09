@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='0-orchestrator',
-    version='1.1.0.a',
+    version='1.1.0-alpha-3',
     description='Zero-OS Orchestrator',
     long_description=long_description,
     url='https://github.com/g8os/grid',
