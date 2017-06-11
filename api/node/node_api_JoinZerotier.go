@@ -56,10 +56,11 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 
 	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("Error running blueprint for zerotiers %s join ", reqBody.Nwid)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		api.AysAPI.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid), "zerotier", api.AysRepo, nil, nil)
 		return

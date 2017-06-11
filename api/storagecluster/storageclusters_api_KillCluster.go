@@ -6,8 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // KillCluster is the handler for DELETE /storageclusters/{label}
@@ -43,8 +41,8 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	_, resp, err := api.AysAPI.Ays.GetServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("error executing blueprint for Storage cluster %s deletion : %+v", storageCluster, err)
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		errmsg := fmt.Sprintf("error executing blueprint for Storage cluster %s deletion", storageCluster)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -56,8 +54,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for storage_cluster deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for storage_cluster deletion")
 		return
 	}
 
@@ -65,9 +62,9 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storage_cluster deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storage_cluster deletion")
 		}
 		return
 	}
@@ -75,8 +72,8 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	_, err = api.AysAPI.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("Error in deleting storage_cluster %s : %+v", storageCluster, err)
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		errmsg := fmt.Sprintf("Error in deleting storage_cluster %s", storageCluster)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

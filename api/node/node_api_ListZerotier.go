@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListZerotier is the handler for GET /nodes/{nodeid}/zerotiers
@@ -28,7 +28,7 @@ func (api NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
 	for i, serv := range services {
 		var data ZerotierListItem
 		if err := json.Unmarshal(serv.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

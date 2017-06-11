@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -54,7 +52,6 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
-		log.Error(errMessage)
 		tools.WriteError(w, http.StatusNotFound, errMessage, "")
 		return
 	}

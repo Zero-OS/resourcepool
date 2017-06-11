@@ -7,8 +7,8 @@ struct Schema {
     templateVdisk @3 :Text; # in case it's a copy of another vdisk
     readOnly @4 :Bool;
     status @5 :Status;
-
-    tlogStoragecluster @6 :Text; # consume
+    storageCluster @6 :Text; # consume 
+    tlogStoragecluster @7 :Text; # consume 
 
     enum Status {
         halted @0;

@@ -36,7 +36,7 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 

@@ -18,14 +18,14 @@ import (
 func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	disk := client.Disk(cl)
 	result, err := disk.List()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error listing disks on node")
 		return
 	}
 
@@ -39,7 +39,7 @@ func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 
 		size, err := strconv.Atoi(disk.Size)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
 			return
 		}
 
@@ -70,7 +70,7 @@ func (api NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 
 			size, err := strconv.Atoi(partition.Size)
 			if err != nil {
-				tools.WriteError(w, http.StatusInternalServerError, err, "")
+				tools.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
 				return
 			}
 

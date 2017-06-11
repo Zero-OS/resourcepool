@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -20,8 +18,8 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	_, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("error executing blueprint for vdisk %s deletion : %+v", vdiskID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s deletion", vdiskID)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -52,7 +50,7 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for vdisk deletion")
 		} else {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for vdisk deletion")
 		}

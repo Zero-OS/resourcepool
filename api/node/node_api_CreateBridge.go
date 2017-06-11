@@ -98,10 +98,10 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	// Wait for the delete job to be finshed before we delete the service
 	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error running blueprint for bridge %s creation", reqBody.Name)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			errmsg := fmt.Sprintf("error running blueprint for bridge %s creation", reqBody.Name)
 			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return

@@ -37,7 +37,7 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 
 		data := schema{}
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

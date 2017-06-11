@@ -13,7 +13,7 @@ import (
 func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 	pID, err := strconv.ParseUint(pid, 10, 64)
 	if err != nil {
-		WriteError(w, http.StatusInternalServerError, err, "")
+		WriteError(w, http.StatusInternalServerError, err, "Error converting pid string into int")
 		return
 	}
 
@@ -33,7 +33,7 @@ func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 		time.Sleep(time.Millisecond * 50)
 
 		if alive, err := core.ProcessAlive(processID); err != nil {
-			WriteError(w, http.StatusInternalServerError, err, "")
+			WriteError(w, http.StatusInternalServerError, err, "Error checking if process alive")
 			return
 		} else if !alive {
 			w.WriteHeader(http.StatusNoContent)

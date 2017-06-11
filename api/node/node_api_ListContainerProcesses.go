@@ -15,14 +15,14 @@ func (api NodeAPI) ListContainerProcesses(w http.ResponseWriter, r *http.Request
 
 	conn, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
 	core := client.Core(conn)
 	processes, err := core.Processes()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error geting processes from container")
 		return
 	}
 

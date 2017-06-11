@@ -34,14 +34,14 @@ func (api NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	file := filesList[0]
 	fd, err := file.Open()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error opening file on host")
 		return
 	}
 	defer fd.Close()
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 

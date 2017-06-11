@@ -31,7 +31,7 @@ func (api NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/octet-stream")
 	if err := fs.Download(path, w); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error downloading file from container")
 		return
 	}
 	w.WriteHeader(http.StatusOK)

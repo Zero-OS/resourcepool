@@ -24,7 +24,7 @@ func (api NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(srv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 	respBody.Name = srv.Name

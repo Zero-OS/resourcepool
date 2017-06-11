@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -62,7 +61,6 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 				for _, reqProtocol := range reqBody.Protocols {
 					if protocol == reqProtocol {
 						err := fmt.Errorf("This protocol, srcip and srcport combination already exists")
-						log.Error(err)
 						tools.WriteError(w, http.StatusBadRequest, err, "")
 						return
 					}
@@ -82,8 +80,8 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		errMessage := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
-		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, errmsg)
+		errMessage := fmt.Errorf("error executing blueprint for gateway %s update", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
 		return
 	}
 

@@ -22,8 +22,8 @@ func ExecuteVMAction(w http.ResponseWriter, r *http.Request, repoName, action st
 	}
 
 	if _, err := ExecuteBlueprint(repoName, "vm", vmID, "action", obj); err != nil {
-		Error := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
-		WriteError(w, http.StatusInternalServerError, err, Error)
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
+		WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

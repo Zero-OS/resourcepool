@@ -25,8 +25,7 @@ func (api NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		errmsg := "Error validating request for storagepool creation "
-		tools.WriteError(w, http.StatusBadRequest, err, errmsg)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 

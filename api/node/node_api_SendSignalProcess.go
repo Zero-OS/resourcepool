@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"syscall"
 
+	"strconv"
+
+	"fmt"
+
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
-	"strconv"
 )
 
 // SendSignalProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/processes/{processid}
@@ -32,7 +35,7 @@ func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error casting process id into an intiger")
 		return
 	}
 
@@ -41,14 +44,15 @@ func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	// Get container connection
 	cl, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
 	// Send signal to the container process
 	core := client.Core(cl)
 	if err := core.KillProcess(processId, syscall.Signal(reqBody.Signal)); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		errmsg := fmt.Sprintf("Failed to kill process %s", processId)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

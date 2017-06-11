@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // DeployNewCluster is the handler for POST /storageclusters
@@ -54,8 +52,8 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("error executing blueprint for storage_cluster %s creation : %+v", reqBody.Label, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, "")
+		errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

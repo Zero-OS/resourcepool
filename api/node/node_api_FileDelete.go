@@ -28,14 +28,14 @@ func (api NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 	}
 
 	fs := client.Filesystem(container)
 	res, err := fs.Exists(reqBody.Path)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking file exists on container")
 		return
 	}
 	if res != true {
@@ -45,7 +45,7 @@ func (api NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := fs.Remove(reqBody.Path); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error removing file from container")
 		return
 	}
 

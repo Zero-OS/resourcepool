@@ -13,7 +13,7 @@ import (
 func (api NodeAPI) GetNodeOSInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
@@ -21,7 +21,7 @@ func (api NodeAPI) GetNodeOSInfo(w http.ResponseWriter, r *http.Request) {
 	os, err := info.OS()
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting os info from node")
 		return
 	}
 

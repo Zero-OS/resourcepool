@@ -35,9 +35,9 @@ func (api NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for gateway uninstallation")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for gateway uninstallation")
 		}
 		return
 	}

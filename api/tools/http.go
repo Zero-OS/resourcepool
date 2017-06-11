@@ -9,10 +9,10 @@ import (
 )
 
 func WriteError(w http.ResponseWriter, code int, err error, msg string) {
-	Error := err.Error()
-	log.Printf(Error)
+	tracebackError := err.Error()
+	log.Printf(tracebackError)
 	if msg == "" {
-		msg = Error
+		msg = tracebackError
 	}
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(code)
@@ -42,8 +42,8 @@ func (httpErr HTTPError) Error() string {
 
 func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWriter, action string) bool {
 	if aysErr != nil {
-		log.Errorf("AYS threw error while %s: %+v.\n", action, aysErr)
-		WriteError(w, http.StatusInternalServerError, aysErr, fmt.Errorf("AYS threw error while %s", action).Error())
+		errmsg := fmt.Sprintf("AYS threw error while %s.\n", action)
+		WriteError(w, http.StatusInternalServerError, aysErr, errmsg)
 		return false
 	}
 	if aysRes.StatusCode != http.StatusOK {

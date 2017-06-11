@@ -64,7 +64,7 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err. errmsg)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
