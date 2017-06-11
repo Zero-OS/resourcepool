@@ -34,7 +34,7 @@ def input(job):
 
             if not nameservers:
                 raise j.exceptions.Input('DHCP nameservers should have at least one nameserver.')
-            hosts = dhcp.get('hosts')
+            hosts = dhcp.get('hosts', [])
             subnet = ipaddress.IPv4Interface(cidr).network
             for host in hosts:
                 ip = host.get('ipaddress')
@@ -116,13 +116,13 @@ def processChange(job):
         j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', args={'nics': args['nics']}))
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
-        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', args={'data': args}))
+        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', args=args))
 
         service.model.data.nics = args['nics']
 
     if nicchanges or portforwardchanges:
         firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args={'data': args}))
+        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args=args))
 
     if portforwardchanges:
         service.model.data.portforwards = args.get('portforwards', [])

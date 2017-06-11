@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateVM is the handler for PUT /nodes/{nodeid}/vms/{vmid}
@@ -63,8 +63,9 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for vm %s creation : %+v", vmID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

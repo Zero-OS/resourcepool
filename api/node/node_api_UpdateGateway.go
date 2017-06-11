@@ -8,8 +8,8 @@ import (
 	"reflect"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
@@ -56,8 +56,9 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gwID)] = reqBody
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for gateway %s creation : %+v", gwID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 

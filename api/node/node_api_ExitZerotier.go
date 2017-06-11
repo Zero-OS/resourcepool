@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
@@ -30,8 +30,9 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
 
 	if err != nil {
+		httpErr := err.(tools.HTTPError)
 		log.Errorf("error executing blueprint for zerotier %s exit : %+v", zerotierID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err)
 		return
 	}
 
