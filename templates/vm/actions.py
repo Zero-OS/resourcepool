@@ -50,12 +50,12 @@ def create_nbd(service, container):
     nbd_name = service.name
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role='diskorchestrator', instance=nbd_name)
+        nbdserver = service.aysrepo.serviceGet(role='zerodisk', instance=nbd_name)
     except j.exceptions.NotFound:
         nbdserver = None
 
     if nbdserver is None:
-        nbd_actor = service.aysrepo.actorGet('diskorchestrator')
+        nbd_actor = service.aysrepo.actorGet('zerodisk')
         args = {
             'container': container.name,
         }
@@ -90,7 +90,7 @@ def _start_nbds(service):
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = service.producers.get('diskorchestrator', None)
+    nbdservers = service.producers.get('zerodisk', None)
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
@@ -184,7 +184,7 @@ def stop(job):
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
 
-    for nbdserver in service.producers.get('diskorchestrator', []):
+    for nbdserver in service.producers.get('zerodisk', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
@@ -263,7 +263,7 @@ def migrate(job):
     target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
-    old_nbd = service.producers.get('diskorchestrator', [])
+    old_nbd = service.producers.get('zerodisk', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
@@ -327,7 +327,7 @@ def updateDisks(job, client, args):
 
     # Detatching and Cleaning old disks
     if old_disks != []:
-        nbdserver = service.producers.get('diskorchestrator', [])[0]
+        nbdserver = service.producers.get('zerodisk', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
@@ -341,7 +341,7 @@ def updateDisks(job, client, args):
             service.consume(diskservice)
         service.saveAll()
         _start_nbds(service)
-        nbdserver = service.producers.get('diskorchestrator', [])[0]
+        nbdserver = service.producers.get('zerodisk', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
             if disk['maxIOps']:
