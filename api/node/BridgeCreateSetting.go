@@ -1,6 +1,7 @@
 package node
 
 import (
+	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
 )
 
@@ -24,6 +25,17 @@ type BridgeCreateSetting struct {
 }
 
 func (s BridgeCreateSetting) Validate() error {
+	if  s.Start != "" {
+		if err := validators.ValidateIpInRange(s.Cidr, s.Start); err != nil {
+			return err
+		}
+	}
+
+	if s.End != "" {
+		if err := validators.ValidateIpInRange(s.Cidr, s.End); err != nil {
+			return err
+		}
+	}
 
 	return validator.Validate(s)
 }

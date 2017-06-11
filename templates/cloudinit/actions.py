@@ -38,5 +38,4 @@ def config_cloud_init(job, nics=None):
 
 
 def update(job):
-    if job.model.args.get("nics", None):
-        config_cloud_init(job, job.model.args["nics"])
+    config_cloud_init(job, job.model.args["nics"])

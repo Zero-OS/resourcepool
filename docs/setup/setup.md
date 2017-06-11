@@ -3,42 +3,43 @@
 This is the recommended and currently the only supported option to setup a Zero-OS cluster.
 
 In order to have a full Zero-OS cluster you'll need to perform the following steps:
-1. JumpScale9 development Docker container
-2. Install the Zero-OS orchestrator into the container
-3. Setup the configuration service in AYS
-4. Configure the backplane network service in AYS
-5. Boot your Zero-OS nodes
+1. [Create a Docker container with a JumpScale9](#create-a-jumpscale9-docker-container)
+2. [Install the Zero-OS Orchestrator into the Docker container](#install-the-orchestrator)
+3. [Setup the AYS configuration service](#setup-the-ays-configuration-service)
+4. [Setup the backplane network](#setup-the-backplane-network)
+5. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
 
-## Installing JumpScale9
+## Create a JumpScale9 Docker container
 
-Create the Docker container with JumpScale9 by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
+Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
 > **Important:** Make sure you set the GIGBRANCH environment variable to 9.0.0 before running jsinit. This version of 0-orchestrator will only work with this version of JumpScale.
 
-## Setting up the 0-orchestrator server
+## Install the Orchestrator
 
-You now have your JumpScale9 Docker container running, before you start the 0-orchestrator setup you need to join your docker into the ZeroTier management network that will be used to manage the ZeroTier nodes in your cluster.
+SSH into your JumpScale9 Docker container and instal the Orchestrator using the [`install-orchestrator.sh`](../../scripts/install-orchestrator.sh) script.
 
-SSH into your JumpScale9 docker and continue with installing the 0-orchestrator server by means of the [`install-orchestrator.sh`](../../scripts/install-orchestrator.sh) script.
+Before actually performing the Orchestrator installation the script will first join the Docker container into the ZeroTier management network that will be used to manage the ZeroTier nodes in your cluster.
 
 This script takes 3 parameters:
-- BRANCH: 0-orchestrator development branch
-- ZEROTIERNWID: ZeroTier network id
-- ZEROTIERTOKEN: ZeroTier API token
+- `BRANCH`: 0-orchestrator development branch
+- `ZEROTIERNWID`: ZeroTier network ID
+- `ZEROTIERTOKEN`: ZeroTier API token
 
 So:
-```
+```bash
 (gig) root@js9:/root$ export BRANCH="1.1.0-alpha-3"
-(gig) root@js9:/root$ export ZEROTIERNWID="<Your ZeroTier network id>"
+(gig) root@js9:/root$ export ZEROTIERNWID="<Your ZeroTier network ID>"
 (gig) root@js9:/root$ export ZEROTIERTOKEN="<Your ZeroTier token>"
 (gig) root@js9:/root$ curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
 (gig) root@js9:/root$ bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN
 ```
 > **Important:**
 - The ZeroTier network needs to be a private network
-- The script will wait until you authorize your JumpScale9 docker into the network.
+- The script will wait until you authorize your JumpScale9 Docker container into the network
 
-## Setup the configuration service in AYS
-In order for the 0-orchestrator to use the correct versions of flists, Zero-OS nodes and JumpScale9, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`
+
+## Setup the AYS configuration service
+In order for the Orchestrator to use the correct versions of flists, Zero-OS nodes and JumpScale9, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
 
 ```yaml
 configuration__main:
@@ -58,14 +59,13 @@ configuration__main:
 ```
 
 After creating this blueprint, issue the following command to AYS to install it:
-```
+```bash
 (gig) root@js9:/root$ cd /optvar/cockpit_repos/orchestrator-server
 (gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays blueprint configuration.bp
-(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays run create -y
 ```
 
 ## Setup the backplane network
-This optional setup allows you to use the 10GE+ network infrastructure that interconnect the nodes in your cluster if available. If you don't have this in your nodes, please skip this step.
+This optional setup allows you to use the 10GE+ network infrastructure (if available) that interconnects the nodes in your cluster. If you don't have this in your nodes, please skip this step.
 
 Create the following blueprint: `/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp`
 ### G8 setup
@@ -86,14 +86,14 @@ After creating this blueprint, issue the following command to AYS to install it:
 ```
 (gig) root@js9:/root$ cd /optvar/cockpit_repos/orchestrator-server
 (gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays blueprint network.bp
-(gig) root@js9:/optvar/cockpit_repos/orchestrator-server$ ays run create -y
 ```
 
-Then we need to update the bootstrap service so that is deploys the storage network when bootstrapping the nodes. So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp` as follows:
+Then we need to update the bootstrap service so that is deploys the storage network when bootstrapping the nodes. So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp` as follows:
 ```yaml
 bootstrap.zero-os__grid1:
   zerotierNetID: '<Your ZeroTier network id>'
   zerotierToken: '<Your ZeroTier token>'
+  wipedisks: true # indicate you want to wipe the disks of the nodes when adding them
   networks:
     - storage
 ```

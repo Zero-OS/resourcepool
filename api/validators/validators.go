@@ -72,13 +72,12 @@ func ipv4(v interface{}, param string) error {
 	}
 
 	match := net.ParseIP(ipValue)
-	if match.To4() == nil{
+	if match.To4() == nil {
 		return errors.New("string is not a valid ipv4 address.")
 	}
 
 	return nil
 }
-
 
 // Validates that a string is a valid ipv6
 func ipv6(v interface{}, param string) error {
@@ -99,6 +98,7 @@ func ipv6(v interface{}, param string) error {
 
 	return nil
 }
+
 // Validates that a string is a valid ip
 func cidr(v interface{}, param string) error {
 	cidr := reflect.ValueOf(v)
@@ -192,4 +192,26 @@ func ValidateVdisk(vtype string, tlog string, template string, size int) error {
 		return fmt.Errorf("Invalid block size")
 	}
 	return nil
+}
+
+func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
+	if cidr1 == "" || cidr2 == "" {
+		return false, nil
+	}
+	
+	_, subnet1, err := net.ParseCIDR(cidr1)
+	if err != nil {
+		return false, fmt.Errorf("%v: is not a valid cidr", cidr1)
+	}
+
+	_, subnet2, err := net.ParseCIDR(cidr2)
+	if err != nil {
+		return false, fmt.Errorf("%v: is not a valid cidr", cidr2)
+	}
+
+	if subnet1.Contains(subnet2.IP) || subnet2.Contains(subnet1.IP) {
+		return true, nil
+	}
+
+	return false, nil
 }
