@@ -1,4 +1,4 @@
-@0xb755efbee1c680d0;
+@0xe212dfefef5d49f5;
 
 struct Schema {
     nwid @0 :Text;
@@ -19,6 +19,7 @@ struct Schema {
     status @15 :Text;
     type @16 :Type;
     dhcp @17 :Bool;
+    token @18 :Text;
 
 }
 

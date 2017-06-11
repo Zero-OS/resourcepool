@@ -12,37 +12,51 @@ def _get_network(service):
 
 def install(job):
     import time
-    service = job.service
-    client = _get_client(service.parent)
-    client.zerotier.join(service.model.data.nwid)
+    from zerotier import client as ztclient
+
+    data = job.service.model.data
+    client = _get_client(job.service.parent)
+    client.zerotier.join(data.nwid)
+
+    if data.token:
+        address = client.zerotier.info()['address']
+        zerotier = ztclient.Client()
+        zerotier.set_auth_header('bearer {}'.format(data.token))
+        resp = zerotier.network.getMember(address, data.nwid)
+        member = resp.json()
+        if member['config']['authorized'] is False and member['online']:
+            # authorized new member
+            job.logger.info("authorize new member {} to network {}".format(member['nodeId'], data.nwid))
+            member['config']['authorized'] = True
+            zerotier.network.updateMember(member, member['nodeId'], data.nwid)
 
     while True:
-        net = _get_network(service)
+        net = _get_network(job.service)
         if net['status'] == 'OK':
             break
         time.sleep(1)
-    service.model.data.allowDefault = net['allowDefault']
-    service.model.data.allowGlobal = net['allowGlobal']
-    service.model.data.allowManaged = net['allowManaged']
-    service.model.data.allowDefault = net['allowDefault']
-    service.model.data.assignedAddresses = net['assignedAddresses']
-    service.model.data.bridge = net['bridge']
-    service.model.data.broadcastEnabled = net['broadcastEnabled']
-    service.model.data.dhcp = net['dhcp']
-    service.model.data.mac = net['mac']
-    service.model.data.mtu = net['mtu']
-    service.model.data.name = net['name']
-    service.model.data.netconfRevision = net['netconfRevision']
-    service.model.data.portDeviceName = net['portDeviceName']
-    service.model.data.portError = net['portError']
+    data.allowDefault = net['allowDefault']
+    data.allowGlobal = net['allowGlobal']
+    data.allowManaged = net['allowManaged']
+    data.allowDefault = net['allowDefault']
+    data.assignedAddresses = net['assignedAddresses']
+    data.bridge = net['bridge']
+    data.broadcastEnabled = net['broadcastEnabled']
+    data.dhcp = net['dhcp']
+    data.mac = net['mac']
+    data.mtu = net['mtu']
+    data.name = net['name']
+    data.netconfRevision = net['netconfRevision']
+    data.portDeviceName = net['portDeviceName']
+    data.portError = net['portError']
 
     for route in net['routes']:
         if route['via'] is None:
             route['via'] = ''
 
-    service.model.data.routes = net['routes']
-    service.model.data.status = net['status']
-    service.model.data.type = net['type'].lower()
+    data.routes = net['routes']
+    data.status = net['status']
+    data.type = net['type'].lower()
 
 
 def delete(job):

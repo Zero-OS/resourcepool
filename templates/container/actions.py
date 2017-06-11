@@ -28,6 +28,7 @@ def install(job):
 
 def start(job):
     import time
+    from zerotier import client
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
@@ -52,9 +53,19 @@ def start(job):
         if nic.type == 'zerotier':
             wait_for_interface()
             service.model.data.zerotiernodeid = container.client.zerotier.info()['address']
-            break
+            if nic.token:
+                zerotier = client.Client()
+                zerotier.set_auth_header('bearer {}'.format(nic.token))
+                resp = zerotier.network.getMember(service.model.data.zerotiernodeid, nic.id)
+                member = resp.json()
+                if member['config']['authorized'] is False and member['online']:
+                    # authorized new member
+                    job.logger.info("authorize new member {} to network {}".format(member['nodeId']), nic.id)
+                    member['config']['authorized'] = True
+                    zerotier.network.updateMember(member, member['nodeId'], nic.id)
 
     service.saveAll()
+
 
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container

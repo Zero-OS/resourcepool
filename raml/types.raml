@@ -470,6 +470,10 @@ ContainerNIC:
     status:
       enum: [up, down]
       description: Status of the bridge
+    token:
+      type: string
+      description: Zerotier token, only valid for nic of type 'zerotier'. If supplied, the container will be authorized on the zerotier network.
+      required: false
 
 ContainerListItem:
   type: object
@@ -662,9 +666,14 @@ ZerotierListItem:
 
 ZerotierJoin:
   type: object
-  description: Arguments to join a Zerotier network
+  description: |
+    Arguments to join a Zerotier network.
+    If the token is specified, the node will be authorized.
   properties:
     nwid: string
+    token:
+      type: string
+      required: false
 
 Zerotier:
   type: object
@@ -1137,6 +1146,17 @@ DHCP:
       type: GWHost[]
       description: List of dhcpshosts
 
+ZerotierBridge:
+  properties:
+    id:
+      type: string
+      description: zerotier network id
+    token:
+      type: string
+      description: zerotier authorization token, used to authorize the container if supplied.
+      required: false
+
+
 GWNIC:
   type: object
   properties:
@@ -1157,7 +1177,7 @@ GWNIC:
       description: |
         Zerotier NetworkId we want to use to bridge the private network to.
         This makes it possible to bridge your private network with a private network of an other gateway
-      type: string
+      type: ZerotierBridge
     config:
       required: false
       properties:

@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // JoinZerotier is the handler for POST /nodes/{nodeid}/zerotiers
@@ -32,9 +32,11 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 	// Create join blueprint
 	bp := struct {
 		NetworkID string `json:"nwid" yaml:"nwid"`
+		Token     string `json:"token,omitempty"`
 		Node      string `json:"node" yaml:"node"`
 	}{
 		NetworkID: reqBody.Nwid,
+		Token:     reqBody.Token,
 		Node:      nodeID,
 	}
 
