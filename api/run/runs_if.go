@@ -13,9 +13,12 @@ import (
 type RunsInterface interface { // GetRunState is the handler for GET /runs
 	// Get Run Status
 	GetRunState(http.ResponseWriter, *http.Request)
+	// Wait on run
+	WaitOnRun(http.ResponseWriter, *http.Request)
 }
 
 // RunsInterfaceRoutes is routing for /runs root endpoint
 func RunsInterfaceRoutes(r *mux.Router, i RunsInterface) {
 	r.HandleFunc("/runs/{runid}", i.GetRunState).Methods("GET")
+	r.HandleFunc("/runs/{runid}/wait", i.WaitOnRun).Methods("GET")
 }

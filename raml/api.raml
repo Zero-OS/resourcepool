@@ -1200,5 +1200,14 @@ types:
           body:
             application/json:
               type: Run
-
+    /wait:
+      get:
+        (AYSBased):
+        displayName: WaitOnRun
+        description: Wait for Run
+        responses:
+          200:
+            body:
+              application/json:
+                type: Run
 
