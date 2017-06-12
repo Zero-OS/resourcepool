@@ -51,19 +51,21 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// Create the blueprint
 	bp := struct {
-		Size           int    `yaml:"size" json:"size"`
-		BlockSize      int    `yaml:"blocksize" json:"blocksize"`
-		TemplateVdisk  string `yaml:"templateVdisk" json:"templateVdisk"`
-		ReadOnly       bool   `yaml:"readOnly" json:"readOnly"`
-		Type           string `yaml:"type" json:"type"`
-		StorageCluster string `yaml:"storageCluster" json:"storageCluster"`
+		Size               int    `yaml:"size" json:"size"`
+		BlockSize          int    `yaml:"blocksize" json:"blocksize"`
+		TemplateVdisk      string `yaml:"templateVdisk" json:"templateVdisk"`
+		ReadOnly           bool   `yaml:"readOnly" json:"readOnly"`
+		Type               string `yaml:"type" json:"type"`
+		StorageCluster     string `yaml:"storageCluster" json:"storageCluster"`
+		TlogStoragecluster string `yaml:"tlogStoragecluster" json:"tlogStoragecluster"`
 	}{
-		Size:           reqBody.Size,
-		BlockSize:      reqBody.Blocksize,
-		TemplateVdisk:  reqBody.Templatevdisk,
-		ReadOnly:       reqBody.ReadOnly,
-		Type:           string(reqBody.Vdisktype),
-		StorageCluster: reqBody.Storagecluster,
+		Size:               reqBody.Size,
+		BlockSize:          reqBody.Blocksize,
+		TemplateVdisk:      reqBody.Templatevdisk,
+		ReadOnly:           reqBody.ReadOnly,
+		Type:               string(reqBody.Vdisktype),
+		StorageCluster:     reqBody.Storagecluster,
+		TlogStoragecluster: reqBody.TlogStoragecluster,
 	}
 
 	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)
