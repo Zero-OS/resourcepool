@@ -7,7 +7,7 @@ import (
 )
 
 type ZerotierBridge struct {
-	Id    string `json:"id"   yaml:"id"`
+	Id    string `json:"id"   yaml:"id" validate:"nonzero"`
 	Token string `json:"token,omitempty" yaml:"token,omitempty"`
 }
 

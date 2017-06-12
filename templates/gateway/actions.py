@@ -57,7 +57,7 @@ def init(job):
             nics.append(
                 {
                     'id': zerotierbridge['id'], 'type': 'zerotier',
-                    'name': 'z-{}'.format(nic['name']), 'token': zerotierbridge['token']
+                    'name': 'z-{}'.format(nic['name']), 'token': zerotierbridge.get('token', '')
                 })
 
     config = get_configuration(service.aysrepo)

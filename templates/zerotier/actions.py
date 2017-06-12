@@ -18,13 +18,22 @@ def install(job):
     client = _get_client(job.service.parent)
     client.zerotier.join(data.nwid)
 
+    def get_member():
+        start = time.time()
+        while start + 60 > time.time():
+            resp = zerotier.network.getMember(address, data.nwid)
+            if resp.content:
+                return resp.json()
+            time.sleep(0.5)
+        raise j.exceptions.RuntimeError('Could not find member on zerotier network')
+
     if data.token:
         address = client.zerotier.info()['address']
         zerotier = ztclient.Client()
         zerotier.set_auth_header('bearer {}'.format(data.token))
-        resp = zerotier.network.getMember(address, data.nwid)
-        member = resp.json()
-        if member['config']['authorized'] is False and member['online']:
+
+        member = get_member()
+        if not member['config']['authorized']:
             # authorized new member
             job.logger.info("authorize new member {} to network {}".format(member['nodeId'], data.nwid))
             member['config']['authorized'] = True
