@@ -136,7 +136,7 @@ def get_tlog_port(container):
     tlog_port = 11211
     for portInfo in ports:
         port = portInfo.get('port', 0)
-        if str(port).startswith('112') and port > tlog_port:
+        if str(port).startswith('112') and port >= tlog_port:
             tlog_port = port + 1
     return tlog_port
 
