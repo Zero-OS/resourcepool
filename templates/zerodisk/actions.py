@@ -37,12 +37,19 @@ def install(job):
     container = get_container(service)
     config = {
         'storageClusters': {},
-        'vdisks': {}
+        'vdisks': {},
+        'tlogStoragecluster': {},
     }
+
+    tlogconfig = {
+        'vdisks': {},
+        'storageClusters': {},
+        'k': 0,
+        'm': 0,
+    }
+
     socketpath = '/server.socket.{id}'.format(id=service.name)
     configpath = "/{}.config".format(service.name)
-
-    storagecluster_storage_ips = []
 
     for vdiskservice in vdisks:
         template = urlparse(vdiskservice.model.data.templateVdisk)
@@ -54,7 +61,7 @@ def install(job):
 
         if vdiskservice.model.data.storageCluster not in config['storageClusters']:
             storagecluster = vdiskservice.model.data.storageCluster
-            clusterconfig = get_storagecluster_config(service, storagecluster)
+            clusterconfig, _, _ = get_storagecluster_config(service, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
@@ -72,11 +79,17 @@ def install(job):
                        'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
                        'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
-        if str(vdiskservice.model.data.type) in ["boot", "db"]:
-            storagecluster_storage_ips += [storage['address'] for storage in clusterconfig['dataStorage']]
 
-    if storagecluster_storage_ips:
-        start_tlog(service, container, storagecluster_storage_ips)
+        if vdiskservice.model.data.tlogStoragecluster and vdiskservice.model.data.tlogStoragecluster not in tlogconfig['storageClusters']:
+            tlogcluster = vdiskservice.model.data.tlogStoragecluster
+            clusterconfig, k, m = get_storagecluster_config(service, tlogcluster)
+            tlogconfig['storageClusters'][tlogcluster] = {"dataStorage": clusterconfig["dataStorage"]}
+            tlogconfig['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
+            tlogconfig['k'] += k
+            tlogconfig['m'] += m
+
+    if tlogconfig['storageClusters']:
+        tlogport = start_tlog(service, container, tlogconfig)
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     configstream = BytesIO(yamlconfig.encode('utf8'))
@@ -88,8 +101,9 @@ def install(job):
             '/bin/nbdserver \
             -protocol unix \
             -address "{socketpath}" \
+            --tlogrpc 0.0.0.0:{tlogport} \
             -config {config}'
-            .format(id=service.name, socketpath=socketpath, config=configpath)
+            .format(tlogport=tlogport, socketpath=socketpath, config=configpath)
         )
 
         # wait for socket to be created
@@ -117,12 +131,33 @@ def install(job):
     service.saveAll()
 
 
-def start_tlog(service, container, storage_ips):
+def get_tlog_port(container):
+    ports = container.node.client.info.port()
+    tlog_port = 11211
+    for portInfo in ports:
+        port = portInfo.get('port', 0)
+        if str(port).startswith('112') and port > tlog_port:
+            tlog_port = port + 1
+    return tlog_port
+
+
+def start_tlog(service, container, config):
+    import yaml
+    from io import BytesIO
+    k = config.pop('k')
+    m = config.pop('m')
+
+    configpath = "/tlog_{}.config".format(service.name)
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    configstream = BytesIO(yamlconfig.encode('utf8'))
+    configstream.seek(0)
+    container.client.filesystem.upload(configpath, configstream)
     if not is_job_running(container, cmd='/bin/tlogserver'):
-        storage_ips = ','.join(set(storage_ips))
-        container.client.system('/bin/tlogserver -storage-addresses={}'.format(storage_ips))
+        port = get_tlog_port(container)
+        container.client.system('/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {}'.format(port, configpath, k, m))
         if not is_job_running(container, cmd='/bin/tlogserver'):
             raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
+        return port
 
 
 def start(job):
@@ -135,7 +170,7 @@ def get_storagecluster_config(service, storagecluster):
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice)
-    return cluster.get_config()
+    return cluster.get_config(), cluster.k, cluster.m
 
 
 def stop(job):

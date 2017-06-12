@@ -10,6 +10,15 @@ struct Schema {
 
     nodes @6 :List(Text); # list of node where we can deploy storage server
 
+    clusterType @7 :Type = storage;
+    k @8: UInt32;
+    m @9: UInt32;
+
+    enum Type {
+        storage @0;
+        tlog @1;
+    }
+
     enum Status{
         empty @0;
         deploying @1;
