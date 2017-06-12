@@ -33,15 +33,21 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 	}
 
 	blueprint := struct {
-		Label    string   `yaml:"label" json:"label"`
-		NrServer int      `yaml:"nrServer" json:"nrServer"`
-		DiskType string   `yaml:"diskType" json:"diskType"`
-		Nodes    []string `yaml:"nodes" json:"nodes"`
+		Label       string          `yaml:"label" json:"label"`
+		NrServer    int             `yaml:"nrServer" json:"nrServer"`
+		DiskType    string          `yaml:"diskType" json:"diskType"`
+		Nodes       []string        `yaml:"nodes" json:"nodes"`
+		ClusterType EnumClusterType `yaml:"clusterType" json:"clusterType"`
+		K           int             `yaml:"k" json:"k"`
+		M           int             `yaml:"M" json:"M"`
 	}{
-		Label:    reqBody.Label,
-		NrServer: reqBody.Servers,
-		DiskType: string(reqBody.DriveType),
-		Nodes:    reqBody.Nodes,
+		Label:       reqBody.Label,
+		NrServer:    reqBody.Servers,
+		DiskType:    string(reqBody.DriveType),
+		Nodes:       reqBody.Nodes,
+		ClusterType: reqBody.ClusterType,
+		K:           reqBody.K,
+		M:           reqBody.M,
 	}
 
 	obj := make(map[string]interface{})
