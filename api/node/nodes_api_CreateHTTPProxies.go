@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -24,7 +22,7 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -43,16 +41,14 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot add HTTp proxy for gateway")
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusForbidden, errMessage)
+		tools.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -60,8 +56,7 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	for _, proxy := range data.Httpproxies {
 		if proxy.Host == reqBody.Host {
 			errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
-			log.Error(errMessage)
-			tools.WriteError(w, http.StatusConflict, errMessage)
+			tools.WriteError(w, http.StatusConflict, errMessage, "")
 			return
 		}
 	}
@@ -73,8 +68,8 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		errMessage := fmt.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage)
+		errMessage := fmt.Errorf("error executing blueprint for gateway %s", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
 		return
 	}
 

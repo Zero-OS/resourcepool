@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -33,7 +32,7 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		}
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID))
+		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID), "")
 		return
 	}
 
@@ -48,8 +47,8 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for storagepool device deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := "Error executing blueprint for storagepool device deletion "
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 

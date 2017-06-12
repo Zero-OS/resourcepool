@@ -19,13 +19,13 @@ func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -36,7 +36,7 @@ func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	containerClient, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 

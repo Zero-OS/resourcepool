@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -30,16 +28,14 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
-		errMessage := fmt.Errorf("Advanced options enabled: cannot delete http proxy for gateway")
-		log.Errorf("%v: %v", errMessage, gateway)
-		tools.WriteError(w, http.StatusForbidden, errMessage)
+		errMessage := "Advanced options enabled: cannot delete http proxy for gateway"
+		tools.WriteError(w, http.StatusForbidden, fmt.Errorf("%v: %v", errMessage, gateway), errMessage)
 		return
 	}
 
@@ -56,8 +52,7 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusNotFound, errMessage)
+		tools.WriteError(w, http.StatusNotFound, errMessage, "")
 		return
 	}
 
@@ -68,8 +63,8 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

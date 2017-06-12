@@ -3,9 +3,8 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // RollbackFilesystemSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystems/{filesystemname}/snapshot/{snapshotname}/rollback
@@ -26,8 +25,8 @@ func (api NodeAPI) RollbackFilesystemSnapshot(w http.ResponseWriter, r *http.Req
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "snapshot", name, "rollback", blueprint); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for fssnapshot rollback : %+v", err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := "Error executing blueprint for fssnapshot rollback "
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 

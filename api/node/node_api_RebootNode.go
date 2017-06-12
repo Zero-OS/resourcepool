@@ -26,7 +26,7 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 	_, err := tools.ExecuteBlueprint(api.AysRepo, "node", nodeId, "reboot", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		return
 	}
 

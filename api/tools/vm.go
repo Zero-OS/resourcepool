@@ -1,9 +1,9 @@
 package tools
 
 import (
+	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 )
 
@@ -22,8 +22,8 @@ func ExecuteVMAction(w http.ResponseWriter, r *http.Request, repoName, action st
 	}
 
 	if _, err := ExecuteBlueprint(repoName, "vm", vmID, "action", obj); err != nil {
-		log.Errorf("error executing blueprint for vm %s %s : %+v", vmID, action, err)
-		WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
+		WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

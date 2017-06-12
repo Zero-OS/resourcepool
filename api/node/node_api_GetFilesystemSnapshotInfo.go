@@ -24,7 +24,7 @@ func (api NodeAPI) GetFilesystemSnapshotInfo(w http.ResponseWriter, r *http.Requ
 
 	respBody.Name = snapshotname
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 

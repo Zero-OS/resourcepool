@@ -1,11 +1,11 @@
 package node
 
 import (
+	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StartContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/start
@@ -26,8 +26,8 @@ func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "start", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for starting container %s : %+v", containername, err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := fmt.Sprintf("Error executing blueprint for starting container %s ", containername)
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
@@ -35,9 +35,9 @@ func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for starting container")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for starting container")
 		}
 		return
 	}

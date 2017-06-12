@@ -3,9 +3,8 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteContainer is the handler for DELETE /nodes/{nodeid}/containers/{containername}
@@ -29,8 +28,8 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for container deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := "Error executing blueprint for container deletion"
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
@@ -38,9 +37,9 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for container deletion")
 		}
 		return
 	}

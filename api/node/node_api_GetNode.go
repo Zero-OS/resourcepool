@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
+	"fmt"
+
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetNode is the handler for GET /nodes/{nodeid}
@@ -17,7 +19,7 @@ func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 	service, res, err := api.AysAPI.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, fmt.Sprintf("Error getting node service %s", nodeID))
 		return
 	}
 
@@ -28,7 +30,7 @@ func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 
 	var respBody NodeService
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 	var node Node

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetZerotier is the handler for GET /nodes/{nodeid}/zerotiers/{zerotierid}
@@ -24,7 +24,7 @@ func (api NodeAPI) GetZerotier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(srv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 

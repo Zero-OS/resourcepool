@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -19,13 +18,13 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -50,8 +49,8 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	// And execute
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("error executing blueprint for vm %s migrate : %+v", vmID, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s migrate ", vmID)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

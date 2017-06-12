@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListGateways is the handler for GET /nodes/{nodeid}/gws
@@ -31,7 +31,7 @@ func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 		}
 		var data ListGW
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 			return
 		}
 		data.Name = service.Name

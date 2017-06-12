@@ -7,7 +7,6 @@ import (
 
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -21,13 +20,13 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -38,16 +37,15 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gwID, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gwID)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		if !reflect.DeepEqual(data.Httpproxies, reqBody.Httpproxies) {
 			errMessage := fmt.Errorf("Advanced options enabled: cannot adjust httpproxies for gateway")
-			tools.WriteError(w, http.StatusForbidden, errMessage)
+			tools.WriteError(w, http.StatusForbidden, errMessage, "")
 			return
 		}
 	}
@@ -57,8 +55,8 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("error executing blueprint for gateway %s creation : %+v", gwID, err)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

@@ -3,9 +3,8 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteNode is the handler for DELETE /nodes/{nodeid}
@@ -27,8 +26,8 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "node.zero-os", nodeID, "uninstall", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for node uninstallation : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := "Error executing blueprint for node uninstallation "
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
@@ -36,9 +35,9 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for node uninstallation")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for node uninstallation")
 		}
 		return
 	}
