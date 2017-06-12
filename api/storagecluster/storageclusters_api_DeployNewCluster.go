@@ -39,7 +39,7 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		Nodes       []string        `yaml:"nodes" json:"nodes"`
 		ClusterType EnumClusterType `yaml:"clusterType" json:"clusterType"`
 		K           int             `yaml:"k" json:"k"`
-		M           int             `yaml:"M" json:"M"`
+		M           int             `yaml:"m" json:"m"`
 	}{
 		Label:       reqBody.Label,
 		NrServer:    reqBody.Servers,
