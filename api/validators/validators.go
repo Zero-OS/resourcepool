@@ -223,7 +223,7 @@ func ValidateCluster(ctype string, k int, m int, nrServers int) error {
 		}
 	}
 	if (k + m) > nrServers {
-		return fmt.Errorf("Number of servers should be larger than K + M")
+		return fmt.Errorf("Number of servers should be greater than or equal to K + M")
 	}
 	return nil
 }
