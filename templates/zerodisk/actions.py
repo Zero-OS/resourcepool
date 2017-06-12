@@ -97,14 +97,23 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
-        container.client.system(
-            '/bin/nbdserver \
-            -protocol unix \
-            -address "{socketpath}" \
-            --tlogrpc 0.0.0.0:{tlogport} \
-            -config {config}'
-            .format(tlogport=tlogport, socketpath=socketpath, config=configpath)
-        )
+        if tlogconfig['storageClusters']:
+            container.client.system(
+                '/bin/nbdserver \
+                -protocol unix \
+                -address "{socketpath}" \
+                --tlogrpc 0.0.0.0:{tlogport} \
+                -config {config}'
+                .format(tlogport=tlogport, socketpath=socketpath, config=configpath)
+            )
+        else:
+            container.client.system(
+                '/bin/nbdserver \
+                -protocol unix \
+                -address "{socketpath}" \
+                -config {config}'
+                .format(socketpath=socketpath, config=configpath)
+            )
 
         # wait for socket to be created
         start = time.time()
