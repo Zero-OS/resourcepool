@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -45,12 +46,17 @@ func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
 		"actions": []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "filesystem"}},
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for filesystem creation "
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 	}
 
+	response := runs.Run{Runid: run.Key, State: run.State}
+
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s", nodeid, storagepool, reqBody.Name))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }

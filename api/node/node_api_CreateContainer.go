@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -99,14 +100,18 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("container__%s", reqBody.Name)] = container
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for container %s creation", reqBody.Name)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
+	response := runs.Run{Runid: run.Key, State: run.State}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Name))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -62,13 +63,19 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("vm__%s", reqBody.Id)] = bp
 	obj["actions"] = []tools.ActionBlock{{Service: reqBody.Id, Actor: "vm", Action: "install"}}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", reqBody.Id)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
+	response := runs.Run{Runid: run.Key, State: run.State}
+
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeid, reqBody.Id))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
+
 }

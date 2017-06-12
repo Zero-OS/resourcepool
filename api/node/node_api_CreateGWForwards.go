@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -78,13 +79,18 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errMessage := fmt.Errorf("error executing blueprint for gateway %s update", gateway)
 		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
 		return
 	}
 
+	response := runs.Run{Runid: run.Key, State: run.State}
+
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gateway, reqBody.Srcip, reqBody.Srcport))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }

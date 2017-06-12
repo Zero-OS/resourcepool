@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
 )
@@ -95,18 +96,10 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Wait for the delete job to be finshed before we delete the service
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error running blueprint for bridge %s creation", reqBody.Name)
-		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
-		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		}
-		return
-	}
+	response := runs.Run{Runid: run.Key, State: run.State}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }

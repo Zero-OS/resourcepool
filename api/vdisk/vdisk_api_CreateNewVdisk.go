@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -71,13 +72,18 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}}
 
 	// And Execute
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
+	response := runs.Run{Runid: run.Key, State: run.State}
+
 	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }

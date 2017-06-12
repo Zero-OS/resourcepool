@@ -206,7 +206,10 @@ types:
           application/json:
             type: BridgeCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Bridge created successfully
             headers:
               Location:
@@ -258,7 +261,10 @@ types:
           application/json:
             type: StoragePoolCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run          
             headers:
               Location:
                 description: Url to the newly created storagepool.
@@ -300,7 +306,10 @@ types:
                 type: string[]
                 example: ['/dev/sdc', '/dev/sdd']
             responses:
-              204:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 description: Devices added successfully
           /{deviceuuid}:
             get:
@@ -342,7 +351,10 @@ types:
               application/json:
                 type: FilesystemCreate
             responses:
-              201:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 headers:
                   Location:
                     description: URL for the newly created file system
@@ -388,7 +400,10 @@ types:
                          Permitted characters: a-z,-, _ and .
                          Max length: 50 characters.
                 responses:
-                  201:
+                  202:
+                    body:
+                      application/json:
+                        type: Run                  
                     description: Snapshot created successfully
                     headers:
                       Location:
@@ -476,8 +491,11 @@ types:
           application/json:
             type: GWCreate
         responses:
-          201:
+          202:
             description: Gateway created successfully
+            body:
+              application/json:
+                type: Run
             headers:
               Location:
                 description: URL to the created gateway resource
@@ -530,7 +548,10 @@ types:
                 application/json:
                   type: PortForward
               responses:
-                201:
+                202:
+                  body:
+                    application/json:
+                      type: Run
                   description: |
                     Succesfully created a new resource
                   headers:
@@ -656,7 +677,10 @@ types:
               application/json:
                 type: HTTPProxy
             responses:
-              201:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 description: Succesfully created a new resource
                 headers:
                   Location:
@@ -700,8 +724,11 @@ types:
           application/json:
             type: CreateContainer
         responses:
-          201:
+          202:
             description: Container created successfully
+            body:
+              application/json:
+                type: Run
             headers:
               Location:
                 description: URL to the created container resource
@@ -954,7 +981,10 @@ types:
           application/json:
             type: VMCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Virtual machine created successfully
             headers:
               Location:
@@ -1105,7 +1135,10 @@ types:
       application/json:
         type: VdiskCreate
     responses:
-      201:
+      202:
+        body:
+          application/json:
+            type: Run      
         headers:
           Location:
             description: URL to the created vdisk resource
@@ -1156,3 +1189,16 @@ types:
         responses:
           204:
             description: Rollback started successfully
+/runs:
+  /{runid}:
+    get:
+      (AYSBased):
+      displayName: GetRunState
+      description: Get Run Status
+      responses:
+        200:
+          body:
+            application/json:
+              type: Run
+
+

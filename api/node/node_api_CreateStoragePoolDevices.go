@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -16,8 +17,8 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
 
-	devices, err := api.getStoragePoolDevices(node, storagepool, w)
-	if err {
+	devices, notok := api.getStoragePoolDevices(node, storagepool, w)
+	if notok {
 		return
 	}
 
@@ -67,12 +68,18 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for storagepool device creation "
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	response := runs.Run{Runid: run.Key, State: run.State}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
+
 }

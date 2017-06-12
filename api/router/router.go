@@ -6,14 +6,15 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
-	"github.com/zero-os/0-orchestrator/api/node"
-	"github.com/zero-os/0-orchestrator/api/storagecluster"
-	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/zero-os/0-orchestrator/api/vdisk"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
+	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"github.com/zero-os/0-orchestrator/api/node"
+	"github.com/zero-os/0-orchestrator/api/run"
+	"github.com/zero-os/0-orchestrator/api/storagecluster"
+	"github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/vdisk"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -60,6 +61,7 @@ func GetRouter(aysURL, aysRepo string) http.Handler {
 	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysAPI, cache.New(5*time.Minute, 1*time.Minute)))
 	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysAPI))
 	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysAPI))
+	run.RunsInterfaceRoutes(r, run.NewRunAPI(aysRepo, aysAPI))
 
 	router := NewRouter(r)
 	router.Use(LoggingMiddleware)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -47,11 +48,17 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 			Service: reqBody.Name}},
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint); err != nil {
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
+	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for fssnapshot creation "
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 	}
+
+	response := runs.Run{Runid: run.Key, State: run.State}
+
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s/snapshots/%s", nodeid, storagepool, filessytem, reqBody.Name))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }
