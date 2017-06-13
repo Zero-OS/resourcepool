@@ -13,7 +13,11 @@ def input(job):
         config = nic.get('config', {})
         name = nic.get('name')
         dhcp = nic.get('dhcpserver')
+        zerotierbridge = nic.get('zerotierbridge')
         cidr = config.get('cidr')
+
+        if zerotierbridge and not zerotierbridge.get('id'):
+            raise j.exceptions.Input('Zerotierbridge id not specified')
 
         if not name:
             raise j.exceptions.Input('Gateway nic should have name defined.')
@@ -50,7 +54,11 @@ def init(job):
         nic.pop('dhcpserver', None)
         zerotierbridge = nic.pop('zerotierbridge', None)
         if zerotierbridge:
-            nics.append({'id': zerotierbridge, 'type': 'zerotier', 'name': 'z-{}'.format(nic['name'])})
+            nics.append(
+                {
+                    'id': zerotierbridge['id'], 'type': 'zerotier',
+                    'name': 'z-{}'.format(nic['name']), 'token': zerotierbridge.get('token', '')
+                })
 
     config = get_configuration(service.aysrepo)
 
@@ -146,6 +154,8 @@ def uninstall(job):
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
     import time
+    from zerotier import client
+
     service = job.service
     container = service.producers.get('container')[0]
 
@@ -176,7 +186,17 @@ def start(job):
             nicname = nic['name']
             linkname = 'l-{}'.format(nicname)[:15]
             wait_for_interface()
-            zerotiername = get_zerotier_nic(zerotierbridge)
+            zerotiername = get_zerotier_nic(zerotierbridge['id'])
+            token = zerotierbridge.get('token')
+            if token:
+                zerotier = client.Client()
+                zerotier.set_auth_header('bearer {}'.format(token))
+                resp = zerotier.network.getMember(container.model.data.zerotiernodeid, zerotierbridge['id'])
+                member = resp.json()
+
+                job.logger.info("Enable bridge in member {} on network {}".format(member['nodeId'], zerotierbridge['id']))
+                member['config']['activeBridge'] = True
+                zerotier.network.updateMember(member, member['nodeId'], zerotierbridge['id'])
 
             # check if configuration is already done
             linkmap = {link['name']: link for link in ip.link.list()}

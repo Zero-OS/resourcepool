@@ -28,6 +28,7 @@ def install(job):
 
 def start(job):
     import time
+    from zerotier import client
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
@@ -38,6 +39,15 @@ def start(job):
         service.model.data.status = "running"
     else:
         raise j.exceptions.RuntimeError("container didn't started")
+
+    def get_member():
+        start = time.time()
+        while start + 60 > time.time():
+            resp = zerotier.network.getMember(service.model.data.zerotiernodeid, nic.id)
+            if resp.content:
+                return resp.json()
+            time.sleep(0.5)
+        raise j.exceptions.RuntimeError('Could not find member on zerotier network')
 
     def wait_for_interface():
         start = time.time()
@@ -52,9 +62,18 @@ def start(job):
         if nic.type == 'zerotier':
             wait_for_interface()
             service.model.data.zerotiernodeid = container.client.zerotier.info()['address']
-            break
+            if nic.token:
+                zerotier = client.Client()
+                zerotier.set_auth_header('bearer {}'.format(nic.token))
+                member = get_member()
+                if not member['config']['authorized']:
+                    # authorized new member
+                    job.logger.info("authorize new member {} to network {}".format(member['nodeId'], nic.id))
+                    member['config']['authorized'] = True
+                    zerotier.network.updateMember(member, member['nodeId'], nic.id)
 
     service.saveAll()
+
 
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container

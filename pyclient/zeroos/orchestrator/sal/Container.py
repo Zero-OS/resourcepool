@@ -59,6 +59,8 @@ class Container:
         self._client = None
 
         self._ays = None
+        for nic in self.nics:
+            nic.pop('token', None)
 
     @classmethod
     def from_containerinfo(cls, containerinfo, node):
