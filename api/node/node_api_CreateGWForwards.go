@@ -87,7 +87,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: run.State}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gateway, reqBody.Srcip, reqBody.Srcport))
 	w.Header().Set("Content-Type", "application/json")

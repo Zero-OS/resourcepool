@@ -18,7 +18,7 @@ func (api RunsAPI) GetRunState(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, resp.StatusCode, err, "Error getting run")
 	}
 
-	respBody := Run{Runid: run.Key, State: run.State}
+	respBody := Run{Runid: run.Key, State: EnumRunState(run.State)}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

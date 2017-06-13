@@ -76,7 +76,7 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: run.State}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

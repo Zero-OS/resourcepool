@@ -53,7 +53,7 @@ func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 	}
 
-	response := runs.Run{Runid: run.Key, State: run.State}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s", nodeid, storagepool, reqBody.Name))
 	w.Header().Set("Content-Type", "application/json")

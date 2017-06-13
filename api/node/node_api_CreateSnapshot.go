@@ -55,7 +55,7 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 	}
 
-	response := runs.Run{Runid: run.Key, State: run.State}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s/snapshots/%s", nodeid, storagepool, filessytem, reqBody.Name))
 	w.Header().Set("Content-Type", "application/json")

@@ -5,8 +5,8 @@ import (
 )
 
 type Run struct {
-	Runid string `json:"runid" validate:"nonzero"`
-	State string `json:"state" validate:"nonzero"`
+	Runid string       `json:"runid" validate:"nonzero"`
+	State EnumRunState `json:"state" validate:"nonzero"`
 }
 
 func (s Run) Validate() error {

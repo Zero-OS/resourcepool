@@ -71,7 +71,7 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: run.State}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeid, reqBody.Id))
 	w.Header().Set("Content-Type", "application/json")
