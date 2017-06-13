@@ -12,6 +12,16 @@ def input(job):
         raise j.exceptions.Input("Invalid amount of nodes provided")
     if nrserver % len(nodes) != 0:
         raise j.exceptions.Input("Invalid spread provided can not evenly spread servers over amount of nodes")
+
+    cluster_type = job.model.args.get("clusterType")
+
+    if cluster_type == "tlog":
+        k = job.model.args.get("k", 0)
+        m = job.model.args.get("m", 0)
+        if not k and not m:
+            raise j.exceptions.Input("K and M should be larger than 0")
+        if (k + m) > nrserver:
+            raise j.exceptions.Input("K and M should be greater than or equal to number of servers")
     return job.model.args
 
 
@@ -98,7 +108,8 @@ def init(job):
             create_server(node, disk)
             idx += 1
 
-    create_server(node, disk, 'metadata')
+    if str(service.model.data.clusterType) != 'tlog':
+        create_server(node, disk, 'metadata')
 
     service.model.data.init('filesystems', len(filesystems))
     service.model.data.init('ardbs', len(ardbs))

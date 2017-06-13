@@ -14,6 +14,16 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
 
+	exists, err := tools.ServiceExists("gateway", gwID, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking gateway service exists")
+		return
+	} else if !exists {
+		err = fmt.Errorf("Gateway with name %s doesn't exists", gwID)
+		tools.WriteError(w, http.StatusNotFound, err, "")
+		return
+	}
+
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			Action:  "start",

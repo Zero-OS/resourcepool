@@ -19,6 +19,8 @@ class StorageCluster:
         self.filesystems = []
         self.storage_servers = []
         self.disk_type = disk_type
+        self.k = 0
+        self.m = 0
         self._ays = None
 
     @classmethod
@@ -36,7 +38,8 @@ class StorageCluster:
 
         cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type)
         cluster.storage_servers = storage_servers
-
+        cluster.k = service.model.data.k
+        cluster.m = service.model.data.m
         return cluster
 
     def get_config(self):
