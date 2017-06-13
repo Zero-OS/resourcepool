@@ -198,7 +198,7 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	if cidr1 == "" || cidr2 == "" {
 		return false, nil
 	}
-	
+
 	_, subnet1, err := net.ParseCIDR(cidr1)
 	if err != nil {
 		return false, fmt.Errorf("%v: is not a valid cidr", cidr1)
@@ -214,4 +214,16 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func ValidateCluster(ctype string, k int, m int, nrServers int) error {
+	if ctype == "tlog" {
+		if k == 0 || m == 0 {
+			return fmt.Errorf("K and M values required for tlog clusters")
+		}
+	}
+	if (k + m) > nrServers {
+		return fmt.Errorf("Number of servers should be greater than or equal to K + M")
+	}
+	return nil
 }

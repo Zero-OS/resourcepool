@@ -937,6 +937,18 @@ ClusterCreate:
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
+    clusterType:
+      type: string
+      enum: [storage, tlog]
+      description: cluster type
+    k:
+      type: integer
+      description: K variable of the erasure encoding, required for tlog clusters
+      required: false
+    m:
+      type: integer
+      description: M variable of the erasure encoding, required for tlog clusters
+      required: false
   example:
     label: cluster1
     servers: 256
@@ -944,6 +956,7 @@ ClusterCreate:
     nodes:
        - node1
        - node2
+    clusterType: storage
 
 Cluster:
   properties:
