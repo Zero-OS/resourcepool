@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
@@ -30,18 +29,20 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
 
 	if err != nil {
-		log.Errorf("error executing blueprint for zerotier %s exit : %+v", zerotierID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for zerotier %s exit ", zerotierID)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
 	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error running blueprint for zerotier %s exit ", zerotierID)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

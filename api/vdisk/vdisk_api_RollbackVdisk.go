@@ -14,13 +14,13 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -43,7 +43,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	// // And execute
 	// if _, err := tools.ExecuteBlueprint(api.AysRepo, bpName, obj); err != nil {
 	// 	log.Errorf("error executing blueprint for vdisk %s rollback : %+v", vdiskId, err)
-	// 	tools.WriteError(w, http.StatusInternalServerError, err)
+	// 	tools.WriteError(w, http.StatusInternalServerError, err, "")
 	// 	return
 	// }
 	//

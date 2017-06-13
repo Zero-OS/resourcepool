@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateVM is the handler for POST /nodes/{nodeid}/vms
@@ -17,13 +16,13 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -33,12 +32,12 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	// Create blueprint
 	userCloudInit, err := json.Marshal(reqBody.UserCloudInit)
 	if err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 	systemCloudInit, err := json.Marshal(reqBody.SystemCloudInit)
 	if err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 	bp := struct {
@@ -64,8 +63,9 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Service: reqBody.Id, Actor: "vm", Action: "install"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj); err != nil {
-		log.Errorf("error executing blueprint for vm %s creation : %+v", reqBody.Id, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", reqBody.Id)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

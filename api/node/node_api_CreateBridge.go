@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
@@ -19,13 +18,13 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	nodeId := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -44,24 +43,24 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.Unmarshal(service.Data, &bridge); err != nil {
-			log.Errorf("Error in decoding bridges: %+v\n", err)
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			errmsg := fmt.Sprintf("Error in decoding bridges")
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return
 		}
 
 		if bridge.Name == reqBody.Name {
-			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name))
+			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name), "")
 			return
 		}
 
 		overlaps, err := validators.ValidateCIDROverlap(reqBody.Setting.Cidr, bridge.Setting.Cidr)
 		if err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err)
+			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 		if overlaps {
 			tools.WriteError(w, http.StatusConflict,
-				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr))
+				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr), "")
 			return
 		}
 	}
@@ -90,18 +89,20 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
 	if err != nil {
-		log.Errorf("error executing blueprint for bridge %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
 	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error running blueprint for bridge %s creation", reqBody.Name)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

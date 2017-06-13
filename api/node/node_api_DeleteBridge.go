@@ -3,10 +3,10 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"fmt"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
@@ -28,8 +28,8 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for bridge deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := "Error executing blueprint for bridge deletion "
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
@@ -37,9 +37,9 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for bridge deletion")
 		}
 		return
 	}
@@ -47,8 +47,8 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	_, err = api.AysAPI.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("Error in deleting bridge %s : %+v", bridge, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error in deleting bridge %s ", bridge)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

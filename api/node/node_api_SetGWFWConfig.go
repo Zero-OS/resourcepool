@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // SetGWFWConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
@@ -19,17 +19,21 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 
 	node, err := tools.GetConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		return
+	}
 	containerID, err := tools.GetContainerId(r, api, node, gwname)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to get container id")
 		return
 	}
 
 	containerClient := client.Container(node).Client(containerID)
 	err = client.Filesystem(containerClient).Upload(r.Body, "/etc/nftables.conf")
 	if err != nil {
-		fmt.Errorf("Error uploading file to container '%s' at path '%s': %+v.\n", gwname, "/etc/nftables.conf", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error uploading file to container '%s' at path '%s'.\n", gwname, "/etc/nftables.conf")
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -40,7 +44,7 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(service.Data, &gatewayBase); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 
@@ -57,8 +61,9 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
-		fmt.Errorf("error executing blueprint for gateway %s creation : %+v", gwname, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

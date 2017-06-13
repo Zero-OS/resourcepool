@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -18,14 +18,14 @@ func (api NodeAPI) GetFilesystemInfo(w http.ResponseWriter, r *http.Request) {
 
 	schema, err := api.getFilesystemDetail(name)
 	if err != nil {
-		log.Errorf("Error get info about filesystem services : %+v", err.Error())
+		errmsg := "Error get info about filesystem services"
 
 		if httpErr, ok := err.(tools.HTTPError); ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 			return
 		}
 
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

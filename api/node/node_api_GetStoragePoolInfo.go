@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetStoragePoolInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}
@@ -16,14 +16,14 @@ func (api NodeAPI) GetStoragePoolInfo(w http.ResponseWriter, r *http.Request) {
 
 	schema, err := api.getStoragepoolDetail(name)
 	if err != nil {
-		log.Errorf("Error get info about storagepool services : %+v", err.Error())
+		errmsg := "Error get info about storagepool services"
 
 		if httpErr, ok := err.(tools.HTTPError); ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 			return
 		}
 
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	respBody := StoragePool{

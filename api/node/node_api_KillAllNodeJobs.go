@@ -12,14 +12,14 @@ import (
 func (api NodeAPI) KillAllNodeJobs(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	core := client.Core(cl)
 
 	if err := core.KillAllJobs(); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error killing all jobs")
 		return
 	}
 

@@ -2,12 +2,13 @@ package node
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
-	
+
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // GetNodeProcess is the handler for GET /nodes/{nodeid}/processes/{processid}
@@ -16,13 +17,13 @@ func (api NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	conn, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
@@ -30,7 +31,8 @@ func (api NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(conn)
 	process, err := core.Process(processID)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error getting process  %s on node", processID)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	cpu := CPUStats{

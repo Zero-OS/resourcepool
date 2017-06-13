@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
-
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateContainer is the handler for POST /nodes/{nodeid}/containers
@@ -19,13 +17,13 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -35,11 +33,11 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	// validate container name
 	exists, err := tools.ServiceExists("container", reqBody.Name, api.AysRepo)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
 		return
 	} else if exists {
 		err = fmt.Errorf("Container with name %s already exists", reqBody.Name)
-		tools.WriteError(w, http.StatusConflict, err)
+		tools.WriteError(w, http.StatusConflict, err, "")
 		return
 	}
 
@@ -56,20 +54,20 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 
 		exists, err := tools.ServiceExists("storagepool", storagepoolname, api.AysRepo)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error checking storagepool service exists")
 			return
 		} else if !exists {
 			err = fmt.Errorf("Storagepool with name %s does not exists", storagepoolname)
-			tools.WriteError(w, http.StatusBadRequest, err)
+			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 		exists, err = tools.ServiceExists("filesystem", filesystemname, api.AysRepo)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error checking filesystem service exists")
 			return
 		} else if !exists {
 			err = fmt.Errorf("Filesystem with name %s does not exists", storagepoolname)
-			tools.WriteError(w, http.StatusBadRequest, err)
+			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", storagepoolname, filesystemname)}
@@ -102,8 +100,9 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj); err != nil {
-		log.Errorf("error executing blueprint for container %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for container %s creation", reqBody.Name)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

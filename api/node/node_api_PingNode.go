@@ -14,7 +14,7 @@ func (api NodeAPI) PingNode(w http.ResponseWriter, r *http.Request) {
 	var respBody bool
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 

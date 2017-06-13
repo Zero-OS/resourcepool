@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -30,24 +28,24 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	exists, err := tools.ServiceExists("gateway", reqBody.Name, api.AysRepo)
 	if err != nil {
-		log.Errorf("error getting gateway service by name : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("error getting gateway service by name %s ", reqBody.Name)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name))
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name), "")
 		return
 	}
 
@@ -65,8 +63,9 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}}
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj); err != nil {
-		log.Errorf("error executing blueprint for gateway %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

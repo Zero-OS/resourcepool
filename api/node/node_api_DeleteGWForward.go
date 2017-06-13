@@ -7,8 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // DeleteGWForward is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
@@ -30,15 +28,14 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot delete forwards for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage)
+		tools.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -65,8 +62,9 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
-		log.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 

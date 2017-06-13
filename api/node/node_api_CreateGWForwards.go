@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -17,13 +16,13 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -42,15 +41,14 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot add forwards for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage)
+		tools.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -63,8 +61,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 				for _, reqProtocol := range reqBody.Protocols {
 					if protocol == reqProtocol {
 						err := fmt.Errorf("This protocol, srcip and srcport combination already exists")
-						log.Error(err)
-						tools.WriteError(w, http.StatusBadRequest, err)
+						tools.WriteError(w, http.StatusBadRequest, err, "")
 						return
 					}
 				}
@@ -82,8 +79,9 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
-		errMessage := fmt.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		httpErr := err.(tools.HTTPError)
+		errMessage := fmt.Errorf("error executing blueprint for gateway %s update", gateway)
+		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
 		return
 	}
 

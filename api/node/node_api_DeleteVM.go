@@ -1,11 +1,11 @@
 package node
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	log "github.com/Sirupsen/logrus"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	//"fmt"
 )
@@ -27,14 +27,15 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
 	if err != nil {
-		log.Errorf("Error executing blueprint for vm %s deletion : %+v", vmId, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("Error executing blueprint for vm %s deletion ", vmId)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
 
 	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		log.Errorf("Error while waiting for vm %s deletion : %+v", vmId, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error while waiting for vm %s deletion", vmId)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

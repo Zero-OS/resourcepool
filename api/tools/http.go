@@ -8,12 +8,17 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func WriteError(w http.ResponseWriter, code int, err error) {
+func WriteError(w http.ResponseWriter, code int, err error, msg string) {
+	tracebackError := err.Error()
+	log.Printf(tracebackError)
+	if msg == "" {
+		msg = tracebackError
+	}
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(code)
 	v := struct {
 		Error string `json:"error"`
-	}{Error: err.Error()}
+	}{Error: msg}
 
 	json.NewEncoder(w).Encode(v)
 }
@@ -37,8 +42,8 @@ func (httpErr HTTPError) Error() string {
 
 func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWriter, action string) bool {
 	if aysErr != nil {
-		log.Errorf("AYS threw error while %s: %+v.\n", action, aysErr)
-		WriteError(w, http.StatusInternalServerError, aysErr)
+		errmsg := fmt.Sprintf("AYS threw error while %s.\n", action)
+		WriteError(w, http.StatusInternalServerError, aysErr, errmsg)
 		return false
 	}
 	if aysRes.StatusCode != http.StatusOK {
