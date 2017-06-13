@@ -929,7 +929,8 @@ ClusterCreate:
       type: string[]
       description: List of node ID on which we can deploy storage server
     clusterType:
-      type: [storage, tlog]
+      type: string
+      enum: [storage, tlog]
       description: cluster type
     k:
       type: integer
