@@ -108,7 +108,8 @@ def init(job):
             create_server(node, disk)
             idx += 1
 
-    create_server(node, disk, 'metadata')
+    if str(service.model.data.clusterType) != 'tlog':
+        create_server(node, disk, 'metadata')
 
     service.model.data.init('filesystems', len(filesystems))
     service.model.data.init('ardbs', len(ardbs))
