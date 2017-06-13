@@ -23,6 +23,7 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "node.zero-os", nodeID, "uninstall", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

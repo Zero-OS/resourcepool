@@ -38,6 +38,7 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

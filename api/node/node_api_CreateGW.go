@@ -63,8 +63,10 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", reqBody.Name)] = gateway
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)
 	if err != nil {
+
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)

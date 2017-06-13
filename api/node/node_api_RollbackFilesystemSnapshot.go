@@ -23,6 +23,7 @@ func (api NodeAPI) RollbackFilesystemSnapshot(w http.ResponseWriter, r *http.Req
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "snapshot", name, "rollback", blueprint); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for fssnapshot rollback "

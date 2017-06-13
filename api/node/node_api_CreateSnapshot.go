@@ -48,6 +48,7 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 			Service: reqBody.Name}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

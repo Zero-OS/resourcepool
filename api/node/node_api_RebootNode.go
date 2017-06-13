@@ -23,6 +23,7 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	_, err := tools.ExecuteBlueprint(api.AysRepo, "node", nodeId, "reboot", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

@@ -24,6 +24,7 @@ func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", name, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

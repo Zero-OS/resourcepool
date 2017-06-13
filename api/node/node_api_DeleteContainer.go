@@ -25,6 +25,7 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

@@ -33,6 +33,7 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "start", bp)
 
 	if err != nil {

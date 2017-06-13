@@ -58,6 +58,7 @@ func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 	obj[decl] = bp
 
 	// And execute
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s resize", vdiskID)

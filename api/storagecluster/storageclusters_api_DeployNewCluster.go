@@ -56,6 +56,7 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		Service: reqBody.Label,
 	}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)

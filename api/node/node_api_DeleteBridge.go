@@ -25,6 +25,7 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

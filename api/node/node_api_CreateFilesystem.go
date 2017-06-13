@@ -45,7 +45,8 @@ func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("filesystem__%s", reqBody.Name): bpContent,
 		"actions": []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "filesystem"}},
 	}
-
+        
+        api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

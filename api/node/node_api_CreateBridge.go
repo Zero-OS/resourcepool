@@ -88,6 +88,7 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Actor:   "bridge",
 		Service: reqBody.Name}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

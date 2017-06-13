@@ -70,6 +70,7 @@ func (api NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 			Service: reqBody.Name}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

@@ -26,6 +26,7 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// And execute
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
 
 	if err != nil {

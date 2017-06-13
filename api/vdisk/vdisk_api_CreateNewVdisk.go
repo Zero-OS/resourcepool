@@ -74,6 +74,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}}
 
 	// And Execute
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

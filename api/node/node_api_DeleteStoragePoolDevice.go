@@ -45,6 +45,7 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		fmt.Sprintf("storagepool__%s", storagePool): bpContent,
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for storagepool device deletion "

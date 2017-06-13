@@ -25,6 +25,7 @@ func main() {
 		bindAddr     string
 		aysURL       string
 		aysRepo      string
+		organization string
 	)
 	app := cli.NewApp()
 	app.Version = "0.2.0"
@@ -53,6 +54,11 @@ func main() {
 			Usage:       "AYS repository name",
 			Destination: &aysRepo,
 		},
+		cli.StringFlag{
+			Name:        "org",
+			Usage:       "Itsyouonline organization to authenticate against",
+			Destination: &organization,
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -77,7 +83,7 @@ func main() {
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
 
-		r := router.GetRouter(aysURL, aysRepo)
+		r := router.GetRouter(aysURL, aysRepo, organization)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)

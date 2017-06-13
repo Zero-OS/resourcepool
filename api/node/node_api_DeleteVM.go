@@ -25,6 +25,7 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 		Force:   true,
 	}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

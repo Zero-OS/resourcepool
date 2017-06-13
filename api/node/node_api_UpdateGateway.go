@@ -53,6 +53,7 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwID)] = reqBody
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)

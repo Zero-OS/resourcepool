@@ -60,6 +60,7 @@ func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)

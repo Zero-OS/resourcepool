@@ -23,6 +23,7 @@ func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "start", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

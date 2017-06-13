@@ -48,6 +48,7 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		Force:   true,
 	}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

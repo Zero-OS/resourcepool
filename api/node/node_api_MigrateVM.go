@@ -47,6 +47,7 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	}}
 
 	// And execute
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vm %s migrate ", vmID)

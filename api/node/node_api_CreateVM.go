@@ -63,6 +63,7 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("vm__%s", reqBody.Id)] = bp
 	obj["actions"] = []tools.ActionBlock{{Service: reqBody.Id, Actor: "vm", Action: "install"}}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

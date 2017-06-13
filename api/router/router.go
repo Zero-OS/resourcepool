@@ -43,7 +43,7 @@ func (i *Router) Handler() http.Handler {
 	return i.handler
 }
 
-func GetRouter(aysURL, aysRepo string) http.Handler {
+func GetRouter(aysURL, aysRepo string, org string) http.Handler {
 	r := mux.NewRouter()
 
 	aysAPI := ays.NewAtYourServiceAPI()
@@ -58,10 +58,10 @@ func GetRouter(aysURL, aysRepo string) http.Handler {
 	// apidocs
 	r.PathPrefix("/apidocs/").Handler(http.StripPrefix("/apidocs/", http.FileServer(http.Dir("./apidocs/"))))
 
-	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysAPI, cache.New(5*time.Minute, 1*time.Minute)))
-	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysAPI))
-	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysAPI))
-	run.RunsInterfaceRoutes(r, run.NewRunAPI(aysRepo, aysAPI))
+	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysAPI, cache.New(5*time.Minute, 1*time.Minute)), org)
+	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysAPI), org)
+	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysAPI), org)
+	run.RunsInterfaceRoutes(r, run.NewRunAPI(aysRepo, aysAPI), org)
 
 	router := NewRouter(r)
 	router.Use(LoggingMiddleware)

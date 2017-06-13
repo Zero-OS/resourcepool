@@ -68,6 +68,7 @@ NicsLoop:
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)

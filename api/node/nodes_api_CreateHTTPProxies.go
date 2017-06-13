@@ -67,6 +67,7 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

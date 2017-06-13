@@ -51,6 +51,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)

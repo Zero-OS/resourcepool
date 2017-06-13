@@ -99,6 +99,7 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("container__%s", reqBody.Name)] = container
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj)
 	if err != nil {

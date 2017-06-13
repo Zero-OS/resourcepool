@@ -34,6 +34,7 @@ func (api NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
