@@ -60,8 +60,7 @@ class Container:
 
         self._ays = None
         for nic in self.nics:
-            if 'token' in nic:
-                nic.pop('token')
+            nic.pop('token', None)
 
     @classmethod
     def from_containerinfo(cls, containerinfo, node):
