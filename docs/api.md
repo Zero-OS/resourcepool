@@ -270,3 +270,12 @@ Response:
  }
 ]
 ```
+
+To pass the JWT using the python client :
+
+```python
+from zeroos.orchestrator.client import APIClient
+
+test = APIClient("<orchestrator ip >:5000")
+test.set_auth_header("Bearer <JWT token>")
+```
