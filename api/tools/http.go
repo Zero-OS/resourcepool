@@ -10,7 +10,7 @@ import (
 
 func WriteError(w http.ResponseWriter, code int, err error, msg string) {
 	tracebackError := err.Error()
-	log.Printf(tracebackError)
+	log.Errorf(tracebackError)
 	if msg == "" {
 		msg = tracebackError
 	}
