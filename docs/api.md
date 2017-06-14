@@ -231,3 +231,42 @@ Payload:
 ```
 
 Response: `202 Accepted`
+
+
+There is also support for JWT tokens , in this case we use itsyou.online ( **IYO** ) to provide the token,  
+but before that the 0-orchestrator need to be running using the --org flag. This flag allows us to add an **IYO** organization  
+to authorize and authenticate with.If the falg is not used orchestrator will not require JWT on requests.
+
+   
+   
+
+To generate the token the 0-orchestrator , the pyclient has provided an easy wrapper around the request that is used:
+```python 
+from zeroos.orchestrator.client import oauth2_client_itsyouonline
+
+cls = oauth2_client_itsyouonline.Oauth2ClientItsyouonline() # this class can take different urls to authenticate with but defaults to https://itsyou.online/v1/oauth/access_token?response_type=id_token
+
+response = cls.get_access_token(<client id>, <client secret>, scope=['user:memberOf:<organization name>'], audience=[]) # at the moment only the scope type organization:memberOf:<organization_name> is supported 
+
+print(respnose.token)
+```
+  
+  
+To use the token from the previous steps in the http requests it is passed as follows:
+Using the header, 
+```
+Authorization: Bearer <**JWT**>
+
+GET http://127.0.0.1:8080/nodes
+```  
+Response:
+
+```json
+[
+ {
+   "hostname": "core0node",
+   "id": "525400123456",
+   "status": "running"
+ }
+]
+```

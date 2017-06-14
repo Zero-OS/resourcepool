@@ -1,0 +1,87 @@
+"""
+Auto-generated class for ContainerNICconfig
+"""
+
+from . import client_support
+
+
+class ContainerNICconfig(object):
+    """
+    auto-generated. don't touch.
+    """
+
+    @staticmethod
+    def create(cidr, dhcp, dns=None, gateway=None):
+        """
+        :type cidr: str
+        :type dhcp: bool
+        :type dns: list[str]
+        :type gateway: str
+        :rtype: ContainerNICconfig
+        """
+
+        return ContainerNICconfig(
+            cidr=cidr,
+            dhcp=dhcp,
+            dns=dns,
+            gateway=gateway,
+        )
+
+    def __init__(self, json=None, **kwargs):
+        if json is None and not kwargs:
+            raise ValueError('No data or kwargs present')
+
+        class_name = 'ContainerNICconfig'
+        create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
+        required_error = '{cls}: missing required property {prop}'
+
+        data = json or kwargs
+
+        property_name = 'cidr'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.cidr = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'dhcp'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [bool]
+            try:
+                self.dhcp = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'dns'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.dns = client_support.list_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+        property_name = 'gateway'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.gateway = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+    def __str__(self):
+        return self.as_json(indent=4)
+
+    def as_json(self, indent=0):
+        return client_support.to_json(self, indent=indent)
+
+    def as_dict(self):
+        return client_support.to_dict(self)
