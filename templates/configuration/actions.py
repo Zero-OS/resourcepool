@@ -17,8 +17,8 @@ def validate_configs(configs):
 
     configurations = {conf['key']: conf['value'] for conf in configs}
     js_version = configurations.get('js-version')
-    jwt_token = configurations.get('jwt_token')
-    jwt_key = configurations.get('jwt_key')
+    jwt_token = configurations.get('jwt-token')
+    jwt_key = configurations.get('jwt-key')
 
     installed_version = j.core.state.versions.get('JumpScale9')
     if js_version and not js_version.startswith('v') and installed_version.startswith('v'):
@@ -34,7 +34,7 @@ def validate_configs(configs):
         try:
             jwt.decode(jwt_token, jwt_key)
         except Exception:
-            raise j.exceptions.RuntimeError('Invalid jwt_key and jwt_cert combination')
+            raise j.exceptions.RuntimeError('Invalid jwt-token and jwt-key combination')
 
 
 def processChange(job):

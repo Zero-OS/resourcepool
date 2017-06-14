@@ -28,7 +28,7 @@ def get_jwt_token(ays_repo):
     try:
         token = jwt.decode(jwt_token, jwt_key)
     except Exception:
-        raise j.exceptions.RuntimeError('Invalid jwt_key and jwt_cert combination')
+        raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
     if token['exp'] > time.time():
         headers = {'Authorization': 'bearer %s' % jwt_token}
