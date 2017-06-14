@@ -25,9 +25,9 @@ def input(job):
     return job.model.args
 
 
-def get_cluster(service):
+def get_cluster(job):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    return StorageCluster.from_ays(service)
+    return StorageCluster.from_ays(job.service, job.model.jwt)
 
 
 def init(job):
@@ -132,7 +132,7 @@ def install(job):
 def start(job):
     service = job.service
 
-    cluster = get_cluster(service)
+    cluster = get_cluster(job)
     job.logger.info("start cluster {}".format(service.name))
     cluster.start()
     job.service.model.data.status = 'ready'
@@ -140,7 +140,7 @@ def start(job):
 
 def stop(job):
     service = job.service
-    cluster = get_cluster(service)
+    cluster = get_cluster(job)
     job.logger.info("stop cluster {}".format(service.name))
     cluster.stop()
 

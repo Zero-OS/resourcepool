@@ -9,7 +9,7 @@ def start(job):
     from zeroos.orchestrator.sal.ARDB import ARDB
 
     service = job.service
-    ardb = ARDB.from_ays(service)
+    ardb = ARDB.from_ays(service, job.model.jwt)
     ardb.start()
 
 
@@ -17,17 +17,18 @@ def stop(job):
     from zeroos.orchestrator.sal.ARDB import ARDB
 
     service = job.service
-    ardb = ARDB.from_ays(service)
+    ardb = ARDB.from_ays(service, job.model.jwt)
     ardb.stop()
 
 
 def monitor(job):
     from zeroos.orchestrator.sal.ARDB import ARDB
+    from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
 
     if service.model.actionsState['install'] == 'ok':
-        ardb = ARDB.from_ays(service)
+        ardb = ARDB.from_ays(service, get_jwt_token(service.aysrepo))
         running, process = ardb.is_running()
 
         if not running:

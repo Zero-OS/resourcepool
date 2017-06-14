@@ -146,8 +146,8 @@ class StorageServer:
         self.ardb = None
 
     @classmethod
-    def from_ays(cls, ardb_services):
-        ardb = ARDB.from_ays(ardb_services)
+    def from_ays(cls, ardb_services, password=None):
+        ardb = ARDB.from_ays(ardb_services, password)
         storage_server = cls(None)
         storage_server.container = ardb.container
         storage_server.ardb = ardb

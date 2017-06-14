@@ -11,7 +11,7 @@ def install(job):
 
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
-        targetconfig = get_storagecluster_config(service)
+        targetconfig = get_storagecluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         storagecluster = service.model.data.storageCluster
 
@@ -63,7 +63,7 @@ def delete(job):
 
     service = job.service
     storagecluster = service.model.data.storageCluster
-    clusterconfig = get_storagecluster_config(service)
+    clusterconfig = get_storagecluster_config(job)
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(job, node)
     configpath = "/config.yaml"
@@ -104,12 +104,12 @@ def get_srcardb(container, template):
         raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
 
 
-def get_storagecluster_config(service):
+def get_storagecluster_config(job):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    storagecluster = service.model.data.storageCluster
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+    storagecluster = job.service.model.data.storageCluster
+    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice)
+    cluster = StorageCluster.from_ays(storageclusterservice, job.model.jwt)
     return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"]}
 
 
