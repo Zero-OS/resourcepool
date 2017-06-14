@@ -4,9 +4,11 @@ def configure(job):
     this method will be called from the node.zero-os install action.
     """
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
 
     nodeservice = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
-    node = Node.from_ays(nodeservice)
+    # @TODO ASK JO
+    node = Node.from_ays(nodeservice, get_jwt_token(job.service.aysrepo))
     node.client.bash("""
     pubint=$(ip route | grep default | awk '{print $5}')
     ip link set dev $pubint down

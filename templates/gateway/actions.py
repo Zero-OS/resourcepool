@@ -160,7 +160,7 @@ def start(job):
     container = service.producers.get('container')[0]
 
     # setup zerotiers bridges
-    containerobj = Container.from_ays(container)
+    containerobj = Container.from_ays(container, job.model.jwt)
     nics = service.model.data.to_dict()['nics']  # get dict version of nics
 
     def get_zerotier_nic(zerotierid):

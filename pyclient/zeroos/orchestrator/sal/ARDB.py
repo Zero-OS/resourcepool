@@ -22,14 +22,14 @@ class ARDB:
         self._ays = None
 
     @classmethod
-    def from_ays(cls, service):
+    def from_ays(cls, service, password=None):
         logger.debug("create ardb from service (%s)", service)
         from .Container import Container
 
-        container = Container.from_ays(service.parent)
+        container = Container.from_ays(service.parent, password)
         if service.model.data.master != '':
             master_service = service.aysrepo.serviceGet('ardb', service.model.data.master)
-            master = ARDB.from_ays(master_service)
+            master = ARDB.from_ays(master_service, password)
         else:
             master = None
 

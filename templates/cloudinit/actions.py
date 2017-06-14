@@ -13,7 +13,8 @@ def config_cloud_init(job, nics=None):
     from zeroos.orchestrator.sal.gateway.cloudinit import CloudInit
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service.parent)
+    # @TODO ASK JO
+    container = Container.from_ays(job.service.parent, job.model.jwt)
     nics = nics or []
     config = {}
 

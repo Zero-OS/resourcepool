@@ -17,9 +17,12 @@ def combine(ip1, ip2, mask):
 
 def getAddresses(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
 
-    node_client = Node.from_ays(node)
+    # @TODO ASK JO
+    node_client = Node.from_ays(node, get_jwt_token(job.service.aysrepo))
     mgmtaddr, network = getMgmtInfo(job, node, node_client.client)
     return {
         'storageaddr': combine(str(network.ip), mgmtaddr, network.prefixlen),
@@ -58,14 +61,15 @@ def configure(job):
     this method will be called from the node.zero-os install action.
     """
     import netaddr
-    from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.Container import Container
 
     node = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     job.logger.info("execute network configure on {}".format(node))
 
-    node_client = Node.from_ays(node)
+    # @TODO ASK JO
+    node_client = Node.from_ays(node, get_jwt_token(job.service.aysrepo))
     service = job.service
 
     mgmtaddr, network = getMgmtInfo(job, node, node_client.client)
@@ -97,7 +101,8 @@ def configure(job):
     }
     cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)
     j.tools.async.wrappers.sync(cont_service.executeAction('install'))
-    container_client = Container.from_ays(cont_service).client
+    # @TODO ASK JO
+    container_client = Container.from_ays(cont_service, get_jwt_token(job.service.aysrepo)).client
     nicmap = {nic['name']: nic for nic in nics}
     if 'backplane' not in nicmap:
         container_client.json('ovs.bridge-add', {"bridge": "backplane"})

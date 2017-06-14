@@ -1,9 +1,9 @@
 from js9 import j
 
 
-def get_container(service):
+def get_container(service, password):
     from zeroos.orchestrator.sal.Container import Container
-    return Container.from_ays(service.parent)
+    return Container.from_ays(service.parent, password)
 
 
 def is_job_running(container, cmd='/bin/nbdserver'):
@@ -34,7 +34,7 @@ def install(job):
     service = job.service
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    container = get_container(service)
+    container = get_container(service, job.model.jwt)
     config = {
         'storageClusters': {},
         'vdisks': {},
@@ -185,7 +185,7 @@ def get_storagecluster_config(service, storagecluster):
 def stop(job):
     import time
     service = job.service
-    container = get_container(service=service)
+    container = get_container(service=service, job.model.jwt)
 
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
@@ -212,12 +212,14 @@ def stop(job):
 
 
 def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
     service = job.service
     if not service.model.actionsState['install'] == 'ok':
         return
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    running = is_job_running(get_container(service))
+    running = is_job_running(get_container(service, get_jwt_token(job.service.aysrepo)))
     for vdisk in vdisks:
         if running:
             vdisk.model.data.status = 'running'

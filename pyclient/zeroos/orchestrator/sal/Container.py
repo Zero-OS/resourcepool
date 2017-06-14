@@ -80,10 +80,10 @@ class Container:
                    arguments['storage'])
 
     @classmethod
-    def from_ays(cls, service):
+    def from_ays(cls, service, password=None):
         logger.debug("create container from service (%s)", service)
         from .Node import Node
-        node = Node.from_ays(service.parent)
+        node = Node.from_ays(service.parent, password)
         ports = {}
         for portmap in service.model.data.ports:
             source, dest = portmap.split(':')

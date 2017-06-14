@@ -24,11 +24,11 @@ class Node:
         self.containers = Containers(self)
 
     @classmethod
-    def from_ays(cls, service, timeout=120):
+    def from_ays(cls, service, password=None, timeout=120):
         return cls(
             addr=service.model.data.redisAddr,
             port=service.model.data.redisPort,
-            password=get_jwt_token(service.aysrepo),
+            password=password,
             timeout=timeout
         )
 

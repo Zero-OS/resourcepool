@@ -8,16 +8,16 @@ def input(job):
         raise j.exceptions.Input("Filesystem requires a name")
 
 
-def get_pool(service):
+def get_pool(job):
     from zeroos.orchestrator.sal.Node import Node
-    nodeservice = service.parent.parent
-    poolname = service.parent.name
-    node = Node.from_ays(nodeservice)
+    nodeservice = job.service.parent.parent
+    poolname = job.service.parent.name
+    node = Node.from_ays(nodeservice, job.model.jwt)
     return node.storagepools.get(poolname)
 
 
 def install(job):
-    pool = get_pool(job.service)
+    pool = get_pool(job)
     fsname = str(job.service.model.data.name)
     try:
         fs = pool.get(fsname)
@@ -27,7 +27,7 @@ def install(job):
 
 
 def delete(job):
-    pool = get_pool(job.service)
+    pool = get_pool(job)
     fsname = str(job.service.model.data.name)
     try:
         fs = pool.get(fsname)

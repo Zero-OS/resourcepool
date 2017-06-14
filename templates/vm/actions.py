@@ -14,7 +14,7 @@ def input(job):
 
 def get_node(service):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(service.parent)
+    return Node.from_ays(service.parent, job.model.jwt)
 
 
 def create_zerodisk_container(service, parent):
@@ -85,24 +85,24 @@ def init(job):
     _init_nbd_services(job, vdisk_container)
 
 
-def _start_nbds(service):
+def _start_nbds(job):
     from zeroos.orchestrator.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = service.producers.get('zerodisk', None)
+    nbdservers = job.service.producers.get('zerodisk', None)
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
     # build full path of the nbdserver unix socket on the host filesystem
-    container = Container.from_ays(nbdserver.parent)
+    container = Container.from_ays(nbdserver.parent, job.model.jwt)
     if not container.is_running():
         # start container
         j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
 
     # make sure the nbdserver is started
     j.tools.async.wrappers.sync(nbdserver.executeAction('start'))
-    for vdisk in service.model.data.vdisks:
+    for vdisk in job.service.model.data.vdisks:
         url = _nbd_url(container, nbdserver, vdisk)
         medias.append({'url': url})
     return medias
@@ -121,10 +121,10 @@ def install(job):
     service = job.service
 
     # get all path to the vdisks serve by the nbdservers
-    medias = _start_nbds(service)
+    medias = _start_nbds(job)
 
     job.logger.info("create vm {}".format(service.name))
-    node = get_node(service)
+    node = get_node(job)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -136,7 +136,7 @@ def install(job):
             media['iotune'] = {'totaliopssec': disk.maxIOps,
                                'totaliopssecset': True}
 
-    kvm = get_domain(service)
+    kvm = get_domain(job)
     if not kvm:
         node.client.kvm.create(
             service.name,
@@ -148,7 +148,7 @@ def install(job):
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
-            kvm = get_domain(service)
+            kvm = get_domain(job)
             if kvm:
                 service.model.data.vnc = kvm['vnc']
                 break
@@ -169,18 +169,18 @@ def start(job):
     j.tools.async.wrappers.sync(service.executeAction('install'))
 
 
-def get_domain(service):
-    node = get_node(service)
+def get_domain(job):
+    node = get_node(job)
     for kvm in node.client.kvm.list():
-        if kvm['name'] == service.name:
+        if kvm['name'] == job.service.name:
             return kvm
 
 
 def stop(job):
     service = job.service
     job.logger.info("stop vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
 
@@ -205,8 +205,8 @@ def stop(job):
 def pause(job):
     service = job.service
     job.logger.info("pause vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.pause(kvm['uuid'])
         service.model.data.status = 'paused'
@@ -216,8 +216,8 @@ def pause(job):
 def resume(job):
     service = job.service
     job.logger.info("resume vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.resume(kvm['uuid'])
         service.model.data.status = 'running'
@@ -228,15 +228,15 @@ def shutdown(job):
     import time
     service = job.service
     job.logger.info("shutdown vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         service.model.data.status = 'halting'
         node.client.kvm.shutdown(kvm['uuid'])
         # wait for max 60 seconds for vm to be shutdown
         start = time.time()
         while start + 60 > time.time():
-            kvm = get_domain(service)
+            kvm = get_domain(job)
             if kvm:
                 time.sleep(3)
             else:
@@ -306,7 +306,7 @@ def updateDisks(job, client, args):
     from zeroos.orchestrator.sal.Container import Container
     service = job.service
 
-    uuid = get_domain(service)['uuid']
+    uuid = get_domain(job)['uuid']
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
@@ -323,7 +323,7 @@ def updateDisks(job, client, args):
     # Set model to new data
     service.model.data.disks = args.get('disks', [])
     vdisk_container = create_zerodisk_container(service, service.parent)
-    container = Container.from_ays(vdisk_container)
+    container = Container.from_ays(vdisk_container, job.model.jwt)
 
     # Detatching and Cleaning old disks
     if old_disks != []:
@@ -340,7 +340,7 @@ def updateDisks(job, client, args):
             diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
             service.consume(diskservice)
         service.saveAll()
-        _start_nbds(service)
+        _start_nbds(job)
         nbdserver = service.producers.get('zerodisk', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
@@ -353,7 +353,7 @@ def updateDisks(job, client, args):
 
 def updateNics(job, client, args):
     service = job.service
-    uuid = get_domain(service)['uuid']
+    uuid = get_domain(job)['uuid']
 
     # Get new and old disks
     new_nics = _diff(args.get('nics', []), service.model.data.nics)
@@ -399,7 +399,7 @@ def processChange(job):
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
-            node = get_node(service)
+            node = get_node(job)
             update_data(job, args)
             updateDisks(job, node, args)
             updateNics(job, node, args)

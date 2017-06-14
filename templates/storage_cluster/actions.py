@@ -38,7 +38,7 @@ def init(job):
     service = job.service
     nodes = []
     for node_service in service.producers['node']:
-        nodes.append(Node.from_ays(node_service))
+        nodes.append(Node.from_ays(node_service, job.model.jwt))
     nodemap = {node.name: node for node in nodes}
 
     cluster = StorageCluster(service.name, nodes, service.model.data.diskType)
