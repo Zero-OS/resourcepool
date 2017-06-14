@@ -30,7 +30,7 @@ def get_jwt_token(ays_repo):
     except Exception:
         raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
-    if token['exp'] > time.time():
+    if token['exp'] < time.time() - 120:
         headers = {'Authorization': 'bearer %s' % jwt_token}
         resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers)
         jwt_token = resp.content.decode()
