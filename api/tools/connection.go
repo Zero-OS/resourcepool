@@ -2,18 +2,20 @@ package tools
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
 
 	"encoding/json"
 
-	"github.com/zero-os/0-core/client/go-client"
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
+	"github.com/zero-os/0-core/client/go-client"
+	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 )
 
 const (
@@ -68,7 +70,13 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 		IdleTimeout: 5 * time.Minute,
 		Dial: func() (redis.Conn, error) {
 			// the redis protocol should probably be made sett-able
-			c, err := redis.Dial("tcp", address)
+			c, err := redis.Dial("tcp", address, redis.DialNetDial(func(network, address string) (net.Conn, error) {
+
+				return tls.Dial(network, address, &tls.Config{
+					InsecureSkipVerify: true,
+				})
+			}))
+
 			if err != nil {
 				return nil, err
 			}
