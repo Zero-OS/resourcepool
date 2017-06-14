@@ -26,11 +26,9 @@ def validate_configs(configs):
     if js_version and js_version != installed_version:
         raise j.exceptions.RuntimeError('Required jumpscale version is %s but installed version is %s.' % (js_version, installed_version))
 
-    auth = [jwt_token, jwt_key]
-    if any(auth) and not all(auth):
-        raise j.exceptions.RuntimeError('JWT auth is not configured correctly')
-
-    if all(auth):
+    if jwt_token:
+        if not jwt_key:
+            raise j.exceptions.RuntimeError('JWT auth is not configured correctly')
         try:
             jwt.decode(jwt_token, jwt_key)
         except Exception:
