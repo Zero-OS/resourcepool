@@ -80,8 +80,8 @@ def install(job):
                        'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
 
-        if vdiskservice.model.data.tlogStoragecluster and vdiskservice.model.data.tlogStoragecluster not in tlogconfig['storageClusters']:
-            tlogcluster = vdiskservice.model.data.tlogStoragecluster
+        tlogcluster = vdiskservice.model.data.tlogStoragecluster
+        if tlogcluster and tlogcluster not in tlogconfig['storageClusters']:
             clusterconfig, k, m = get_storagecluster_config(service, tlogcluster)
             tlogconfig['storageClusters'][tlogcluster] = {"dataStorage": clusterconfig["dataStorage"]}
             tlogconfig['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
@@ -97,20 +97,23 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
+        logpath = '/{}.log'.format(service.name)
         if tlogconfig['storageClusters']:
             container.client.system(
                 '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
                 --tlogrpc 0.0.0.0:{tlogport} \
+                --logfile {logpath} \
                 -config {config}'
-                .format(tlogport=tlogport, socketpath=socketpath, config=configpath)
+                .format(tlogport=tlogport, logpath=logpath, socketpath=socketpath, config=configpath)
             )
         else:
             container.client.system(
                 '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
+                --logfile {logpath} \
                 -config {config}'
                 .format(socketpath=socketpath, config=configpath)
             )
@@ -192,7 +195,7 @@ def stop(job):
 
     # Delete tmp vdisks
     for vdiskservice in vdisks:
-        vdiskservice.model.data.status = 'halted'
+        j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
         vdiskservice.saveAll()
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete'))
@@ -220,8 +223,8 @@ def monitor(job):
     running = is_job_running(get_container(service))
     for vdisk in vdisks:
         if running:
-            vdisk.model.data.status = 'running'
+            j.tools.async.wrappers.sync(vdisk.executeAction('start'))
         else:
-            vdisk.model.data.status = 'halted'
+            j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
     vdisk.saveAll()
 
