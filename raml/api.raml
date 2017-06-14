@@ -264,7 +264,7 @@ types:
           202:
             body:
               application/json:
-                type: Run          
+                type: Run
             headers:
               Location:
                 description: Url to the newly created storagepool.
@@ -403,7 +403,7 @@ types:
                   202:
                     body:
                       application/json:
-                        type: Run                  
+                        type: Run
                     description: Snapshot created successfully
                     headers:
                       Location:
@@ -1138,7 +1138,7 @@ types:
       202:
         body:
           application/json:
-            type: Run      
+            type: Run
         headers:
           Location:
             description: URL to the created vdisk resource
@@ -1187,7 +1187,10 @@ types:
           application/json:
             type: VdiskRollback
         responses:
-          204:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Rollback started successfully
 /runs:
   /{runid}:

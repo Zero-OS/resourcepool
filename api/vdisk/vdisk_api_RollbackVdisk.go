@@ -2,8 +2,11 @@ package vdisk
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,27 +28,28 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create rollback blueprint
-	// TODO: define rollback
-	// vdiskId := mux.Vars(r)["vdiskid"]
-	// bp := struct {
-	// 	Epoch int `yaml:"epoch" json:"epoch"`
-	// }{
-	// 	Epoch: reqBody.Epoch,
-	// }
-	//
-	// bpName := fmt.Sprintf("vdiskrollback%sfrom%vto%v", vdiskId, time.Now().Unix(), reqBody.Epoch)
-	// decl := fmt.Sprintf("vdisk__%v", vdiskId)
-	//
-	// obj := make(map[string]interface{})
-	// obj[decl] = bp
-	// obj["actions"] = []map[string]string{map[string]string{"action": "rollback"}}
-	//
-	// // And execute
-	// if _, err := tools.ExecuteBlueprint(api.AysRepo, bpName, obj); err != nil {
-	// 	log.Errorf("error executing blueprint for vdisk %s rollback : %+v", vdiskId, err)
-	// 	tools.WriteError(w, http.StatusInternalServerError, err, "")
-	// 	return
-	// }
-	//
-	// w.WriteHeader(http.StatusNoContent)
+	vdiskID := mux.Vars(r)["vdiskid"]
+	bp := struct {
+		Timestamp uint64 `yaml:"timestamp" json:"timestamp"`
+	}{
+		Timestamp: reqBody.Epoch,
+	}
+
+	obj := make(map[string]interface{})
+	obj[fmt.Sprintf("vdisk__%s", vdiskID)] = bp
+	obj["actions"] = []tools.ActionBlock{{Service: vdiskID, Actor: "vdisk", Action: "rollback"}}
+
+	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)
+	if err != nil {
+		httpErr := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", vdiskID)
+		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+		return
+	}
+
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }
