@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/zero-os/0-orchestrator/api",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -100,13 +97,9 @@
 			"Rev": "ada3ba68f000aa1b58580e45c9d308fe0b7fc5c5"
 		},
 		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Rev": "3b361f7ebbeff8f74ac0af5b9751f01b32cd74e5"
-		},
-		{
 			"ImportPath": "github.com/zero-os/0-core/client/go-client",
-			"Comment": "v1.1.0-alpha-2-45-g4d60093",
-			"Rev": "4d600937f550df3ceb299f42eb1200cd2954b228"
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
@@ -119,6 +112,81 @@
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a5b47d31c556af34a302ce5d659e6fea44d90de0"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/garyburd/redigo/redis",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/google/shlex",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/pborman/uuid",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/cpu",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/disk",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/host",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/mem",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/net",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/garyburd/redigo/internal",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/StackExchange/wmi",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/internal/common",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/gopsutil/process",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/go-ole/go-ole",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/go-ole/go-ole/oleutil",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
+		},
+		{
+			"ImportPath": "github.com/zero-os/0-core/vendor/github.com/shirou/w32",
+			"Comment": "v1.1.0-alpha-2-76-g4ee374a",
+			"Rev": "4ee374a63363909170e9a406bf6af70f6a452f77"
 		}
 	]
 }
