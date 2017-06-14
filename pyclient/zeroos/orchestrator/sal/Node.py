@@ -1,4 +1,5 @@
 from zeroos.core0.client import Client
+from zeroos.orchestrator.configuration import get_jwt_token
 from .Disk import Disks, DiskType
 from .Container import Containers
 from .StoragePool import StoragePools
@@ -27,7 +28,7 @@ class Node:
         return cls(
             addr=service.model.data.redisAddr,
             port=service.model.data.redisPort,
-            password=service.model.data.redisPassword or None,
+            password=get_jwt_token(service.aysrepo),
             timeout=timeout
         )
 

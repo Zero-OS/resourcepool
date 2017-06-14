@@ -87,6 +87,7 @@ def wipedisks(node):
 def try_authorize(service, logger, netid, member, zerotier):
     import time
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
 
     if not member['online'] or member['config']['authorized']:
         return
@@ -106,7 +107,7 @@ def try_authorize(service, logger, netid, member, zerotier):
     zerotier_ip = member['config']['ipAssignments'][0]
 
     # test if we can connect to the new member
-    node = Node(zerotier_ip)
+    node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
     node.client.testConnectionAttempts = 0
     node.client.timeout = 10
     for attempt in range(5):

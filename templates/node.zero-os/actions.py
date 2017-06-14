@@ -3,11 +3,11 @@ from js9 import j
 
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
 
     args = job.model.args
     ip = args.get('redisAddr')
-    node = Node(ip, args.get('redisPort'), args.get('redisPassword'))
+    node = Node(ip, args.get('redisPort'), get_jwt_token(job.service.aysrepo))
 
     config = get_configuration(job.service.aysrepo)
     version = node.client.info.version()
