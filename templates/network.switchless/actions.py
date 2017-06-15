@@ -38,10 +38,16 @@ def configure(job):
         raise j.exceptions.RuntimeError("Could not find available nic")
 
     # freenics = ([1000, ['eth0']], [100, ['eth1']])
-    interface = freenics[0][1][0]
+    for speed, nics in freenics:
+        if len(nics) >= 2:
+            break
+    else:
+        raise j.exceptions.RuntimeError("Could not find two equal available nics")
+
     if 'backplane' not in nicmap:
-        container_client.json('ovs.bridge-add', {"bridge": "backplane"})
-        container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
+        container_client.json('ovs.bridge-add', {"bridge": "backplane", "options": {'stp_enable': 'true'}})
+        container_client.json('ovs.port-add', {"bridge": "backplane", "port": nics[0], "vlan": 0})
+        container_client.json('ovs.port-add', {"bridge": "backplane", "port": nics[1], "vlan": 0})
         node.client.system('ip address add {storageaddr} dev backplane'.format(**addresses)).get()
         node.client.system('ip link set dev backplane up').get()
     if 'vxbackend' not in nicmap:
