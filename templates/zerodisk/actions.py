@@ -103,8 +103,8 @@ def install(job):
                 '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
-                --tlogrpc 0.0.0.0:{tlogport} \
-                --logfile {logpath} \
+                -tlogrpc 0.0.0.0:{tlogport} \
+                -logfile {logpath} \
                 -config {config}'
                 .format(tlogport=tlogport, logpath=logpath, socketpath=socketpath, config=configpath)
             )

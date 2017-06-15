@@ -155,7 +155,7 @@ def rollback(job):
     import yaml
     service = job.service
     service.model.data.status = 'rollingback'
-    ts = service.model.data.timestamp
+    ts = job.model.args['timestamp']
 
     storagecluster = service.model.data.storageCluster
     clusterconfig = get_cluster_config(service)
@@ -218,4 +218,11 @@ def processChange(job):
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
-        j.tools.async.wrappers.sync(service.executeAction('resize', args={'size': args['size']}))
+        if args.get('size', None):
+            j.tools.async.wrappers.sync(service.executeAction('resize', args={'size': args['size']}))
+        if args.get('timestamp', None):
+            if str(service.model.data.status) != "halted":
+                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
+            if str(service.model.data.type) not in ["boot", "db"]:
+                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
+            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}))
