@@ -213,6 +213,7 @@ def resize(job):
 
 
 def processChange(job):
+    import math
     service = job.service
 
     args = job.model.args
@@ -225,4 +226,5 @@ def processChange(job):
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
             if str(service.model.data.type) not in ["boot", "db"]:
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
+            args['timestamp'] = int(args['timestamp'] * math.pow(10, 9))
             j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}))
