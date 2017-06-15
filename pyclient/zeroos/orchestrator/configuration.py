@@ -27,10 +27,10 @@ def get_jwt_token(ays_repo):
     import time
 
     configs, service = get_configuration_and_service(ays_repo)
-    jwt_token = configs.get('jwt-token')
+    jwt_token = configs.get('jwt-token', '')
     jwt_key = configs.get('jwt-key')
     if not jwt_token:
-        return None
+        return jwt_token
 
     try:
         token = jose.jwt.decode(jwt_token, jwt_key)

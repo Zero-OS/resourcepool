@@ -81,7 +81,7 @@ def init(job):
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    vdisk_container = create_zerodisk_container(service, service.parent)
+    vdisk_container = create_zerodisk_container(job, service.parent)
     _init_nbd_services(job, vdisk_container)
 
 
@@ -268,7 +268,7 @@ def migrate(job):
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
-    vdisk_container = create_zerodisk_container(service, target_node)
+    vdisk_container = create_zerodisk_container(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
     nbdserver = create_nbd(service, vdisk_container)
     service.consume(nbdserver)
