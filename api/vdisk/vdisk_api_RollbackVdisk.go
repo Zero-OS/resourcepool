@@ -54,7 +54,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// Create rollback blueprint
 	bp := struct {
-		Timestamp uint64 `yaml:"timestamp" json:"timestamp"`
+		Timestamp int `yaml:"timestamp" json:"timestamp"`
 	}{
 		Timestamp: reqBody.Epoch,
 	}
