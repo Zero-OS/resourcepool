@@ -11,7 +11,7 @@ def apply_rules(job, httpproxies=None, nics=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.http import HTTPServer
 
-    container = Container.from_ays(job.service.parent, job.model.jwt)
+    container = Container.from_ays(job.service.parent, job.context['token'])
 
     httpproxies = [] if httpproxies is None else httpproxies
     nics = [] if nics is None else nics

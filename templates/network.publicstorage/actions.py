@@ -7,7 +7,7 @@ def configure(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     nodeservice = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
-    # @TODO ASK JO
+
     node = Node.from_ays(nodeservice, get_jwt_token(job.service.aysrepo))
     node.client.bash("""
     pubint=$(ip route | grep default | awk '{print $5}')

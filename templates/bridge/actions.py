@@ -4,7 +4,7 @@ def install(job):
     service = job.service
 
     # Get g8core client
-    node = Node.from_ays(service.parent, job.model.jwt)
+    node = Node.from_ays(service.parent, job.context['token'])
 
     # Create bridge
     network = None if str(service.model.data.networkMode) == "none" else str(service.model.data.networkMode)
@@ -27,7 +27,7 @@ def delete(job):
     service = job.service
 
     # Get node client
-    node = Node.from_ays(service.parent, job.model.jwt)
+    node = Node.from_ays(service.parent, job.context['token'])
 
     if service.model.data.status == 'error':
         if service.name not in node.client.bridge.list():

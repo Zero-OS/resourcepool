@@ -9,7 +9,7 @@ def apply_config(job, gwdata=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.dhcp import DHCP
 
-    container = Container.from_ays(job.service.parent, job.model.jwt)
+    container = Container.from_ays(job.service.parent, job.context['token'])
 
     gwdata = {} if gwdata is None else gwdata
     nics = gwdata.get('nics', [])

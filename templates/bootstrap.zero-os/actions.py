@@ -24,7 +24,7 @@ def bootstrap(job):
 
     for member in members:
         try:
-            try_authorize(service, job.logger, netid, member, zerotier)
+            try_authorize(job, job.logger, netid, member, zerotier)
         except Exception as err:
             job.logger.error(str(err))
             member['config']['authorized'] = False
@@ -84,10 +84,13 @@ def wipedisks(node):
         job.get()
 
 
-def try_authorize(service, logger, netid, member, zerotier):
+def try_authorize(job, logger, netid, member, zerotier):
     import time
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
 
     if not member['online'] or member['config']['authorized']:
         return
@@ -130,7 +133,7 @@ def try_authorize(service, logger, netid, member, zerotier):
         nodeservice.model.data.redisAddr = zerotier_ip
         nodeservice.model.data.status = 'running'
         # after reboot we also wonna call install
-        j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
+        j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
     except j.exceptions.NotFound:
         # create and install the node.zero-os service
         if service.model.data.wipedisks:
@@ -151,7 +154,7 @@ def try_authorize(service, logger, netid, member, zerotier):
         try:
 
             logger.info("install node.zero-os service {}".format(name))
-            j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
+            j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
         except:
             j.tools.async.wrappers.sync(nodeservice.delete())
             raise

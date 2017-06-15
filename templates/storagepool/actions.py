@@ -12,7 +12,7 @@ def install(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
     pservice = service.parent
-    node = Node.from_ays(pservice, job.model.jwt)
+    node = Node.from_ays(pservice, job.context['token'])
 
     devices = [d.device for d in service.model.data.devices]
     name = service.name
@@ -56,7 +56,7 @@ def delete(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
     pservice = service.parent
-    node = Node.from_ays(pservice, job.model.jwt)
+    node = Node.from_ays(pservice, job.context['token'])
     name = service.name
 
     try:
@@ -111,8 +111,8 @@ def processChange(job):
     category = args.pop('changeCategory')
     if category == "dataschema":
         pservice = service.parent
-        # @TODO ASK JO
-        node = Node.from_ays(pservice, job.model.jwt)
+
+        node = Node.from_ays(pservice, job.context['token'])
         try:
             pool = node.storagepools.get(service.name)
             devices = [d['device'] for d in args['devices']]

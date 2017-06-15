@@ -109,7 +109,7 @@ def get_storagecluster_config(job):
     storagecluster = job.service.model.data.storageCluster
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.model.jwt)
+    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"]}
 
 
@@ -123,8 +123,7 @@ def create_from_template_container(job, parent):
     from zeroos.orchestrator.sal.Node import Node
 
     container_name = 'vdisk_{}_{}'.format(job.service.name, parent.name)
-    # @TODO Get jwt token from request headers
-    node = Node.from_ays(parent, job.model.jwt)
+    node = Node.from_ays(parent, job.context['token'])
     config = get_configuration(job.service.aysrepo)
     container = Container(name=container_name,
                           flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
@@ -171,4 +170,4 @@ def processChange(job):
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
-        j.tools.async.wrappers.sync(service.executeAction('resize', args={'size': args['size']}))
+        j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))

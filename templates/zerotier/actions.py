@@ -1,6 +1,6 @@
 def _get_client(job):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(job.service.parent, job.model.jwt).client
+    return Node.from_ays(job.service.parent, job.context['token']).client
 
 
 def _get_network(service):

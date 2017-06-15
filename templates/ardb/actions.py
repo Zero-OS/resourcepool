@@ -2,14 +2,14 @@ from js9 import j
 
 
 def install(job):
-    j.tools.async.wrappers.sync(job.service.executeAction('start'))
+    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
     from zeroos.orchestrator.sal.ARDB import ARDB
 
     service = job.service
-    ardb = ARDB.from_ays(service, job.model.jwt)
+    ardb = ARDB.from_ays(service, job.context['token'])
     ardb.start()
 
 
@@ -17,7 +17,7 @@ def stop(job):
     from zeroos.orchestrator.sal.ARDB import ARDB
 
     service = job.service
-    ardb = ARDB.from_ays(service, job.model.jwt)
+    ardb = ARDB.from_ays(service, job.context['token'])
     ardb.stop()
 
 

@@ -22,8 +22,8 @@ def input(job):
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+
     service = job.service
-    # @TODO ASK JO
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
     job.logger.info("create storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
@@ -45,9 +45,9 @@ def getAddresses(job):
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+
     # at each boot recreate the complete state in the system
     service = job.service
-    # @TODO ASK JO
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
     job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
@@ -87,7 +87,7 @@ def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
     job.logger.info("reboot node {}".format(service))
-    node = Node.from_ays(service, job.model.jwt)
+    node = Node.from_ays(service, job.context['token'])
     node.client.raw('core.reboot', {})
 
 

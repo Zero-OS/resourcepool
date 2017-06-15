@@ -34,7 +34,7 @@ def install(job):
     service = job.service
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    container = get_container(service, job.model.jwt)
+    container = get_container(service, job.context['token'])
     config = {
         'storageClusters': {},
         'vdisks': {},
@@ -163,7 +163,8 @@ def start_tlog(service, container, config):
     container.client.filesystem.upload(configpath, configstream)
     if not is_job_running(container, cmd='/bin/tlogserver'):
         port = get_tlog_port(container)
-        container.client.system('/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {}'.format(port, configpath, k, m))
+        container.client.system(
+            '/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {}'.format(port, configpath, k, m))
         if not is_job_running(container, cmd='/bin/tlogserver'):
             raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
         return port
@@ -171,21 +172,21 @@ def start_tlog(service, container, config):
 
 def start(job):
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install'))
+    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
 def get_storagecluster_config(job, storagecluster):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.model.jwt)
+    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     return cluster.get_config(), cluster.k, cluster.m
 
 
 def stop(job):
     import time
     service = job.service
-    container = get_container(service=service, job.model.jwt)
+    container = get_container(service, job.context['token'])
 
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
@@ -195,7 +196,7 @@ def stop(job):
         vdiskservice.model.data.status = 'halted'
         vdiskservice.saveAll()
         if vdiskservice.model.data.type == "tmp":
-            j.tools.async.wrappers.sync(vdiskservice.executeAction('delete'))
+            j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
 
     nbdjob = is_job_running(container)
     if nbdjob:

@@ -14,10 +14,17 @@ def get_configuration(ays_repo):
     return configs
 
 
-def get_jwt_token(ays_repo):
-    from jose import jwt
-    import time
+def refresh_jwt_token(token):
     import requests
+    headers = {'Authorization': 'bearer %s' % token}
+    resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers)
+    return resp.content.decode()
+
+
+def get_jwt_token(ays_repo):
+    import jose
+    import requests
+    import time
 
     configs, service = get_configuration_and_service(ays_repo)
     jwt_token = configs.get('jwt-token')
@@ -26,20 +33,19 @@ def get_jwt_token(ays_repo):
         return None
 
     try:
-        token = jwt.decode(jwt_token, jwt_key)
-    except Exception:
-        raise RuntimeError('Invalid jwt-token and jwt-key combination')
+        token = jose.jwt.decode(jwt_token, jwt_key)
+        if token['exp'] < time.time() - 240:
+            jwt_token = refresh_jwt_token(jwt_token)
+    except Exception as e:
+        if e.__class__ != jose.exceptions.ExpiredSignatureError:
+            raise RuntimeError('Invalid jwt-token and jwt-key combination')
+        else:
+            jwt_token = refresh_jwt_token(jwt_token)
 
-    if token['exp'] < time.time() - 120:
-        headers = {'Authorization': 'bearer %s' % jwt_token}
-        resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers)
-        jwt_token = resp.content.decode()
+    for config in service.model.data.configurations:
+        if config.key == 'jwt-token':
+            config.value = jwt_token
+            break
 
-        for config in service.model.data.configurations:
-            if config.key == 'jwt-token':
-                config.value = jwt_token
-                break
-
-        service.saveAll()
-
+    service.saveAll()
     return jwt_token

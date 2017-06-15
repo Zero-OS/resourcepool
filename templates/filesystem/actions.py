@@ -12,7 +12,7 @@ def get_pool(job):
     from zeroos.orchestrator.sal.Node import Node
     nodeservice = job.service.parent.parent
     poolname = job.service.parent.name
-    node = Node.from_ays(nodeservice, job.model.jwt)
+    node = Node.from_ays(nodeservice, job.context['token'])
     return node.storagepools.get(poolname)
 
 

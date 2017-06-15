@@ -13,7 +13,7 @@ def input(job):
 
 
 def validate_configs(configs):
-    from jose import jwt
+    import jose
 
     configurations = {conf['key']: conf['value'] for conf in configs}
     js_version = configurations.get('js-version')
@@ -30,9 +30,10 @@ def validate_configs(configs):
         if not jwt_key:
             raise j.exceptions.RuntimeError('JWT auth is not configured correctly')
         try:
-            jwt.decode(jwt_token, jwt_key)
-        except Exception:
-            raise j.exceptions.RuntimeError('Invalid jwt-token and jwt-key combination')
+            jose.jwt.decode(jwt_token, jwt_key)
+        except Exception as e:
+            if e.__class__ != jose.exceptions.ExpiredSignatureError:
+                raise j.exceptions.RuntimeError('Invalid jwt-token and jwt-key combination')
 
 
 def processChange(job):

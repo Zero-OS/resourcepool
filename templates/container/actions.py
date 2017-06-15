@@ -23,7 +23,7 @@ def input(job):
 
 def install(job):
     job.service.model.data.status = "halted"
-    j.tools.async.wrappers.sync(job.service.executeAction('start'))
+    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
@@ -32,7 +32,7 @@ def start(job):
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
-    container = Container.from_ays(service, job.model.jwt)
+    container = Container.from_ays(service, job.context['token'])
     container.start()
 
     if container.is_running():
@@ -78,7 +78,7 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service, job.model.jwt)
+    container = Container.from_ays(job.service, job.context['token'])
     container.stop()
 
     if not container.is_running():

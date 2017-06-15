@@ -95,7 +95,7 @@ def init(job):
 
 def install(job):
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('start'))
+    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
 
 
 def processChange(job):
@@ -113,16 +113,16 @@ def processChange(job):
 
     if nicchanges:
         cloudInitServ = service.aysrepo.serviceGet(role='cloudinit', instance=service.name)
-        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', args={'nics': args['nics']}))
+        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', context=job.context, args={'nics': args['nics']}))
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
-        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', args=args))
+        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', context=job.context, args=args))
 
         service.model.data.nics = args['nics']
 
     if nicchanges or portforwardchanges:
         firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args=args))
+        j.tools.async.wrappers.sync(firewallServ.executeAction('update', context=job.context, args=args))
 
     if portforwardchanges:
         service.model.data.portforwards = args.get('portforwards', [])
@@ -131,7 +131,7 @@ def processChange(job):
         httpproxies = args.get('httpproxies', [])
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
         http_args = {'httpproxies': httpproxies, 'nics': args.get('nics', gatewaydata['nics'])}
-        j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
+        j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
         service.model.data.httpproxies = httpproxies
 
     if args.get("domain", None):
@@ -147,7 +147,7 @@ def uninstall(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
 
@@ -160,7 +160,7 @@ def start(job):
     container = service.producers.get('container')[0]
 
     # setup zerotiers bridges
-    containerobj = Container.from_ays(container, job.model.jwt)
+    containerobj = Container.from_ays(container, job.context['token'])
     nics = service.model.data.to_dict()['nics']  # get dict version of nics
 
     def get_zerotier_nic(zerotierid):
@@ -231,11 +231,11 @@ def start(job):
     cloudinit = container.consumers.get('cloudinit')[0]
     firewall = container.consumers.get('firewall')[0]
 
-    j.tools.async.wrappers.sync(container.executeAction('start'))
-    j.tools.async.wrappers.sync(http.executeAction('install'))
-    j.tools.async.wrappers.sync(dhcp.executeAction('install'))
-    j.tools.async.wrappers.sync(firewall.executeAction('install'))
-    j.tools.async.wrappers.sync(cloudinit.executeAction('install'))
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(http.executeAction('install', context=job.context))
+    j.tools.async.wrappers.sync(dhcp.executeAction('install', context=job.context))
+    j.tools.async.wrappers.sync(firewall.executeAction('install', context=job.context))
+    j.tools.async.wrappers.sync(cloudinit.executeAction('install', context=job.context))
     service.model.data.status = "running"
 
 
@@ -243,5 +243,5 @@ def stop(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         service.model.data.status = "halted"
