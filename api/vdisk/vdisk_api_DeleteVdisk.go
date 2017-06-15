@@ -11,11 +11,11 @@ import (
 // DeleteVdisk is the handler for DELETE /vdisks/{vdiskid}
 // Delete Vdisk
 func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
-
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]
 
-	_, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	_, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 
 	if err != nil {
 		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s deletion", vdiskID)
@@ -38,8 +38,7 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		msg := fmt.Sprintf("Error executing blueprint for vdisk deletion")
@@ -48,7 +47,7 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for vdisk deletion")
@@ -58,7 +57,7 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.AysAPI.Ays.DeleteServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	_, err = aysClient.Ays.DeleteServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 
 	if err != nil {
 		errmsg := fmt.Sprintf("Error in deleting vdisk %s ", vdiskID)

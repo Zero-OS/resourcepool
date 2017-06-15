@@ -13,6 +13,7 @@ import (
 // CreateGWForwards is the handler for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Create a new Portforwarding
 func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody PortForward
 
 	// decode request
@@ -35,7 +36,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -79,8 +80,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errMessage := fmt.Errorf("error executing blueprint for gateway %s update", gateway)

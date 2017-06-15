@@ -34,7 +34,7 @@ func (api NodeAPI) GetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	containerClient := client.Container(node).Client(containerID)
 	err = client.Filesystem(containerClient).Download("/etc/caddy.conf", &config)
 	if err != nil {
-		errmsg:=fmt.Sprintf("Error getting  file from container '%s' at path '%s'.\n", gwname, "/etc/caddy.conf")
+		errmsg := fmt.Sprintf("Error getting  file from container '%s' at path '%s'.\n", gwname, "/etc/caddy.conf")
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}

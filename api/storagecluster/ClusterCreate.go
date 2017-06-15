@@ -1,6 +1,5 @@
 package storagecluster
 
-
 import (
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"

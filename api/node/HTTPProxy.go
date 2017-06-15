@@ -1,8 +1,8 @@
 package node
 
 import (
-	"gopkg.in/validator.v2"
 	"github.com/zero-os/0-orchestrator/api/validators"
+	"gopkg.in/validator.v2"
 )
 
 type HTTPProxy struct {
@@ -14,8 +14,8 @@ type HTTPProxy struct {
 func (s HTTPProxy) Validate() error {
 
 	httpTypes := map[interface{}]struct{}{
-		EnumHTTPTypehttp: struct{}{},
-		EnumHTTPTypehttps:    struct{}{},
+		EnumHTTPTypehttp:  struct{}{},
+		EnumHTTPTypehttps: struct{}{},
 	}
 
 	for _, httpType := range s.Types {

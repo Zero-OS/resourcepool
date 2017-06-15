@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ import (
 // SetGWFWConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
 // Set FW config
 func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var gatewayBase GW
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]
@@ -37,7 +39,7 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return
@@ -60,8 +62,7 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
+	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)

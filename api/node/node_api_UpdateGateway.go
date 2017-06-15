@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"reflect"
@@ -14,6 +15,7 @@ import (
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
 // Update Gateway
 func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody GW
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
@@ -30,7 +32,7 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
 		return
 	}
@@ -53,8 +55,7 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwID)] = reqBody
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
+	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)

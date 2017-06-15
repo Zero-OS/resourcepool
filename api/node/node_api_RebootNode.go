@@ -3,13 +3,14 @@ package node
 import (
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // RebootNode is the handler for POST /nodes/{nodeid}/reboot
 // Immediately reboot the machine.
 func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteConnection(r)
 	vars := mux.Vars(r)
 	nodeId := vars["nodeid"]
@@ -23,8 +24,7 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	_, err := tools.ExecuteBlueprint(api.AysRepo, "node", nodeId, "reboot", blueprint)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "node", nodeId, "reboot", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")

@@ -47,7 +47,7 @@ func NewOauth2itsyouonlineMiddleware(scope string) *Oauth2itsyouonlineMiddleware
 	if scope == "" {
 		scopes = []string{}
 	} else {
-		scopes = []string{fmt.Sprintf("user:memberOf:%s", scope)}
+		scopes = []string{fmt.Sprintf("user:memberof:%s", scope)}
 	}
 
 	om := Oauth2itsyouonlineMiddleware{

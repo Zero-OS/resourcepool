@@ -1,6 +1,5 @@
 package storagecluster
 
-
 type EnumClusterCreateDriveType string
 
 const (

@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ListZerotier is the handler for GET /nodes/{nodeid}/zerotiers
 // List running Zerotier networks
 func (api NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	nodeID := mux.Vars(r)["nodeid"]
 	// Only zerotiers with the node from the request as parent
 	queryParams := map[string]interface{}{
@@ -19,7 +21,7 @@ func (api NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("zerotier", api.AysRepo, nil, queryParams)
+	services, res, err := aysClient.Ays.ListServicesByRole("zerotier", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing zerotiers") {
 		return
 	}

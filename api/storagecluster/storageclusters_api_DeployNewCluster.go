@@ -3,6 +3,7 @@ package storagecluster
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -11,6 +12,7 @@ import (
 // DeployNewCluster is the handler for POST /storageclusters
 // Deploy New Cluster
 func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ClusterCreate
 
 	// decode request
@@ -56,8 +58,7 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		Service: reqBody.Label,
 	}}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
+	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)

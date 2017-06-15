@@ -11,6 +11,7 @@ import (
 // DeleteFilesystem is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}
 // Delete filesystem
 func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	name := vars["filesystemname"]
 
@@ -24,8 +25,7 @@ func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", name, "delete", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "filesystem", name, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for filesystem deletion "
@@ -34,7 +34,7 @@ func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for filesystem deletion")
@@ -44,7 +44,7 @@ func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := api.AysAPI.Ays.DeleteServiceByName(name, "filesystem", api.AysRepo, nil, nil)
+	resp, err := aysClient.Ays.DeleteServiceByName(name, "filesystem", api.AysRepo, nil, nil)
 	if err != nil {
 		errmsg := "Error deleting filesystem services "
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)

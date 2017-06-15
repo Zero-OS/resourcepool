@@ -1,9 +1,9 @@
 package node
 
 import (
+	"fmt"
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
-	"fmt"
 )
 
 type ContainerNICConfig struct {

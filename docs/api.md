@@ -246,7 +246,7 @@ from zeroos.orchestrator.client import oauth2_client_itsyouonline
 
 cls = oauth2_client_itsyouonline.Oauth2ClientItsyouonline() # this class can take different urls to authenticate with but defaults to https://itsyou.online/v1/oauth/access_token?response_type=id_token
 
-response = cls.get_access_token(<client id>, <client secret>, scope=['user:memberOf:<organization name>'], audience=[]) # at the moment only the scope type organization:memberOf:<organization_name> is supported 
+response = cls.get_access_token(<client id>, <client secret>, scope=['user:memberof:<organization name>'], audience=[]) # at the moment only the scope type organization:memberof:<organization_name> is supported 
 
 print(respnose.token)
 ```

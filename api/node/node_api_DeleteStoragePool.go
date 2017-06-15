@@ -11,6 +11,7 @@ import (
 // DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
 // Delete the storage pool
 func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	name := vars["storagepoolname"]
 
@@ -24,8 +25,7 @@ func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", name, "delete", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", name, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for storagepool deletion "
@@ -34,7 +34,7 @@ func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storagepool deletion")
@@ -44,7 +44,7 @@ func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := api.AysAPI.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
+	resp, err := aysClient.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
 	if err != nil {
 		errmsg := "Error deleting storagepool services"
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)

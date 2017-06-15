@@ -13,6 +13,7 @@ import (
 // CreateSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
 // Create a new readonly filesystem of the current state of the vdisk
 func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	filessytem := mux.Vars(r)["filesystemname"]
 	nodeid := mux.Vars(r)["nodeid"]
 	storagepool := mux.Vars(r)["storagepoolname"]
@@ -48,8 +49,7 @@ func (api NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 			Service: reqBody.Name}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for fssnapshot creation "

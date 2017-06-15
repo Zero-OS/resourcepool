@@ -11,9 +11,10 @@ import (
 // GetRunState is the handler for GET /runs/{runid}
 // Get Run Status
 func (api RunsAPI) GetRunState(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	runid := vars["runid"]
-	run, resp, err := api.AysAPI.Ays.GetRun(runid, api.AysRepo, nil, nil)
+	run, resp, err := aysClient.Ays.GetRun(runid, api.AysRepo, nil, nil)
 	if err != nil {
 		tools.WriteError(w, resp.StatusCode, err, "Error getting run")
 	}

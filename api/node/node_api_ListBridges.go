@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
 // List bridges
 func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
@@ -19,7 +21,7 @@ func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "setting,status",
 	}
-	services, resp, err := api.AysAPI.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 		return
 	}

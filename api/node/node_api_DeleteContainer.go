@@ -10,6 +10,7 @@ import (
 // DeleteContainer is the handler for DELETE /nodes/{nodeid}/containers/{containername}
 // Delete Container instance
 func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)
@@ -25,8 +26,7 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for container deletion"
@@ -35,7 +35,7 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
@@ -45,7 +45,7 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := api.AysAPI.Ays.DeleteServiceByName(containername, "container", api.AysRepo, nil, nil)
+	res, err := aysClient.Ays.DeleteServiceByName(containername, "container", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "deleting service") {
 		return
 	}

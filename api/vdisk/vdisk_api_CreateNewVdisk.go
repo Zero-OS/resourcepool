@@ -3,6 +3,7 @@ package vdisk
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	runs "github.com/zero-os/0-orchestrator/api/run"
@@ -12,6 +13,7 @@ import (
 // CreateNewVdisk is the handler for POST /vdisks
 // Create a new vdisk, can be a copy from an existing vdisk
 func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskCreate
 
 	// decode request
@@ -26,7 +28,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := tools.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
+	exists, err := aysClient.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting vdisk service by name %s ", reqBody.ID)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
@@ -37,7 +39,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err = tools.ServiceExists("storage_cluster", reqBody.Storagecluster, api.AysRepo)
+	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.Storagecluster, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.Storagecluster)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
@@ -74,8 +76,8 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}}
 
 	// And Execute
-	api.AysAPI.AuthHeader = r.Header.Get("Authorization")
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
+
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
