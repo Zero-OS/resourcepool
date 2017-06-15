@@ -14,6 +14,8 @@ import (
 // Rollback a vdisk to a previous state
 func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	var reqBody VdiskRollback
+	vars := mux.Vars(r)
+	vdiskID := vars["vdiskid"]
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -27,8 +29,30 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serv, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("rollback vdisk %s", vdiskID)) {
+		return
+	}
+
+	// Validate if disk is halted and of type [db, boot]
+	var disk Vdisk
+	if err := json.Unmarshal(serv.Data, &disk); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
+		return
+	}
+	if string(disk.Status) != "halted" {
+		err = fmt.Errorf("Failed to rollback %s, vdisk should be halted", vdiskID)
+		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+	if string(disk.Vdisktype) != "boot" || string(disk.Vdisktype) != "db" {
+		err = fmt.Errorf("Failed to rollback %s, rollback is supported for boot or db only", vdiskID)
+		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+
 	// Create rollback blueprint
-	vdiskID := mux.Vars(r)["vdiskid"]
 	bp := struct {
 		Timestamp uint64 `yaml:"timestamp" json:"timestamp"`
 	}{
@@ -37,7 +61,6 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vdisk__%s", vdiskID)] = bp
-	obj["actions"] = []tools.ActionBlock{{Service: vdiskID, Actor: "vdisk", Action: "rollback"}}
 
 	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)
 	if err != nil {
