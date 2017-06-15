@@ -71,7 +71,8 @@ class ARDB:
         logger.debug('start %s', self)
 
         self._configure()
-
+        port = self.bind.split(":")[0]
+        self.container.node.client.nft.open_port(port)
         self.container.client.system('/bin/ardb-server /etc/ardb.conf.used')
 
         # wait for ardb to start
@@ -107,6 +108,8 @@ class ARDB:
 
         if is_running:
             raise RuntimeError("storage server {} didn't stopped")
+        port = self.bind.split(":")[0]
+        self.container.node.client.nft.drop_port(port)
 
     def is_running(self):
         try:
