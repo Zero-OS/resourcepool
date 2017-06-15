@@ -1080,7 +1080,7 @@ VdiskRollback:
   properties:
     epoch:
       type: integer
-      description: Epoch to which we want to rollback the vdisk
+      description: Epoch (in nanoseconds) to which we want to rollback the vdisk
 
 # GWS objects
 IPProtocol:
@@ -1298,7 +1298,7 @@ RunState:
   enum: [ok, running, scheduled, error, new, disabled, changed]
 
 Run:
-  properties: 
+  properties:
       runid:
         description: Runid of job that was scheduled.
         type: string
