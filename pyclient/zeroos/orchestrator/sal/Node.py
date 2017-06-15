@@ -2,6 +2,7 @@ from zeroos.core0.client import Client
 from .Disk import Disks, DiskType
 from .Container import Containers
 from .StoragePool import StoragePools
+from .Network import Network
 from collections import namedtuple
 from datetime import datetime
 import netaddr
@@ -21,6 +22,7 @@ class Node:
         self.disks = Disks(self)
         self.storagepools = StoragePools(self)
         self.containers = Containers(self)
+        self.network = Network(self)
 
     @classmethod
     def from_ays(cls, service, timeout=120):
