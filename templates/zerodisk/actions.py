@@ -97,7 +97,7 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
-        logpath = '/{}.log'.format(service.name)
+        logpath = '/nbd_{}.log'.format(service.name)
         if tlogconfig['storageClusters']:
             container.client.system(
                 '/bin/nbdserver \
@@ -166,7 +166,8 @@ def start_tlog(service, container, config):
     container.client.filesystem.upload(configpath, configstream)
     if not is_job_running(container, cmd='/bin/tlogserver'):
         port = get_tlog_port(container)
-        container.client.system('/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {}'.format(port, configpath, k, m))
+        logpath = '/tlog_{}.log'.format(service.name)
+        container.client.system('/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {} -logfile {}'.format(port, configpath, k, m, logpath))
         if not is_job_running(container, cmd='/bin/tlogserver'):
             raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
         return port

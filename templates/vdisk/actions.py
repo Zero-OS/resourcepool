@@ -117,7 +117,7 @@ def get_cluster_config(service, type="storage"):
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice)
-    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"]}
+    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"], 'k': cluster.k, 'm': cluster.m}
 
 
 def create_from_template_container(service, parent):
@@ -186,8 +186,9 @@ def rollback(job):
                 }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         container.upload_content(configpath, yamlconfig)
-
-        cmd = '/bin/zeroctl restore vdisk {} --config {} --start-timestamp {}'.format(service.name, configpath, ts)
+        k = tlogclusterconfig.pop('k')
+        m = tlogclusterconfig.pop('m')
+        cmd = '/bin/zeroctl restore vdisk {} --config {} --start-timestamp {} --k {} --m {}'.format(service.name, configpath, ts, k, m)
         print(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
