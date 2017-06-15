@@ -181,12 +181,12 @@ def deploy(api, nodeIDs, nodeIPs, orchestratorserver, storagecluster, vdiskcount
         fioFlist = "https://hub.gig.tech/gig-official-apps/performance-test.flist"
         createContainer(orchestratorserver, api, nodeID, [fss], fioFlist, testContainer)
         # Load nbd kernel module
-        nodeClient.bash("modprobe nbd").get()
+        nodeClient.system("modprobe nbd nbds_max=512").get()
 
         deployInfo[nodeID] = {
-                "nbdContainer": nbdContainer,
-                "testContainer": testContainer,
-                "nbdConfig": nbdConfig,
+            "nbdContainer": nbdContainer,
+            "testContainer": testContainer,
+            "nbdConfig": nbdConfig,
         }
     return deployInfo
 
@@ -356,4 +356,3 @@ def _create_fss(orchestratorserver, cl, nodeID):
 
 if __name__ == "__main__":
     test_fio_nbd()
-
