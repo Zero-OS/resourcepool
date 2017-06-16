@@ -107,6 +107,8 @@ def updateDevices(service, pool, devices):
 def processChange(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
+    if service.model.actionsState['install'] in ['new', 'schedules']:
+        return
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema":
