@@ -127,7 +127,7 @@ func (c *connectionMiddleware) getConnection(id NodeInfo, api NAPI) (client.Clie
 	poolId := fmt.Sprintf("%s#%s", nodeId, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
 
 	if pool, ok := c.pools.Get(poolId); ok {
-		c.pools.Set(nodeId, pool, cache.DefaultExpiration)
+		c.pools.Set(poolId, pool, cache.DefaultExpiration)
 		return client.NewClientWithPool(pool.(*redis.Pool)), nil
 	}
 	srv, res, err := api.AysAPIClient().Ays.GetServiceByName(nodeId, "node", api.AysRepoName(), nil, nil)

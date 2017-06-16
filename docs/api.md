@@ -234,7 +234,10 @@ Response: `202 Accepted`
 
 
 There is also support for JWT tokens , in this case we use itsyou.online ( **IYO** ) to provide the token,  
-but before that the 0-orchestrator need to be running using the --org flag. This flag allows us to add an **IYO** organization  
+To enable JWT authentication , both AYS server and the 0-orchestrator must be running with JWT auth enabled.
+ - The documnetation for doing that in ays is available [here](https://github.com/Jumpscale/ays9/blob/master/doc/configuration.md).  
+ - As for the api the organization name is passed through --org flag , or passed as the last param to the install develop param
+This flag allows us to add an **IYO** organization
 to authorize and authenticate with.If the falg is not used orchestrator will not require JWT on requests.
 
    
