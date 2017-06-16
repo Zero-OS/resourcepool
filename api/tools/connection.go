@@ -11,6 +11,8 @@ import (
 
 	"encoding/json"
 
+	"strings"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -40,6 +42,11 @@ type redisInfo struct {
 	RedisAddr     string
 	RedisPort     int
 	RedisPassword string
+}
+
+type NodeInfo struct {
+	token string
+	id    string
 }
 
 func ConnectionPortOption(port int) ConnectionOptions {
@@ -76,7 +83,6 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 		Dial: func() (redis.Conn, error) {
 			// the redis protocol should probably be made sett-able
 			c, err := redis.Dial("tcp", address, redis.DialNetDial(func(network, address string) (net.Conn, error) {
-
 				return tls.Dial(network, address, &tls.Config{
 					InsecureSkipVerify: true,
 				})
@@ -112,17 +118,19 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 	return pool
 }
 
-func (c *connectionMiddleware) getConnection(
-	id string, api NAPI) (client.Client, error) {
+func (c *connectionMiddleware) getConnection(id NodeInfo, api NAPI) (client.Client, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	if pool, ok := c.pools.Get(id); ok {
-		c.pools.Set(id, pool, cache.DefaultExpiration)
+	nodeId := id.id
+	token := id.token
+	poolId := fmt.Sprintf("%s#%s", nodeId, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+
+	if pool, ok := c.pools.Get(poolId); ok {
+		c.pools.Set(nodeId, pool, cache.DefaultExpiration)
 		return client.NewClientWithPool(pool.(*redis.Pool)), nil
 	}
-
-	srv, res, err := api.AysAPIClient().Ays.GetServiceByName(id, "node", api.AysRepoName(), nil, nil)
+	srv, res, err := api.AysAPIClient().Ays.GetServiceByName(nodeId, "node", api.AysRepoName(), nil, nil)
 
 	if err != nil {
 		return nil, err
@@ -137,9 +145,8 @@ func (c *connectionMiddleware) getConnection(
 		return nil, err
 	}
 
-	pool := c.createPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), info.RedisPassword)
-
-	c.pools.Set(id, pool, cache.DefaultExpiration)
+	pool := c.createPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
+	c.pools.Set(poolId, pool, cache.DefaultExpiration)
 	return client.NewClientWithPool(pool), nil
 }
 
@@ -181,10 +188,11 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	}
 
 	vars := mux.Vars(r)
-	id := vars["nodeid"]
+	token := strings.Split(r.Header.Get("Authorization"), " ")[1]
+	id := NodeInfo{token, vars["nodeid"]}
 
 	mw := p.(*connectionMiddleware)
-
+	mw.password = token
 	return mw.getConnection(id, api)
 }
 
