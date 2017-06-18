@@ -23,7 +23,7 @@ def validate_configs(configs):
     installed_version = j.core.state.versions.get('JumpScale9')
     if js_version and not js_version.startswith('v') and installed_version.startswith('v'):
         installed_version = installed_version[1:]
-    if js_version and js_version != installed_version:
+    if js_version and not installed_version.startswith(js_version):
         raise j.exceptions.Input('Required jumpscale version is %s but installed version is %s.' % (js_version, installed_version))
 
     if jwt_token:
