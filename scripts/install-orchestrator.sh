@@ -98,10 +98,20 @@ popd
 echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
-if [ ! -d /optvar/cfg/jumpscale ]; then
-    mkdir /optvar/cfg/jumpscale
+if [ ! -d /optvar/cfg/ ]; then
+    mkdir /optvar/cfg/
 fi 
-printf "%s\n" "oauth:" "  client_id: ${ITSYOUONLINEORG}" "  client_secret: ${CLIENTSECRET}" "  jwt_key: '-----BEGIN PUBLIC KEY-----" "    MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n2" "    7MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny6" "    6+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv" "    -----END PUBLIC KEY-----" "    '" "  organization: ${ITSYOUONLINEORG}" > /optvar/cfg/jumpscale/ays.yaml
+config=<<- EOT
+[ays]        
+production = true
+                                                 
+[ays.oauth]
+client_secret = "${CLIENTSECRET}"
+jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIy"
+organization = "${ITSYOUONLINEORG}" 
+EOT
+
+echo config >> /optvar/cfg/jumpscale9.toml
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 

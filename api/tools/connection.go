@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"encoding/json"
-
-	"strings"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
@@ -42,11 +41,6 @@ type redisInfo struct {
 	RedisAddr     string
 	RedisPort     int
 	RedisPassword string
-}
-
-type NodeInfo struct {
-	token string
-	id    string
 }
 
 func ConnectionPortOption(port int) ConnectionOptions {
@@ -118,26 +112,30 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 	return pool
 }
 
-func (c *connectionMiddleware) getConnection(id NodeInfo, api NAPI) (client.Client, error) {
+func (c *connectionMiddleware) getConnection(nodeid string, token string, api NAPI) (client.Client, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	nodeId := id.id
-	token := id.token
-	poolId := fmt.Sprintf("%s#%s", nodeId, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
-
-	if pool, ok := c.pools.Get(poolId); ok {
-		c.pools.Set(poolId, pool, cache.DefaultExpiration)
-		return client.NewClientWithPool(pool.(*redis.Pool)), nil
-	}
-	srv, res, err := api.AysAPIClient().Ays.GetServiceByName(nodeId, "node", api.AysRepoName(), nil, nil)
+	// set auth token for ays to make call to get node info
+	aysAPI := api.AysAPIClient()
+	aysAPI.AuthHeader = token
+	ays := GetAYSClient(aysAPI)
+	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
+	token = strings.Split(token, " ")[1]
+	poolId := fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+
+	if pool, ok := c.pools.Get(poolId); ok {
+		c.pools.Set(poolId, pool, cache.DefaultExpiration)
+		return client.NewClientWithPool(pool.(*redis.Pool)), nil
+	}
+
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Error getting service %v", id)
+		return nil, fmt.Errorf("Error getting service %v", nodeid)
 	}
 
 	var info redisInfo
@@ -188,11 +186,11 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	}
 
 	vars := mux.Vars(r)
-	token := strings.Split(r.Header.Get("Authorization"), " ")[1]
-	id := NodeInfo{token, vars["nodeid"]}
+	token := r.Header.Get("Authorization")
+	nodeid := vars["nodeid"]
 
 	mw := p.(*connectionMiddleware)
-	return mw.getConnection(id, api)
+	return mw.getConnection(nodeid, token, api)
 }
 
 func GetContainerConnection(r *http.Request, api NAPI) (client.Client, error) {
