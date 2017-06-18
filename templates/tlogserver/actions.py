@@ -44,7 +44,7 @@ def install(job):
     for vdiskservice in vdisks:
         tlogcluster = vdiskservice.model.data.tlogStoragecluster
         if tlogcluster and tlogcluster not in config['storageClusters']:
-            clusterconfig, k, m = get_storagecluster_config(service, tlogcluster)
+            clusterconfig, k, m = get_storagecluster_config(job, tlogcluster)
             config['storageClusters'][tlogcluster] = {"dataStorage": clusterconfig["dataStorage"]}
             config['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
             config['k'] += k
@@ -109,11 +109,11 @@ def start(job):
     j.tools.async.wrappers.sync(service.executeAction('install'))
 
 
-def get_storagecluster_config(service, storagecluster):
+def get_storagecluster_config(job, storagecluster):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
-                                                       instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice)
+    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
+                                                           instance=storagecluster)
+    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     return cluster.get_config(), cluster.k, cluster.m
 
 

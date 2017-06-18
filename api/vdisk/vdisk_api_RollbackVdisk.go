@@ -17,6 +17,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	var reqBody VdiskRollback
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]
+	aysClient := tools.GetAysConnection(r, api)
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -29,8 +30,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
-
-	serv, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("rollback vdisk %s", vdiskID)) {
 		return
@@ -63,7 +63,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vdisk__%s", vdiskID)] = bp
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", vdiskID)

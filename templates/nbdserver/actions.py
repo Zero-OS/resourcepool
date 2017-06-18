@@ -58,7 +58,7 @@ def install(job):
 
         if vdiskservice.model.data.storageCluster not in config['storageClusters']:
             storagecluster = vdiskservice.model.data.storageCluster
-            clusterconfig, _, _ = get_storagecluster_config(job, storagecluster)
+            clusterconfig = get_storagecluster_config(job, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
@@ -68,7 +68,7 @@ def install(job):
 
         if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
             tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
-            clusterconfig = get_storagecluster_config(service, tlogStoragecluster)
+            clusterconfig = get_storagecluster_config(job, tlogStoragecluster)
             config['storageClusters'][tlogStoragecluster] = clusterconfig
 
         if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
@@ -149,7 +149,7 @@ def get_storagecluster_config(job, storagecluster):
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                            instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.k, cluster.m
+    return cluster.get_config()
 
 
 def stop(job):
