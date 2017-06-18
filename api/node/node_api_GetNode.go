@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/json"
+
 	"net/http"
 
 	"fmt"
@@ -13,10 +14,11 @@ import (
 // GetNode is the handler for GET /nodes/{nodeid}
 // Get detailed information of a node
 func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
 
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, fmt.Sprintf("Error getting node service %s", nodeID))

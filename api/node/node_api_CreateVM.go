@@ -13,6 +13,7 @@ import (
 // CreateVM is the handler for POST /nodes/{nodeid}/vms
 // Creates the VM
 func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMCreate
 
 	// decode request
@@ -63,7 +64,7 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("vm__%s", reqBody.Id)] = bp
 	obj["actions"] = []tools.ActionBlock{{Service: reqBody.Id, Actor: "vm", Action: "install"}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", reqBody.Id, "install", obj)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", reqBody.Id)

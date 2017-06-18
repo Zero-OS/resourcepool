@@ -13,6 +13,7 @@ import (
 // RollbackVdisk is the handler for POST /vdisks/{vdiskid}/rollback
 // Rollback a vdisk to a previous state
 func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
+
 	var reqBody VdiskRollback
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]

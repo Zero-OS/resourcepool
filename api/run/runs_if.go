@@ -18,7 +18,7 @@ type RunsInterface interface { // GetRunState is the handler for GET /runs
 }
 
 // RunsInterfaceRoutes is routing for /runs root endpoint
-func RunsInterfaceRoutes(r *mux.Router, i RunsInterface) {
+func RunsInterfaceRoutes(r *mux.Router, i RunsInterface, org string) {
 	r.HandleFunc("/runs/{runid}", i.GetRunState).Methods("GET")
 	r.HandleFunc("/runs/{runid}/wait", i.WaitOnRun).Methods("GET")
 }

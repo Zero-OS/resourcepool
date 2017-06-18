@@ -12,6 +12,7 @@ import (
 // DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
 // Remove bridge
 func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
 
@@ -25,7 +26,7 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for bridge deletion "
@@ -34,7 +35,7 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
@@ -44,7 +45,7 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.AysAPI.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	_, err = aysClient.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
 	if err != nil {
 		errmsg := fmt.Sprintf("Error in deleting bridge %s ", bridge)

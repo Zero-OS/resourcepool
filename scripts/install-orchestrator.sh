@@ -22,17 +22,21 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN>"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG>"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
   echo "  ZEROTIERTOKEN: Zerotier api token."
-  echo
+  echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
+  echo "  CLIENTSECRET: client secret for itsyou.online authentication."  
+  echo  
   exit 1
 fi
 BRANCH=$1
 ZEROTIERNWID=$2
 ZEROTIERTOKEN=$3
+ITSYOUONLINEORG=$4
+CLIENTSECRET=$5
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -94,6 +98,21 @@ popd
 echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
+if [ -z ${ITSYOUONLINEORG} ]; then
+if [ ! -d /optvar/cfg/ ]; then
+    mkdir /optvar/cfg/
+fi 
+cat >  /optvar/cfg/jumpscale9.toml << EOL
+[ays]        
+production = true
+                                                
+[ays.oauth] 
+client_secret = "${CLIENTSECRET}" 
+jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv" 
+organization = "${ITSYOUONLINEORG}"  
+EOL
+fi 
+
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
@@ -122,7 +141,11 @@ fi
 
 # create orchestrator service
 echo '#!/bin/bash -x' > ${orchinit}
-echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server"' >> ${orchinit}
+if [ -z ${ITSYOUONLINEORG} ]; then
+    echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server "' >> ${orchinit}
+else
+    echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '"${ITSYOUONLINEORG}"'"' >> ${orchinit}
+fi
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}

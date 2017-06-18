@@ -130,7 +130,7 @@ def processChange(job):
     if httproxychanges:
         httpproxies = args.get('httpproxies', [])
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
-        http_args = {'httpproxies': httpproxies, 'nics': args.get('nics', gatewaydata['nics'])}
+        http_args = {'httpproxies': httpproxies}
         j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
         service.model.data.httpproxies = httpproxies
 
@@ -179,10 +179,10 @@ def start(job):
             time.sleep(0.5)
         raise j.exceptions.RuntimeError("Could not find zerotier network interface")
 
+    ip = containerobj.client.ip
     for nic in nics:
         zerotierbridge = nic.pop('zerotierbridge', None)
         if zerotierbridge:
-            ip = containerobj.client.ip
             nicname = nic['name']
             linkname = 'l-{}'.format(nicname)[:15]
             wait_for_interface()
@@ -224,6 +224,12 @@ def start(job):
 
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
+
+    # setup cloud-init magical ip
+    loaddresses = ip.addr.list('lo')
+    magicip = '169.254.169.254/32'
+    if magicip not in loaddresses:
+        ip.addr.add('lo', magicip)
 
     # start services
     http = container.consumers.get('http')[0]
