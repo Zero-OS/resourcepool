@@ -99,6 +99,7 @@ def install(job):
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
@@ -131,6 +132,7 @@ def processChange(job):
         httpproxies = args.get('httpproxies', [])
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
         http_args = {'httpproxies': httpproxies, 'nics': args.get('nics', gatewaydata['nics'])}
+        job.context['token'] = get_jwt_token_from_job(job)
         j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
         service.model.data.httpproxies = httpproxies
 

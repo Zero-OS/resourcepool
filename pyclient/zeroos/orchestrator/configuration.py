@@ -36,11 +36,10 @@ def get_jwt_token(ays_repo):
         token = jose.jwt.decode(jwt_token, jwt_key)
         if token['exp'] < time.time() - 240:
             jwt_token = refresh_jwt_token(jwt_token)
-    except Exception as e:
-        if e.__class__ != jose.exceptions.ExpiredSignatureError:
-            raise RuntimeError('Invalid jwt-token and jwt-key combination')
-        else:
-            jwt_token = refresh_jwt_token(jwt_token)
+    except jose.exceptions.ExpiredSignatureError:
+        jwt_token = refresh_jwt_token(jwt_token)
+    except Exception:
+        raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
     for config in service.model.data.configurations:
         if config.key == 'jwt-token':
@@ -49,3 +48,10 @@ def get_jwt_token(ays_repo):
 
     service.saveAll()
     return jwt_token
+
+
+def get_jwt_token_from_job(job):
+    if 'token' in job.context:
+        return job.context['token']
+
+    return get_jwt_token(job.service.aysrepo)

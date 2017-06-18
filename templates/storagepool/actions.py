@@ -106,13 +106,15 @@ def updateDevices(service, pool, devices):
 
 def processChange(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema":
         pservice = service.parent
 
-        node = Node.from_ays(pservice, job.context['token'])
+        node = Node.from_ays(pservice, get_jwt_token_from_job(job))
         try:
             pool = node.storagepools.get(service.name)
             devices = [d['device'] for d in args['devices']]

@@ -165,9 +165,12 @@ def resize(job):
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+
     service = job.service
 
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
+        job.context['token'] = get_jwt_token_from_job(job)
         j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))

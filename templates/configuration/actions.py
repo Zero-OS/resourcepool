@@ -28,12 +28,13 @@ def validate_configs(configs):
 
     if jwt_token:
         if not jwt_key:
-            raise j.exceptions.RuntimeError('JWT auth is not configured correctly')
+            raise j.exceptions.Input('JWT key is not configured')
         try:
             jose.jwt.decode(jwt_token, jwt_key)
-        except Exception as e:
-            if e.__class__ != jose.exceptions.ExpiredSignatureError:
-                raise j.exceptions.RuntimeError('Invalid jwt-token and jwt-key combination')
+        except jose.exceptions.ExpiredSignatureError:
+            pass
+        except Exception:
+            raise j.exceptions.RuntimeError('Invalid jwt-token and jwt-key combination')
 
 
 def processChange(job):

@@ -394,11 +394,14 @@ def update_data(job, args):
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
+            job.context['token'] = get_jwt_token_from_job(job)
             node = get_node(job)
             update_data(job, args)
             updateDisks(job, node, args)
