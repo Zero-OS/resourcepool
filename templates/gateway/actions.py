@@ -210,7 +210,9 @@ def start(job):
             ip.link.down(zerotiername)
 
             # remove IP and rename
-            ip.addr.delete(nicname, nic['config']['cidr'])
+            ipaddresses = ip.addr.list(nicname)
+            for ipaddress in ipaddresses:
+                ip.addr.delete(nicname, ipaddress)
             ip.link.name(nicname, linkname)
 
             # create bridge and add interface and IP
@@ -219,7 +221,8 @@ def start(job):
             ip.bridge.addif(nicname, zerotiername)
 
             # readd IP and bring interfaces up
-            ip.addr.add(nicname, nic['config']['cidr'])
+            for ipaddress in ipaddresses:
+                ip.addr.add(nicname, ipaddress)
             ip.link.up(nicname)
             ip.link.up(linkname)
             ip.link.up(zerotiername)
