@@ -224,4 +224,3 @@ def monitor(job):
         else:
             vdisk.model.data.status = 'halted'
     vdisk.saveAll()
-
