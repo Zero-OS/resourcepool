@@ -51,6 +51,13 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, nic := range reqBody.Nics {
+		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
+			tools.WriteError(w, http.StatusBadRequest, err, "")
+			return
+		}
+	}
+
 	gateway := CreateGWBP{
 		Node:         nodeID,
 		Domain:       reqBody.Domain,

@@ -75,6 +75,13 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", storagepoolname, filesystemname)}
 	}
 
+	for _, nic := range reqBody.Nics {
+		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
+			tools.WriteError(w, http.StatusBadRequest, err, "")
+			return
+		}
+	}
+
 	container := struct {
 		Nics           []ContainerNIC `json:"nics" yaml:"nics"`
 		Mounts         []mount        `json:"mounts" yaml:"mounts"`

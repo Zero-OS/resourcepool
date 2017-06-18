@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
 )
@@ -16,16 +17,16 @@ func (s ZerotierBridge) Validate() error {
 }
 
 type GWNIC struct {
+	BaseNic
 	Config         *GWNICConfig    `json:"config,omitempty" yaml:"config,omitempty"`
 	Dhcpserver     *DHCP           `json:"dhcpserver,omitempty" yaml:"dhcpserver,omitempty"`
-	Id             string          `json:"id,omitempty"   yaml:"id,omitempty"`
-	Name           string          `json:"name" yaml:"name" validate:"nonzero"`
-	Type           EnumGWNICType   `json:"type" yaml:"type" validate:"nonzero"`
 	ZerotierBridge *ZerotierBridge `json:"zerotierbridge,omitempty" yaml:"zerotierbridge,omitempty"`
-	Token          string          `json:"token,omitempty" yaml:"token,omitempty"`
 }
 
 func (s GWNIC) Validate() error {
+	if err := s.BaseNic.Validate(); err != nil {
+		return err
+	}
 	if s.Config != nil {
 		if err := s.Config.Validate(); err != nil {
 			return err
@@ -50,22 +51,22 @@ func (s GWNIC) Validate() error {
 	}
 
 	nicTypes := map[interface{}]struct{}{
-		EnumGWNICTypezerotier: struct{}{},
-		EnumGWNICTypevxlan:    struct{}{},
-		EnumGWNICTypevlan:     struct{}{},
-		EnumGWNICTypedefault:  struct{}{},
-		EnumGWNICTypebridge:   struct{}{},
+		EnumContainerNICTypezerotier: struct{}{},
+		EnumContainerNICTypevlan:     struct{}{},
+		EnumContainerNICTypevxlan:    struct{}{},
+		EnumContainerNICTypedefault:  struct{}{},
+		EnumContainerNICTypebridge:   struct{}{},
 	}
 
 	if err := validators.ValidateEnum("Type", s.Type, nicTypes); err != nil {
 		return err
 	}
 
-	if err := validators.ValidateConditional(s.Type, EnumGWNICTypedefault, s.Id, "Id"); err != nil {
+	if err := validators.ValidateConditional(s.Type, EnumContainerNICTypedefault, s.Id, "Id"); err != nil {
 		return err
 	}
 
-	if s.Type != EnumGWNICTypezerotier && s.Token != "" {
+	if s.Type != EnumContainerNICTypezerotier && s.Token != "" {
 		return fmt.Errorf("Token: set for a nic that is not of type zerotier.")
 	}
 
