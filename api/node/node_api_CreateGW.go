@@ -22,6 +22,7 @@ type CreateGWBP struct {
 // CreateGW is the handler for POST /nodes/{nodeid}/gws
 // Create a new gateway
 func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody GWCreate
 
 	vars := mux.Vars(r)
@@ -39,7 +40,7 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := tools.ServiceExists("gateway", reqBody.Name, api.AysRepo)
+	exists, err := aysClient.ServiceExists("gateway", reqBody.Name, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting gateway service by name %s ", reqBody.Name)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
@@ -63,8 +64,9 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", reqBody.Name)] = gateway
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)
 	if err != nil {
+
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)

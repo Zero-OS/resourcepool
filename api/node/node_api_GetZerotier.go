@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,13 +13,14 @@ import (
 // GetZerotier is the handler for GET /nodes/{nodeid}/zerotiers/{zerotierid}
 // Get Zerotier network details
 func (api NodeAPI) GetZerotier(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var respBody Zerotier
 
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 	zerotierID := vars["zerotierid"]
 
-	srv, res, err := api.AysAPI.Ays.GetServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
+	srv, res, err := aysClient.Ays.GetServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting zerotier %s details", zerotierID)) {
 		return
 	}

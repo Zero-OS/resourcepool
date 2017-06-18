@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 // StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
 // Stop Container instance
 func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)
@@ -25,7 +27,7 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error executing blueprint for stopping container %s ", containername)
@@ -34,7 +36,7 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the job to be finshed
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for stopping container %s ", containername)
 		if ok {

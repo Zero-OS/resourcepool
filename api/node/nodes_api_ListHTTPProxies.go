@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ import (
 // ListHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Get list for HTTP proxies
 func (api NodeAPI) ListHTTPProxies(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
@@ -22,7 +24,7 @@ func (api NodeAPI) ListHTTPProxies(w http.ResponseWriter, r *http.Request) {
 		"fields": "httpproxies",
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}

@@ -12,10 +12,11 @@ import (
 // StopGateway is the handler for POST /nodes/{nodeid}/gws/{gwname}/stop
 // Stop gateway instance
 func (api NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
 
-	exists, err := tools.ServiceExists("gateway", gwID, api.AysRepo)
+	exists, err := aysClient.ServiceExists("gateway", gwID, api.AysRepo)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking gateway service exists")
 		return
@@ -34,7 +35,7 @@ func (api NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "stop", bp)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error executing blueprint for stoping gateway %s", gwID)
@@ -43,7 +44,7 @@ func (api NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the job to be finshed
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for stoping gateway %s", gwID)
 		if ok {

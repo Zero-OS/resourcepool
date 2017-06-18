@@ -183,7 +183,11 @@ def stop(job):
     kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
+    cleanupnbd(job)
 
+
+def cleanupnbd(job):
+    service = job.service
     for nbdserver in service.producers.get('zerodisk', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
@@ -240,6 +244,7 @@ def shutdown(job):
             if kvm:
                 time.sleep(3)
             else:
+                cleanupnbd(job)
                 service.model.data.status = 'halted'
                 break
         else:
@@ -247,6 +252,7 @@ def shutdown(job):
             raise j.exceptions.RuntimeError("Failed to shutdown vm {}".format(service.name))
     else:
         service.model.data.status = 'halted'
+        cleanupnbd(job)
 
     service.saveAll()
 

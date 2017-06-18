@@ -8,12 +8,22 @@ import (
 // RunsAPI is API implementation of /runs root endpoint
 type RunsAPI struct {
 	AysRepo string
-	AysAPI  *ays.AtYourServiceAPI
+	AysUrl  string
 }
 
-func NewRunAPI(repo string, client *ays.AtYourServiceAPI) RunsAPI {
+func NewRunAPI(repo string, aysurl string) RunsAPI {
 	return RunsAPI{
 		AysRepo: repo,
-		AysAPI:  client,
+		AysUrl:  aysurl,
 	}
+}
+
+func (api RunsAPI) AysAPIClient() *ays.AtYourServiceAPI {
+	aysAPI := ays.NewAtYourServiceAPI()
+	aysAPI.BaseURI = api.AysUrl
+	return aysAPI
+}
+
+func (api RunsAPI) AysRepoName() string {
+	return api.AysRepo
 }

@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ListContainers is the handler for GET /nodes/{nodeid}/containers
 // List running Containers
 func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
@@ -19,7 +21,7 @@ func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "flist,hostname,status",
 	}
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
+	services, res, err := aysClient.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting container services from ays")
 		return

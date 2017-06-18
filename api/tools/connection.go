@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,8 +26,13 @@ const (
 
 type ConnectionOptions func(*connectionMiddleware)
 
-type API interface {
+type NAPI interface {
 	ContainerCache() *cache.Cache
+	AysAPIClient() *ays.AtYourServiceAPI
+	AysRepoName() string
+}
+
+type API interface {
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
 }
@@ -71,7 +77,6 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 		Dial: func() (redis.Conn, error) {
 			// the redis protocol should probably be made sett-able
 			c, err := redis.Dial("tcp", address, redis.DialNetDial(func(network, address string) (net.Conn, error) {
-
 				return tls.Dial(network, address, &tls.Config{
 					InsecureSkipVerify: true,
 				})
@@ -107,24 +112,30 @@ func (c *connectionMiddleware) createPool(address, password string) *redis.Pool 
 	return pool
 }
 
-func (c *connectionMiddleware) getConnection(
-	id string, api API) (client.Client, error) {
+func (c *connectionMiddleware) getConnection(nodeid string, token string, api NAPI) (client.Client, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	if pool, ok := c.pools.Get(id); ok {
-		c.pools.Set(id, pool, cache.DefaultExpiration)
-		return client.NewClientWithPool(pool.(*redis.Pool)), nil
-	}
-
-	srv, res, err := api.AysAPIClient().Ays.GetServiceByName(id, "node", api.AysRepoName(), nil, nil)
+	// set auth token for ays to make call to get node info
+	aysAPI := api.AysAPIClient()
+	aysAPI.AuthHeader = token
+	ays := GetAYSClient(aysAPI)
+	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
+	token = strings.Split(token, " ")[1]
+	poolId := fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+
+	if pool, ok := c.pools.Get(poolId); ok {
+		c.pools.Set(poolId, pool, cache.DefaultExpiration)
+		return client.NewClientWithPool(pool.(*redis.Pool)), nil
+	}
+
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Error getting service %v", id)
+		return nil, fmt.Errorf("Error getting service %v", nodeid)
 	}
 
 	var info redisInfo
@@ -132,9 +143,8 @@ func (c *connectionMiddleware) getConnection(
 		return nil, err
 	}
 
-	pool := c.createPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), info.RedisPassword)
-
-	c.pools.Set(id, pool, cache.DefaultExpiration)
+	pool := c.createPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
+	c.pools.Set(poolId, pool, cache.DefaultExpiration)
 	return client.NewClientWithPool(pool), nil
 }
 
@@ -163,21 +173,27 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 	}
 }
 
-func GetConnection(r *http.Request, api API) (client.Client, error) {
+func GetAysConnection(r *http.Request, api API) AYStool {
+	aysAPI := api.AysAPIClient()
+	aysAPI.AuthHeader = r.Header.Get("Authorization")
+	return GetAYSClient(aysAPI)
+}
+
+func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	p := r.Context().Value(connectionPoolMiddlewareKey)
 	if p == nil {
 		panic("middleware not injected")
 	}
 
 	vars := mux.Vars(r)
-	id := vars["nodeid"]
+	token := r.Header.Get("Authorization")
+	nodeid := vars["nodeid"]
 
 	mw := p.(*connectionMiddleware)
-
-	return mw.getConnection(id, api)
+	return mw.getConnection(nodeid, token, api)
 }
 
-func GetContainerConnection(r *http.Request, api API) (client.Client, error) {
+func GetContainerConnection(r *http.Request, api NAPI) (client.Client, error) {
 	nodeClient, err := GetConnection(r, api)
 	if err != nil {
 		return nil, err
@@ -204,7 +220,7 @@ func getContainerWithTag(containers map[int16]client.ContainerResult, tag string
 	return 0
 }
 
-func GetContainerId(r *http.Request, api API, nodeClient client.Client, containername string) (int, error) {
+func GetContainerId(r *http.Request, api NAPI, nodeClient client.Client, containername string) (int, error) {
 	vars := mux.Vars(r)
 	if containername == "" {
 		containername = vars["containername"]
@@ -230,7 +246,7 @@ func GetContainerId(r *http.Request, api API, nodeClient client.Client, containe
 	return id, nil
 }
 
-func DeleteContainerId(r *http.Request, api API) {
+func DeleteContainerId(r *http.Request, api NAPI) {
 	vars := mux.Vars(r)
 	c := api.ContainerCache()
 	c.Delete(vars["containername"])

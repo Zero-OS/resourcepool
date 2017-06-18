@@ -109,6 +109,8 @@ def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
     service = job.service
+    if service.model.actionsState['install'] in ['new', 'schedules']:
+        return
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema":

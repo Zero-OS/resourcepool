@@ -13,6 +13,7 @@ import (
 // CreateFilesystem is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // Create a new filesystem
 func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody FilesystemCreate
 	nodeid := mux.Vars(r)["nodeid"]
 	storagepool := mux.Vars(r)["storagepoolname"]
@@ -46,7 +47,7 @@ func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
 		"actions": []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "filesystem"}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "filesystem", reqBody.Name, "install", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for filesystem creation "

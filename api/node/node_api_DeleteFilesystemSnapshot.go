@@ -11,6 +11,7 @@ import (
 // DeleteFilesystemSnapshot is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
 // Delete snapshot
 func (api NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	name := vars["snapshotname"]
 
@@ -24,7 +25,7 @@ func (api NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Reque
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "fssnapshot", name, "delete", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "fssnapshot", name, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for fssnapshot deletion "
@@ -33,7 +34,7 @@ func (api NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for fssnapshot deletion")
@@ -43,7 +44,7 @@ func (api NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resp, err := api.AysAPI.Ays.DeleteServiceByName(name, "fssnapshot", api.AysRepo, nil, nil)
+	resp, err := aysClient.Ays.DeleteServiceByName(name, "fssnapshot", api.AysRepo, nil, nil)
 	if err != nil {
 		errmsg := "Error deleting fssnapshot services "
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)

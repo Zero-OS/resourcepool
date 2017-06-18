@@ -10,6 +10,7 @@ import (
 // RollbackVdisk is the handler for POST /vdisks/{vdiskid}/rollback
 // Rollback a vdisk to a previous state
 func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
+
 	var reqBody VdiskRollback
 
 	// decode request
@@ -26,6 +27,11 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// Create rollback blueprint
 	// TODO: define rollback
+	// aysAPI := ays.NewAtYourServiceAPI()
+	// aysAPI.BaseURI = api.AysUrl
+	// aysAPI.AuthHeader = r.Header.Get("Authorization")
+	// aysClient := tools.GetAYSClient(aysAPI)
+	//
 	// vdiskId := mux.Vars(r)["vdiskid"]
 	// bp := struct {
 	// 	Epoch int `yaml:"epoch" json:"epoch"`
@@ -41,7 +47,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	// obj["actions"] = []map[string]string{map[string]string{"action": "rollback"}}
 	//
 	// // And execute
-	// if _, err := tools.ExecuteBlueprint(api.AysRepo, bpName, obj); err != nil {
+	// if _, err := aysClient.ExecuteBlueprint(api.AysRepo, bpName, obj); err != nil {
 	// 	log.Errorf("error executing blueprint for vdisk %s rollback : %+v", vdiskId, err)
 	// 	tools.WriteError(w, http.StatusInternalServerError, err, "")
 	// 	return

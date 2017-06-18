@@ -8,12 +8,22 @@ import (
 // StorageclusterAPI is API implementation of /storagecluster root endpoint
 type StorageclustersAPI struct {
 	AysRepo string
-	AysAPI  *ays.AtYourServiceAPI
+	AysUrl  string
 }
 
-func NewStorageClusterAPI(repo string, client *ays.AtYourServiceAPI) StorageclustersAPI {
+func NewStorageClusterAPI(repo string, aysurl string) StorageclustersAPI {
 	return StorageclustersAPI{
 		AysRepo: repo,
-		AysAPI:  client,
+		AysUrl:  aysurl,
 	}
+}
+
+func (api StorageclustersAPI) AysAPIClient() *ays.AtYourServiceAPI {
+	aysAPI := ays.NewAtYourServiceAPI()
+	aysAPI.BaseURI = api.AysUrl
+	return aysAPI
+}
+
+func (api StorageclustersAPI) AysRepoName() string {
+	return api.AysRepo
 }

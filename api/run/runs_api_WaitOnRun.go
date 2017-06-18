@@ -3,6 +3,7 @@ package run
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,14 +13,15 @@ import (
 // GetRunState is the handler for GET /runs/{runid}/wait
 // Get Run Status
 func (api RunsAPI) WaitOnRun(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	runid := vars["runid"]
-	run, resp, err := api.AysAPI.Ays.GetRun(runid, api.AysRepo, nil, nil)
+	run, resp, err := aysClient.Ays.GetRun(runid, api.AysRepo, nil, nil)
 	if err != nil {
 		tools.WriteError(w, resp.StatusCode, err, "Error getting run")
 	}
 
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
 		if ok {

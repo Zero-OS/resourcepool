@@ -13,11 +13,12 @@ import (
 // CreateStoragePoolDevices is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/device
 // Add extra devices to this storage pool
 func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
 
-	devices, notok := api.getStoragePoolDevices(node, storagepool, w)
+	devices, notok := api.getStoragePoolDevices(node, storagepool, w, r)
 	if notok {
 		return
 	}
@@ -68,7 +69,7 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := "Error executing blueprint for storagepool device creation "

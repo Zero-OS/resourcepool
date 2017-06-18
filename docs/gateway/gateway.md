@@ -51,7 +51,7 @@ Advanced reverse proxy configuration can be configured by uploading the [Caddy](
 
 ## Cloud-init
 The gateway also acts as a cloud-init server over HTTP. For more information on cloud-init see https://cloud-init.io/ && https://cloudinit.readthedocs.io.
-The gateway implements the [Apache Cloudstack](https://cloudinit.readthedocs.io/en/latest/topics/datasources/cloudstack.html) datasource.
+The gateway implements the [Amazon EC2](http://cloudinit.readthedocs.io/en/latest/topics/datasources/ec2.html) datasource.
 
 See [../../raml/api.html#nodes_nodeid_gws_gwname_dhcp_interface_hosts_post](https://htmlpreviewer.github.io/?../../raml/api.html#nodes__nodeid__gws__gwname__dhcp__interface__hosts_post) to learn how to configure cloud-init user-data and meta-data when adding hosts to a connected network of a gateway. Posting the cloud-init data needs to be done in **YAML** format. Many configuration examples can be found here: https://cloudinit.readthedocs.io/en/latest/topics/examples.html
 

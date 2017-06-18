@@ -381,12 +381,6 @@ VMCreate:
     disks:
       description: List of virtual disks
       type: VDiskLink[]
-    userCloudInit:
-      description: User level cloudinit configuration
-      type: object
-    systemCloudInit:
-      description: System level cloudinit configuration
-      type: object
 
 VMUpdate:
   type: object
@@ -1127,7 +1121,7 @@ CloudInit:
       type: string
       description: |
         metadata for cloud-init ini YAML format mainly used for setting hostname
-        For more details [see](http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/virtual_machines.html#user-data-and-meta-data)
+        For more details [see](http://cloudinit.readthedocs.io/en/latest/topics/datasources/ec2.html)
 
 GWHost:
   properties:
@@ -1298,7 +1292,7 @@ RunState:
   enum: [ok, running, scheduled, error, new, disabled, changed]
 
 Run:
-  properties: 
+  properties:
       runid:
         description: Runid of job that was scheduled.
         type: string
