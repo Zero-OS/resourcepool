@@ -192,7 +192,6 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	id := NodeInfo{token, vars["nodeid"]}
 
 	mw := p.(*connectionMiddleware)
-	mw.password = token
 	return mw.getConnection(id, api)
 }
 
