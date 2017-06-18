@@ -101,17 +101,16 @@ aysinit="/etc/my_init.d/10_ays.sh"
 if [ ! -d /optvar/cfg/ ]; then
     mkdir /optvar/cfg/
 fi 
-config=<<- EOT
+cat >  /optvar/cfg/jumpscale9.toml << EOL
 [ays]        
 production = true
-                                                 
-[ays.oauth]
-client_secret = "${CLIENTSECRET}"
-jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIy"
-organization = "${ITSYOUONLINEORG}" 
-EOT
+                                                  
+[ays.oauth] 
+client_secret = "${CLIENTSECRET}" 
+jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//      wngxIy" 
+organization = "${ITSYOUONLINEORG}"  
+EOL
 
-echo config >> /optvar/cfg/jumpscale9.toml
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
