@@ -1,6 +1,6 @@
-def _get_client(parent):
+def _get_client(job):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(parent).client
+    return Node.from_ays(job.service.parent, job.context['token']).client
 
 
 def _get_network(service):
@@ -15,7 +15,7 @@ def install(job):
     from zerotier import client as ztclient
 
     data = job.service.model.data
-    client = _get_client(job.service.parent)
+    client = _get_client(job)
     client.zerotier.join(data.nwid)
 
     def get_member():
@@ -70,5 +70,5 @@ def install(job):
 
 def delete(job):
     service = job.service
-    client = _get_client(service.parent)
+    client = _get_client(job)
     client.zerotier.leave(service.model.data.nwid)

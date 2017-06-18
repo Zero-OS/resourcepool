@@ -23,7 +23,7 @@ def input(job):
 
 def install(job):
     job.service.model.data.status = "halted"
-    j.tools.async.wrappers.sync(job.service.executeAction('start'))
+    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
@@ -32,7 +32,7 @@ def start(job):
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
-    container = Container.from_ays(service)
+    container = Container.from_ays(service, job.context['token'])
     container.start()
 
     if container.is_running():
@@ -78,7 +78,7 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service)
+    container = Container.from_ays(job.service, job.context['token'])
     container.stop()
 
     if not container.is_running():
@@ -89,10 +89,12 @@ def stop(job):
 
 def monitor(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
     service = job.service
 
     if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service)
+        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo))
         running = container.is_running()
         if not running and service.model.data.status == 'running':
             try:

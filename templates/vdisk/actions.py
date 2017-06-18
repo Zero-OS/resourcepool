@@ -11,11 +11,11 @@ def install(job):
 
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
-        targetconfig = get_cluster_config(service)
+        targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         storagecluster = service.model.data.storageCluster
 
-        volume_container = create_from_template_container(service, target_node)
+        volume_container = create_from_template_container(job, target_node)
         try:
             srcardb = get_srcardb(volume_container, template)
             configpath = "/config.yml"
@@ -63,7 +63,7 @@ def delete(job):
 
     service = job.service
     storagecluster = service.model.data.storageCluster
-    clusterconfig = get_cluster_config(service)
+    clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(service, node)
     try:
@@ -107,20 +107,20 @@ def get_srcardb(container, template):
         raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
 
 
-def get_cluster_config(service, type="storage"):
+def get_cluster_config(job, type="storage"):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     if type == "tlog":
-        cluster = service.model.data.tlogStoragecluster
+        cluster = job.service.model.data.tlogStoragecluster
     else:
-        cluster = service.model.data.storageCluster
+        cluster = job.service.model.data.storageCluster
 
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=cluster)
-    cluster = StorageCluster.from_ays(storageclusterservice)
+    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"], 'k': cluster.k, 'm': cluster.m}
 
 
-def create_from_template_container(service, parent):
+def create_from_template_container(job, parent):
     """
     if not it creates it.
     return the container service
@@ -129,9 +129,9 @@ def create_from_template_container(service, parent):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
 
-    container_name = 'vdisk_{}_{}'.format(service.name, parent.name)
-    node = Node.from_ays(parent)
-    config = get_configuration(service.aysrepo)
+    container_name = 'vdisk_{}_{}'.format(job.service.name, parent.name)
+    node = Node.from_ays(parent, job.context['token'])
+    config = get_configuration(job.service.aysrepo)
     container = Container(name=container_name,
                           flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
                           host_network=True,
@@ -214,12 +214,14 @@ def resize(job):
 
 def processChange(job):
     import math
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
 
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         if args.get('size', None):
+            job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('resize', args={'size': args['size']}))
         if args.get('timestamp', None):
             if str(service.model.data.status) != "halted":
@@ -227,4 +229,5 @@ def processChange(job):
             if str(service.model.data.type) not in ["boot", "db"]:
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
             args['timestamp'] = int(args['timestamp'] * math.pow(10, 9))
+            job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}))

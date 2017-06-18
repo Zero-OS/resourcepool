@@ -38,3 +38,8 @@ The following are the available keys:
 * `0-disk-flist`:
   - Specifies the flist for the 0-disk containers
   - Defaults to 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'
+* `jwt-token`:
+  - Specifies a refreshable JWT token. To configure jwt-token, the jwt-key must be supplied too.
+  - If not configured, the services will connect to 0core with supplying a password.
+* `jwt-key`:
+  - Key used to validate the jwt-token.

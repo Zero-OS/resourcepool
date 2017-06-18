@@ -25,9 +25,9 @@ def input(job):
     return job.model.args
 
 
-def get_cluster(service):
+def get_cluster(job):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    return StorageCluster.from_ays(service)
+    return StorageCluster.from_ays(job.service, job.context['token'])
 
 
 def init(job):
@@ -38,7 +38,7 @@ def init(job):
     service = job.service
     nodes = []
     for node_service in service.producers['node']:
-        nodes.append(Node.from_ays(node_service))
+        nodes.append(Node.from_ays(node_service, job.context['token']))
     nodemap = {node.name: node for node in nodes}
 
     cluster = StorageCluster(service.name, nodes, service.model.data.diskType)
@@ -130,7 +130,7 @@ def install(job):
 def start(job):
     service = job.service
 
-    cluster = get_cluster(service)
+    cluster = get_cluster(job)
     job.logger.info("start cluster {}".format(service.name))
     cluster.start()
     job.service.model.data.status = 'ready'
@@ -138,7 +138,7 @@ def start(job):
 
 def stop(job):
     service = job.service
-    cluster = get_cluster(service)
+    cluster = get_cluster(job)
     job.logger.info("stop cluster {}".format(service.name))
     cluster.stop()
 
@@ -150,14 +150,14 @@ def delete(job):
 
     for ardb in ardbs:
         container = ardb.parent
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
     for fs in filesystems:
         if not fs.parent:
             continue
         pool = fs.parent
-        j.tools.async.wrappers.sync(pool.executeAction('delete'))
+        j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
         j.tools.async.wrappers.sync(pool.delete())
 
     job.logger.info("stop cluster {}".format(service.name))
