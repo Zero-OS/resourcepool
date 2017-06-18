@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StorageclustersInterface is interface for /storageclusters root endpoint
@@ -28,8 +26,8 @@ type StorageclustersInterface interface { // KillCluster is the handler for DELE
 
 // StorageclustersInterfaceRoutes is routing for /storageclusters root endpoint
 func StorageclustersInterfaceRoutes(r *mux.Router, i StorageclustersInterface, org string) {
-	r.Handle("/storageclusters/{label}", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.KillCluster))).Methods("DELETE")
-	r.Handle("/storageclusters/{label}", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.GetClusterInfo))).Methods("GET")
-	r.Handle("/storageclusters", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.ListAllClusters))).Methods("GET")
-	r.Handle("/storageclusters", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.DeployNewCluster))).Methods("POST")
+	r.HandleFunc("/storageclusters/{label}", i.KillCluster).Methods("DELETE")
+	r.HandleFunc("/storageclusters/{label}", i.GetClusterInfo).Methods("GET")
+	r.HandleFunc("/storageclusters", i.ListAllClusters).Methods("GET")
+	r.HandleFunc("/storageclusters", i.DeployNewCluster).Methods("POST")
 }

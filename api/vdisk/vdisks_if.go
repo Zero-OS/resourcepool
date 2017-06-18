@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // VdisksInterface is interface for /vdisks root endpoint
@@ -34,10 +32,10 @@ type VdisksInterface interface { // ResizeVdisk is the handler for POST /vdisks/
 
 // VdisksInterfaceRoutes is routing for /vdisks root endpoint
 func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface, org string) {
-	r.Handle("/vdisks/{vdiskid}/resize", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.ResizeVdisk))).Methods("POST")
-	r.Handle("/vdisks/{vdiskid}/rollback", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.RollbackVdisk))).Methods("POST")
-	r.Handle("/vdisks/{vdiskid}", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.DeleteVdisk))).Methods("DELETE")
-	r.Handle("/vdisks/{vdiskid}", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.GetVdiskInfo))).Methods("GET")
-	r.Handle("/vdisks", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.ListVdisks))).Methods("GET")
-	r.Handle("/vdisks", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.CreateNewVdisk))).Methods("POST")
+	r.HandleFunc("/vdisks/{vdiskid}/resize", i.ResizeVdisk).Methods("POST")
+	r.HandleFunc("/vdisks/{vdiskid}/rollback", i.RollbackVdisk).Methods("POST")
+	r.HandleFunc("/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
+	r.HandleFunc("/vdisks/{vdiskid}", i.GetVdiskInfo).Methods("GET")
+	r.HandleFunc("/vdisks", i.ListVdisks).Methods("GET")
+	r.HandleFunc("/vdisks", i.CreateNewVdisk).Methods("POST")
 }

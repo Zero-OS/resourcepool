@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // RunsInterface is interface for /runs root endpoint
@@ -21,6 +19,6 @@ type RunsInterface interface { // GetRunState is the handler for GET /runs
 
 // RunsInterfaceRoutes is routing for /runs root endpoint
 func RunsInterfaceRoutes(r *mux.Router, i RunsInterface, org string) {
-	r.Handle("/runs/{runid}", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.GetRunState))).Methods("GET")
-	r.Handle("/runs/{runid}/wait", alice.New(tools.NewOauth2itsyouonlineMiddleware(org).Handler).Then(http.HandlerFunc(i.WaitOnRun))).Methods("GET")
+	r.HandleFunc("/runs/{runid}", i.GetRunState).Methods("GET")
+	r.HandleFunc("/runs/{runid}/wait", i.WaitOnRun).Methods("GET")
 }
