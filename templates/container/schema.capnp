@@ -1,4 +1,4 @@
-@0x9947b6d71387a2a5;
+@0xc8f60a10ebb307a6;
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
@@ -38,6 +38,7 @@ struct Schema {
         config @2: NicConfig;
         name @3: Text;
         token @4: Text;
+        hwaddr @5: Text;
     }
 
     struct NicConfig {
