@@ -30,23 +30,6 @@ def get_cluster(service):
     return StorageCluster.from_ays(service)
 
 
-def get_baseports(node, baseport=2000, nrports=3):
-    ports = node.client.info.port()
-    usedports = set()
-    for portInfo in ports:
-        if portInfo['network'] != "tcp":
-            continue
-        usedports.add(portInfo['port'])
-
-    baseports = []
-    while True:
-        if baseport not in usedports:
-            baseports.append(baseport)
-            if len(baseports) >= nrports:
-                return baseports
-        baseport += 1
-
-
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
@@ -118,8 +101,8 @@ def init(job):
 
     for nodename, disks in availabledisks.items():
         node = nodemap[nodename]
-        # making the storagepools
-        baseports = get_baseports(node, baseport=2000, nrports=len(disks) + 1)
+        # making the storagepool
+        baseports = node.freeports(baseport=2000, nrports=len(disks) + 1)
         for idx, disk in enumerate(disks):
             create_server(node, disk, baseports[idx])
 

@@ -41,33 +41,39 @@ def create_zerodisk_container(service, parent):
     return containerservice
 
 
-def create_nbd(service, container):
+def create_service(service, container, role='nbdserver'):
     """
-    first check if the nbd server exists.
+    first check if the nbd server exists.'zerodisk'
     if not it creates it.
     return the nbdserver service
     """
-    nbd_name = service.name
+    service_name = service.name
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role='zerodisk', instance=nbd_name)
+        nbdserver = service.aysrepo.serviceGet(role=role, instance=service_name)
     except j.exceptions.NotFound:
         nbdserver = None
 
     if nbdserver is None:
-        nbd_actor = service.aysrepo.actorGet('zerodisk')
+        nbd_actor = service.aysrepo.actorGet(role)
         args = {
             'container': container.name,
         }
-        nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)
+        nbdserver = nbd_actor.serviceCreate(instance=service_name, args=args)
     return nbdserver
 
 
-def _init_nbd_services(job, vdisk_container):
+def _init_zerodisk_services(job, vdisk_container):
     service = job.service
-    nbdserver = create_nbd(service, vdisk_container)
+    # Create nbderver service
+    nbdserver = create_service(service, vdisk_container)
     job.logger.info("creates nbd server for vm {}".format(service.name))
     service.consume(nbdserver)
+    # Create tlogserver service
+    tlogserver = create_service(service, vdisk_container, role='tlogserver')
+    job.logger.info("creates tlog server for vm {}".format(service.name))
+    service.consume(tlogserver)
+    nbdserver.consume(tlogserver)
 
 
 def _nbd_url(container, nbdserver, vdisk):
@@ -82,15 +88,15 @@ def init(job):
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
     vdisk_container = create_zerodisk_container(service, service.parent)
-    _init_nbd_services(job, vdisk_container)
+    _init_zerodisk_services(job, vdisk_container)
 
 
-def _start_nbds(service):
+def _start_nbd(service):
     from zeroos.orchestrator.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = service.producers.get('zerodisk', None)
+    nbdservers = service.producers.get('nbdserver', None)
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
@@ -108,6 +114,23 @@ def _start_nbds(service):
     return medias
 
 
+def start_tlog(service):
+    from zeroos.orchestrator.sal.Container import Container
+
+    tlogservers = service.producers.get('tlogserver', None)
+    if not tlogservers:
+        raise j.exceptions.RuntimeError("Failed to start tlogs, no tlogs created to start")
+    tlogserver = tlogservers[0]
+    # build full path of the tlogserver unix socket on the host filesystem
+    container = Container.from_ays(tlogserver.parent)
+    # make sure container is up
+    if not container.is_running():
+        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start'))
+
+    # make sure the tlogserver is started
+    j.tools.async.wrappers.sync(tlogserver.executeAction('start'))
+
+
 def get_media_for_disk(medias, disk):
     from urllib.parse import urlparse
     for media in medias:
@@ -121,7 +144,8 @@ def install(job):
     service = job.service
 
     # get all path to the vdisks serve by the nbdservers
-    medias = _start_nbds(service)
+    start_tlog(service)
+    medias = _start_nbd(service)
 
     job.logger.info("create vm {}".format(service.name))
     node = get_node(service)
@@ -184,7 +208,7 @@ def stop(job):
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
 
-    for nbdserver in service.producers.get('zerodisk', []):
+    for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
@@ -263,14 +287,14 @@ def migrate(job):
     target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
-    old_nbd = service.producers.get('zerodisk', [])
+    old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
     vdisk_container = create_zerodisk_container(service, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
-    nbdserver = create_nbd(service, vdisk_container)
+    nbdserver = create_service(service, vdisk_container)
     service.consume(nbdserver)
 
     # TODO: migrate domain, not impleented yet in core0
@@ -327,7 +351,7 @@ def updateDisks(job, client, args):
 
     # Detatching and Cleaning old disks
     if old_disks != []:
-        nbdserver = service.producers.get('zerodisk', [])[0]
+        nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
@@ -335,13 +359,13 @@ def updateDisks(job, client, args):
 
     # Attaching new disks
     if new_disks != []:
-        _init_nbd_services(job, vdisk_container)
+        _init_zerodisk_services(job, vdisk_container)
         for disk in new_disks:
             diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
             service.consume(diskservice)
         service.saveAll()
-        _start_nbds(service)
-        nbdserver = service.producers.get('zerodisk', [])[0]
+        _start_nbd(service)
+        nbdserver = service.producers.get('nbdserver', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
             if disk['maxIOps']:
