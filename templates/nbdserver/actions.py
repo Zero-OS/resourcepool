@@ -40,7 +40,6 @@ def install(job):
     config = {
         'storageClusters': {},
         'vdisks': {},
-        'tlogStoragecluster': {},
     }
 
     socketpath = '/server.socket.{id}'.format(id=service.name)
@@ -59,13 +58,18 @@ def install(job):
 
         if vdiskservice.model.data.storageCluster not in config['storageClusters']:
             storagecluster = vdiskservice.model.data.storageCluster
-            clusterconfig, _, _ = get_storagecluster_config(service, storagecluster)
+            clusterconfig = get_storagecluster_config(service, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
 
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
+
+        if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
+            tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
+            clusterconfig = get_storagecluster_config(service, tlogStoragecluster)
+            config['storageClusters'][tlogStoragecluster] = clusterconfig
 
         vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
         vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
@@ -140,7 +144,7 @@ def get_storagecluster_config(service, storagecluster):
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice)
-    return cluster.get_config(), cluster.k, cluster.m
+    return cluster.get_config()
 
 
 def stop(job):
