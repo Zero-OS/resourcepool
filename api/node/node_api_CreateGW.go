@@ -76,6 +76,10 @@ func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
+		if httpErr.Resp.StatusCode/100 == 4 {
+			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+			return
+		}
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}

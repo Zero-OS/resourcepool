@@ -58,6 +58,10 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
+		if httpErr.Resp.StatusCode/100 == 4 {
+			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+			return
+		}
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}

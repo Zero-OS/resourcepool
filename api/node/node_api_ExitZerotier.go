@@ -34,6 +34,10 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error executing blueprint for zerotier %s exit ", zerotierID)
+		if httpErr.Resp.StatusCode/100 == 4 {
+			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+			return
+		}
 		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return
 	}
