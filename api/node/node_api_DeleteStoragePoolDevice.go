@@ -17,8 +17,8 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 	storagePool := vars["storagepoolname"]
 	toDeleteUUID := vars["deviceuuid"]
 
-	devices, err := api.getStoragePoolDevices(node, storagePool, w, r)
-	if err {
+	devices, errBool := api.getStoragePoolDevices(node, storagePool, w, r)
+	if errBool {
 		return
 	}
 
@@ -46,10 +46,9 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		fmt.Sprintf("storagepool__%s", storagePool): bpContent,
 	}
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for storagepool device deletion "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint)
+	errmsg := "Error executing blueprint for storagepool device deletion "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

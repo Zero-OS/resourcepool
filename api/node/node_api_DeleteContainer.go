@@ -27,10 +27,8 @@ func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for container deletion"
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := "Error executing blueprint for container deletion"
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

@@ -51,10 +51,8 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 	}}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

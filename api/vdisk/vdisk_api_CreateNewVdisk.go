@@ -78,10 +78,8 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	// And Execute
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

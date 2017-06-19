@@ -2,13 +2,19 @@ from js9 import j
 
 
 def input(job):
+    service = job.service
     # Check the blueprint input for errors
     args = job.model.args
     if args.get('vdisks'):
         raise j.exceptions.Input('vdisks property should not be set in the blueprint. Instead use disks property.')
     disks = args.get("disks", [])
+    args['vdisks'] = []
     if disks != []:
-        args['vdisks'] = [disk['vdiskid'] for disk in disks]
+        for disk in disks:
+            if not disk["vdiskid"]:
+                continue
+            service.aysrepo.serviceGet(role='vdisk', instance=disk["vdiskid"])
+            args['vdisks'].append(disk)
     return args
 
 

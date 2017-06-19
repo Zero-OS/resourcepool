@@ -24,10 +24,10 @@ func (api NodeAPI) RollbackFilesystemSnapshot(w http.ResponseWriter, r *http.Req
 		}},
 	}
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "snapshot", name, "rollback", blueprint); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for fssnapshot rollback "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "snapshot", name, "rollback", blueprint)
+
+	errmsg := "Error executing blueprint for fssnapshot rollback "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

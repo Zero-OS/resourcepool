@@ -41,13 +41,13 @@ def install(job):
 
     while True:
         net = _get_network(job)
-        if net['status'] == 'OK':
+        if net['status'] in ['OK', 'ACCESS_DENIED']:
             break
         time.sleep(1)
+
     data.allowDefault = net['allowDefault']
     data.allowGlobal = net['allowGlobal']
     data.allowManaged = net['allowManaged']
-    data.allowDefault = net['allowDefault']
     data.assignedAddresses = net['assignedAddresses']
     data.bridge = net['bridge']
     data.broadcastEnabled = net['broadcastEnabled']

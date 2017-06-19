@@ -6,9 +6,13 @@ def get_container(service):
     return Container.from_ays(service.parent)
 
 
-def is_port_listening(container, port):
-    if port in container.node.freeports(port, nrports=3):
-        return True
+def is_port_listening(container, port, timeout=60):
+    import time
+    start = time.time()
+    while start + timeout > time.time():
+        if port not in container.node.freeports(port, nrports=3):
+            return True
+        time.sleep(0.2)
     return False
 
 
@@ -58,7 +62,7 @@ def install(job):
         configstream.seek(0)
         container.client.filesystem.upload(configpath, configstream)
         bind = service.model.data.bind or None
-        if is_port_listening(container, int(bind.split(':')[1])):
+        if not bind or is_port_listening(container, int(bind.split(':')[1])):
             ip = container.node.storageAddr
             port = container.node.freeports(baseport=11211, nrports=1)[0]
             logpath = '/tlog_{}.log'.format(service.name)

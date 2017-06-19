@@ -109,12 +109,11 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "container"}}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", reqBody.Name, "install", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for container %s creation", reqBody.Name)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	errmsg := fmt.Sprintf("error executing blueprint for container %s creation", reqBody.Name)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
+
 	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Name))

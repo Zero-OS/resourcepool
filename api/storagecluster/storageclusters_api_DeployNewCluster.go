@@ -58,10 +58,10 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		Service: reqBody.Label,
 	}}
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
