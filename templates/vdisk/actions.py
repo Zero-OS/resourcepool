@@ -65,7 +65,7 @@ def delete(job):
     storagecluster = service.model.data.storageCluster
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
-    container = create_from_template_container(service, node)
+    container = create_from_template_container(job, node)
     try:
         configpath = "/config.yaml"
         disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
@@ -115,7 +115,7 @@ def get_cluster_config(job, type="storage"):
         cluster = job.service.model.data.storageCluster
 
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
-                                                       instance=cluster)
+                                                           instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"], 'k': cluster.k, 'm': cluster.m}
 
@@ -158,13 +158,13 @@ def rollback(job):
     ts = job.model.args['timestamp']
 
     storagecluster = service.model.data.storageCluster
-    clusterconfig = get_cluster_config(service)
+    clusterconfig = get_cluster_config(job)
 
     tlogcluster = service.model.data.tlogStoragecluster
-    tlogclusterconfig = get_cluster_config(service, type='tlog')
+    tlogclusterconfig = get_cluster_config(job, type='tlog')
 
     node = random.choice(clusterconfig['nodes'])
-    container = create_from_template_container(service, node)
+    container = create_from_template_container(job, node)
     try:
         configpath = "/config.yaml"
         disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
@@ -222,7 +222,7 @@ def processChange(job):
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         if args.get('size', None):
             job.context['token'] = get_jwt_token_from_job(job)
-            j.tools.async.wrappers.sync(service.executeAction('resize', args={'size': args['size']}))
+            j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
         if args.get('timestamp', None):
             if str(service.model.data.status) != "halted":
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
@@ -230,4 +230,4 @@ def processChange(job):
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
             args['timestamp'] = int(args['timestamp'] * math.pow(10, 9))
             job.context['token'] = get_jwt_token_from_job(job)
-            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}))
+            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))

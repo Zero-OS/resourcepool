@@ -106,7 +106,7 @@ def install(job):
 
 def start(job):
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install'))
+    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
 def get_storagecluster_config(job, storagecluster):

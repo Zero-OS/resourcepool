@@ -12,9 +12,9 @@ def input(job):
     return args
 
 
-def get_node(service):
+def get_node(job):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(service.parent, job.context['token'])
+    return Node.from_ays(job.service.parent, job.context['token'])
 
 
 def create_zerodisk_container(job, parent):
@@ -114,10 +114,10 @@ def _start_nbd(job):
     return medias
 
 
-def start_tlog(service):
+def start_tlog(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    tlogservers = service.producers.get('tlogserver', None)
+    tlogservers = job.service.producers.get('tlogserver', None)
     if not tlogservers:
         raise j.exceptions.RuntimeError("Failed to start tlogs, no tlogs created to start")
     tlogserver = tlogservers[0]
@@ -125,10 +125,10 @@ def start_tlog(service):
     container = Container.from_ays(tlogserver.parent)
     # make sure container is up
     if not container.is_running():
-        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start'))
+        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
 
     # make sure the tlogserver is started
-    j.tools.async.wrappers.sync(tlogserver.executeAction('start'))
+    j.tools.async.wrappers.sync(tlogserver.executeAction('start', context=job.context))
 
 
 def get_media_for_disk(medias, disk):
@@ -144,8 +144,8 @@ def install(job):
     service = job.service
 
     # get all path to the vdisks serve by the nbdservers
-    start_tlog(service)
-    medias = _start_nbd(service)
+    start_tlog(job)
+    medias = _start_nbd(job)
 
     job.logger.info("create vm {}".format(service.name))
     node = get_node(job)
@@ -375,7 +375,7 @@ def updateDisks(job, client, args):
             diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
             service.consume(diskservice)
         service.saveAll()
-        _start_nbd(service)
+        _start_nbd(job)
         nbdserver = service.producers.get('nbdserver', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}

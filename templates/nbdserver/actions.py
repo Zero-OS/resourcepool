@@ -73,7 +73,7 @@ def install(job):
 
         if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
             tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
-            clusterconfig = get_storagecluster_config(service, tlogStoragecluster)
+            clusterconfig = get_storagecluster_config(job, tlogStoragecluster)
             config['storageClusters'][tlogStoragecluster] = clusterconfig
 
         vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
