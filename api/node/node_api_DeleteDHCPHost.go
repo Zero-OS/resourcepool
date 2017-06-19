@@ -69,14 +69,10 @@ NicsLoop:
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
-		if httpErr.Resp.StatusCode/100 == 4 {
-			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-			return
-		}
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

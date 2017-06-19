@@ -55,14 +55,10 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwID)] = reqBody
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
-		if httpErr.Resp.StatusCode/100 == 4 {
-			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-			return
-		}
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

@@ -62,14 +62,10 @@ func (api NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
-		if httpErr.Resp.StatusCode/100 == 4 {
-			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-			return
-		}
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

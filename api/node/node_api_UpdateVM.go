@@ -63,14 +63,10 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
-		if httpErr.Resp.StatusCode/100 == 4 {
-			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-			return
-		}
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

@@ -50,14 +50,10 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	// And execute
 
-	if _, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for vm %s migrate ", vmID)
-		if httpErr.Resp.StatusCode/100 == 4 {
-			tools.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-			return
-		}
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s migrate ", vmID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
