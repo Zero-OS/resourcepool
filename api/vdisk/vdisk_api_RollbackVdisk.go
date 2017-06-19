@@ -47,7 +47,7 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
-	if string(disk.Vdisktype) != "boot" && string(disk.Vdisktype) != "db" {
+	if disk.Vdisktype != EnumVdiskVdisktypeboot && disk.Vdisktype != EnumVdiskVdisktypedb {
 		err = fmt.Errorf("Failed to rollback %s, rollback is supported for boot or db only", vdiskID)
 		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return

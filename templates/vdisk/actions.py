@@ -215,7 +215,6 @@ def resize(job):
 
 
 def processChange(job):
-    import math
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
 
@@ -230,6 +229,6 @@ def processChange(job):
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
             if str(service.model.data.type) not in ["boot", "db"]:
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
-            args['timestamp'] = int(args['timestamp'] * math.pow(10, 9))
+            args['timestamp'] = args['timestamp'] * 10**9
             job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))

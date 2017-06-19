@@ -133,7 +133,6 @@ def install(job):
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
         job = is_job_running(container)
-        print(job)
         container.client.job.kill(job['cmd']['id'], signal=1)
     service.model.data.socketPath = socketpath
     service.saveAll()
@@ -163,7 +162,6 @@ def stop(job):
     # Delete tmp vdisks
     for vdiskservice in vdisks:
         j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
-        vdiskservice.saveAll()
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
 
@@ -195,4 +193,3 @@ def monitor(job):
             j.tools.async.wrappers.sync(vdisk.executeAction('start'))
         else:
             j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
-    vdisk.saveAll()

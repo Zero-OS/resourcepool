@@ -6,6 +6,12 @@ def get_container(service):
     return Container.from_ays(service.parent)
 
 
+def is_port_listening(container, port):
+    if port in container.node.freeports(port, nrports=3):
+        return True
+    return False
+
+
 def is_job_running(container, cmd='/bin/tlogserver'):
     try:
         for job in container.client.job.list():
@@ -19,15 +25,7 @@ def is_job_running(container, cmd='/bin/tlogserver'):
         raise
 
 
-def is_port_listening(container, port):
-    for connection in container.client.info.port():
-        if connection['network'] == 'tcp' and connection['port'] == port:
-            return True
-    return False
-
-
 def install(job):
-    import time
     import yaml
     from io import BytesIO
     service = job.service
@@ -58,7 +56,8 @@ def install(job):
     configstream = BytesIO(yamlconfig.encode('utf8'))
     configstream.seek(0)
     container.client.filesystem.upload(configpath, configstream)
-    if not is_job_running(container, cmd='/bin/tlogserver'):
+    bind = service.model.data.bind or None
+    if is_port_listening(container, int(bind.split(':')[1])):
         ip = container.node.storageAddr
         port = container.node.freeports(baseport=11211, nrports=1)[0]
         logpath = '/tlog_{}.log'.format(service.name)
@@ -76,31 +75,14 @@ def install(job):
                         m=m,
                         log=logpath)
             )
-        if not is_job_running(container, cmd='/bin/tlogserver'):
+        if not is_port_listening(container, port):
             raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
         service.model.data.bind = '%s:%s' % (ip, port)
-        # container.node.client.nft.open_port(port)
-        # Ensure tlog is running
-        start = time.time()
-        while start + 60 > time.time():
-            if is_port_listening(container, port):
-                break
-            time.sleep(0.2)
-        else:
-            raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
-        # make sure tlog is still running
-        running = is_job_running(container)
-        for vdisk in vdisks:
-            if running:
-                vdisk.model.data.status = 'running'
-                vdisk.saveAll()
-        if not running:
-            container.node.client.nft.drop_port(port)
-            raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
+        container.node.client.nft.open_port(port)
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
+        port = int(service.model.data.bind.split(':')[1])
         job = is_job_running(container)
-        print(job)
         container.client.job.kill(job['cmd']['id'], signal=1)
 
 
@@ -121,7 +103,7 @@ def stop(job):
     import time
     service = job.service
     container = get_container(service=service)
-
+    port = int(service.model.data.bind.split(':')[1])
     tlogjob = is_job_running(container)
     if tlogjob:
         job.logger.info("killing job {}".format(tlogjob['cmd']['arguments']['name']))
@@ -130,7 +112,8 @@ def stop(job):
         job.logger.info("wait for tlogserver to stop")
         for i in range(60):
             time.sleep(1)
-            if is_job_running(container):
+            if is_port_listening(container, port):
                 continue
+            container.node.client.nft.drop_port(port)
             return
         raise j.exceptions.RuntimeError("tlogserver didn't stopped")
