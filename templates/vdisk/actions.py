@@ -188,7 +188,9 @@ def rollback(job):
         container.upload_content(configpath, yamlconfig)
         k = tlogclusterconfig.pop('k')
         m = tlogclusterconfig.pop('m')
-        cmd = '/bin/zeroctl restore vdisk {} --config {} --start-timestamp {} --k {} --m {}'.format(service.name, configpath, ts, k, m)
+        cmd = '/bin/zeroctl restore vdisk {vdisk} --config {config} --start-timestamp {ts} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
+                                                                                                                                        config=configpath,
+                                                                                                                                        ts=ts, k=k, m=m)
         print(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
