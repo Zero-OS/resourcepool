@@ -66,13 +66,8 @@ def install(job):
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
 
-        if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
-            tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
-            clusterconfig = get_storagecluster_config(job, tlogStoragecluster)
-            config['storageClusters'][tlogStoragecluster] = clusterconfig
-
-        if vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
-            tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
+        tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
+        if tlogStoragecluster and vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
             clusterconfig = get_storagecluster_config(job, tlogStoragecluster)
             config['storageClusters'][tlogStoragecluster] = clusterconfig
 
@@ -110,7 +105,7 @@ def install(job):
                 -protocol unix \
                 -address "{socketpath}" \
                 --logfile {logpath} \
-                -config {config}'.format(socketpath=socketpath, config=configpath)
+                -config {config}'.format(socketpath=socketpath, config=configpath, logpath=logpath)
             print(cmd)
             container.client.system(cmd)
 
