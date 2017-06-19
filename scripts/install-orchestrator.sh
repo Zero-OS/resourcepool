@@ -22,14 +22,15 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG>"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> <DOMAIN>"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
   echo "  ZEROTIERTOKEN: Zerotier api token."
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
   echo "  CLIENTSECRET: client secret for itsyou.online authentication."  
-  echo  
+  echo "  DOMAIN: the domain to use for caddy."
+  echo
   exit 1
 fi
 BRANCH=$1
@@ -37,6 +38,7 @@ ZEROTIERNWID=$2
 ZEROTIERTOKEN=$3
 ITSYOUONLINEORG=$4
 CLIENTSECRET=$5
+DOMAIN=$6
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -139,16 +141,50 @@ if [ "$ZEROTIERIP" == "" ]; then
     exit 1
 fi
 
+if [ -z "$DOMAIN" ]; then
+    PRIV="$ZEROTIERIP"
+    PUB="http://$ZEROTIERIP:8080/"
+else
+    PRIV="127.0.0.1"
+    PUB="$DOMAIN"
+fi
+
+
 # create orchestrator service
 echo '#!/bin/bash -x' > ${orchinit}
 if [ -z ${ITSYOUONLINEORG} ]; then
-    echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server "' >> ${orchinit}
+    echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server "' >> ${orchinit}
 else
-    echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '"${ITSYOUONLINEORG}"'"' >> ${orchinit}
+    echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '"${ITSYOUONLINEORG}"'"' >> ${orchinit}
 fi
+
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
+
+if [ -n "$DOMAIN" ]; then
+    js9 'j.tools.prefab.local.apps.caddy.install()'
+    mkdir -p /opt/caddy
+    pushd /opt/caddy
+    cat >> Caddyfile <<EOF
+http://$DOMAIN:80 {
+    proxy / $PRIV:8080 {
+        transparent
+    }
+}
+
+http://ays.$DOMAIN:80 {
+    proxy / 127.0.0.1:5000 {
+        transparent
+    }
+}
+EOF
+    popd
+    echo 'cmd="cd /opt/caddy; caddy"' >> ${orchinit}
+    echo 'tmux new-window -t main -n caddy' >> ${orchinit}
+    echo 'tmux send-key -t caddy.0 "$cmd" ENTER' >> ${orchinit}
+
+fi
 
 chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
@@ -160,4 +196,4 @@ cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${lo
 
 echo "Your ays server is ready to bootstrap nodes into your zerotier network."
 echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID} and boot up your nodes!"
-echo "Enjoy your orchestrator api server: http://${ZEROTIERIP}:8080/"
+echo "Enjoy your orchestrator api server: $PUB"

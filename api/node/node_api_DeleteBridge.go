@@ -16,6 +16,19 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
 
+	exists, err := aysClient.ServiceExists("bridge", bridge, api.AysRepo)
+
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the bridge")
+		return
+	}
+
+	if !exists {
+		err = fmt.Errorf("Bridge %s doesn't exist", bridge)
+		tools.WriteError(w, http.StatusNotFound, err, err.Error())
+		return
+	}
+
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
