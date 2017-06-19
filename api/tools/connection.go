@@ -126,8 +126,10 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 		return nil, err
 	}
 
-	token = strings.Split(token, " ")[1]
-	poolId := fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+	poolId := nodeid
+	if token != "" {
+		poolId = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+	}
 
 	if pool, ok := c.pools.Get(poolId); ok {
 		c.pools.Set(poolId, pool, cache.DefaultExpiration)
@@ -179,6 +181,18 @@ func GetAysConnection(r *http.Request, api API) AYStool {
 	return GetAYSClient(aysAPI)
 }
 
+func extractToken(token string) (string, error) {
+	if token == "" {
+		return "", nil
+	}
+	parts := strings.Split(token, " ")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("JWT token is not set correctly in the authorization header")
+	}
+
+	return parts[1], nil
+}
+
 func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	p := r.Context().Value(connectionPoolMiddlewareKey)
 	if p == nil {
@@ -186,7 +200,11 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	}
 
 	vars := mux.Vars(r)
-	token := r.Header.Get("Authorization")
+	token, err := extractToken(r.Header.Get("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+
 	nodeid := vars["nodeid"]
 
 	mw := p.(*connectionMiddleware)
