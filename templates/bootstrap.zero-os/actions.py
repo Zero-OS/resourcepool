@@ -55,6 +55,7 @@ def delete_node(job):
                 if member['config']['authorized']:
                     member['config']['authorized'] = False
                     zerotier.network.updateMember(member, member['nodeId'], netid)
+                    zerotier.network.deleteMember(member['nodeId'], netid)
             except Exception as err:
                 job.logger.error(str(err))
             break
