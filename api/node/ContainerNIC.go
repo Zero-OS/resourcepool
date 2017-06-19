@@ -8,7 +8,7 @@ type ContainerNICConfig struct {
 }
 
 type ContainerNIC struct {
-	BaseNic
-	Config ContainerNICConfig `json:"config,omitempty" yaml:"config,omitempty"`
-	Hwaddr string             `json:"hwaddr,omitempty" yaml:"hwaddr,omitempty" validate:"macaddress=empty"`
+	BaseNic `yaml:",inline"`
+	Config  ContainerNICConfig `json:"config,omitempty" yaml:"config,omitempty"`
+	Hwaddr  string             `json:"hwaddr,omitempty" yaml:"hwaddr,omitempty" validate:"macaddress=empty"`
 }

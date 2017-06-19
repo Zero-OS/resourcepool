@@ -17,7 +17,7 @@ func (s ZerotierBridge) Validate() error {
 }
 
 type GWNIC struct {
-	BaseNic
+	BaseNic        `yaml:",inline"`
 	Config         *GWNICConfig    `json:"config,omitempty" yaml:"config,omitempty"`
 	Dhcpserver     *DHCP           `json:"dhcpserver,omitempty" yaml:"dhcpserver,omitempty"`
 	ZerotierBridge *ZerotierBridge `json:"zerotierbridge,omitempty" yaml:"zerotierbridge,omitempty"`
