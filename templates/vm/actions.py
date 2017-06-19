@@ -12,9 +12,9 @@ def input(job):
     return args
 
 
-def get_node(service):
+def get_node(job):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(service.parent, job.context['token'])
+    return Node.from_ays(job.service.parent, job.context['token'])
 
 
 def create_zerodisk_container(job, parent):
