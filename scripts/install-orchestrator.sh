@@ -100,11 +100,11 @@ popd
 echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
-if [ -z ${ITSYOUONLINEORG} ]; then
-if [ ! -d /optvar/cfg/ ]; then
-    mkdir /optvar/cfg/
-fi 
-cat >  /optvar/cfg/jumpscale9.toml << EOL
+if [ -n "${ITSYOUONLINEORG}" ]; then
+    if [ ! -d /optvar/cfg/ ]; then
+        mkdir /optvar/cfg/
+    fi 
+    cat >  /optvar/cfg/jumpscale9.toml << EOL
 [ays]        
 production = true
                                                 
@@ -152,7 +152,7 @@ fi
 
 # create orchestrator service
 echo '#!/bin/bash -x' > ${orchinit}
-if [ -z ${ITSYOUONLINEORG} ]; then
+if [ -z "${ITSYOUONLINEORG}" ]; then
     echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server "' >> ${orchinit}
 else
     echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '"${ITSYOUONLINEORG}"'"' >> ${orchinit}
@@ -195,5 +195,9 @@ cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
 cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 
 echo "Your ays server is ready to bootstrap nodes into your zerotier network."
-echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID} and boot up your nodes!"
+if [ -z "${ITSYOUONLINEORG}" ]; then 
+    echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/ and boot up your nodes!"
+else
+    echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG} and boot up your nodes!"
+fi
 echo "Enjoy your orchestrator api server: $PUB"

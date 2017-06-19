@@ -3,10 +3,10 @@ def _get_client(job):
     return Node.from_ays(job.service.parent, job.context['token']).client
 
 
-def _get_network(service):
-    client = _get_client(service.parent)
+def _get_network(job):
+    client = _get_client(job)
     for net in client.zerotier.list():
-        if net['id'] == service.model.data.nwid:
+        if net['id'] == job.service.model.data.nwid:
             return net
 
 
@@ -40,7 +40,7 @@ def install(job):
             zerotier.network.updateMember(member, member['nodeId'], data.nwid)
 
     while True:
-        net = _get_network(job.service)
+        net = _get_network(job)
         if net['status'] == 'OK':
             break
         time.sleep(1)
