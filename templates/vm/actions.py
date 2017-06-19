@@ -175,6 +175,8 @@ def install(job):
             kvm = get_domain(job)
             if kvm:
                 service.model.data.vnc = kvm['vnc']
+                if kvm['vnc'] != -1:
+                    node.client.nft.open_port(kvm['vnc'])
                 break
             else:
                 time.sleep(3)
@@ -231,7 +233,14 @@ def cleanupzerodisk(job):
         job.logger.info("container doesn't exists.")
 
     service.model.data.status = 'halted'
-    service.model.data.vnc = -1
+
+    node = get_node(job)
+
+    vnc = service.model.data.vnc
+    if vnc != -1:
+        node.client.nft.drop_port(vnc)
+        service.model.data.vnc = -1
+
     service.saveAll()
 
 
