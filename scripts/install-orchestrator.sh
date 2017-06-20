@@ -199,13 +199,6 @@ $PUB {
     }
     $tls
 }
-
-$PUB {
-    proxy / 127.0.0.1:5000 {
-        transparent
-    }
-    $tls
-}
 EOF
 popd
 echo 'cmd="cd /opt/caddy; caddy"' >> ${orchinit}
