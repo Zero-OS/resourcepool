@@ -1,3 +1,5 @@
+# Switchless Setup
+
 ![Switchless](switchless.png)
 
 With a maximum of 4 nodes it is possible to setup a Zero-OS cluster without the need for a 10GB+ Ethernet switch.

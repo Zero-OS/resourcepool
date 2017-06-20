@@ -14,7 +14,7 @@ def input(job):
             if not disk["vdiskid"]:
                 continue
             service.aysrepo.serviceGet(role='vdisk', instance=disk["vdiskid"])
-            args['vdisks'].append(disk)
+            args['vdisks'].append(disk['vdiskid'])
     return args
 
 

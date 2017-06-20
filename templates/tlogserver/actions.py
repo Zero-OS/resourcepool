@@ -62,7 +62,7 @@ def install(job):
         configstream.seek(0)
         container.client.filesystem.upload(configpath, configstream)
         bind = service.model.data.bind or None
-        if not bind or is_port_listening(container, int(bind.split(':')[1])):
+        if not bind or not is_port_listening(container, int(bind.split(':')[1])):
             ip = container.node.storageAddr
             port = container.node.freeports(baseport=11211, nrports=1)[0]
             logpath = '/tlog_{}.log'.format(service.name)
@@ -81,14 +81,9 @@ def install(job):
                             log=logpath)
                 )
             if not is_port_listening(container, port):
-                raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
+                raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
             service.model.data.bind = '%s:%s' % (ip, port)
             container.node.client.nft.open_port(port)
-        else:
-            # send a siganl sigub(1) to reload the config in case it was changed.
-            port = int(service.model.data.bind.split(':')[1])
-            job = is_job_running(container)
-            container.client.job.kill(job['cmd']['id'], signal=1)
 
 
 def start(job):

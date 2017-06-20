@@ -39,10 +39,8 @@ func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		msg := fmt.Sprintf("Error executing blueprint for vdisk deletion")
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, msg)
+	msg := fmt.Sprintf("Error executing blueprint for vdisk deletion")
+	if !tools.HandleExecuteBlueprintResponse(err, w, msg) {
 		return
 	}
 

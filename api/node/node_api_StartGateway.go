@@ -37,10 +37,8 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "start", bp)
 
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("Error executing blueprint for starting gateway %s", gwID)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := fmt.Sprintf("Error executing blueprint for starting gateway %s", gwID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

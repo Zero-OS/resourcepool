@@ -32,8 +32,8 @@ The following are the available keys:
 * `0-core-revision`:
   - Specifies the revision used to control the build revision of the core0 nodes
   - If not configured, any revision will be allowed
-* `rocksdb-flist`:
-  - Specifies the flist used for the RocksDB container
+* `ardb-flist`:
+  - Specifies the flist used for the ARDB container
   - Defaults to 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'
 * `0-disk-flist`:
   - Specifies the flist for the 0-disk containers
