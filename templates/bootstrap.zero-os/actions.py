@@ -52,10 +52,7 @@ def delete_node(job):
     for member in members:
         if node.model.data.redisAddr in member['config']['ipAssignments']:
             try:
-                if member['config']['authorized']:
-                    member['config']['authorized'] = False
-                    zerotier.network.updateMember(member, member['nodeId'], netid)
-                    zerotier.network.deleteMember(member['nodeId'], netid)
+                zerotier.network.deleteMember(member['nodeId'], netid)
             except Exception as err:
                 job.logger.error(str(err))
             break
