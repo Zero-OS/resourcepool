@@ -1,18 +1,33 @@
-language: go
-sudo: true
-dist: trusty
+matrix:
+  include: 
+    - language: python
+      sudo: true
+      dist: trusty
+      python: 3.5
+      before_script:
+        - pip3 install -r tests/Grid_API_Testing/requirements.txt
+        - pip3 install git+https://github.com/gigforks/packet-python.git
+        - bash tests/Grid_API_Testing/zt_join.sh
+        - cd tests/Grid_API_Testing; python3 orch_packet_machines.py create $PACKET_TOKEN $ZT_NET_ID
+        - export PYTHONPATH='./'
+      script:
+        - nosetests-3.4 -v -s api_testing/testcases/basic_tests/test01_nodeid_apis.py:TestNodeidAPI.test001_list_nodes --tc-file=api_testing/config.ini
+      after_script:
+        - python3 orch_packet_machines.py delete $PACKET_TOKEN
+    
+    - language: go
+      sudo: true
+      dist: trusty
+      go: 1.8
+      before_install:
+        - sudo apt-get -qq update
+        - sudo apt-get install -y libvirt-dev libcap-dev capnproto nodejs
+        - sudo npm install -g raml2html
+      install:
+        - go get github.com/Jumpscale/go-raml
+      script:
+        - bash test.sh
 
-go:
-  - 1.8
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libvirt-dev libcap-dev capnproto nodejs
-  - sudo npm install -g raml2html
 
-install:
-  - go get github.com/Jumpscale/go-raml
-
-script:
-  - bash test.sh
 
