@@ -17,6 +17,7 @@ class ARDB:
         self.master = master
         self.container = container
         self.bind = bind
+        self.port = int(bind.split(':')[1])
         self.data_dir = data_dir
         self.master = master
         self._ays = None
@@ -61,7 +62,7 @@ class ARDB:
         # upload new config
         self.container.client.filesystem.upload('/etc/ardb.conf.used', io.BytesIO(initial_bytes=content.encode()))
 
-    def start(self, timeout=30):
+    def start(self, timeout=100):
         if not self.container.is_running():
             self.container.start()
 
@@ -71,8 +72,7 @@ class ARDB:
         logger.debug('start %s', self)
 
         self._configure()
-        port = int(self.bind.split(":")[1])
-        self.container.node.client.nft.open_port(port)
+        self.container.node.client.nft.open_port(self.port)
         self.container.client.system('/bin/ardb-server /etc/ardb.conf.used')
 
         # wait for ardb to start
@@ -108,14 +108,14 @@ class ARDB:
 
         if is_running:
             raise RuntimeError("storage server {} didn't stopped")
-        port = int(self.bind.split(":")[1])
-        self.container.node.client.nft.drop_port(port)
+        self.container.node.client.nft.drop_port(self.port)
 
     def is_running(self):
         try:
-            for job in self.container.client.job.list():
-                if 'name' in job['cmd']['arguments'] and job['cmd']['arguments']['name'] == '/bin/ardb-server':
-                    return (True, job)
+            if self.port not in self.container.node.freeports(self.port, 1):
+                for job in self.container.client.job.list():
+                    if 'name' in job['cmd']['arguments'] and job['cmd']['arguments']['name'] == '/bin/ardb-server':
+                        return (True, job)
             return (False, None)
         except Exception as err:
             if str(err).find("invalid container id"):

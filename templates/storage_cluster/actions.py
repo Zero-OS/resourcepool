@@ -62,10 +62,8 @@ def init(job):
     ardbactor = service.aysrepo.actorGet("ardb")
     filesystems = []
     ardbs = []
-    idx = 0
-    baseport = 2000
 
-    def create_server(node, disk, variant='data'):
+    def create_server(node, disk, baseport, variant='data'):
         diskmap = [{'device': disk.devicename}]
         args = {
             'node': node.name,
@@ -75,7 +73,7 @@ def init(job):
         }
         storagepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, disk.name)
         spactor.serviceCreate(instance=storagepoolname, args=args)
-        containername = '{}_{}_{}'.format(storagepoolname, variant, idx)
+        containername = '{}_{}_{}'.format(storagepoolname, variant, baseport)
         # adding filesystem
         args = {
             'storagePool': storagepoolname,
@@ -96,20 +94,20 @@ def init(job):
         # create ardbs
         args = {
             'homeDir': '/mnt/data',
-            'bind': '{}:{}'.format(node.storageAddr, baseport + idx),
+            'bind': '{}:{}'.format(node.storageAddr, baseport),
             'container': containername
         }
         ardbs.append(ardbactor.serviceCreate(instance=containername, args=args))
 
     for nodename, disks in availabledisks.items():
         node = nodemap[nodename]
-        # making the storagepools
-        for disk in disks:
-            create_server(node, disk)
-            idx += 1
+        # making the storagepool
+        baseports = node.freeports(baseport=2000, nrports=len(disks) + 1)
+        for idx, disk in enumerate(disks):
+            create_server(node, disk, baseports[idx])
 
     if str(service.model.data.clusterType) != 'tlog':
-        create_server(node, disk, 'metadata')
+        create_server(node, disk, baseports[-1], 'metadata')
 
     service.model.data.init('filesystems', len(filesystems))
     service.model.data.init('ardbs', len(ardbs))

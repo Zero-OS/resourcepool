@@ -116,6 +116,22 @@ class Node:
             self.client.system('syslogd -n -O /var/log/messages')
             self.client.system('klogd -n')
 
+    def freeports(self, baseport=2000, nrports=3):
+        ports = self.client.info.port()
+        usedports = set()
+        for portInfo in ports:
+            if portInfo['network'] != "tcp":
+                continue
+            usedports.add(portInfo['port'])
+
+        freeports = []
+        while True:
+            if baseport not in usedports:
+                freeports.append(baseport)
+                if len(freeports) >= nrports:
+                    return freeports
+            baseport += 1
+
     def ensure_persistance(self, name='fscache'):
         """
         look for a disk not used,

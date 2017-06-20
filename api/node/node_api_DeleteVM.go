@@ -27,10 +27,8 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 	}}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("Error executing blueprint for vm %s deletion ", vmId)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s deletion ", vmId)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

@@ -32,26 +32,23 @@ def install(job):
     from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
+
+    tlog = False
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
         'storageClusters': {},
         'vdisks': {},
-        'tlogStoragecluster': {},
-    }
-
-    tlogconfig = {
-        'vdisks': {},
-        'storageClusters': {},
-        'k': 0,
-        'm': 0,
     }
 
     socketpath = '/server.socket.{id}'.format(id=service.name)
-    configpath = "/{}.config".format(service.name)
+    configpath = "/nbd_{}.config".format(service.name)
 
     for vdiskservice in vdisks:
+        if vdiskservice.model.data.tlogStoragecluster:
+            tlog = True
+
         template = urlparse(vdiskservice.model.data.templateVdisk)
         if template.scheme == 'ardb' and template.netloc:
             rootardb = template.netloc
@@ -61,13 +58,18 @@ def install(job):
 
         if vdiskservice.model.data.storageCluster not in config['storageClusters']:
             storagecluster = vdiskservice.model.data.storageCluster
-            clusterconfig, _, _ = get_storagecluster_config(job, storagecluster)
+            clusterconfig = get_storagecluster_config(job, storagecluster)
             rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
 
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
+
+        tlogStoragecluster = vdiskservice.model.data.tlogStoragecluster
+        if tlogStoragecluster and vdiskservice.model.data.tlogStoragecluster not in config['storageClusters']:
+            clusterconfig = get_storagecluster_config(job, tlogStoragecluster)
+            config['storageClusters'][tlogStoragecluster] = clusterconfig
 
         vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
         vdiskconfig = {'blockSize': vdiskservice.model.data.blocksize,
@@ -80,40 +82,32 @@ def install(job):
                        'type': vdisk_type}
         config['vdisks'][vdiskservice.name] = vdiskconfig
 
-        if vdiskservice.model.data.tlogStoragecluster and vdiskservice.model.data.tlogStoragecluster not in tlogconfig['storageClusters']:
-            tlogcluster = vdiskservice.model.data.tlogStoragecluster
-            clusterconfig, k, m = get_storagecluster_config(job, tlogcluster)
-            tlogconfig['storageClusters'][tlogcluster] = {"dataStorage": clusterconfig["dataStorage"]}
-            tlogconfig['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
-            tlogconfig['k'] += k
-            tlogconfig['m'] += m
-
-    if tlogconfig['storageClusters']:
-        tlogport = start_tlog(service, container, tlogconfig)
-
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     configstream = BytesIO(yamlconfig.encode('utf8'))
     configstream.seek(0)
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
-        if tlogconfig['storageClusters']:
-            container.client.system(
-                '/bin/nbdserver \
+        logpath = '/nbd_{}.log'.format(service.name)
+        if tlog:
+            tlogservice = service.aysrepo.serviceGet(role='tlogserver', instance=service.name)
+            tlogip = tlogservice.model.data.bind.split(':')
+            cmd = '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
-                --tlogrpc 0.0.0.0:{tlogport} \
-                -config {config}'
-                .format(tlogport=tlogport, socketpath=socketpath, config=configpath)
-            )
+                -tlogrpc {tlogip}:{tlogport} \
+                -logfile {logpath} \
+                -config {config}'.format(tlogip=tlogip[0], tlogport=tlogip[1], logpath=logpath, socketpath=socketpath, config=configpath)
+            print(cmd)
+            container.client.system(cmd)
         else:
-            container.client.system(
-                '/bin/nbdserver \
+            cmd = '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
-                -config {config}'
-                .format(socketpath=socketpath, config=configpath)
-            )
+                --logfile {logpath} \
+                -config {config}'.format(socketpath=socketpath, config=configpath, logpath=logpath)
+            print(cmd)
+            container.client.system(cmd)
 
         # wait for socket to be created
         start = time.time()
@@ -135,39 +129,8 @@ def install(job):
         # send a siganl sigub(1) to reload the config in case it was changed.
         job = is_job_running(container)
         container.client.job.kill(job['cmd']['id'], signal=1)
-
     service.model.data.socketPath = socketpath
     service.saveAll()
-
-
-def get_tlog_port(container):
-    ports = container.node.client.info.port()
-    tlog_port = 11211
-    for portInfo in ports:
-        port = portInfo.get('port', 0)
-        if str(port).startswith('112') and port >= tlog_port:
-            tlog_port = port + 1
-    return tlog_port
-
-
-def start_tlog(service, container, config):
-    import yaml
-    from io import BytesIO
-    k = config.pop('k')
-    m = config.pop('m')
-
-    configpath = "/tlog_{}.config".format(service.name)
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    configstream = BytesIO(yamlconfig.encode('utf8'))
-    configstream.seek(0)
-    container.client.filesystem.upload(configpath, configstream)
-    if not is_job_running(container, cmd='/bin/tlogserver'):
-        port = get_tlog_port(container)
-        container.client.system(
-            '/bin/tlogserver -address 0.0.0.0:{} -config {} -k {} -m {}'.format(port, configpath, k, m))
-        if not is_job_running(container, cmd='/bin/tlogserver'):
-            raise j.exceptions.RuntimeError("Failed to start tlogserver {}".format(service.name))
-        return port
 
 
 def start(job):
@@ -178,9 +141,9 @@ def start(job):
 def get_storagecluster_config(job, storagecluster):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
-                                                       instance=storagecluster)
+                                                           instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.k, cluster.m
+    return cluster.get_config()
 
 
 def stop(job):
@@ -193,8 +156,7 @@ def stop(job):
 
     # Delete tmp vdisks
     for vdiskservice in vdisks:
-        vdiskservice.model.data.status = 'halted'
-        vdiskservice.saveAll()
+        j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
 
@@ -223,7 +185,6 @@ def monitor(job):
     running = is_job_running(get_container(service, get_jwt_token(job.service.aysrepo)))
     for vdisk in vdisks:
         if running:
-            vdisk.model.data.status = 'running'
+            j.tools.async.wrappers.sync(vdisk.executeAction('start'))
         else:
-            vdisk.model.data.status = 'halted'
-    vdisk.saveAll()
+            j.tools.async.wrappers.sync(vdisk.executeAction('pause'))

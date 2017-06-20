@@ -40,10 +40,8 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for bridge deletion "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := "Error executing blueprint for bridge deletion "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

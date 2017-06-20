@@ -11,7 +11,7 @@ def install(job):
 
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
-        targetconfig = get_storagecluster_config(job)
+        targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         storagecluster = service.model.data.storageCluster
 
@@ -63,33 +63,36 @@ def delete(job):
 
     service = job.service
     storagecluster = service.model.data.storageCluster
-    clusterconfig = get_storagecluster_config(job)
+    clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(job, node)
-    configpath = "/config.yaml"
-    disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
-    config = {
-                "storageClusters": {
-                    storagecluster: clusterconfig['config']
-                },
-                "vdisks": {
-                    service.name: {
-                        "blockSize": service.model.data.blocksize,
-                        "readOnly": service.model.data.readOnly,
-                        "size": service.model.data.size,
-                        "storageCluster": storagecluster,
-                        "type": disktype,
+    try:
+        configpath = "/config.yaml"
+        disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
+        config = {
+                    "storageClusters": {
+                        storagecluster: clusterconfig['config']
+                    },
+                    "vdisks": {
+                        service.name: {
+                            "blockSize": service.model.data.blocksize,
+                            "readOnly": service.model.data.readOnly,
+                            "size": service.model.data.size,
+                            "storageCluster": storagecluster,
+                            "type": disktype,
+                        }
                     }
                 }
-            }
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    container.upload_content(configpath, yamlconfig)
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        container.upload_content(configpath, yamlconfig)
 
-    cmd = '/bin/zeroctl delete vdisks --config {}'.format(configpath)
-    print(cmd)
-    result = container.client.system(cmd).get()
-    if result.state != 'SUCCESS':
-        raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
+        cmd = '/bin/zeroctl delete vdisks --config {}'.format(configpath)
+        print(cmd)
+        result = container.client.system(cmd).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
+    finally:
+        container.stop()
 
 
 def get_srcardb(container, template):
@@ -104,13 +107,17 @@ def get_srcardb(container, template):
         raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
 
 
-def get_storagecluster_config(job):
+def get_cluster_config(job, type="storage"):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    storagecluster = job.service.model.data.storageCluster
+    if type == "tlog":
+        cluster = job.service.model.data.tlogStoragecluster
+    else:
+        cluster = job.service.model.data.storageCluster
+
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
-                                                       instance=storagecluster)
+                                                           instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"]}
+    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"], 'k': cluster.k, 'm': cluster.m}
 
 
 def create_from_template_container(job, parent):
@@ -144,10 +151,53 @@ def pause(job):
 
 
 def rollback(job):
+    import random
+    import yaml
     service = job.service
     service.model.data.status = 'rollingback'
-    # TODO: rollback disk
-    service.model.data.status = 'running'
+    ts = job.model.args['timestamp']
+
+    storagecluster = service.model.data.storageCluster
+    clusterconfig = get_cluster_config(job)
+
+    tlogcluster = service.model.data.tlogStoragecluster
+    tlogclusterconfig = get_cluster_config(job, type='tlog')
+
+    node = random.choice(clusterconfig['nodes'])
+    container = create_from_template_container(job, node)
+    try:
+        configpath = "/config.yaml"
+        disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
+        config = {
+                    "storageClusters": {
+                        storagecluster: clusterconfig['config'],
+                        tlogcluster: tlogclusterconfig['config']
+                    },
+                    "vdisks": {
+                        service.name: {
+                            "blockSize": service.model.data.blocksize,
+                            "readOnly": service.model.data.readOnly,
+                            "size": service.model.data.size,
+                            "storageCluster": storagecluster,
+                            "tlogStorageCluster": tlogcluster,
+                            "type": disktype,
+                        }
+                    }
+                }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        container.upload_content(configpath, yamlconfig)
+        k = tlogclusterconfig.pop('k')
+        m = tlogclusterconfig.pop('m')
+        cmd = '/bin/zeroctl restore vdisk {vdisk} --config {config} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
+                                                                                                                 config=configpath,
+                                                                                                                 ts=ts, k=k, m=m)
+        print(cmd)
+        result = container.client.system(cmd).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl restore {} {}".format(result.stdout, result.stderr))
+        service.model.data.status = 'running'
+    finally:
+        container.stop()
 
 
 def resize(job):
@@ -166,11 +216,19 @@ def resize(job):
 
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
-
     service = job.service
 
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
-        job.context['token'] = get_jwt_token_from_job(job)
-        j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
+        if args.get('size', None):
+            job.context['token'] = get_jwt_token_from_job(job)
+            j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
+        if args.get('timestamp', None):
+            if str(service.model.data.status) != "halted":
+                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
+            if str(service.model.data.type) not in ["boot", "db"]:
+                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
+            args['timestamp'] = args['timestamp'] * 10**9
+            job.context['token'] = get_jwt_token_from_job(job)
+            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))

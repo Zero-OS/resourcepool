@@ -25,10 +25,8 @@ func (api NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "uninstall", bp)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for gateway uninstallation "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := "Error executing blueprint for gateway uninstallation "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

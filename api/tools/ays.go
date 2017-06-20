@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -111,13 +112,19 @@ func (aystool AYStool) createBlueprint(repoName string, name string, bp map[stri
 }
 
 func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) error {
-
+	errBody := struct {
+		Error string `json:"error"`
+	}{}
 	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
 		return NewHTTPError(resp, err.Error())
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return NewHTTPError(resp, resp.Status)
+		if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+			return NewHTTPError(resp, "Error decoding response body")
+		}
+		return NewHTTPError(resp, errBody.Error)
 	}
 	return nil
 }
