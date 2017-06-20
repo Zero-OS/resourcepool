@@ -26,10 +26,11 @@ def install(job):
             time.sleep(0.5)
         raise j.exceptions.RuntimeError('Could not find member on zerotier network')
 
-    if job.service.model.data.token:
+    token = job.service.model.data.token
+    if token:
         address = client.zerotier.info()['address']
         zerotier = ztclient.Client()
-        zerotier.set_auth_header('bearer {}'.format(job.service.model.data.token))
+        zerotier.set_auth_header('bearer {}'.format(token))
 
         member = get_member()
         if not member['config']['authorized']:
@@ -41,7 +42,8 @@ def install(job):
 
     while True:
         net = _get_network(job)
-        if net['status'] in ['OK', 'ACCESS_DENIED']:
+
+        if (token and net['status'] == 'OK') or (not token and net['status'] in ['OK', 'ACCESS_DENIED']):
             break
         time.sleep(1)
 
