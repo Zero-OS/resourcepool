@@ -19,24 +19,27 @@ class StorageCluster:
         self.filesystems = []
         self.storage_servers = []
         self.disk_type = disk_type
+        self.k = 0
+        self.m = 0
         self._ays = None
 
     @classmethod
-    def from_ays(cls, service):
+    def from_ays(cls, service, password):
         logger.debug("load cluster storage cluster from service (%s)", service)
         disk_type = str(service.model.data.diskType)
 
         nodes = []
         storage_servers = []
         for ardb_service in service.producers.get('ardb', []):
-            storages_server = StorageServer.from_ays(ardb_service)
+            storages_server = StorageServer.from_ays(ardb_service, password)
             storage_servers.append(storages_server)
             if storages_server.node not in nodes:
                 nodes.append(storages_server.node)
 
         cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type)
         cluster.storage_servers = storage_servers
-
+        cluster.k = service.model.data.k
+        cluster.m = service.model.data.m
         return cluster
 
     def get_config(self):
@@ -143,8 +146,8 @@ class StorageServer:
         self.ardb = None
 
     @classmethod
-    def from_ays(cls, ardb_services):
-        ardb = ARDB.from_ays(ardb_services)
+    def from_ays(cls, ardb_services, password=None):
+        ardb = ARDB.from_ays(ardb_services, password)
         storage_server = cls(None)
         storage_server.container = ardb.container
         storage_server.ardb = ardb

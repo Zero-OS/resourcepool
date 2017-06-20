@@ -7,38 +7,36 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // DeleteGWForward is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
 // Delete portforward, forwardid = srcip:srcport
 func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
 	forwardID := vars["forwardid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeID),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot delete forwards for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage)
+		tools.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -64,9 +62,10 @@ func (api NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
-		log.Errorf("error executing blueprint for gateway %s update : %+v", gateway, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

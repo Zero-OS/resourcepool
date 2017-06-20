@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	g8client "github.com/zero-os/0-core/client/go-client"
 	"github.com/gorilla/mux"
+	g8client "github.com/zero-os/0-core/client/go-client"
 
 	"fmt"
 
@@ -23,16 +22,16 @@ func (api NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		log.Errorf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	kvmManager := g8client.Kvm(cl)
 	vms, err := kvmManager.List()
 	if err != nil {
-		log.Errorf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -45,15 +44,14 @@ func (api NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 
 	if uuid == "" {
 		err = fmt.Errorf("VM %s is not found", vmid)
-		log.Errorf("Error: %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "")
 		return
 	}
 
 	vminfo, err := kvmManager.InfoPs(uuid)
 	if err != nil {
-		log.Errorf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

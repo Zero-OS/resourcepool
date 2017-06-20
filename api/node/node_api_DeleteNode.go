@@ -3,14 +3,14 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteNode is the handler for DELETE /nodes/{nodeid}
 // Delete Node
 func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
@@ -18,32 +18,30 @@ func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			Action:  "uninstall",
-			Actor:   "node.g8os",
+			Actor:   "node.zero-os",
 			Service: nodeID,
 			Force:   true,
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "node.g8os", nodeID, "uninstall", bp)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for node uninstallation : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "node.zero-os", nodeID, "uninstall", bp)
+	errmsg := "Error executing blueprint for node uninstallation "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
 	// Wait for the uninstall job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for node uninstallation")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for node uninstallation")
 		}
 		return
 	}
 
-	res, err := api.AysAPI.Ays.DeleteServiceByName(nodeID, "node.g8os", api.AysRepo, nil, nil)
+	res, err := aysClient.Ays.DeleteServiceByName(nodeID, "node.zero-os", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "deleting service") {
 		return
 	}

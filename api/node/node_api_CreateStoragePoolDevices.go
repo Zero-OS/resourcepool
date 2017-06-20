@@ -5,26 +5,27 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateStoragePoolDevices is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/device
 // Add extra devices to this storage pool
 func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
 
-	devices, err := api.getStoragePoolDevices(node, storagepool, w)
-	if err {
+	devices, notok := api.getStoragePoolDevices(node, storagepool, w, r)
+	if notok {
 		return
 	}
 
 	nodeDevices, errMsg := api.GetNodeDevices(w, r)
 	if errMsg != nil {
-		tools.WriteError(w, http.StatusInternalServerError, errMsg)
+		tools.WriteError(w, http.StatusInternalServerError, errMsg, "Failed to get Node device")
 		return
 	}
 
@@ -37,7 +38,7 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 	var newDevices []string
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&newDevices); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request for storagepool creation")
 		return
 	}
 
@@ -50,7 +51,7 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		_, ok := nodeDevices[dev]
 		if !ok {
 			err := fmt.Errorf("Device %v doesn't exist", dev)
-			tools.WriteError(w, http.StatusBadRequest, err)
+			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 
@@ -68,12 +69,16 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint); err != nil {
-		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for storagepool device creation : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
+	errmsg := "Error executing blueprint for storagepool device creation "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
+
 }

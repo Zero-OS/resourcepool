@@ -4,7 +4,7 @@ The Zero-OS Orchestrator is the REST API server for managing a cluster of Zero-O
 
 In the below picture you see a Zero-OS cluster of 5 physical nodes, all running Zero-OS, and all connected through a ZeroTier network.
 
-![Architecture](resource-pool.png)
+![Architecture](architecture.png)
 
 Next to the the Zero-OS nodes, a Zero-OS cluster includes the following components:
 - **Zero-OS Orchestrator**, exposing all the REST APIs to manage and interact with the Zero-OS cluster

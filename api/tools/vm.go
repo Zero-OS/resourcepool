@@ -1,14 +1,14 @@
 package tools
 
 import (
+	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 )
 
 // ExecuteVMAction executes an action on a vm
-func ExecuteVMAction(w http.ResponseWriter, r *http.Request, repoName, action string) {
+func ExecuteVMAction(aystool AYStool, w http.ResponseWriter, r *http.Request, repoName, action string) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
@@ -21,9 +21,9 @@ func ExecuteVMAction(w http.ResponseWriter, r *http.Request, repoName, action st
 		}},
 	}
 
-	if _, err := ExecuteBlueprint(repoName, "vm", vmID, "action", obj); err != nil {
-		log.Errorf("error executing blueprint for vm %s %s : %+v", vmID, action, err)
-		WriteError(w, http.StatusInternalServerError, err)
+	if _, err := aystool.ExecuteBlueprint(repoName, "vm", vmID, "action", obj); err != nil {
+		errmsg := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
+		WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

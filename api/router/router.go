@@ -2,18 +2,16 @@ package router
 
 import (
 	"net/http"
-
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
-	"github.com/zero-os/0-orchestrator/api/node"
-	"github.com/zero-os/0-orchestrator/api/storagecluster"
-	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/zero-os/0-orchestrator/api/vdisk"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
+	"github.com/zero-os/0-orchestrator/api/node"
+	"github.com/zero-os/0-orchestrator/api/run"
+	"github.com/zero-os/0-orchestrator/api/storagecluster"
+	"github.com/zero-os/0-orchestrator/api/vdisk"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -42,12 +40,8 @@ func (i *Router) Handler() http.Handler {
 	return i.handler
 }
 
-func GetRouter(aysURL, aysRepo string) http.Handler {
+func GetRouter(aysURL, aysRepo, org string) http.Handler {
 	r := mux.NewRouter()
-
-	aysAPI := ays.NewAtYourServiceAPI()
-	aysAPI.BaseURI = aysURL
-	tools.SetAYSClient(aysAPI)
 
 	// home page
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -57,9 +51,10 @@ func GetRouter(aysURL, aysRepo string) http.Handler {
 	// apidocs
 	r.PathPrefix("/apidocs/").Handler(http.StripPrefix("/apidocs/", http.FileServer(http.Dir("./apidocs/"))))
 
-	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysAPI, cache.New(5*time.Minute, 1*time.Minute)))
-	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysAPI))
-	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysAPI))
+	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
+	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
+	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
+	run.RunsInterfaceRoutes(r, run.NewRunAPI(aysRepo, aysURL), org)
 
 	router := NewRouter(r)
 	router.Use(LoggingMiddleware)

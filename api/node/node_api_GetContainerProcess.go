@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"fmt"
+
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // GetContainerProcess is the handler for GET /nodes/{nodeid}/containers/{containername}/processes/{processid}
@@ -16,13 +18,13 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	conn, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error converting processid string into int")
 		return
 	}
 
@@ -31,7 +33,8 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	process, err := core.Process(processID)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error getting process %s info on container", processID)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

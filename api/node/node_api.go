@@ -1,28 +1,30 @@
 package node
 
 import (
+	"github.com/patrickmn/go-cache"
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	_ "github.com/zero-os/0-orchestrator/api/validators"
-	"github.com/patrickmn/go-cache"
 )
 
 // NodeAPI is API implementation of /node root endpoint
 type NodeAPI struct {
 	AysRepo string
-	AysAPI  *ays.AtYourServiceAPI
+	AysUrl  string
 	Cache   *cache.Cache
 }
 
-func NewNodeAPI(repo string, client *ays.AtYourServiceAPI, c *cache.Cache) NodeAPI {
+func NewNodeAPI(repo string, aysurl string, c *cache.Cache) NodeAPI {
 	return NodeAPI{
 		AysRepo: repo,
-		AysAPI:  client,
+		AysUrl:  aysurl,
 		Cache:   c,
 	}
 }
 
 func (api NodeAPI) AysAPIClient() *ays.AtYourServiceAPI {
-	return api.AysAPI
+	aysAPI := ays.NewAtYourServiceAPI()
+	aysAPI.BaseURI = api.AysUrl
+	return aysAPI
 }
 
 func (api NodeAPI) AysRepoName() string {

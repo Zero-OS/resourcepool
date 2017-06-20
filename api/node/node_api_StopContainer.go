@@ -1,16 +1,18 @@
 package node
 
 import (
+	"fmt"
+
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
 // Stop Container instance
 func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)
@@ -25,21 +27,22 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for stopping container %s : %+v", containername, err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+		errmsg := fmt.Sprintf("Error executing blueprint for stopping container %s ", containername)
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		return
 	}
 
 	// Wait for the job to be finshed
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
+		errmsg := fmt.Sprintf("Error running blueprint for stopping container %s ", containername)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

@@ -1,6 +1,8 @@
 #%RAML 1.0
 title: Zero-OS 0 Rest API Server
 version: v1.1.0-alpha
+securitySchemes:
+  itsyouonline: !include itsyouonline-raml/securitySchemes/oauth_2_0.raml
 mediaType:  application/json
 
 annotationTypes:
@@ -20,6 +22,7 @@ types:
 /nodes:
   get:
     (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     description: List all nodes
     displayName: ListNodes
     responses:
@@ -30,6 +33,7 @@ types:
   /{nodeid}:
     delete:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       description: Delete a node
       displayName: DeleteNode
       responses:
@@ -37,6 +41,7 @@ types:
           description: Node deleted successfully
     get:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       description: Get detailed information of a node
       displayName: GetNode
       responses:
@@ -48,6 +53,7 @@ types:
       description: List all jobs of this node
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListNodeJobs
         description: List running jobs
         responses:
@@ -57,6 +63,7 @@ types:
                 type: JobListItem[]
       delete:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: KillAllNodeJobs
         description: Kill all running jobs
         responses:
@@ -65,6 +72,7 @@ types:
       /{jobid}:
         get:
           (DirectAccess):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetNodeJob
           description: Get the details of a submitted job
           responses:
@@ -74,6 +82,7 @@ types:
                   type: JobResult
         delete:
           (DirectAccess):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: KillNodeJob
           description: Kills the job
           responses:
@@ -82,6 +91,7 @@ types:
     /ping:
       post:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: PingNode
         description: Ping this node
         responses:
@@ -93,6 +103,7 @@ types:
     /state:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetNodeState
         description: The aggregated consumption of node + all processes (cpu, memory, etc...)
         responses:
@@ -104,6 +115,7 @@ types:
     /reboot:
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: RebootNode
         description: Immediately reboot the machine
         responses:
@@ -112,6 +124,7 @@ types:
     /cpus:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetCPUInfo
         description: Get detailed information of all CPUs in the node
         responses:
@@ -122,6 +135,7 @@ types:
     /disks:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetDiskInfo
         description: Get detailed information of all the disks in the node
         responses:
@@ -132,6 +146,7 @@ types:
     /mounts:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetNodeMounts
         description: Get detailed information of all the mountpoints on the node
         responses:
@@ -142,6 +157,7 @@ types:
     /mem:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetMemInfo
         description: Get detailed information about the memory in the node
         responses:
@@ -152,6 +168,7 @@ types:
     /nics:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetNicInfo
         description: Get detailed information about the network interfaces in the node
         responses:
@@ -162,6 +179,7 @@ types:
     /info:
       get:
         (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: GetNodeOSInfo
         description: Get detailed information of the OS of the node
         responses:
@@ -172,6 +190,7 @@ types:
     /processes:
        get:
          (DirectAccess):
+         securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
          displayName: ListNodeProcesses
          description: Get processes
          responses:
@@ -182,6 +201,7 @@ types:
        /{processid}:
          get:
            (DirectAccess):
+           securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
            displayName: GetNodeProcess
            description: Get process details
            responses:
@@ -191,6 +211,7 @@ types:
                    type: Process
          delete:
            (DirectAccess):
+           securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
            displayName: KillNodeProcess
            description: Kills the process by sending sigterm signal to the process.
                         If it is still running, a sigkill signal will be sent to the process
@@ -200,19 +221,27 @@ types:
     /bridges:
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: CreateBridge
         description: Creates a new bridge
         body:
           application/json:
             type: BridgeCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Bridge created successfully
             headers:
               Location:
                 description: URL to the created bridge resource
+          409:
+            description: A bridge with the same name or settings.cidr already exists.
+
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListBridges
         description: List bridges
         responses:
@@ -223,6 +252,7 @@ types:
       /{bridgeid}:
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetBridge
           description: Get bridge details
           responses:
@@ -232,14 +262,18 @@ types:
                   type: Bridge
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteBridge
           description: Remove bridge
           responses:
             204:
               description: Bridge removed successfully
+            404:
+              description: Bridge not found
     /storagepools:
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListStoragePools
         description: List storage pools present in the node
         responses:
@@ -249,19 +283,24 @@ types:
                 type: StoragePoolListItem[]
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: CreateStoragePool
         description: Create a new storage pool in the node
         body:
           application/json:
             type: StoragePoolCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run
             headers:
               Location:
                 description: Url to the newly created storagepool.
       /{storagepoolname}:
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetStoragePoolInfo
           description: Get detailed information of this storage pool
           responses:
@@ -271,6 +310,7 @@ types:
                   type: StoragePool
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteStoragePool
           description: Delete the storage pool
           responses:
@@ -279,6 +319,7 @@ types:
         /devices:
           get:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: ListStoragePoolDevices
             description: List the devices in the storage pool
             responses:
@@ -289,6 +330,7 @@ types:
                     type: StoragePoolDevice[]
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: CreateStoragePoolDevices
             description: Add extra devices to this storage pool
             body:
@@ -297,7 +339,10 @@ types:
                 type: string[]
                 example: ['/dev/sdc', '/dev/sdd']
             responses:
-              204:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 description: Devices added successfully
           /{deviceuuid}:
             get:
@@ -310,6 +355,7 @@ types:
                       type: StoragePoolDevice
             delete:
               (AYSBased):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: DeleteStoragePoolDevice
               description: Removes the device from the storage pool
               responses:
@@ -318,9 +364,12 @@ types:
                   headers:
                     Location:
                       description: URL to the storage pool device resource being removed
+                404:
+                  description: Device not found.
         /filesystems:
           get:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: ListFilesystems
             description: List all file systems
             responses:
@@ -331,19 +380,24 @@ types:
                     type: string[]
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: CreateFilesystem
             description: Create a new file system
             body:
               application/json:
                 type: FilesystemCreate
             responses:
-              201:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 headers:
                   Location:
                     description: URL for the newly created file system
           /{filesystemname}:
             get:
               (AYSBased):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: GetFilesystemInfo
               description: Get detailed file system information
               responses:
@@ -353,6 +407,7 @@ types:
                       type: Filesystem
             delete:
               (AYSBased):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: DeleteFilesystem
               description: Delete file system
               responses:
@@ -361,6 +416,7 @@ types:
             /snapshots:
               get:
                 (AYSBased):
+                securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                 displayName: ListFilesystemSnapshots
                 description: List snapshots of this file system
                 responses:
@@ -371,6 +427,7 @@ types:
                         type: string[]
               post:
                 (AYSBased):
+                securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                 displayName: CreateSnapshot
                 description: Create a new read-only snapshot of the current state of the vdisk
                 body:
@@ -383,7 +440,10 @@ types:
                          Permitted characters: a-z,-, _ and .
                          Max length: 50 characters.
                 responses:
-                  201:
+                  202:
+                    body:
+                      application/json:
+                        type: Run
                     description: Snapshot created successfully
                     headers:
                       Location:
@@ -391,6 +451,7 @@ types:
               /{snapshotname}:
                 get:
                   (AYSBased):
+                  securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                   displayName: GetFilesystemSnapshotInfo
                   description: Get detailed information on the snapshot
                   responses:
@@ -400,6 +461,7 @@ types:
                           type: Snapshot
                 delete:
                   (AYSBased):
+                  securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                   displayName: DeleteFilesystemSnapshot
                   description: Delete snapshot
                   responses:
@@ -408,6 +470,7 @@ types:
                 /rollback:
                   post:
                     (AYSBased):
+                    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                     displayName: RollbackFilesystemSnapshot
                     description: Rollback the file system to the state at the moment the snapshot was taken
                     responses:
@@ -416,6 +479,7 @@ types:
     /zerotiers:
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListZerotier
         description: List running ZeroTier networks
         responses:
@@ -425,6 +489,7 @@ types:
                 type: ZerotierListItem[]
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: JoinZerotier
         description: Join ZeroTier network
         body:
@@ -439,6 +504,7 @@ types:
       /{zerotierid}:
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetZerotier
           description: Get ZeroTier network details
           responses:
@@ -448,6 +514,7 @@ types:
                   type: Zerotier
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: ExitZerotier
           description: Exit the ZeroTier network
           responses:
@@ -456,6 +523,7 @@ types:
     /gws:
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListGateways
         description: List running gateways
         responses:
@@ -465,14 +533,18 @@ types:
                 type: ListGW[]
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: CreateGW
         description: Create a new gateway
         body:
           application/json:
             type: GWCreate
         responses:
-          201:
+          202:
             description: Gateway created successfully
+            body:
+              application/json:
+                type: Run
             headers:
               Location:
                 description: URL to the created gateway resource
@@ -481,6 +553,7 @@ types:
       /{gwname}:
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteGateway
           description: Delete gateway instance
           responses:
@@ -488,6 +561,7 @@ types:
               description: Gateway deleted successfully
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetGateway
           description: Get gateway
           responses:
@@ -497,6 +571,7 @@ types:
                   type: GetGW
         put:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: UpdateGateway
           description: Update Gateway
           body:
@@ -525,7 +600,10 @@ types:
                 application/json:
                   type: PortForward
               responses:
-                201:
+                202:
+                  body:
+                    application/json:
+                      type: Run
                   description: |
                     Succesfully created a new resource
                   headers:
@@ -620,6 +698,7 @@ types:
         /start:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StartGateway
             description: Start Gateway instance
             responses:
@@ -628,6 +707,7 @@ types:
         /stop:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StopGateway
             description: Stop gateway instance
             responses:
@@ -636,6 +716,7 @@ types:
         /httpproxies:
           get:
               (AYSBased):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: ListHTTPProxies
               description: List for HTTP proxies
               responses:
@@ -645,13 +726,17 @@ types:
                       type: HTTPProxy[]
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: CreateHTTPProxies
             description: Create new HTTP proxies
             body:
               application/json:
                 type: HTTPProxy
             responses:
-              201:
+              202:
+                body:
+                  application/json:
+                    type: Run
                 description: Succesfully created a new resource
                 headers:
                   Location:
@@ -661,6 +746,7 @@ types:
           /{proxyid}:
             get:
               (AYSBased):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: GetHTTPProxy
               description: Get info of HTTP proxy
               responses:
@@ -670,6 +756,7 @@ types:
                       type: HTTPProxy
             delete:
                 (AYSBased):
+                securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                 displayName: DeleteHTTPProxies
                 description: Delete HTTP proxy
                 responses:
@@ -680,6 +767,7 @@ types:
     /containers:
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ListContainers
         description: List running containers
         responses:
@@ -689,20 +777,25 @@ types:
                 type: ContainerListItem[]
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: CreateContainer
         description: Create a new container
         body:
           application/json:
             type: CreateContainer
         responses:
-          201:
+          202:
             description: Container created successfully
+            body:
+              application/json:
+                type: Run
             headers:
               Location:
                 description: URL to the created container resource
       /{containername}:
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteContainer
           description: Delete container instance
           responses:
@@ -710,6 +803,7 @@ types:
               description: Container deleted successfully
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetContainer
           description: Get container
           responses:
@@ -720,6 +814,7 @@ types:
         /start:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StartContainer
             description: Start container instance
             responses:
@@ -728,6 +823,7 @@ types:
         /stop:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StopContainer
             description: Stop container instance
             responses:
@@ -736,6 +832,7 @@ types:
         /filesystem:
           post:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             description: Upload file to container
             displayName: FileUpload
             queryString:
@@ -753,6 +850,7 @@ types:
                 description: File uploaded successfully
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             description: Download file from container
             displayName: FileDownload
             queryString:
@@ -764,6 +862,7 @@ types:
                   application/octet-stream:
           delete:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             description: Delete file from container
             displayName: FileDelete
             body:
@@ -775,6 +874,7 @@ types:
         /jobs:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: ListContainerJobs
             description: List running jobs on the container
             responses:
@@ -784,6 +884,7 @@ types:
                     type: JobListItem[]
           post:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StartContainerJob
             description: Start a new job in this container
             body:
@@ -796,6 +897,7 @@ types:
                     description: URL to the job object handling this request
           delete:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: KillAllContainerJobs
             description: Kill all running jobs on the container
             responses:
@@ -804,6 +906,7 @@ types:
           /{jobid}:
             get:
               (DirectAccess):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: GetContainerJob
               description: Get details of a submitted job on the container
               responses:
@@ -813,6 +916,7 @@ types:
                       type: JobResult
             post:
               (DirectAccess):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: SendSignalToJob
               description: Send signal to the job
               body:
@@ -820,6 +924,7 @@ types:
                   type: ProcessSignal
             delete:
               (DirectAccess):
+              securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
               displayName: KillContainerJob
               description: Kills the job
               responses:
@@ -828,6 +933,7 @@ types:
         /ping:
           post:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: PingContainer
             description: Ping this container
             responses:
@@ -838,6 +944,7 @@ types:
         /state:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerState
             description: Get aggregated consumption of container + all processes (CPU, memory, etc.)
             responses:
@@ -849,6 +956,7 @@ types:
         /cpus:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerCPUInfo
             description: Get detailed information of all CPUs in the container
             responses:
@@ -859,6 +967,7 @@ types:
         /disks:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerDiskInfo
             description: Get detailed information of all the disks in the container
             responses:
@@ -869,6 +978,7 @@ types:
         /mem:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerMemInfo
             description: Get detailed information about the memory in the container
             responses:
@@ -879,6 +989,7 @@ types:
         /nics:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerNicInfo
             description: Get detailed information about the network interfaces in the container
             responses:
@@ -889,6 +1000,7 @@ types:
         /info:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetContainerOSInfo
             description: Get detailed information of the container OS
             responses:
@@ -899,6 +1011,7 @@ types:
         /processes:
            get:
              (DirectAccess):
+             securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
              displayName: ListContainerProcesses
              description: Get running processes in this container
              responses:
@@ -909,6 +1022,7 @@ types:
            /{processid}:
              get:
                (DirectAccess):
+               securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                displayName: GetContainerProcess
                description: Get process details
                responses:
@@ -918,6 +1032,7 @@ types:
                        type: Process
              delete:
                (DirectAccess):
+               securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                displayName: KillContainerProcess
                description: Kills the process by sending sigterm signal to the process.
                             If it is still running, a sigkill signal will be sent to the process
@@ -926,6 +1041,7 @@ types:
                    description: Process killed successfully
              post:
                (DirectAccess):
+               securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
                displayName: SendSignalToProcess
                description: Send signal to the process
                body:
@@ -934,6 +1050,7 @@ types:
     /vms:
       get:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         description: List all virtual machines
         displayName: ListVMs
         responses:
@@ -943,13 +1060,17 @@ types:
                 type: VMListItem[]
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         description: Creates a new virtual machine
         displayName: CreateVM
         body:
           application/json:
             type: VMCreate
         responses:
-          201:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Virtual machine created successfully
             headers:
               Location:
@@ -957,6 +1078,7 @@ types:
       /{vmid}:
         delete:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteVM
           description: Deletes the virtual machine
           responses:
@@ -964,6 +1086,7 @@ types:
               description: Virtual machine stopped successfully
         get:
           (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetVM
           description: Get the virtual machine object
           responses:
@@ -983,6 +1106,7 @@ types:
         /info:
           get:
             (DirectAccess):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: GetVMInfo
             description: Get statistical information about the virtual machine.
             responses:
@@ -993,6 +1117,7 @@ types:
         /start:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StartVM
             description: Start the virtual machine
             responses:
@@ -1001,6 +1126,7 @@ types:
         /stop:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: StopVM
             description: Stops the VM
             responses:
@@ -1009,6 +1135,7 @@ types:
         /pause:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: PauseVM
             description: Pauses the VM
             responses:
@@ -1017,6 +1144,7 @@ types:
         /resume:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: ResumeVM
             description: Resumes the virtual machine
             responses:
@@ -1025,6 +1153,7 @@ types:
         /shutdown:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: ShutdownVM
             description: Gracefully shutdown the virtual machine
             responses:
@@ -1033,6 +1162,7 @@ types:
         /migrate:
           post:
             (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
             displayName: MigrateVM
             description: Migrate the virtual machine to another host
             body:
@@ -1045,6 +1175,7 @@ types:
   description: Create and get information about a storage clusters
   post:
     (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     displayName: DeployNewCluster
     description: Deploy new cluster
     body:
@@ -1058,6 +1189,7 @@ types:
             description: URL to newly created storage cluster resource
   get:
     (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     displayName: ListAllClusters
     description: List all running clusters
     responses:
@@ -1068,6 +1200,7 @@ types:
   /{label}:
     get:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       displayName: GetClusterInfo
       description: Get full information about specific cluster
       responses:
@@ -1077,6 +1210,7 @@ types:
               type: Cluster
     delete:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       displayName: KillCluster
       description: Kill cluster
       responses:
@@ -1085,6 +1219,7 @@ types:
 /vdisks:
   get:
     (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     displayName: ListVdisks
     description: List vdisks
     responses:
@@ -1094,13 +1229,17 @@ types:
             type: VdiskListItem[]
   post:
     (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     displayName: CreateNewVdisk
     description: Create a new vdisk, can be a copy from an existing vdisk
     body:
       application/json:
         type: VdiskCreate
     responses:
-      201:
+      202:
+        body:
+          application/json:
+            type: Run
         headers:
           Location:
             description: URL to the created vdisk resource
@@ -1111,6 +1250,7 @@ types:
   /{vdiskid}:
     get:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       displayName: GetVdiskInfo
       description: Get vdisk information
       responses:
@@ -1122,6 +1262,7 @@ types:
           description: The vdisk does not exist
     delete:
       (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
       displayName: DeleteVdisk
       description: Delete Vdisk
       responses:
@@ -1132,6 +1273,7 @@ types:
     /resize:
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: ResizeVdisk
         description: Resize vdisk
         body:
@@ -1143,11 +1285,37 @@ types:
     /rollback:
       post:
         (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: RollbackVdisk
         description: Rollback a vdisk to a previous state
         body:
           application/json:
             type: VdiskRollback
         responses:
-          204:
+          202:
+            body:
+              application/json:
+                type: Run
             description: Rollback started successfully
+/runs:
+  /{runid}:
+    get:
+      (AYSBased):
+      displayName: GetRunState
+      description: Get Run Status
+      responses:
+        200:
+          body:
+            application/json:
+              type: Run
+    /wait:
+      get:
+        (AYSBased):
+        displayName: WaitOnRun
+        description: Wait for Run
+        responses:
+          200:
+            body:
+              application/json:
+                type: Run
+

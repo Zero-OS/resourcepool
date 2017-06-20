@@ -3,27 +3,28 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePools is the handler for GET /node/{nodeid}/storagepool
 // List storage pools present in the node
 func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeid),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "status,freeCapacity",
 	}
-	services, _, err := api.AysAPI.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
+	services, _, err := aysClient.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
 	if err != nil {
-		log.Errorf("Error listing storagepool services : %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := "Error listing storagepool services"
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -38,7 +39,7 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 
 		data := schema{}
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

@@ -12,7 +12,7 @@
 python3 bd-performance.py [Options]
 
 Options:
-  --restapiserver TEXT       0-rest-api api server endpoint. Eg
+  --orchestratorserver TEXT       0-orchestrator api server endpoint. Eg
                              http://192.168.193.212:8080
   --storagecluster TEXT      Name of the storage cluster in which the vdisks
                              need to be created

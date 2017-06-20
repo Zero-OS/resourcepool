@@ -3,29 +3,30 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // MigrateVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/migrate
 // Migrate the VM to another host
 func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMMigrate
 
 	vmID := mux.Vars(r)["vmid"]
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -48,9 +49,11 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	}}
 
 	// And execute
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj); err != nil {
-		log.Errorf("error executing blueprint for vm %s migrate : %+v", vmID, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s migrate ", vmID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

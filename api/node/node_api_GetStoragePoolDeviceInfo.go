@@ -15,7 +15,7 @@ func (api NodeAPI) GetStoragePoolDeviceInfo(w http.ResponseWriter, r *http.Reque
 	nodeId := vars["nodeid"]
 	deviceUuid := vars["deviceuuid"]
 
-	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w)
+	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w, r)
 	if err {
 		return
 	}

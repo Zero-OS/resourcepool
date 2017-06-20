@@ -3,27 +3,28 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListGWDHCPHosts is the handler for GET /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
 // List DHCPHosts for specified interface
 func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeId := vars["nodeid"]
 	nicInterface := vars["interface"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeId),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
 		"fields": "nics",
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -32,9 +33,8 @@ func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 		Nics []GWNIC `json:"nics"`
 	}
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal gateway service '%s' data: %+v", gateway, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
@@ -44,7 +44,7 @@ func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 		if nic.Name == nicInterface {
 			if nic.Dhcpserver == nil {
 				err = fmt.Errorf("Interface %v has no dhcp", nicInterface)
-				tools.WriteError(w, http.StatusNotFound, err)
+				tools.WriteError(w, http.StatusNotFound, err, "")
 				return
 			}
 			exists = true
@@ -55,7 +55,7 @@ func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		err = fmt.Errorf("Interface %v not found.", nicInterface)
-		tools.WriteError(w, http.StatusNotFound, err)
+		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 

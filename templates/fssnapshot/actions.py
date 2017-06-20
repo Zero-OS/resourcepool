@@ -14,19 +14,19 @@ def input(job):
         raise j.exceptions.Input("path should not be set as input")
 
 
-def get_filesystem(service):
+def get_filesystem(job):
     from zeroos.orchestrator.sal.Node import Node
-    nodeservice = service.parent.parent.parent
-    poolname = service.parent.parent.name
-    fsname = str(service.parent.model.data.name)
-    node = Node.from_ays(nodeservice)
+    nodeservice = job.service.parent.parent.parent
+    poolname = job.service.parent.parent.name
+    fsname = str(job.ervice.parent.model.data.name)
+    node = Node.from_ays(nodeservice, job.context['token'])
     pool = node.storagepools.get(poolname)
     return pool.get(fsname)
 
 
 def install(job):
     name = str(job.service.model.data.name)
-    fs = get_filesystem(job.service)
+    fs = get_filesystem(job)
     try:
         snap = fs.get(name)
     except ValueError:
@@ -37,13 +37,13 @@ def install(job):
 
 def delete(job):
     name = str(job.service.model.data.name)
-    fs = get_filesystem(job.service)
+    fs = get_filesystem(job)
     snapshot = fs.get(name)
     snapshot.delete()
 
 
 def rollback(job):
     name = str(job.service.model.data.name)
-    fs = get_filesystem(job.service)
+    fs = get_filesystem(job)
     snapshot = fs.get(name)
     snapshot.rollback()

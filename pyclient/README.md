@@ -1,6 +1,6 @@
 # Python Client
 
-O-orchestrator is the Python client used to talk to [Zero-OS 0 Rest API](https://github.com/zero-os/0-orchestrator)
+O-orchestrator is the Python client used to talk to [Zero-OS 0 Rest API](../README.md)
 
 ## Install
 

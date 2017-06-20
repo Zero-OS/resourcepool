@@ -15,14 +15,14 @@ func (api NodeAPI) ListNodeProcesses(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	core := client.Core(conn)
 	processes, err := core.Processes()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting processes from node")
 		return
 	}
 

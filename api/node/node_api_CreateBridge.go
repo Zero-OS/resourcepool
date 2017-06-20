@@ -5,42 +5,67 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/validators"
 )
 
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
 func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody BridgeCreate
+	vars := mux.Vars(r)
+	nodeId := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
-	// check that service exists
-	flag, err := tools.ServiceExists("bridge", reqBody.Name, api.AysRepo)
-	if flag == true {
-		err = fmt.Errorf("Bridge already exists")
-		tools.WriteError(w, http.StatusConflict, err)
+	queryParams := map[string]interface{}{
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+		"fields": "setting",
+	}
+	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 		return
 	}
 
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
+	for _, service := range services {
+		bridge := Bridge{
+			Name: service.Name,
+		}
 
-	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
+		if err := json.Unmarshal(service.Data, &bridge); err != nil {
+			errmsg := fmt.Sprintf("Error in decoding bridges")
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			return
+		}
+
+		if bridge.Name == reqBody.Name {
+			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name), "")
+			return
+		}
+
+		overlaps, err := validators.ValidateCIDROverlap(reqBody.Setting.Cidr, bridge.Setting.Cidr)
+		if err != nil {
+			tools.WriteError(w, http.StatusBadRequest, err, "")
+			return
+		}
+		if overlaps {
+			tools.WriteError(w, http.StatusConflict,
+				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr), "")
+			return
+		}
+	}
 
 	// Create blueprint
 	bp := struct {
@@ -54,7 +79,7 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Nat:         reqBody.Nat,
 		NetworkMode: reqBody.NetworkMode,
 		Setting:     reqBody.Setting,
-		Node:        nodeid,
+		Node:        nodeId,
 	}
 
 	obj := make(map[string]interface{})
@@ -64,24 +89,16 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Actor:   "bridge",
 		Service: reqBody.Name}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
-	if err != nil {
-		log.Errorf("error executing blueprint for bridge %s creation : %+v", reqBody.Name, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	// Wait for the delete job to be finshed before we delete the service
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
-		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
-		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
-		}
-		return
-	}
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeid, reqBody.Name))
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
 }
