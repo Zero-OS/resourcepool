@@ -7,8 +7,12 @@ apt-get update
 apt-get install -y debootstrap
 
 mkdir /mnt/ubuntu
-debootstrap --include openssh-server --arch amd64 xenial /mnt/ubuntu
+debootstrap --include openssh-server,curl,ca-certificates --arch amd64 xenial /mnt/ubuntu
+
 sed -i "s/main/main restricted universe multiverse/" /mnt/ubuntu/etc/apt/sources.list
+
+rm -rf /mnt/ubuntu/etc/ssh/ssh_host_*
+mkdir -p /mnt/ubuntu/root/.ssh
 
 cd /mnt/ubuntu
 
