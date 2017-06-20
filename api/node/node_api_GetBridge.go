@@ -2,7 +2,7 @@ package node
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -14,25 +14,19 @@ import (
 // GetBridge is the handler for GET /nodes/{nodeid}/bridges/{bridgeid}
 // Get bridge details
 func (api NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var respBody Bridge
 
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
-	srv, resp, err := api.AysAPI.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	srv, resp, err := aysClient.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
-	if err != nil {
-		log.Errorf("Error in getting bridge service %s : %+v", bridge, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Bridge %s does not exist", bridge))
+	if !tools.HandleAYSResponse(err, resp, w, "Get bridge by name") {
 		return
 	}
 
 	if err := json.Unmarshal(srv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 	respBody.Name = srv.Name

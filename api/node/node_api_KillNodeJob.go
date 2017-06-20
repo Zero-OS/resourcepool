@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"syscall"
 
+	"fmt"
+
+	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // KillNodeJob is the handler for DELETE /nodes/{nodeid}/job/{jobid}
@@ -16,14 +18,15 @@ func (api NodeAPI) KillNodeJob(w http.ResponseWriter, r *http.Request) {
 	jobID := vars["jobid"]
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	core := client.Core(cl)
 
 	if err := core.KillJob(client.JobId(jobID), syscall.SIGKILL); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error killing job %s on node", jobID)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

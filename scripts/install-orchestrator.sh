@@ -22,17 +22,23 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN>"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> <DOMAIN>"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
   echo "  ZEROTIERTOKEN: Zerotier api token."
+  echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
+  echo "  CLIENTSECRET: client secret for itsyou.online authentication."  
+  echo "  DOMAIN: the domain to use for caddy."
   echo
   exit 1
 fi
 BRANCH=$1
 ZEROTIERNWID=$2
 ZEROTIERTOKEN=$3
+ITSYOUONLINEORG=$4
+CLIENTSECRET=$5
+DOMAIN=$6
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -50,6 +56,17 @@ echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 
 chmod +x ${ztinit} >> ${logfile} 2>&1
 bash $ztinit >> ${logfile} 2>&1
+
+echo "[+] Waiting for zerotier connectivity"
+if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
+    echo "[-] ZeroTier interface zt0 does not have an ipaddress."
+    echo "[-] Make sure you authorized this docker into your ZeroTier network"
+    echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
+
+    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+        sleep 0.2
+    done
+fi
 
 echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
@@ -83,11 +100,29 @@ popd
 echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
+if [ -n "${ITSYOUONLINEORG}" ]; then
+    if [ ! -d /optvar/cfg/ ]; then
+        mkdir /optvar/cfg/
+    fi 
+    cat >  /optvar/cfg/jumpscale9.toml << EOL
+[ays]        
+production = true
+                                                
+[ays.oauth] 
+client_secret = "${CLIENTSECRET}" 
+jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv" 
+organization = "${ITSYOUONLINEORG}"  
+EOL
+fi 
+
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
 chmod +x ${aysinit} >> ${logfile} 2>&1
 bash $aysinit >> ${logfile} 2>&1
+
+echo "[+] Waiting for AtYourService"
+while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
 echo "[+] Building orchestrator api server"
 mkdir -p /opt/go/proj/src/github.com >> ${logfile} 2>&1
@@ -109,21 +144,63 @@ if [ "$ZEROTIERIP" == "" ]; then
     exit 1
 fi
 
+if [ -z "$DOMAIN" ]; then
+    PRIV="$ZEROTIERIP"
+    PUB="http://$ZEROTIERIP:8080/"
+else
+    PRIV="127.0.0.1"
+    PUB="$DOMAIN"
+fi
+
+
 # create orchestrator service
 echo '#!/bin/bash -x' > ${orchinit}
-echo 'cmd="orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server"' >> ${orchinit}
+if [ -z "${ITSYOUONLINEORG}" ]; then
+    echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server "' >> ${orchinit}
+else
+    echo 'cmd="orchestratorapiserver --bind '"${PRIV}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '"${ITSYOUONLINEORG}"'"' >> ${orchinit}
+fi
+
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
+
+if [ -n "$DOMAIN" ]; then
+    js9 'j.tools.prefab.local.apps.caddy.install()'
+    mkdir -p /opt/caddy
+    pushd /opt/caddy
+    cat >> Caddyfile <<EOF
+http://$DOMAIN:80 {
+    proxy / $PRIV:8080 {
+        transparent
+    }
+}
+
+http://ays.$DOMAIN:80 {
+    proxy / 127.0.0.1:5000 {
+        transparent
+    }
+}
+EOF
+    popd
+    echo 'cmd="cd /opt/caddy; caddy"' >> ${orchinit}
+    echo 'tmux new-window -t main -n caddy' >> ${orchinit}
+    echo 'tmux send-key -t caddy.0 "$cmd" ENTER' >> ${orchinit}
+
+fi
 
 chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
-echo -e "bootstrap.g8os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
+echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
 cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
 cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 
 echo "Your ays server is ready to bootstrap nodes into your zerotier network."
-echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID} and boot up your nodes!"
-echo "Enjoy your orchestrator api server: http://${ZEROTIERIP}:8080/"
+if [ -z "${ITSYOUONLINEORG}" ]; then 
+    echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/ and boot up your nodes!"
+else
+    echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG} and boot up your nodes!"
+fi
+echo "Enjoy your orchestrator api server: $PUB"

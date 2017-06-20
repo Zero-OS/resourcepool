@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // GetContainerJob is the handler for GET /nodes/{nodeid}/container/{containername}/job/{jobid}
@@ -19,7 +19,7 @@ func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
@@ -38,10 +38,6 @@ func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
 	// Check if the job has finished
 	if process, _ := container.ResultNonBlock(jobID); process != nil {
 

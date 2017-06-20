@@ -1,6 +1,7 @@
 """
 Auto-generated class for ContainerNIC
 """
+from .ContainerNICconfig import ContainerNICconfig
 from .EnumContainerNICStatus import EnumContainerNICStatus
 from .EnumContainerNICType import EnumContainerNICType
 
@@ -13,13 +14,14 @@ class ContainerNIC(object):
     """
 
     @staticmethod
-    def create(id, status, type, config=None, hwaddr=None, name=None):
+    def create(id, status, type, config=None, hwaddr=None, name=None, token=None):
         """
-        :type config: str
+        :type config: ContainerNICconfig
         :type hwaddr: str
         :type id: str
         :type name: str
         :type status: EnumContainerNICStatus
+        :type token: str
         :type type: EnumContainerNICType
         :rtype: ContainerNIC
         """
@@ -30,11 +32,12 @@ class ContainerNIC(object):
             id=id,
             name=name,
             status=status,
+            token=token,
             type=type,
         )
 
     def __init__(self, json=None, **kwargs):
-        if not json and not kwargs:
+        if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
         class_name = 'ContainerNIC'
@@ -46,7 +49,7 @@ class ContainerNIC(object):
         property_name = 'config'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [str]
+            datatypes = [ContainerNICconfig]
             try:
                 self.config = client_support.val_factory(val, datatypes)
             except ValueError as err:
@@ -91,6 +94,15 @@ class ContainerNIC(object):
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'token'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.token = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'type'
         val = data.get(property_name)

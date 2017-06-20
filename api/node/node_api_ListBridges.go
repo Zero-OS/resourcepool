@@ -3,24 +3,25 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
 // List bridges
 func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.g8os!%s", nodeid),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "setting,status",
 	}
-	services, resp, err := api.AysAPI.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 		return
 	}
@@ -32,8 +33,8 @@ func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.Unmarshal(service.Data, &bridge); err != nil {
-			log.Errorf("Error in listing bridges: %+v\n", err)
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			errmsg := "Error in listing bridges"
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return
 		}
 

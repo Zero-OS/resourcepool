@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // Ardb Struct that is used to map ardb service.
@@ -18,9 +18,9 @@ type Ardb struct {
 	Container string `json:"container" validate:"nonzero"`
 }
 
-func getArdb(name string, api StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
+func getArdb(aysClient tools.AYStool, name string, api StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
 	var state EnumStorageServerStatus
-	service, res, err := api.AysAPI.Ays.GetServiceByName(name, "ardb", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(name, "ardb", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return StorageServer{}, []string{""}, err
 	}
@@ -56,13 +56,14 @@ const clusterInfoCacheKey = "clusterInfoCacheKey"
 // GetClusterInfo is the handler for GET /storageclusters/{label}
 // Get full Information about specific cluster
 func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var metadata []StorageServer
 	var data []StorageServer
 	vars := mux.Vars(r)
 	label := vars["label"]
 
 	//getting cluster service
-	service, res, err := api.AysAPI.Ays.GetServiceByName(label, "storage_cluster", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(label, "storage_cluster", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return
 	}
@@ -78,16 +79,16 @@ func (api StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Requ
 	}{}
 
 	if err := json.Unmarshal(service.Data, &clusterItem); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "error unmarshaling ays response")
 		return
 	}
 
 	//looping over all ardb disks relating to this cluster
 	for _, ardbName := range clusterItem.Ardbs {
 		//getting all ardb disk services relating to this cluster to get more info on each ardb
-		storageServer, nameInfo, err := getArdb(ardbName, api, w)
+		storageServer, nameInfo, err := getArdb(aysClient, ardbName, api, w)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting ardb service")
 			return
 		}
 

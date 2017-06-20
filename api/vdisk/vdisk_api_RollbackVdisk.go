@@ -2,50 +2,77 @@ package vdisk
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	runs "github.com/zero-os/0-orchestrator/api/run"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // RollbackVdisk is the handler for POST /vdisks/{vdiskid}/rollback
 // Rollback a vdisk to a previous state
 func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
+
 	var reqBody VdiskRollback
+	vars := mux.Vars(r)
+	vdiskID := vars["vdiskid"]
+	aysClient := tools.GetAysConnection(r, api)
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
+	}
+	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("rollback vdisk %s", vdiskID)) {
+		return
+	}
+
+	// Validate if disk is halted and of type [db, boot]
+	var disk Vdisk
+	if err := json.Unmarshal(serv.Data, &disk); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
+		return
+	}
+	if string(disk.Status) != "halted" {
+		err = fmt.Errorf("Failed to rollback %s, vdisk should be halted", vdiskID)
+		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+	if disk.Vdisktype != EnumVdiskVdisktypeboot && disk.Vdisktype != EnumVdiskVdisktypedb {
+		err = fmt.Errorf("Failed to rollback %s, rollback is supported for boot or db only", vdiskID)
+		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 
 	// Create rollback blueprint
-	// TODO: define rollback
-	// vdiskId := mux.Vars(r)["vdiskid"]
-	// bp := struct {
-	// 	Epoch int `yaml:"epoch" json:"epoch"`
-	// }{
-	// 	Epoch: reqBody.Epoch,
-	// }
-	//
-	// bpName := fmt.Sprintf("vdiskrollback%sfrom%vto%v", vdiskId, time.Now().Unix(), reqBody.Epoch)
-	// decl := fmt.Sprintf("vdisk__%v", vdiskId)
-	//
-	// obj := make(map[string]interface{})
-	// obj[decl] = bp
-	// obj["actions"] = []map[string]string{map[string]string{"action": "rollback"}}
-	//
-	// // And execute
-	// if _, err := tools.ExecuteBlueprint(api.AysRepo, bpName, obj); err != nil {
-	// 	log.Errorf("error executing blueprint for vdisk %s rollback : %+v", vdiskId, err)
-	// 	tools.WriteError(w, http.StatusInternalServerError, err)
-	// 	return
-	// }
-	//
-	// w.WriteHeader(http.StatusNoContent)
+	bp := struct {
+		Timestamp int `yaml:"timestamp" json:"timestamp"`
+	}{
+		Timestamp: reqBody.Epoch,
+	}
+
+	obj := make(map[string]interface{})
+	obj[fmt.Sprintf("vdisk__%s", vdiskID)] = bp
+
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", vdiskID)
+	if tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+		return
+	}
+
+	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(&response)
+
 }

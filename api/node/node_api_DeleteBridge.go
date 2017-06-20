@@ -3,17 +3,31 @@ package node
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"fmt"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
 // Remove bridge
 func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
+
+	exists, err := aysClient.ServiceExists("bridge", bridge, api.AysRepo)
+
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the bridge")
+		return
+	}
+
+	if !exists {
+		err = fmt.Errorf("Bridge %s doesn't exist", bridge)
+		tools.WriteError(w, http.StatusNotFound, err, err.Error())
+		return
+	}
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
@@ -25,30 +39,28 @@ func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for bridge deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", bridge, "delete", blueprint)
+	errmsg := "Error executing blueprint for bridge deletion "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for bridge deletion")
 		}
 		return
 	}
 
-	_, err = api.AysAPI.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	_, err = aysClient.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
 	if err != nil {
-		log.Errorf("Error in deleting bridge %s : %+v", bridge, err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := fmt.Sprintf("Error in deleting bridge %s ", bridge)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

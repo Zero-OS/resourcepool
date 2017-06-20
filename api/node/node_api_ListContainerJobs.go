@@ -13,14 +13,14 @@ import (
 func (api NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
 	core := client.Core(container)
 	processes, err := core.Jobs()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting jobs from container")
 		return
 	}
 

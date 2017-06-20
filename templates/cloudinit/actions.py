@@ -13,7 +13,7 @@ def config_cloud_init(job, nics=None):
     from zeroos.orchestrator.sal.gateway.cloudinit import CloudInit
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service.parent)
+    container = Container.from_ays(job.service.parent, job.context['token'])
     nics = nics or []
     config = {}
 
@@ -38,5 +38,4 @@ def config_cloud_init(job, nics=None):
 
 
 def update(job):
-    if job.model.args.get("nics", None):
-        config_cloud_init(job, job.model.args["nics"])
+    config_cloud_init(job, job.model.args["nics"])

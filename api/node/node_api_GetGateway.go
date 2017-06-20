@@ -2,27 +2,29 @@ package node
 
 import (
 	"encoding/json"
+
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetGateway is the handler for GET /nodes/{nodeid}/gws/{gwname}
 // Get gateway
 func (api NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var gateway GetGW
 
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return
 	}
 
 	if err := json.Unmarshal(service.Data, &gateway); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 

@@ -6,26 +6,26 @@ import (
 	"net/http"
 	str "strings"
 
+	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 )
 
 // StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/jobs
 // Start a new process in this container
 func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 	var reqBody CoreSystem
-	var env map[string]string
+	env := map[string]string{}
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -36,7 +36,7 @@ func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 
 	containerClient, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 

@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePoolDevices is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/devices
@@ -19,7 +18,7 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 	storagePoolName := vars["storagepoolname"]
 	nodeId := vars["nodeid"]
 
-	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w)
+	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w, r)
 	if err {
 		return
 	}
@@ -43,10 +42,11 @@ type DeviceInfo struct {
 }
 
 // Get storagepool devices
-func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter) ([]DeviceInfo, bool) {
-	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.g8os!%s", node)}
+func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
+	aysClient := tools.GetAysConnection(r, api)
+	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
 		return nil, true
 	}
@@ -56,9 +56,8 @@ func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.Respon
 	}
 
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Errorf("Error Unmarshal storagepool service '%s' data: %+v", storagePool, err)
-		log.Error(errMessage)
-		tools.WriteError(w, http.StatusInternalServerError, errMessage)
+		errMessage := fmt.Sprintf("Error Unmarshal storagepool service '%s'", storagePool)
+		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return nil, true
 	}
 

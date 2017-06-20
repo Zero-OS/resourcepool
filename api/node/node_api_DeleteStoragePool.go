@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
 // Delete the storage pool
 func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	name := vars["storagepoolname"]
 
@@ -25,35 +25,33 @@ func (api NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", name, "delete", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		log.Errorf("Error executing blueprint for storagepool deletion : %+v", err.Error())
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", name, "delete", blueprint)
+	errmsg := "Error executing blueprint for storagepool deletion "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storagepool deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err)
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storagepool deletion")
 		}
 		return
 	}
 
-	resp, err := api.AysAPI.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
+	resp, err := aysClient.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
 	if err != nil {
-		log.Errorf("Error deleting storagepool services : %+v", err)
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		errmsg := "Error deleting storagepool services"
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		log.Errorf("Error deleting storagepool services : %+v", resp.Status)
-		tools.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status))
+		errmsg := fmt.Sprintf("Error deleting storagepool services : %+v", resp.Status)
+		tools.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status), errmsg)
 		return
 	}
 

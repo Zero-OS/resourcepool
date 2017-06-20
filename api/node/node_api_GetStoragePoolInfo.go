@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetStoragePoolInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}
@@ -14,16 +14,16 @@ import (
 func (api NodeAPI) GetStoragePoolInfo(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["storagepoolname"]
 
-	schema, err := api.getStoragepoolDetail(name)
+	schema, err := api.getStoragepoolDetail(name, r)
 	if err != nil {
-		log.Errorf("Error get info about storagepool services : %+v", err.Error())
+		errmsg := "Error get info about storagepool services"
 
 		if httpErr, ok := err.(tools.HTTPError); ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr)
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 			return
 		}
 
-		tools.WriteError(w, http.StatusInternalServerError, err)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	respBody := StoragePool{
@@ -50,10 +50,11 @@ type storagePoolSchema struct {
 	TotalCapacity   uint64                         `json:"totalCapacity"`
 }
 
-func (api NodeAPI) getStoragepoolDetail(name string) (*storagePoolSchema, error) {
+func (api NodeAPI) getStoragepoolDetail(name string, r *http.Request) (*storagePoolSchema, error) {
+	aysClient := tools.GetAysConnection(r, api)
 	log.Debugf("Get schema detail for storagepool %s\n", name)
 
-	service, resp, err := api.AysAPI.Ays.GetServiceByName(name, "storagepool", api.AysRepo, nil, nil)
+	service, resp, err := aysClient.Ays.GetServiceByName(name, "storagepool", api.AysRepo, nil, nil)
 	if err != nil {
 		return nil, tools.NewHTTPError(resp, err.Error())
 	}

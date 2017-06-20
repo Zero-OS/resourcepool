@@ -13,15 +13,13 @@ class VMCreate(object):
     """
 
     @staticmethod
-    def create(cpu, disks, id, memory, nics, systemCloudInit, userCloudInit):
+    def create(cpu, disks, id, memory, nics):
         """
         :type cpu: int
         :type disks: list[VDiskLink]
         :type id: str
         :type memory: int
         :type nics: list[NicLink]
-        :type systemCloudInit: dict
-        :type userCloudInit: dict
         :rtype: VMCreate
         """
 
@@ -31,12 +29,10 @@ class VMCreate(object):
             id=id,
             memory=memory,
             nics=nics,
-            systemCloudInit=systemCloudInit,
-            userCloudInit=userCloudInit,
         )
 
     def __init__(self, json=None, **kwargs):
-        if not json and not kwargs:
+        if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
         class_name = 'VMCreate'
@@ -95,28 +91,6 @@ class VMCreate(object):
             datatypes = [NicLink]
             try:
                 self.nics = client_support.list_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'systemCloudInit'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [dict]
-            try:
-                self.systemCloudInit = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'userCloudInit'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [dict]
-            try:
-                self.userCloudInit = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
