@@ -25,9 +25,7 @@ func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "node", nodeId, "reboot", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+	if !tools.HandleExecuteBlueprintResponse(err, w, "Error running blueprint for Rebooting node") {
 		return
 	}
 
