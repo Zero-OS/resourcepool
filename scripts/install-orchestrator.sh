@@ -22,7 +22,7 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> <DOMAIN>"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> <DOMAIN> [--development]"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
@@ -30,15 +30,29 @@ if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
   echo "  CLIENTSECRET: client secret for itsyou.online authentication."  
   echo "  DOMAIN: the domain to use for caddy."
+  echo "  --development: an optional parameter to use self signed certificates."
   echo
   exit 1
 fi
 BRANCH=$1
-ZEROTIERNWID=$2
-ZEROTIERTOKEN=$3
-ITSYOUONLINEORG=$4
-CLIENTSECRET=$5
-DOMAIN=$6
+shift
+ZEROTIERNWID=$1
+shift
+ZEROTIERTOKEN=$1
+shift
+ITSYOUONLINEORG=$1
+shift
+CLIENTSECRET=$1
+shift
+DOMAIN=$1
+shift
+
+if [ "$1" = "--development" ]; then
+	DEVELOPMENT=true
+	shift
+else
+	DEVELOPMENT=false
+fi
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -169,17 +183,23 @@ if [ -n "$DOMAIN" ]; then
     js9 'j.tools.prefab.local.apps.caddy.install()'
     mkdir -p /opt/caddy
     pushd /opt/caddy
+    tls=
+    if [ "$DEVELOPMENT" = true ]; then
+        tls='tls self_signed'
+    fi
     cat >> Caddyfile <<EOF
-http://$DOMAIN:80 {
+https://$DOMAIN:443 {
     proxy / $PRIV:8080 {
         transparent
     }
+    $tls
 }
 
-http://ays.$DOMAIN:80 {
+https://ays.$DOMAIN:443 {
     proxy / 127.0.0.1:5000 {
         transparent
     }
+    $tls
 }
 EOF
     popd
