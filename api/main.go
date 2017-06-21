@@ -7,13 +7,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/justinas/alice"
 
 	"github.com/codegangsta/cli"
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/zero-os/0-orchestrator/api/goraml"
 	"github.com/zero-os/0-orchestrator/api/router"
-	"github.com/zero-os/0-orchestrator/api/tools"
 
 	"fmt"
 
@@ -88,7 +86,7 @@ func main() {
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)
-		if err := http.ListenAndServe(bindAddr, alice.New(tools.NewOauth2itsyouonlineMiddleware(organization).Handler).Then(tools.ConnectionMiddleware()(r))); err != nil {
+		if err := http.ListenAndServe(bindAddr, r); err != nil {
 			log.Errorln(err)
 		}
 	}
