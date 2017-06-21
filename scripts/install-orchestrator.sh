@@ -22,13 +22,12 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> [<DOMAIN> [--development]]"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> [<DOMAIN> [--development]]"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
   echo "  ZEROTIERTOKEN: Zerotier api token."
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
-  echo "  CLIENTSECRET: client secret for itsyou.online authentication."
   echo "  DOMAIN: the domain to use for caddy."
   echo "  --development: an optional parameter to use self signed certificates."
   echo
@@ -41,8 +40,6 @@ shift
 ZEROTIERTOKEN=$1
 shift
 ITSYOUONLINEORG=$1
-shift
-CLIENTSECRET=$1
 shift
 DOMAIN=$1
 
@@ -129,7 +126,6 @@ if [ -n "${ITSYOUONLINEORG}" ]; then
 production = true
 
 [ays.oauth]
-client_secret = "${CLIENTSECRET}"
 jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv"
 organization = "${ITSYOUONLINEORG}"
 EOL
@@ -153,12 +149,15 @@ cd /opt/go/proj/src/github.com/zero-os/0-orchestrator/api
 GOPATH=/opt/jumpscale9/go/proj GOROOT=/opt/jumpscale9/go/root /opt/jumpscale9/go/root/bin/go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
     mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
-    mkdir -p /optvar/cockpit_repos/orchestrator-server/services >> ${logfile} 2>&1
-    mkdir -p /optvar/cockpit_repos/orchestrator-server/actorTemplates >> ${logfile} 2>&1
-    mkdir -p /optvar/cockpit_repos/orchestrator-server/actors >> ${logfile} 2>&1
-    mkdir -p /optvar/cockpit_repos/orchestrator-server/blueprints >> ${logfile} 2>&1
-    touch /optvar/cockpit_repos/orchestrator-server/.ays >> ${logfile} 2>&1
-    git init /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
+    pushd /optvar/cockpit_repos/orchestrator-server
+    mkdir services >> ${logfile} 2>&1
+    mkdir actorTemplates >> ${logfile} 2>&1
+    mkdir actors >> ${logfile} 2>&1
+    mkdir blueprints >> ${logfile} 2>&1
+    touch .ays >> ${logfile} 2>&1
+    git init >> ${logfile} 2>&1
+    git remote add https://github.com/zero-os/orchestrator >> ${logfile} 2>&1
+    popd
 fi
 
 echo "[+] Starting orchestrator api server"

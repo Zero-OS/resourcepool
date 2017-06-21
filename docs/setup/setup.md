@@ -14,7 +14,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
 > **Important:** Make sure you set the `GIGBRANCH` environment variable to 9.0.0 before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
 
-> **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires librairies.
+> **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires libraries.
 
 
 ## Install the Orchestrator
@@ -29,7 +29,6 @@ This script takes the following parameters:
 - `ZEROTIERNWID`: ZeroTier network ID
 - `ZEROTIERTOKEN`: ZeroTier API token
 - `ITSYOUONLINEORG`: Itsyouonline organization to authenticate against
-- `CLIENTSECRET`: Itsyouonline clientsecret for the organization
 - `DOMAIN`: Optional domain to listen on if this is ommited caddy will listen on the zerotier network with a selfsigned certificate
 - `--development`: When domain is passed and you want to force a selfsigned certificate
 
@@ -40,7 +39,6 @@ export BRANCH="1.1.0-alpha-3"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
-export CLIENTSECRET="<client secret of the itsyou.online organization>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
 bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> <$CLIENTSECRET> [<$DOMAIN> [--development]]
@@ -147,8 +145,8 @@ ays run create -y
 ## Boot your Zero-OS nodes
 The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
 
-Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/1.1.0-alpha-3-0-core-6d11a464/<Your ZeroTier network id>`
+Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/<Your ZeroTier network id>/organization=${ITSYOUONLINEORG}`
 
-Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/1.1.0-alpha-3-0-core-6d11a464/<Your ZeroTier network id>`
+Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/<Your ZeroTier network id>/organization=${ITSYOUONLINEORG}`
 
 Refer to the 0-core repository documentation for more information on booting Zero-OS.
