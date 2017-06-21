@@ -2,8 +2,6 @@
 
 A Zero-OS cluster typically hosts (as a workload) one or more storage clusters.
 
-A storage cluster is set of containers running ARDB.
+Setting up a storage cluster is achieved through the REST API exposed by the Zero-OS Orchestrator, as documented in [Setup a Storage Cluster](./setup.md)
 
-Setting up a storage cluster is achieved through the REST API exposed by the Zero-OS Orchestrator, as documented in [Setup a Storage Cluster](setup.md)
-
-Once you have a storage cluster setup it can be used for multiple purposes, most importantly for creating vdisks as discussed in [Block Storage](/docs/blockstorage/blockstorage.md).
+Once you have a storage cluster setup it can be used for multiple purposes, most importantly for creating vdisks as discussed in [Block Storage](../blockstorage/blockstorage.md).
