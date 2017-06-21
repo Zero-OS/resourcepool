@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	runs "github.com/zero-os/0-orchestrator/api/run"
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -70,17 +70,15 @@ func (api NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errMessage := fmt.Errorf("error executing blueprint for gateway %s", gateway)
-		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
+	errMessage := fmt.Sprintf("error executing blueprint for gateway %s", gateway)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errMessage) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/httpproxies/%v", nodeID, gateway, reqBody.Host))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(&response)
+	w.WriteHeader(http.StatusCreated)
+
 }

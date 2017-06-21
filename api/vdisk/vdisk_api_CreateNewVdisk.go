@@ -6,7 +6,7 @@ import (
 
 	"net/http"
 
-	runs "github.com/zero-os/0-orchestrator/api/run"
+	
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -85,10 +85,10 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
+       return
+   }
+   w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
+   w.WriteHeader(http.StatusCreated)
 
-	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(&response)
 }

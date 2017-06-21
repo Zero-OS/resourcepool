@@ -1297,25 +1297,3 @@ types:
               application/json:
                 type: Run
             description: Rollback started successfully
-/runs:
-  /{runid}:
-    get:
-      (AYSBased):
-      displayName: GetRunState
-      description: Get Run Status
-      responses:
-        200:
-          body:
-            application/json:
-              type: Run
-    /wait:
-      get:
-        (AYSBased):
-        displayName: WaitOnRun
-        description: Wait for Run
-        responses:
-          200:
-            body:
-              application/json:
-                type: Run
-

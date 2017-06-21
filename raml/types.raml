@@ -1295,14 +1295,3 @@ GetGW:
       description: id of the zerotier daemon
       required: false
 
-RunState:
-  enum: [ok, running, scheduled, error, new, disabled, changed]
-
-Run:
-  properties:
-      runid:
-        description: Runid of job that was scheduled.
-        type: string
-      state:
-        description: state of job that was scheduled.
-        type: RunState

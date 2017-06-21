@@ -26,10 +26,8 @@ func (api NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "start", bp)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("Error executing blueprint for starting container %s ", containername)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := fmt.Sprintf("Error executing blueprint for starting container %s ", containername)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

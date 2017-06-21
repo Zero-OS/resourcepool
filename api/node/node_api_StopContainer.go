@@ -28,10 +28,8 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "stop", bp)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("Error executing blueprint for stopping container %s ", containername)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	errmsg := fmt.Sprintf("Error executing blueprint for stopping container %s ", containername)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
