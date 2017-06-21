@@ -1023,6 +1023,13 @@ VdiskCreate:
 
         This property can only be used when the disk is of type boot or db.
       required: false
+    backupStoragecluster:
+      type: string
+      description: |
+        the storagecluster used for this vdisk's main storage.
+
+        This property can only be used when the disk is of type boot or db.
+      required: false
 
 Vdisk:
   properties:
