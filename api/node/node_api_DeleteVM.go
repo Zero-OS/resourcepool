@@ -32,7 +32,7 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		errmsg := fmt.Sprintf("Error while waiting for vm %s deletion", vmId)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return

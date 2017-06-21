@@ -43,7 +43,7 @@ func (api NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the job to be finshed
-	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for starting gateway")

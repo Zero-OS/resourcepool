@@ -59,11 +59,11 @@ func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blu
 	return run, aystool.archiveBlueprint(blueprintName, repoName)
 }
 
-func (aystool AYStool) WaitRunDone(runid, repoName string) error {
+func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	run, err := aystool.getRun(runid, repoName)
 
 	if err != nil {
-		return err
+		return run, err
 	}
 
 	for run.State == "new" || run.State == "running" {
@@ -71,10 +71,10 @@ func (aystool AYStool) WaitRunDone(runid, repoName string) error {
 
 		run, err = aystool.getRun(run.Key, repoName)
 		if err != nil {
-			return err
+			return run, err
 		}
 	}
-	return nil
+	return run, nil
 }
 
 // ServiceExists check if an atyourserivce exists
