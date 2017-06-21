@@ -19,11 +19,16 @@ Create the Docker container with JumpScale9 development environment by following
 SSH into your JumpScale9 Docker container and install the Orchestrator using the [`install-orchestrator.sh`](../../scripts/install-orchestrator.sh) script.
 
 Before actually performing the Orchestrator installation the script will first join the Docker container into the ZeroTier management network that will be used to manage the Zero-OS nodes in your cluster.
+The orchestrator by default installs caddy and runs using https. If the domain is passed, it will try to create certificates for that domain, unless `--development` is used, then it will use self signed certificates.
 
-This script takes 3 parameters:
+This script takes the following parameters:
 - `BRANCH`: 0-orchestrator development branch
 - `ZEROTIERNWID`: ZeroTier network ID
 - `ZEROTIERTOKEN`: ZeroTier API token
+- `ITSYOUONLINEORG`: Itsyouonline organization to authenticate against
+- `CLIENTSECRET`: Itsyouonline clientsecret for the organization
+- `DOMAIN`: Optional domain to listen on if this is ommited caddy will listen on the zerotier network with a selfsigned certificate
+- `--development`: When domain is passed and you want to force a selfsigned certificate
 
 So:
 ```bash
@@ -34,8 +39,6 @@ export ZEROTIERTOKEN="<Your ZeroTier token>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
 bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <ITSYOUONLINEORG> <CLIENTSECRET> [<DOMAIN> [--development]]
 ```
-
-The orchestrator by default installs caddy and runs using https. If the domain is passed, it will try to create certificates for that domain, unless `--development` is used, then it will use self signed certificates.
 
 In order to see the full log details while `install-orchestrator.sh` executes:
 ```shell
