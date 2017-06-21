@@ -186,13 +186,13 @@ echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
 js9 'j.tools.prefab.local.apps.caddy.install()'
-mkdir -p /opt/caddy
-pushd /opt/caddy
 tls=
 if [ "$DEVELOPMENT" = true ]; then
     tls='tls self_signed'
 fi
-cat >> Caddyfile <<EOF
+
+cfgdir=`js9 "print(j.dirs.CFGDIR)"`
+cat > $cfgdir/caddy.cfg <<EOF
 $PUB {
     proxy / $PRIV:8080 {
         transparent
@@ -200,10 +200,7 @@ $PUB {
     $tls
 }
 EOF
-popd
-echo 'cmd="cd /opt/caddy; caddy"' >> ${orchinit}
-echo 'tmux new-window -t main -n caddy' >> ${orchinit}
-echo 'tmux send-key -t caddy.0 "$cmd" ENTER' >> ${orchinit}
+echo 'js9 "j.tools.prefab.local.apps.caddy.start()"' >> ${orchinit}
 
 
 chmod +x ${orchinit} >> ${logfile} 2>&1

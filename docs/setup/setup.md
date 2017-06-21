@@ -32,8 +32,10 @@ export BRANCH="1.1.0-alpha-3"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN
+bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <ITSYOUONLINEORG> <CLIENTSECRET> [<DOMAIN> [--development]]
 ```
+
+The orchestrator by default installs caddy and runs using https. If the domain is passed, it will try to create certificates for that domain, unless `--development` is used, then it will use self signed certificates.
 
 In order to see the full log details while `install-orchestrator.sh` executes:
 ```shell
