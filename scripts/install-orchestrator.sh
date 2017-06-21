@@ -121,7 +121,7 @@ if [ -n "${ITSYOUONLINEORG}" ]; then
     if [ ! -d /optvar/cfg/ ]; then
         mkdir /optvar/cfg/
     fi
-    cat >  /optvar/cfg/jumpscale9.toml << EOL
+    cat >>  /optvar/cfg/jumpscale9.toml << EOL
 [ays]
 production = true
 
@@ -141,11 +141,11 @@ echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
 echo "[+] Building orchestrator api server"
-mkdir -p /opt/go/proj/src/github.com >> ${logfile} 2>&1
-if [ ! -d /opt/go/proj/src/github.com/zero-os ]; then
-    ln -sf ${CODEDIR}/github/zero-os /opt/go/proj/src/github.com/zero-os >> ${logfile} 2>&1
+mkdir -p /opt/jumpscale9/go/proj/src/github.com >> ${logfile} 2>&1
+if [ ! -d /opt/jumpscale9/go/proj/src/github.com/zero-os ]; then
+    ln -sf ${CODEDIR}/github/zero-os /opt/jumpscale9/go/proj/src/github.com/zero-os >> ${logfile} 2>&1
 fi
-cd /opt/go/proj/src/github.com/zero-os/0-orchestrator/api
+cd /opt/jumpscale9/go/proj/src/github.com/zero-os/0-orchestrator/api
 GOPATH=/opt/jumpscale9/go/proj GOROOT=/opt/jumpscale9/go/root /opt/jumpscale9/go/root/bin/go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
     mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
@@ -156,7 +156,7 @@ if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
     mkdir blueprints >> ${logfile} 2>&1
     touch .ays >> ${logfile} 2>&1
     git init >> ${logfile} 2>&1
-    git remote add https://github.com/zero-os/orchestrator >> ${logfile} 2>&1
+    git remote add origin https://github.com/zero-os/orchestrator >> ${logfile} 2>&1
     popd
 fi
 

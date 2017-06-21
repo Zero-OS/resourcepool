@@ -41,7 +41,7 @@ export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> <$CLIENTSECRET> [<$DOMAIN> [--development]]
+bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> [<$DOMAIN> [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:
@@ -56,13 +56,22 @@ tail -s /tmp/install.log
 
 ## Setup the AYS configuration service
 
-### Create a JWT token for the AYS CLI:
+### Create a JWT token for the AYS CLI and configuration service:
 Since AYS is protected with JWT, you have to generate a token so the AYS CLI can authenticate to AYS server.
 The CLI provide and easy way to do it:
 ```shell
-eval `ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG`
+ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG
 ```
-CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)
+CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)  
+From the website, go to your settings, in the `API Keys` panel, generate a new id/secret pair.
+
+This command will output something like:
+```shell
+# Generated Token, please run to use in client:
+export JWT='eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCJ9.eyJhenAiOiJLa0Y0c3IyUll4cXVYWTZlWjVtMWtic0dTbVJRIiwiZXhwIjoxNDk4MTM0MDMyLCJpc3MiOiJpdHN5b3VvbmxpbmUiLCJyZWZyZXNoX3Rva2VuIjoiU2xxLWVfY9ktSjBEalRDbmZPNzA1SDN1ZFN5UyIsInNjb3BlIjpbInVzZXI6bWVtYmVyb2Y6Z3JlZW5pdGdsb2JlLmVudmlyb25tZW50cy5iZS1nOC0zIl0sInVzZXJuYW1lIjoiemFpYm9uIn0.sKVUHPxSb6rxOMx1DKV8w0T0dpyuMya4fBgOV66VFl6-R4p53crvSkHidXRjsKbgbyxV2stsbxV67mo5JPvRN9uaf-pnJ9cXxs74lSq8OoFwre6aG9pG0JPmVt9uMy56'
+```
+
+copy the export and execute it in your terminal. This will allow the AYS CLI to be authenticate from now one.
 
 ### Configuration
 In order for the Orchestrator to know which flists and version of JumpScale to use, and which Zero-OS version is required on the nodes, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
@@ -71,7 +80,7 @@ In order for the Orchestrator to know which flists and version of JumpScale to u
 configuration__main:
   configurations:
   - key: '0-core-version'
-    value: '1.1.0-alpha-3'
+    value: 'master'
   - key: 'js-version'
     value: '9.0.0'
   - key: 'gw-flist'
@@ -80,6 +89,10 @@ configuration__main:
     value: 'https://hub.gig.tech/gig-official-apps/ovs-1.1.0-alpha-3.flist'
   - key: '0-disk-flist'
     value: 'https://hub.gig.tech/gig-official-apps/0-disk-1.1.0-alpha-3.flist'
+  - key: 'jwt-token'
+    value: <The JWT generted at the previous step>
+  - key: 'jwt-key'
+    value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'    
 ```
 
 See [Versioning](versioning.md) for more details about the AYS configuration service.
