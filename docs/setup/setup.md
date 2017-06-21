@@ -14,6 +14,9 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
 > **Important:** Make sure you set the `GIGBRANCH` environment variable to 9.0.0 before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
 
+> **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires librairies.
+
+
 ## Install the Orchestrator
 
 SSH into your JumpScale9 Docker container and install the Orchestrator using the [`install-orchestrator.sh`](../../scripts/install-orchestrator.sh) script.
@@ -36,8 +39,11 @@ cd /tmp
 export BRANCH="1.1.0-alpha-3"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
+export ITSYOUONLINEORG="<itsyou.online organization>"
+export CLIENTSECRET="<client secret of the itsyou.online organization>"
+export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <ITSYOUONLINEORG> <CLIENTSECRET> [<DOMAIN> [--development]]
+bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> <$CLIENTSECRET> [<$DOMAIN> [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:
@@ -51,6 +57,16 @@ tail -s /tmp/install.log
 
 
 ## Setup the AYS configuration service
+
+### Create a JWT token for the AYS CLI:
+Since AYS is protected with JWT, you have to generate a token so the AYS CLI can authenticate to AYS server.
+The CLI provide and easy way to do it:
+```shell
+eval `ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG`
+```
+CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)
+
+### Configuration
 In order for the Orchestrator to know which flists and version of JumpScale to use, and which Zero-OS version is required on the nodes, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
 
 ```yaml
