@@ -43,6 +43,7 @@ def install(job):
         'm': 0,
     }
 
+    backup = False
     for vdiskservice in vdisks:
         tlogcluster = vdiskservice.model.data.tlogStoragecluster
         if tlogcluster and tlogcluster not in config['storageClusters']:
@@ -51,6 +52,14 @@ def install(job):
             config['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
             config['k'] += k
             config['m'] += m
+
+        backupcluster = vdiskservice.model.data.backupStoragecluster
+        if backupcluster and backupcluster not in config['storageClusters']:
+            clusterconfig, _, _ = get_storagecluster_config(job, tlogcluster)
+            config['storageClusters'][backupcluster] = clusterconfig
+            config['vdisks'][vdiskservice.name] = {'storageCluster': clusterconfig}
+            config['vdisks'][vdiskservice.name] = {'tlogSlaveSync': True}
+            backup = True
 
     if config['storageClusters']:
         k = config.pop('k')
@@ -66,20 +75,21 @@ def install(job):
             ip = container.node.storageAddr
             port = container.node.freeports(baseport=11211, nrports=1)[0]
             logpath = '/tlog_{}.log'.format(service.name)
-            container.client.system(
-                    '/bin/tlogserver \
+            cmd = '/bin/tlogserver \
                     -address {ip}:{port} \
                     -k {k} \
                     -m {m} \
                     -logfile {log} \
-                    -config {config}'
-                    .format(ip=ip,
-                            port=port,
-                            config=configpath,
-                            k=k,
-                            m=m,
-                            log=logpath)
-                )
+                    -config {config} \
+                    '.format(ip=ip,
+                             port=port,
+                             config=configpath,
+                             k=k,
+                             m=m,
+                             log=logpath)
+            if backup:
+                cmd += '-with-slave-sync'
+            container.client.system(cmd)
             if not is_port_listening(container, port):
                 raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
             service.model.data.bind = '%s:%s' % (ip, port)
@@ -118,4 +128,4 @@ def stop(job):
                     continue
                 container.node.client.nft.drop_port(port)
                 return
-            raise j.exceptions.RuntimeError("tlogserver didn't stopped")
+            raise j.exceptions.RuntimeError("Failed to stop Tlog server")
