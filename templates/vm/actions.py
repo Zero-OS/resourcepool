@@ -69,17 +69,19 @@ def create_service(service, container, role='nbdserver'):
     return nbdserver
 
 
-def _init_zerodisk_services(job, vdisk_container):
+def _init_zerodisk_services(job, nbd_container, tlog_container=None):
     service = job.service
     # Create nbderver service
-    nbdserver = create_service(service, vdisk_container)
+    nbdserver = create_service(service, nbd_container)
     job.logger.info("creates nbd server for vm {}".format(service.name))
     service.consume(nbdserver)
-    # Create tlogserver service
-    tlogserver = create_service(service, vdisk_container, role='tlogserver')
-    job.logger.info("creates tlog server for vm {}".format(service.name))
-    service.consume(tlogserver)
-    nbdserver.consume(tlogserver)
+
+    if tlog_container:
+        # Create tlogserver service
+        tlogserver = create_service(service, tlog_container, role='tlogserver')
+        job.logger.info("creates tlog server for vm {}".format(service.name))
+        service.consume(tlogserver)
+        nbdserver.consume(tlogserver)
 
 
 def _nbd_url(container, nbdserver, vdisk):
@@ -89,12 +91,18 @@ def _nbd_url(container, nbdserver, vdisk):
 
 
 def init(job):
+    import random
     service = job.service
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    vdisk_container = create_zerodisk_container(job, service.parent)
-    _init_zerodisk_services(job, vdisk_container)
+    services = service.aysrepo.servicesFind(role="node")
+
+    node = random.choice(services)
+    tlog_container = create_zerodisk_container(job, node)
+
+    nbd_container = create_zerodisk_container(job, service.parent)
+    _init_zerodisk_services(job, nbd_container, tlog_container)
 
 
 def _start_nbd(job):

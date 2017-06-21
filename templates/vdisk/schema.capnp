@@ -9,8 +9,8 @@ struct Schema {
     status @5 :Status;
     storageCluster @6 :Text; # consume
     tlogStoragecluster @7 :Text; # consume
-    backupStoragecluster @7 :Text; # consume
-    timestamp @8: UInt64;
+    backupStoragecluster @8 :Text; # consume
+    timestamp @9: UInt64;
     enum Status {
         halted @0;
         running @1;
