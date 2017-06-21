@@ -193,6 +193,7 @@ fi
 
 cfgdir=`js9 "print(j.dirs.CFGDIR)"`
 cat > $cfgdir/caddy.cfg <<EOF
+#tcpport:443
 $PUB {
     proxy / $PRIV:8080 {
         transparent

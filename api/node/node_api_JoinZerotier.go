@@ -56,7 +56,7 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for zerotiers %s join ", reqBody.Nwid)
 		if ok {

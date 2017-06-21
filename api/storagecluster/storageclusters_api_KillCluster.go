@@ -61,7 +61,7 @@ func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
 			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storage_cluster deletion")

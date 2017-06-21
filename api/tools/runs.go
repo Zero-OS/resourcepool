@@ -32,8 +32,8 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		WriteError(w, resp.StatusCode, err, "Error getting run")
 		return Run{}, err
 	}
-
-	if err := aysClient.WaitRunDone(run.Key, aysRepo); err != nil {
+	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
+	if err != nil {
 		httpErr, ok := err.(HTTPError)
 		errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
 		if ok {
@@ -43,9 +43,10 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		}
 		return Run{}, err
 	}
-	if EnumRunState(run.State) != EnumRunStateok {
-		err = fmt.Errorf("Internal server Error")
+	if EnumRunState(runstatus.State) != EnumRunStateok {
+		err = fmt.Errorf("Internal Server Error")
 		WriteError(w, http.StatusInternalServerError, err, "")
+		return Run{}, err
 	}
 	response := Run{Runid: run.Key, State: EnumRunState(run.State)}
 	return response, nil

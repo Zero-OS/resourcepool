@@ -34,7 +34,7 @@ func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for the job to be finshed
-	if err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for stopping container %s ", containername)
 		if ok {
