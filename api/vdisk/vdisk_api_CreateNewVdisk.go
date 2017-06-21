@@ -6,7 +6,6 @@ import (
 
 	"net/http"
 
-	
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -85,10 +84,10 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
-   w.WriteHeader(http.StatusCreated)
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
+	w.WriteHeader(http.StatusCreated)
 
 }

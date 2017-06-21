@@ -55,10 +55,17 @@ def install(job):
 
         backupcluster = vdiskservice.model.data.backupStoragecluster
         if backupcluster and backupcluster not in config['storageClusters']:
-            clusterconfig, _, _ = get_storagecluster_config(job, tlogcluster)
+            vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
+            clusterconfig, _, _ = get_storagecluster_config(job, backupcluster)
             config['storageClusters'][backupcluster] = clusterconfig
-            config['vdisks'][vdiskservice.name] = {'storageCluster': clusterconfig}
-            config['vdisks'][vdiskservice.name] = {'tlogSlaveSync': True}
+            vdisk = config['vdisks'][vdiskservice.name]
+            vdisk['storageCluster'] = backupcluster
+            vdisk['tlogSlaveSync'] = True
+            vdisk['blockSize'] = vdiskservice.model.data.blocksize
+            vdisk['readOnly'] = vdiskservice.model.data.readOnly
+            vdisk['size'] = vdiskservice.model.data.size
+            vdisk['type'] = vdisk_type
+
             backup = True
 
     if config['storageClusters']:

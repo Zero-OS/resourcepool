@@ -41,7 +41,7 @@ def create_zerodisk_container(job, parent):
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
-    containerservice.model.changeParent(service.parent)
+    containerservice.model.changeParent(parent)
     j.tools.async.wrappers.sync(containerservice.executeAction('start', context=job.context))
 
     return containerservice
@@ -99,6 +99,11 @@ def init(job):
     services = service.aysrepo.servicesFind(role="node")
 
     node = random.choice(services)
+    if len(services) > 1 and node.name == service.parent.name:
+        node = services.index(node)
+        services.pop(node)
+        node = random.choice(services)
+
     tlog_container = create_zerodisk_container(job, node)
 
     nbd_container = create_zerodisk_container(job, service.parent)
