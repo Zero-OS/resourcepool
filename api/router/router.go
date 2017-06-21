@@ -47,9 +47,6 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 		http.ServeFile(w, r, "apidocs/index.html")
 	})
 
-	// apidocs
-	r.PathPrefix("/apidocs/").Handler(http.StripPrefix("/apidocs/", http.FileServer(http.Dir("./apidocs/"))))
-
 	node.NodesInterfaceRoutes(r, node.NewNodeAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
 	storagecluster.StorageclustersInterfaceRoutes(r, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
 	vdisk.VdisksInterfaceRoutes(r, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
