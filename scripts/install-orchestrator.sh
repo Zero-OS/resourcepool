@@ -22,7 +22,7 @@ export LANG=en_US.UTF-8
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> <DOMAIN>"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <CLIENTSECRET> [<DOMAIN> [--development]]"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
@@ -30,15 +30,35 @@ if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
   echo "  CLIENTSECRET: client secret for itsyou.online authentication."  
   echo "  DOMAIN: the domain to use for caddy."
+  echo "  --development: an optional parameter to use self signed certificates."
   echo
   exit 1
 fi
 BRANCH=$1
-ZEROTIERNWID=$2
-ZEROTIERTOKEN=$3
-ITSYOUONLINEORG=$4
-CLIENTSECRET=$5
-DOMAIN=$6
+shift
+ZEROTIERNWID=$1
+shift
+ZEROTIERTOKEN=$1
+shift
+ITSYOUONLINEORG=$1
+shift
+CLIENTSECRET=$1
+shift
+DOMAIN=$1
+
+if [ -n "$DOMAIN" ]; then
+    shift
+    if [ "$1" = "--development" ]; then
+        DEVELOPMENT=true
+        shift
+    else
+        DEVELOPMENT=false
+    fi
+else
+    DEVELOPMENT=true
+fi
+
+# NOTE that you can't add any arguments after here, if you want to do so, please use argparse
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -113,7 +133,7 @@ client_secret = "${CLIENTSECRET}"
 jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv" 
 organization = "${ITSYOUONLINEORG}"  
 EOL
-fi 
+fi
 
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
@@ -146,10 +166,10 @@ fi
 
 if [ -z "$DOMAIN" ]; then
     PRIV="$ZEROTIERIP"
-    PUB="http://$ZEROTIERIP:8080/"
+    PUB="https://$ZEROTIERIP:443/"
 else
     PRIV="127.0.0.1"
-    PUB="$DOMAIN"
+    PUB="https://$DOMAIN:443/"
 fi
 
 
@@ -165,29 +185,23 @@ echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
-if [ -n "$DOMAIN" ]; then
-    js9 'j.tools.prefab.local.apps.caddy.install()'
-    mkdir -p /opt/caddy
-    pushd /opt/caddy
-    cat >> Caddyfile <<EOF
-http://$DOMAIN:80 {
+js9 'j.tools.prefab.local.apps.caddy.install()'
+tls=
+if [ "$DEVELOPMENT" = true ]; then
+    tls='tls self_signed'
+fi
+
+cfgdir=`js9 "print(j.dirs.CFGDIR)"`
+cat > $cfgdir/caddy.cfg <<EOF
+$PUB {
     proxy / $PRIV:8080 {
         transparent
     }
-}
-
-http://ays.$DOMAIN:80 {
-    proxy / 127.0.0.1:5000 {
-        transparent
-    }
+    $tls
 }
 EOF
-    popd
-    echo 'cmd="cd /opt/caddy; caddy"' >> ${orchinit}
-    echo 'tmux new-window -t main -n caddy' >> ${orchinit}
-    echo 'tmux send-key -t caddy.0 "$cmd" ENTER' >> ${orchinit}
+echo 'js9 "j.tools.prefab.local.apps.caddy.start()"' >> ${orchinit}
 
-fi
 
 chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
