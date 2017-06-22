@@ -6,7 +6,6 @@ import (
 
 	"net/http"
 
-	
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -52,21 +51,23 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// Create the blueprint
 	bp := struct {
-		Size               int    `yaml:"size" json:"size"`
-		BlockSize          int    `yaml:"blocksize" json:"blocksize"`
-		TemplateVdisk      string `yaml:"templateVdisk" json:"templateVdisk"`
-		ReadOnly           bool   `yaml:"readOnly" json:"readOnly"`
-		Type               string `yaml:"type" json:"type"`
-		StorageCluster     string `yaml:"storageCluster" json:"storageCluster"`
-		TlogStoragecluster string `yaml:"tlogStoragecluster" json:"tlogStoragecluster"`
+		Size                 int    `yaml:"size" json:"size"`
+		BlockSize            int    `yaml:"blocksize" json:"blocksize"`
+		TemplateVdisk        string `yaml:"templateVdisk" json:"templateVdisk"`
+		ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
+		Type                 string `yaml:"type" json:"type"`
+		StorageCluster       string `yaml:"storageCluster" json:"storageCluster"`
+		TlogStoragecluster   string `yaml:"tlogStoragecluster" json:"tlogStoragecluster"`
+		BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
 	}{
-		Size:               reqBody.Size,
-		BlockSize:          reqBody.Blocksize,
-		TemplateVdisk:      reqBody.Templatevdisk,
-		ReadOnly:           reqBody.ReadOnly,
-		Type:               string(reqBody.Vdisktype),
-		StorageCluster:     reqBody.Storagecluster,
-		TlogStoragecluster: reqBody.TlogStoragecluster,
+		Size:                 reqBody.Size,
+		BlockSize:            reqBody.Blocksize,
+		TemplateVdisk:        reqBody.Templatevdisk,
+		ReadOnly:             reqBody.ReadOnly,
+		Type:                 string(reqBody.Vdisktype),
+		StorageCluster:       reqBody.Storagecluster,
+		TlogStoragecluster:   reqBody.TlogStoragecluster,
+		BackupStoragecluster: reqBody.BackupStoragecluster,
 	}
 
 	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)
@@ -83,10 +84,10 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
-   w.WriteHeader(http.StatusCreated)
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
+	w.WriteHeader(http.StatusCreated)
 
 }

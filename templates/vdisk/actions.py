@@ -117,7 +117,8 @@ def get_cluster_config(job, type="storage"):
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                            instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return {"config": cluster.get_config(), "nodes": storageclusterservice.producers["node"], 'k': cluster.k, 'm': cluster.m}
+    nodes = list(set(storageclusterservice.producers["node"]))
+    return {"config": cluster.get_config(), "nodes": nodes, 'k': cluster.k, 'm': cluster.m}
 
 
 def create_from_template_container(job, parent):
