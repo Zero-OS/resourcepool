@@ -41,7 +41,7 @@ def create_zerodisk_container(job, parent):
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
-    containerservice.model.changeParent(service.parent)
+    containerservice.model.changeParent(parent)
     j.tools.async.wrappers.sync(containerservice.executeAction('start', context=job.context))
 
     return containerservice
@@ -69,17 +69,19 @@ def create_service(service, container, role='nbdserver'):
     return nbdserver
 
 
-def _init_zerodisk_services(job, vdisk_container):
+def _init_zerodisk_services(job, nbd_container, tlog_container=None):
     service = job.service
     # Create nbderver service
-    nbdserver = create_service(service, vdisk_container)
+    nbdserver = create_service(service, nbd_container)
     job.logger.info("creates nbd server for vm {}".format(service.name))
     service.consume(nbdserver)
-    # Create tlogserver service
-    tlogserver = create_service(service, vdisk_container, role='tlogserver')
-    job.logger.info("creates tlog server for vm {}".format(service.name))
-    service.consume(tlogserver)
-    nbdserver.consume(tlogserver)
+
+    if tlog_container:
+        # Create tlogserver service
+        tlogserver = create_service(service, tlog_container, role='tlogserver')
+        job.logger.info("creates tlog server for vm {}".format(service.name))
+        service.consume(tlogserver)
+        nbdserver.consume(tlogserver)
 
 
 def _nbd_url(container, nbdserver, vdisk):
@@ -89,12 +91,23 @@ def _nbd_url(container, nbdserver, vdisk):
 
 
 def init(job):
+    import random
     service = job.service
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    vdisk_container = create_zerodisk_container(job, service.parent)
-    _init_zerodisk_services(job, vdisk_container)
+    services = service.aysrepo.servicesFind(role="node")
+
+    node = random.choice(services)
+    if len(services) > 1 and node.name == service.parent.name:
+        node = services.index(node)
+        services.pop(node)
+        node = random.choice(services)
+
+    tlog_container = create_zerodisk_container(job, node)
+
+    nbd_container = create_zerodisk_container(job, service.parent)
+    _init_zerodisk_services(job, nbd_container, tlog_container)
 
 
 def _start_nbd(job):
@@ -218,6 +231,21 @@ def stop(job):
     cleanupzerodisk(job)
 
 
+def destroy(job):
+    stop(job)
+    service = job.service
+    tlogservers = service.producers.get('tlogserver', [])
+    nbdservers = service.producers.get('nbdserver', [])
+
+    for tlogserver in tlogservers:
+        j.tools.async.wrappers.sync(tlogserver.delete())
+        j.tools.async.wrappers.sync(tlogserver.parent.delete())
+
+    for nbdserver in nbdservers:
+        j.tools.async.wrappers.sync(nbdserver.delete())
+        j.tools.async.wrappers.sync(nbdserver.parent.delete())
+
+
 def cleanupzerodisk(job):
     service = job.service
     for nbdserver in service.producers.get('nbdserver', []):
@@ -228,7 +256,7 @@ def cleanupzerodisk(job):
     for tlogserver in service.producers.get('tlogserver', []):
         job.logger.info("stop tlogserver for vm {}".format(service.name))
         # make sure the tlogserver is stopped
-        j.tools.async.wrappers.sync(tlogserver.executeAction('stop'))
+        j.tools.async.wrappers.sync(tlogserver.executeAction('stop', context=job.context))
 
     job.logger.info("stop vdisks container for vm {}".format(service.name))
     try:

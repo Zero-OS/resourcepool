@@ -1,9 +1,9 @@
 from js9 import j
 
 
-def get_container(service):
+def get_container(service, password):
     from zeroos.orchestrator.sal.Container import Container
-    return Container.from_ays(service.parent)
+    return Container.from_ays(service.parent, password)
 
 
 def is_port_listening(container, port, timeout=60):
@@ -35,7 +35,7 @@ def install(job):
     service = job.service
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    container = get_container(service)
+    container = get_container(service, job.context['token'])
     config = {
         'vdisks': {},
         'storageClusters': {},
@@ -43,6 +43,7 @@ def install(job):
         'm': 0,
     }
 
+    backup = False
     for vdiskservice in vdisks:
         tlogcluster = vdiskservice.model.data.tlogStoragecluster
         if tlogcluster and tlogcluster not in config['storageClusters']:
@@ -51,6 +52,21 @@ def install(job):
             config['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
             config['k'] += k
             config['m'] += m
+
+        backupcluster = vdiskservice.model.data.backupStoragecluster
+        if backupcluster and backupcluster not in config['storageClusters']:
+            vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
+            clusterconfig, _, _ = get_storagecluster_config(job, backupcluster)
+            config['storageClusters'][backupcluster] = clusterconfig
+            vdisk = config['vdisks'][vdiskservice.name]
+            vdisk['storageCluster'] = backupcluster
+            vdisk['tlogSlaveSync'] = True
+            vdisk['blockSize'] = vdiskservice.model.data.blocksize
+            vdisk['readOnly'] = vdiskservice.model.data.readOnly
+            vdisk['size'] = vdiskservice.model.data.size
+            vdisk['type'] = vdisk_type
+
+            backup = True
 
     if config['storageClusters']:
         k = config.pop('k')
@@ -66,24 +82,33 @@ def install(job):
             ip = container.node.storageAddr
             port = container.node.freeports(baseport=11211, nrports=1)[0]
             logpath = '/tlog_{}.log'.format(service.name)
-            container.client.system(
-                    '/bin/tlogserver \
+            cmd = '/bin/tlogserver \
                     -address {ip}:{port} \
                     -k {k} \
                     -m {m} \
-                    -logfile {log} \
-                    -config {config}'
-                    .format(ip=ip,
-                            port=port,
-                            config=configpath,
-                            k=k,
-                            m=m,
-                            log=logpath)
-                )
+                    -config {config} \
+                    '.format(ip=ip,
+                             port=port,
+                             config=configpath,
+                             k=k,
+                             m=m,
+                             log=logpath)
+            if backup:
+                cmd += '-with-slave-sync'
+            container.client.system(cmd)
             if not is_port_listening(container, port):
                 raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
             service.model.data.bind = '%s:%s' % (ip, port)
-            container.node.client.nft.open_port(port)
+            if service.model.data.status != 'running':
+                container.node.client.nft.open_port(port)
+                service.model.data.status = 'running'
+        else:
+            # send a siganl sigub(1) to reload the config in case it was changed.
+            import signal
+            port = int(service.model.data.bind.split(':')[1])
+            job = is_job_running(container)
+            container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
+            service.model.data.status = 'running'
 
 
 def start(job):
@@ -102,10 +127,11 @@ def get_storagecluster_config(job, storagecluster):
 def stop(job):
     import time
     service = job.service
-    container = get_container(service=service)
+    container = get_container(service, job.context['token'])
     bind = service.model.data.bind
     if bind:
-        port = int(service.model.data.bind.split(':')[1])
+        port = int(bind.split(':')[1])
+        container.node.client.nft.drop_port(port)
         tlogjob = is_job_running(container)
         if tlogjob:
             job.logger.info("killing job {}".format(tlogjob['cmd']['arguments']['name']))
@@ -114,8 +140,26 @@ def stop(job):
             job.logger.info("wait for tlogserver to stop")
             for i in range(60):
                 time.sleep(1)
-                if is_port_listening(container, port):
-                    continue
-                container.node.client.nft.drop_port(port)
-                return
-            raise j.exceptions.RuntimeError("tlogserver didn't stopped")
+                if not is_port_listening(container, port):
+                    break
+                raise j.exceptions.RuntimeError("Failed to stop Tlog server")
+    service.model.data.status = 'halted'
+
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    if not service.model.actionsState['install'] == 'ok':
+        return
+
+    if str(service.model.data.status) != 'running':
+        return
+
+    bind = service.model.data.bind
+    port = int(bind.split(':')[1])
+    container = get_container(service, get_jwt_token(job.service.aysrepo))
+    if is_port_listening(container, port):
+        return
+
+    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))

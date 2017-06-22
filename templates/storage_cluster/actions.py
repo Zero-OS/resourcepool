@@ -36,9 +36,10 @@ def init(job):
     from zeroos.orchestrator.sal.Node import Node
 
     service = job.service
-    nodes = []
+    nodes = set()
     for node_service in service.producers['node']:
-        nodes.append(Node.from_ays(node_service, job.context['token']))
+        nodes.add(Node.from_ays(node_service, job.context['token']))
+    nodes = list(nodes)
     nodemap = {node.name: node for node in nodes}
 
     cluster = StorageCluster(service.name, nodes, service.model.data.diskType)
