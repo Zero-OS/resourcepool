@@ -99,8 +99,9 @@ def install(job):
             if not is_port_listening(container, port):
                 raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
             service.model.data.bind = '%s:%s' % (ip, port)
-            container.node.client.nft.open_port(port)
-            service.model.data.status = 'running'
+            if service.model.data.status != 'running':
+                container.node.client.nft.open_port(port)
+                service.model.data.status = 'running'
         else:
             # send a siganl sigub(1) to reload the config in case it was changed.
             import signal
@@ -129,7 +130,8 @@ def stop(job):
     container = get_container(service, job.context['token'])
     bind = service.model.data.bind
     if bind:
-        port = int(service.model.data.bind.split(':')[1])
+        port = int(bind.split(':')[1])
+        container.node.client.nft.drop_port(port)
         tlogjob = is_job_running(container)
         if tlogjob:
             job.logger.info("killing job {}".format(tlogjob['cmd']['arguments']['name']))
@@ -139,7 +141,6 @@ def stop(job):
             for i in range(60):
                 time.sleep(1)
                 if not is_port_listening(container, port):
-                    container.node.client.nft.drop_port(port)
                     break
                 raise j.exceptions.RuntimeError("Failed to stop Tlog server")
     service.model.data.status = 'halted'
@@ -156,9 +157,9 @@ def monitor(job):
         return
 
     bind = service.model.data.bind
-    if bind:
-        port = int(service.model.data.bind.split(':')[1])
-        container = get_container(service, get_jwt_token(job.service.aysrepo))
-        if is_port_listening(container, port):
-            return
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    port = int(bind.split(':')[1])
+    container = get_container(service, get_jwt_token(job.service.aysrepo))
+    if is_port_listening(container, port):
+        return
+
+    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))
