@@ -234,8 +234,8 @@ def stop(job):
 def destroy(job):
     stop(job)
     service = job.service
-    tlogservers = service.producers.get('tlogserver', None)
-    nbdservers = service.producers.get('nbdserver', None)
+    tlogservers = service.producers.get('tlogserver', [])
+    nbdservers = service.producers.get('nbdserver', [])
 
     for tlogserver in tlogservers:
         j.tools.async.wrappers.sync(tlogserver.delete())

@@ -127,8 +127,9 @@ def install(job):
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
+        import signal
         job = is_job_running(container)
-        container.client.job.kill(job['cmd']['id'], signal=1)
+        container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUB))
     service.model.data.socketPath = socketpath
     service.saveAll()
 

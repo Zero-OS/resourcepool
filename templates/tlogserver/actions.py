@@ -103,9 +103,10 @@ def install(job):
             container.node.client.nft.open_port(port)
         else:
             # send a siganl sigub(1) to reload the config in case it was changed.
+            import signal
             port = int(service.model.data.bind.split(':')[1])
             job = is_job_running(container)
-            container.client.job.kill(job['cmd']['id'], signal=1)
+            container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUB))
 
 
 def start(job):
