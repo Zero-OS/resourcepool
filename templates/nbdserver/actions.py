@@ -88,7 +88,6 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
-        logpath = '/nbd_{}.log'.format(service.name)
         if tlog:
             tlogservice = service.aysrepo.serviceGet(role='tlogserver', instance=service.name)
             tlogip = tlogservice.model.data.bind.split(':')
@@ -96,16 +95,14 @@ def install(job):
                 -protocol unix \
                 -address "{socketpath}" \
                 -tlogrpc {tlogip}:{tlogport} \
-                -logfile {logpath} \
-                -config {config}'.format(tlogip=tlogip[0], tlogport=tlogip[1], logpath=logpath, socketpath=socketpath, config=configpath)
+                -config {config}'.format(tlogip=tlogip[0], tlogport=tlogip[1], socketpath=socketpath, config=configpath)
             print(cmd)
             container.client.system(cmd)
         else:
             cmd = '/bin/nbdserver \
                 -protocol unix \
                 -address "{socketpath}" \
-                --logfile {logpath} \
-                -config {config}'.format(socketpath=socketpath, config=configpath, logpath=logpath)
+                -config {config}'.format(socketpath=socketpath, config=configpath)
             print(cmd)
             container.client.system(cmd)
 
@@ -129,7 +126,7 @@ def install(job):
         # send a siganl sigub(1) to reload the config in case it was changed.
         import signal
         job = is_job_running(container)
-        container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUB))
+        container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
     service.model.data.socketPath = socketpath
     service.saveAll()
 

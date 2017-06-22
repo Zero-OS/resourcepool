@@ -256,7 +256,7 @@ def cleanupzerodisk(job):
     for tlogserver in service.producers.get('tlogserver', []):
         job.logger.info("stop tlogserver for vm {}".format(service.name))
         # make sure the tlogserver is stopped
-        j.tools.async.wrappers.sync(tlogserver.executeAction('stop'))
+        j.tools.async.wrappers.sync(tlogserver.executeAction('stop', context=job.context))
 
     job.logger.info("stop vdisks container for vm {}".format(service.name))
     try:
