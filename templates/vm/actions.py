@@ -231,6 +231,21 @@ def stop(job):
     cleanupzerodisk(job)
 
 
+def destroy(job):
+    stop(job)
+    service = job.service
+    tlogservers = service.producers.get('tlogserver', None)
+    nbdservers = service.producers.get('nbdserver', None)
+
+    for tlogserver in tlogservers:
+        tlogserver.delete()
+        tlogserver.parent.delete()
+
+    for nbdserver in nbdservers:
+        nbdserver.delete()
+        nbdserver.parent.delete()
+
+
 def cleanupzerodisk(job):
     service = job.service
     for nbdserver in service.producers.get('nbdserver', []):

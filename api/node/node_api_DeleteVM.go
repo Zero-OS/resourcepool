@@ -20,7 +20,7 @@ func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj["actions"] = []tools.ActionBlock{{
-		Action:  "stop",
+		Action:  "destroy",
 		Actor:   "vm",
 		Service: vmId,
 		Force:   true,
