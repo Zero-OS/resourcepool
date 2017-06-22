@@ -238,12 +238,12 @@ def destroy(job):
     nbdservers = service.producers.get('nbdserver', None)
 
     for tlogserver in tlogservers:
-        tlogserver.delete()
-        tlogserver.parent.delete()
+        j.tools.async.wrappers.sync(tlogserver.delete())
+        j.tools.async.wrappers.sync(tlogserver.parent.delete())
 
     for nbdserver in nbdservers:
-        nbdserver.delete()
-        nbdserver.parent.delete()
+        j.tools.async.wrappers.sync(nbdserver.delete())
+        j.tools.async.wrappers.sync(nbdserver.parent.delete())
 
 
 def cleanupzerodisk(job):
