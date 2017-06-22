@@ -101,6 +101,11 @@ def install(job):
                 raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
             service.model.data.bind = '%s:%s' % (ip, port)
             container.node.client.nft.open_port(port)
+        else:
+            # send a siganl sigub(1) to reload the config in case it was changed.
+            port = int(service.model.data.bind.split(':')[1])
+            job = is_job_running(container)
+            container.client.job.kill(job['cmd']['id'], signal=1)
 
 
 def start(job):
