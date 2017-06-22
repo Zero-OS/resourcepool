@@ -106,7 +106,7 @@ def install(job):
             import signal
             port = int(service.model.data.bind.split(':')[1])
             job = is_job_running(container)
-            container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUB))
+            container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
 
 
 def start(job):

@@ -129,7 +129,7 @@ def install(job):
         # send a siganl sigub(1) to reload the config in case it was changed.
         import signal
         job = is_job_running(container)
-        container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUB))
+        container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
     service.model.data.socketPath = socketpath
     service.saveAll()
 
