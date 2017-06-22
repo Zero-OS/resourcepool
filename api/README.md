@@ -2,7 +2,8 @@
 ## How to build
 ```shell
 git clone https://github.com/zero-os/0-orchestrator
-cd grid/api
+cd 0-orchestrator/api
+go generate
 go build
 ```
 

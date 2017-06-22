@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"net/http"
 	"time"
 
@@ -31,7 +32,13 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 
 	// home page
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "apidocs/index.html")
+		data, err := Asset("api.html")
+		if err != nil {
+			w.WriteHeader(404)
+			return
+		}
+		datareader := bytes.NewReader(data)
+		http.ServeContent(w, r, "index.html", time.Now(), datareader)
 	})
 
 	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, LoggingMiddleware)
