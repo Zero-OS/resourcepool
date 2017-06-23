@@ -95,8 +95,18 @@ func (om *Oauth2itsyouonlineMiddleware) Handler(next http.Handler) http.Handler 
 		if len(oauth2ServerPublicKey) > 0 {
 			claim, err = om.checkJWTClaim(accessToken)
 			if err != nil {
-				log.Error(err)
-				w.WriteHeader(403)
+				validationerror, ok := err.(*jwt.ValidationError)
+				if ok {
+					log.Error(validationerror)
+					if validationerror.Errors&jwt.ValidationErrorExpired == jwt.ValidationErrorExpired {
+						w.WriteHeader(440)
+					} else {
+						w.WriteHeader(403)
+					}
+				} else {
+					log.Error(err)
+					w.WriteHeader(403)
+				}
 				return
 			}
 		}
@@ -125,8 +135,8 @@ func (om *Oauth2itsyouonlineMiddleware) checkJWTClaim(tokenStr string) (jwt.MapC
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !(ok && token.Valid) {
-		return nil, fmt.Errorf("invalid token")
+	if !ok {
+		return nil, fmt.Errorf("Invalid claims")
 	}
 	return claims, nil
 }
