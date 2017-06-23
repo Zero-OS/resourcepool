@@ -58,30 +58,6 @@ def delete_node(job):
             break
 
 
-def wipedisks(node):
-    print('Wiping node {hostname}'.format(**node.client.info.os()))
-    mounteddevices = {mount['device']: mount for mount in node.client.info.disk()}
-
-    def getmountpoint(device):
-        for mounteddevice, mount in mounteddevices.items():
-            if mounteddevice.startswith(device):
-                return mount
-
-    jobs = []
-    for disk in node.client.disk.list()['blockdevices']:
-        devicename = '/dev/{}'.format(disk['kname'])
-        mount = getmountpoint(devicename)
-        if not mount:
-            print('   * Wiping disk {kname}'.format(**disk))
-            jobs.append(node.client.system('dd if=/dev/zero of={} bs=1M count=50'.format(devicename)))
-        else:
-            print('   * Not wiping {device} mounted at {mountpoint}'.format(device=devicename, mountpoint=mount['mountpoint']))
-
-    # wait for wiping to complete
-    for job in jobs:
-        job.get()
-
-
 def try_authorize(job, logger, netid, member, zerotier):
     import time
     from zeroos.orchestrator.sal.Node import Node
@@ -135,7 +111,7 @@ def try_authorize(job, logger, netid, member, zerotier):
     except j.exceptions.NotFound:
         # create and install the node.zero-os service
         if service.model.data.wipedisks:
-            wipedisks(node)
+            node.wipedisks()
 
         node_actor = service.aysrepo.actorGet('node.zero-os')
         networks = [n.name for n in service.producers.get('network', [])]

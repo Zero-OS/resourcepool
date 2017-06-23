@@ -1,5 +1,4 @@
 from zeroos.core0.client import Client
-from zeroos.orchestrator.configuration import get_jwt_token
 from .Disk import Disks, DiskType
 from .Container import Containers
 from .StoragePool import StoragePools
@@ -163,6 +162,29 @@ class Node:
         # mount the storage pool
         self._mount_fscache(fscache_sp)
         return fscache_sp
+
+    def wipedisks(self):
+        print('Wiping node {hostname}'.format(**self.client.info.os()))
+        mounteddevices = {mount['device']: mount for mount in self.client.info.disk()}
+
+        def getmountpoint(device):
+            for mounteddevice, mount in mounteddevices.items():
+                if mounteddevice.startswith(device):
+                    return mount
+
+        jobs = []
+        for disk in self.client.disk.list()['blockdevices']:
+            devicename = '/dev/{}'.format(disk['kname'])
+            mount = getmountpoint(devicename)
+            if not mount:
+                print('   * Wiping disk {kname}'.format(**disk))
+                jobs.append(self.client.system('dd if=/dev/zero of={} bs=1M count=50'.format(devicename)))
+            else:
+                print('   * Not wiping {device} mounted at {mountpoint}'.format(device=devicename, mountpoint=mount['mountpoint']))
+
+        # wait for wiping to complete
+        for job in jobs:
+            job.get()
 
     def list_mounts(self):
         allmounts = []
