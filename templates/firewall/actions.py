@@ -1,4 +1,4 @@
-def install(job):
+def start(job):
     gateway = job.service.parent.consumers['gateway'][0]
     gwdata = gateway.model.data.to_dict()
     apply_rules(job, gwdata)

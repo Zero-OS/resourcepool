@@ -42,5 +42,5 @@ class DHCP:
 
     def is_running(self):
         for port in self.container.client.info.port():
-            if port['network'] == 'udp' and port['port'] == 67:
+            if port['network'] == 'udp' and port['port'] == 53:
                 return True

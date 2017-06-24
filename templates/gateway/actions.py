@@ -243,10 +243,10 @@ def start(job):
     firewall = container.consumers.get('firewall')[0]
 
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(http.executeAction('install', context=job.context))
-    j.tools.async.wrappers.sync(dhcp.executeAction('install', context=job.context))
-    j.tools.async.wrappers.sync(firewall.executeAction('install', context=job.context))
-    j.tools.async.wrappers.sync(cloudinit.executeAction('install', context=job.context))
+    j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(dhcp.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
     service.model.data.status = "running"
 
 
