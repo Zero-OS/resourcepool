@@ -227,10 +227,10 @@ bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
 echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
-cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
-cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 
-echo "Your ays server is ready to bootstrap nodes into your zerotier network."
+echo "Your ays server is nearly ready to bootstrap nodes into your zerotier network."
+echo "Create a JWT token from the AYS CLI and execute the bootstrap blueprint in your AYS repository located at '/optvar/cockpit_repos/orchestrator-server'"
+echo "Once done, you can start deploying nodes"
 if [ -z "${ITSYOUONLINEORG}" ]; then
     echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/ and boot up your nodes!"
 else
