@@ -2,9 +2,7 @@ package tools
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -70,48 +68,6 @@ func (c *connectionMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	c.handler.ServeHTTP(w, r)
 }
 
-func (c *connectionMiddleware) createPool(address, password string) *redis.Pool {
-	pool := &redis.Pool{
-		MaxIdle:     5,
-		IdleTimeout: 5 * time.Minute,
-		Dial: func() (redis.Conn, error) {
-			// the redis protocol should probably be made sett-able
-			c, err := redis.Dial("tcp", address, redis.DialNetDial(func(network, address string) (net.Conn, error) {
-				return tls.Dial(network, address, &tls.Config{
-					InsecureSkipVerify: true,
-				})
-			}))
-
-			if err != nil {
-				return nil, err
-			}
-
-			if len(password) > 0 {
-				if _, err := c.Do("AUTH", password); err != nil {
-					c.Close()
-					return nil, err
-				}
-			} else {
-				// check with PING
-				if _, err := c.Do("PING"); err != nil {
-					c.Close()
-					return nil, err
-				}
-			}
-			return c, err
-		},
-		// custom connection test method
-		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			if _, err := c.Do("PING"); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-
-	return pool
-}
-
 func (c *connectionMiddleware) getConnection(nodeid string, token string, api NAPI) (client.Client, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
@@ -145,7 +101,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 		return nil, err
 	}
 
-	pool := c.createPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
+	pool := client.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
 	c.pools.Set(poolId, pool, cache.DefaultExpiration)
 	return client.NewClientWithPool(pool), nil
 }
