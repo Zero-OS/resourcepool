@@ -4,3 +4,8 @@ links:
     optional: false
     role: node
     argname: node
+
+recurring:
+  - action: monitor
+    log: true
+    period: 5m
