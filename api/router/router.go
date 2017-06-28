@@ -41,7 +41,7 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 		http.ServeContent(w, r, "index.html", time.Now(), datareader)
 	})
 
-	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, LoggingMiddleware, tools.ConnectionMiddleware())
+	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, tools.ConnectionMiddleware(), LoggingMiddleware)
 
 	r.PathPrefix("/nodes").Handler(apihandler)
 	r.PathPrefix("/vdisks").Handler(apihandler)
