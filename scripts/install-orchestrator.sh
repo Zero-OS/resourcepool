@@ -16,8 +16,12 @@ error_handler() {
 
 trap 'error_handler $LINENO' ERR
 
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
+export LC_ALL="en_US.UTF-8"
+export LANG="en_US.UTF-8"
+if ! grep -q "^${LANG}" /etc/locale.gen; then
+	echo "${LANG} UTF-8" >> /etc/locale.gen
+	locale-gen
+fi
 
 logfile="/tmp/install.log"
 
@@ -121,7 +125,9 @@ if [ -n "${ITSYOUONLINEORG}" ]; then
     if [ ! -d /optvar/cfg/ ]; then
         mkdir /optvar/cfg/
     fi
-    cat >>  /optvar/cfg/jumpscale9.toml << EOL
+    if ! grep -q ays.oauth /optvar/cfg/jumpscale9.toml ; then
+
+       cat >>  /optvar/cfg/jumpscale9.toml << EOL
 [ays]
 production = true
 
@@ -129,6 +135,7 @@ production = true
 jwt_key = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv"
 organization = "${ITSYOUONLINEORG}"
 EOL
+    fi
 fi
 
 echo '#!/bin/bash -x' > ${aysinit}
@@ -145,8 +152,13 @@ mkdir -p /opt/jumpscale9/go/proj/src/github.com >> ${logfile} 2>&1
 if [ ! -d /opt/jumpscale9/go/proj/src/github.com/zero-os ]; then
     ln -sf ${CODEDIR}/github/zero-os /opt/jumpscale9/go/proj/src/github.com/zero-os >> ${logfile} 2>&1
 fi
+export GOPATH=/opt/jumpscale9/go/proj
+export GOROOT=/opt/jumpscale9/go/root
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 cd /opt/jumpscale9/go/proj/src/github.com/zero-os/0-orchestrator/api
-GOPATH=/opt/jumpscale9/go/proj GOROOT=/opt/jumpscale9/go/root /opt/jumpscale9/go/root/bin/go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
+go get -u github.com/jteeuwen/go-bindata/... >> ${logfile} 2>&1
+go generate >> ${logfile} 2>&1
+go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
     mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
     pushd /optvar/cockpit_repos/orchestrator-server
@@ -190,12 +202,14 @@ echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
 js9 'j.tools.prefab.local.apps.caddy.install()'
-tls=
+tls=""
+
 if [ "$DEVELOPMENT" = true ]; then
     tls='tls self_signed'
 fi
 
-cfgdir=`js9 "print(j.dirs.CFGDIR)"`
+cfgdir=$(js9 "print(j.dirs.CFGDIR)")
+
 cat > $cfgdir/caddy.cfg <<EOF
 #tcpport:443
 $PUB {
@@ -213,10 +227,10 @@ bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
 echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
-cd /optvar/cockpit_repos/orchestrator-server; ays blueprint >> ${logfile} 2>&1
-cd /optvar/cockpit_repos/orchestrator-server; ays run create --follow -y >> ${logfile} 2>&1
 
-echo "Your ays server is ready to bootstrap nodes into your zerotier network."
+echo "Your ays server is nearly ready to bootstrap nodes into your zerotier network."
+echo "Create a JWT token from the AYS CLI and execute the bootstrap blueprint in your AYS repository located at '/optvar/cockpit_repos/orchestrator-server'"
+echo "Once done, you can start deploying nodes"
 if [ -z "${ITSYOUONLINEORG}" ]; then
     echo "Download your ipxe boot iso image https://bootstrap.gig.tech/iso/${BRANCH}/${ZEROTIERNWID}/ and boot up your nodes!"
 else
