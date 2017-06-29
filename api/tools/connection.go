@@ -118,7 +118,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 
 	// set auth token for ays to make call to get node info
 	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = token
+	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
 	ays := GetAYSClient(aysAPI)
 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
