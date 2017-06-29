@@ -7,10 +7,10 @@ TARGET=/tmp/grafana
 VERSION=4.3.2
 url="https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-${VERSION}.linux-x64.tar.gz"
 
-#rm -rf $TARGET
+rm -rf $TARGET
 mkdir -p $TARGET
 mkdir -p $TARGET/root/opt/grafana
-#wget "$url" -O "${TARGET}/grafana.tar.gz"
+wget "$url" -O "${TARGET}/grafana.tar.gz"
 tar xf $TARGET/grafana.tar.gz -C $TARGET grafana-${VERSION}/public grafana-${VERSION}/bin grafana-${VERSION}/conf
 # restructure
 pushd $TARGET
