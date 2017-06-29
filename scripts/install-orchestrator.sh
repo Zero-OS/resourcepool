@@ -142,7 +142,7 @@ echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
 chmod +x ${aysinit} >> ${logfile} 2>&1
-#bash $aysinit >> ${logfile} 2>&1
+bash $aysinit >> ${logfile} 2>&1
 
 echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
