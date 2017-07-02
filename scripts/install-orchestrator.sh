@@ -71,7 +71,7 @@ mkdir -p /etc/my_init.d > ${logfile} 2>&1
 ztinit="/etc/my_init.d/10_zerotier.sh"
 
 echo '#!/bin/bash -x' > ${ztinit}
-echo 'zerotier-one -d' >> ${ztinit}
+echo 'if ! pgrep -x "zerotier-one" ; then zerotier-one -d ; fi' >> ${ztinit}
 echo 'while ! zerotier-cli info > /dev/null 2>&1; do sleep 0.1; done' >> ${ztinit}
 echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 
