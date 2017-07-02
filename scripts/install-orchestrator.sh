@@ -79,7 +79,7 @@ chmod +x ${ztinit} >> ${logfile} 2>&1
 bash $ztinit >> ${logfile} 2>&1
 
 echo "[+] Waiting for zerotier connectivity"
-if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
+if ! zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|OK PUBLIC'; then
     echo "[-] ZeroTier interface does not have an ipaddress."
     echo "[-] Make sure you authorized this docker into your ZeroTier network"
     echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
