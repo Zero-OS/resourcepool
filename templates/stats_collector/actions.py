@@ -5,7 +5,7 @@ def get_init_processes(service):
     cmd_args = []
 
     if token:
-        cmd_args.extend(['-- token', token])
+        cmd_args.extend(['--token', token])
     if service.model.data.ip:
         cmd_args.extend(['--ip', service.model.data.ip])
     if service.model.data.port:
