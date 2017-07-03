@@ -141,7 +141,7 @@ def start_tlog(job):
         raise j.exceptions.RuntimeError("Failed to start tlogs, no tlogs created to start")
     tlogserver = tlogservers[0]
     # build full path of the tlogserver unix socket on the host filesystem
-    container = Container.from_ays(tlogserver.parent)
+    container = Container.from_ays(tlogserver.parent, password=job.context['token'])
     # make sure container is up
     if not container.is_running():
         j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
