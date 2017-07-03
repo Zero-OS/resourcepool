@@ -58,9 +58,9 @@ def init(job):
     spactor = service.aysrepo.actorGet("storagepool")
     fsactor = service.aysrepo.actorGet("filesystem")
     containeractor = service.aysrepo.actorGet("container")
-    ardbactor = service.aysrepo.actorGet("ardb")
+    storageEngineactor = service.aysrepo.actorGet("storageEngine")
     filesystems = []
-    ardbs = []
+    storageEngines = []
 
     def create_server(node, disk, baseport, tcp, variant='data'):
         diskmap = [{'device': disk.devicename}]
@@ -85,20 +85,20 @@ def init(job):
         args = {
             'node': node.name,
             'hostname': containername,
-            'flist': config.get('rocksdb-flist', 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'),
+            'flist': config.get('storage-engine-flist', 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'),
             'mounts': [{'filesystem': containername, 'target': '/mnt/data'}],
             'hostNetworking': True
         }
         containeractor.serviceCreate(instance=containername, args=args)
-        # create ardbs
+        # create storageEngines
         args = {
             'homeDir': '/mnt/data',
             'bind': '{}:{}'.format(node.storageAddr, baseport),
             'container': containername
         }
-        ardb = ardbactor.serviceCreate(instance=containername, args=args)
-        ardb.consume(tcp)
-        ardbs.append(ardb)
+        storageEngine = ardbactor.serviceCreate(instance=containername, args=args)
+        storageEngine.consume(tcp)
+        storageEngines.append(ardb)
 
     for nodename, disks in availabledisks.items():
         node = nodemap[nodename]
@@ -111,14 +111,14 @@ def init(job):
         create_server(node, disk, baseports[-1], tcpservices[-1], variant='metadata')
 
     service.model.data.init('filesystems', len(filesystems))
-    service.model.data.init('ardbs', len(ardbs))
+    service.model.data.init('storageEngines', len(storageEngines))
 
     for index, fs in enumerate(filesystems):
         service.consume(fs)
         service.model.data.filesystems[index] = fs.name
-    for index, ardb in enumerate(ardbs):
-        service.consume(ardb)
-        service.model.data.ardbs[index] = ardb.name
+    for index, storageEngine in enumerate(storageEngines):
+        service.consume(storageEngine)
+        service.model.data.storageEngines[index] = storageEngine.name
 
     job.service.model.data.status = 'empty'
 
@@ -197,11 +197,11 @@ def stop(job):
 
 def delete(job):
     service = job.service
-    ardbs = service.producers.get('ardb', [])
+    storageEngines = service.producers.get('storageEngine', [])
     filesystems = service.producers.get('filesystem', [])
 
-    for ardb in ardbs:
-        container = ardb.parent
+    for storageEngine in storageEngines:
+        container = storageEngine.parent
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 

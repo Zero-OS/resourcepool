@@ -50,16 +50,16 @@ def install(job):
             tlog = True
 
         template = urlparse(vdiskservice.model.data.templateVdisk)
-        if template.scheme == 'ardb' and template.netloc:
-            rootardb = template.netloc
+        if template.scheme == 'storageEngine' and template.netloc:
+            rootstorageEngine = template.netloc
         else:
             conf = container.node.client.config.get()
-            rootardb = urlparse(conf['globals']['storage']).netloc
+            rootstorageEngine = urlparse(conf['globals']['storage']).netloc
 
         if vdiskservice.model.data.storageCluster not in config['storageClusters']:
             storagecluster = vdiskservice.model.data.storageCluster
             clusterconfig = get_storagecluster_config(job, storagecluster)
-            rootcluster = {'dataStorage': [{'address': rootardb}], 'metadataStorage': {'address': rootardb}}
+            rootcluster = {'dataStorage': [{'address': rootstorageEngine}], 'metadataStorage': {'address': rootstorageEngine}}
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
 
