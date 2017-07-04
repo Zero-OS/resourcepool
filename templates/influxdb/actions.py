@@ -35,7 +35,6 @@ def start(job):
     influx = InfluxDB(
         container, service.parent.model.data.redisAddr, service.model.data.port)
     influx.start()
-    time.sleep(1)
     service.model.data.status = 'running'
     influx.create_databases(service.model.data.databases)
     service.saveAll()

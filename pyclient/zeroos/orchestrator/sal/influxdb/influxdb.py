@@ -1,7 +1,7 @@
 import signal
 import time
 
-from . import templates
+from zeroos.orchestrator.sal import templates
 from js9 import j
 
 
@@ -47,6 +47,7 @@ class InfluxDB:
         self.apply_config()
         self.container.node.client.nft.open_port(self.port)
         self.container.client.system('influxd')
+        time.sleep(1)
 
         start = time.time()
         end = start + timeout
@@ -60,7 +61,7 @@ class InfluxDB:
             raise RuntimeError('Failed to start influxd.')
 
     def create_databases(self, databases):
-        client = j.clients.influxdb.get('172.17.0.1', port=self.port)
+        client = j.clients.influxdb.get(self.ip, port=self.port)
 
         for database in databases:
             client.create_database(database)
