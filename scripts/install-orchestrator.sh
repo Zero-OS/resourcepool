@@ -84,7 +84,7 @@ if ! zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|O
     echo "[-] Make sure you authorized this docker into your ZeroTier network"
     echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
 
-    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+    while ! zerotier-cli listnetworks | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|OK PUBLIC'; do
         sleep 0.2
     done
 fi

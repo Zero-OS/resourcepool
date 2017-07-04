@@ -96,7 +96,7 @@ def init(job):
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    services = service.aysrepo.servicesFind(role="node")
+    services = [ node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted" ]
 
     node = random.choice(services)
     if len(services) > 1 and node.name == service.parent.name:
