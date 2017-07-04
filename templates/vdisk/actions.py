@@ -8,7 +8,6 @@ def install(job):
 
     service = job.service
     service.model.data.status = 'halted'
-
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)

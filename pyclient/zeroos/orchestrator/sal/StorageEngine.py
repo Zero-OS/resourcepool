@@ -29,7 +29,7 @@ class StorageEngine:
 
         container = Container.from_ays(service.parent, password)
         if service.model.data.master != '':
-            master_service = service.aysrepo.serviceGet('storageEngine', service.model.data.master)
+            master_service = service.aysrepo.serviceGet('storage_engine', service.model.data.master)
             master = StorageEngine.from_ays(master_service, password)
         else:
             master = None

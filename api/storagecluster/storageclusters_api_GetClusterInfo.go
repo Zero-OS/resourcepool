@@ -20,7 +20,7 @@ type StorageEngine struct {
 
 func getStorageEngine(aysClient tools.AYStool, name string, api StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
 	var state EnumStorageServerStatus
-	service, res, err := aysClient.Ays.GetServiceByName(name, "storageEngine", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(name, "storage_engine", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return StorageServer{}, []string{""}, err
 	}

@@ -58,7 +58,7 @@ def init(job):
     spactor = service.aysrepo.actorGet("storagepool")
     fsactor = service.aysrepo.actorGet("filesystem")
     containeractor = service.aysrepo.actorGet("container")
-    storageEngineactor = service.aysrepo.actorGet("storageEngine")
+    storageEngineactor = service.aysrepo.actorGet("storage_engine")
     filesystems = []
     storageEngines = []
 
@@ -197,7 +197,7 @@ def stop(job):
 
 def delete(job):
     service = job.service
-    storageEngines = service.producers.get('storageEngine', [])
+    storageEngines = service.producers.get('storage_engine', [])
     filesystems = service.producers.get('filesystem', [])
 
     for storageEngine in storageEngines:

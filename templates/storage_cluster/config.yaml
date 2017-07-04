@@ -9,7 +9,7 @@ links:
     - auto: false
       min: 0
       max: 257
-      role: storageEngine
+      role: storage_engine
       argname: storageEngines
 
     - auto: false

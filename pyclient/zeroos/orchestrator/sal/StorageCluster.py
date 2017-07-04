@@ -30,7 +30,7 @@ class StorageCluster:
 
         nodes = []
         storage_servers = []
-        for storageEngine_service in service.producers.get('storageEngine', []):
+        for storageEngine_service in service.producers.get('storage_engine', []):
             storages_server = StorageServer.from_ays(storageEngine_service, password)
             storage_servers.append(storages_server)
             if storages_server.node not in nodes:

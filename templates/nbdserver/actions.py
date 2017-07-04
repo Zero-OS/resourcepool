@@ -50,7 +50,7 @@ def install(job):
             tlog = True
 
         template = urlparse(vdiskservice.model.data.templateVdisk)
-        if template.scheme == 'storageEngine' and template.netloc:
+        if template.scheme == 'ardb' and template.netloc:
             rootstorageEngine = template.netloc
         else:
             conf = container.node.client.config.get()
