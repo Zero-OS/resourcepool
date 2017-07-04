@@ -42,6 +42,14 @@ def getAddresses(job):
     return networkmap
 
 
+def isConfigured(node, name):
+    poolname = "{}_fscache".format(name)
+    fscache_sp = node.find_persistance(poolname)
+    if fscache_sp is None:
+        return False
+    return bool(fscache_sp.mountpoint)
+
+
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -64,6 +72,7 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
     service = job.service
+
     if service.model.actionsState['install'] != 'ok':
         return
 
@@ -78,6 +87,10 @@ def monitor(job):
 
     if state:
         service.model.data.status = 'running'
+        configured = isConfigured(node, service.name)
+        if not configured:
+            job = service.getJob('install', args={})
+            j.tools.async.wrappers.sync(job.execute())
     else:
         service.model.data.status = 'halted'
     service.saveAll()
