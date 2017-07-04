@@ -20,7 +20,10 @@ setup(
     license='Apache 2.0',
     packages=find_packages(),
     include_package_data=True,
-    package_data={'zeroos.orchestrator.sal.gateway.templates': ['*']},
+    package_data={
+        'zeroos.orchestrator.sal.gateway.templates': ['*'],
+        'zeroos.orchestrator.sal.influxdb.templates': ['*']
+    },
     namespace_packages=['zeroos'],
     install_requires=['python-dateutil', 'Jinja2'],
 )

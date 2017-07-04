@@ -30,7 +30,6 @@ def init(job):
     service = job.service
     container_actor = service.aysrepo.actorGet('container')
     config = get_configuration(service.aysrepo)
-    parent = service.parent.model.data
 
     args = {
         'node': service.model.data.node,
@@ -46,8 +45,10 @@ def init(job):
 def install(job):
     service = job.service
     containers = service.producers.get('container')
-    if containers:
-        j.tools.async.wrappers.sync(containers[0].executeAction('start', context=job.context))
+    if not containers:
+        raise RuntimeError('Service didn\'t consume any containers')
+
+    j.tools.async.wrappers.sync(containers[0].executeAction('start', context=job.context))
     service.model.data.status = 'running'
     service.saveAll()
 
@@ -55,9 +56,11 @@ def install(job):
 def uninstall(job):
     service = job.service
     containers = service.producers.get('container')
-    if containers:
-        j.tools.async.wrappers.sync(containers[0].executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(containers[0].delete())
+    if not containers:
+        raise RuntimeError('Service didn\'t consume any containers')
+
+    j.tools.async.wrappers.sync(containers[0].executeAction('stop', context=job.context))
+    j.tools.async.wrappers.sync(containers[0].delete())
     service.delete()
 
 
@@ -66,8 +69,12 @@ def processChange(job):
     service = job.service
     args = job.model.args
 
-    if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'schedules']:
+    if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
+
+    containers = service.producers.get('container')
+    if not containers:
+        raise RuntimeError('Service didn\'t consume any containers')
 
     if args.get('ip'):
         service.model.data.ip = args['ip']
@@ -78,17 +85,15 @@ def processChange(job):
     if args.get('retention'):
         service.model.data.retention = args['retention']
 
-    containers = service.producers.get('container')
-    if containers:
-        container = containers[0]
-        container.model.data.initProcesses = get_init_processes(service)
-        container.saveAll()
+    container = containers[0]
+    container.model.data.initProcesses = get_init_processes(service)
+    container.saveAll()
 
-        job.context['token'] = get_jwt_token_from_job(job)
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        service.model.data.status = 'halted'
-        j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-        service.model.data.status = 'running'
+    job.context['token'] = get_jwt_token_from_job(job)
+    j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+    service.model.data.status = 'halted'
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    service.model.data.status = 'running'
 
     service.saveAll()
 
