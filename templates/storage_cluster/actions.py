@@ -58,7 +58,7 @@ def init(job):
     spactor = service.aysrepo.actorGet("storagepool")
     fsactor = service.aysrepo.actorGet("filesystem")
     containeractor = service.aysrepo.actorGet("container")
-    storageEngineactor = service.aysrepo.actorGet("storage_engine")
+    storageEngineActor = service.aysrepo.actorGet("storage_engine")
     filesystems = []
     storageEngines = []
 
@@ -96,9 +96,9 @@ def init(job):
             'bind': '{}:{}'.format(node.storageAddr, baseport),
             'container': containername
         }
-        storageEngine = ardbactor.serviceCreate(instance=containername, args=args)
+        storageEngine = storageEngineActor.serviceCreate(instance=containername, args=args)
         storageEngine.consume(tcp)
-        storageEngines.append(ardb)
+        storageEngines.append(storageEngine)
 
     for nodename, disks in availabledisks.items():
         node = nodemap[nodename]
