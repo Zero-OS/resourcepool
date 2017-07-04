@@ -98,7 +98,7 @@ class Node:
         containerpath = '/var/cache/containers'
         if containerpath not in mountedpaths:
             if storagepool.exists('containercache'):
-                storagepool.delete('containercache')
+                storagepool.get('containercache').delete()
             fs = storagepool.create('containercache')
             self.client.disk.mount(storagepool.devicename, containerpath, ['subvol={}'.format(fs.subvolume)])
         logpath = '/var/log'

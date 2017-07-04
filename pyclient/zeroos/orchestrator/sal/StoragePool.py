@@ -94,24 +94,25 @@ class StoragePool(Mountable):
     def delete(self, zero=True):
         """
         Destroy storage pool
-        param name: name of storagepool to delete
         param zero: write zeros (nulls) to the first 500MB of each disk in this storagepool
         """
 
         if self.mountpoint:
             self.umount()
-        if zero:
-            partitionmap = {}
-            for disk in self.node.disks.list():
-                for partition in disk.partitions:
-                    partitionmap[partition.name] = partition
-            for device in self.devices:
-                diskpath = os.path.basename(device)
-                partition = partitionmap.get(diskpath)
-                if partition:
-                    disk = partition.disk
-                    self._client.disk.rmpart(disk.name, 1)
-                    self._client.system('dd if=/dev/zero bs=1M count=500 of={}'.format(disk.devicename)).get()
+        partitionmap = {}
+        for disk in self.node.disks.list():
+            for partition in disk.partitions:
+                partitionmap[partition.name] = partition
+        for device in self.devices:
+            diskpath = os.path.basename(device)
+            partition = partitionmap.get(diskpath)
+            if partition:
+                disk = partition.disk
+                self._client.disk.rmpart(disk.name, 1)
+                if zero:
+                    self._client.system('dd if=/dev/zero bs=1M count=500 of={}'.format(diskpath)).get()
+                return True
+        return False
 
     @property
     def mountpoint(self):
