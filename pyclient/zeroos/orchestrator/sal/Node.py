@@ -131,6 +131,14 @@ class Node:
                     return freeports
             baseport += 1
 
+    def find_persistance(self, name='fscache'):
+        fscache_sp = None
+        for sp in self.storagepools.list():
+            if sp.name == name:
+                fscache_sp = sp
+                break
+        return fscache_sp
+
     def ensure_persistance(self, name='fscache'):
         """
         look for a disk not used,
@@ -143,11 +151,7 @@ class Node:
             return
 
         # check if there is already a storage pool with the fs_cache label
-        fscache_sp = None
-        for sp in self.storagepools.list():
-            if sp.name == name:
-                fscache_sp = sp
-                break
+        fscache_sp = self.find_persistance(name)
 
         # create the storage pool if we don't have one yet
         if fscache_sp is None:
