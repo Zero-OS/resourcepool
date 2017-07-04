@@ -336,19 +336,90 @@ def shutdown(job):
     service.saveAll()
 
 
+def start_migartion_channel(job, old_node, node):
+    service = job.service
+    actor = service.aysrepo.actorGet("tcp")
+
+    # Get free ports on node to use for ssh
+    node_args = {"node": node.name}
+    tcp = actor.serviceCreate(instance="tcp_%s" % node.name, args=node_args)
+    node.consume(tcp)
+    freeports_node, _ = get_baseports(job, node, 3000, 1)
+    node.client.nft.open_port(freeports_node[0])
+
+    cmd = "/usr/sbin/sshd -f {config}"
+
+    # start ssh server on new node for this migration
+    file_discriptor = node.client.filesystem.open("/tmp/ssh.config", mode='x')
+    node.client.filesystem.write(file_discriptor, str.encode("Port %s" % freeports_node[0]))
+    node.client.close(file_discriptor)
+    node.client.system(cmd.format(config='/tmp/ssh.config')).get()
+
+
+    # Move keys from old_node to node authorized_keys
+    for item in  old_node.client.filesystem.list("/root/.ssh"):
+        if item.get['name'] == 'id_rsa.pub':
+            break
+    else:
+        old_node.client.system("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
+
+    file_discriptor = old_node.client.filesystem.open("id_rsa.pub", mode='r')
+    pub_key = old_node.client.read(file_discriptor)
+    old_node.client.close(file_discriptor)
+
+    for item in  node.client.filesystem.list("/root/.ssh"):
+        if item.get['name'] == 'authorized_keys':
+            file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='a')
+            break
+    else:
+        file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='x')
+
+    node.client.filesystem.write(file_discriptor, str.encode(pub_key))
+    old_node.client.close(file_discriptor)
+
+    return freeports_node[0]
+
+
+def get_baseports(job, node, baseport, nrports):
+    service = job.service
+    tcps = service.aysrepo.servicesFind(role='tcp', parent='node.zero-os!%s' % node.name)
+
+    usedports = set()
+    for tcp in tcps:
+        usedports.add(tcp.model.data.port)
+
+    freeports = []
+    tcpactor = service.aysrepo.actorGet("tcp")
+    tcpservices = []
+    while True:
+        if baseport not in usedports:
+            baseport = node.freeports(baseport=baseport, nrports=1)[0]
+            args = {
+                'node': node.name,
+                'port': baseport,
+            }
+            tcp = 'tcp_{}_{}'.format(node.name, baseport)
+            tcpservices.append(tcpactor.serviceCreate(instance=tcp, args=args))
+            freeports.append(baseport)
+            if len(freeports) >= nrports:
+                return freeports, tcpservices
+        baseport += 1
+
+
 def migrate(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
 
     service.model.data.status = 'migrating'
 
-    node = job.service.model.data.node
+    node = service.model.data.node
     if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
     target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
+    ssh_port = start_migartion_channel(job, Node.from_ays(service.parent), Node.from_ays(target_node))
     old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
@@ -360,15 +431,13 @@ def migrate(job):
     service.consume(nbdserver)
 
     # TODO: migrate domain, not impleented yet in core0
-
-    from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
     service.model.changeParent(target_node)
     service.model.data.status = 'running'
     node_client = Node.from_ays(service.aysrepo.serviceGet('node', job.model.args["node"]))._client
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]
-            node_client.kvm.migrate(uuid, "qemu+tcp://%s/system" % target_node.model.data.redisAddr)
+            node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % target_node.model.data.redisAddr, ssh_port)
             break
 
     # delete current nbd services and volue container
@@ -483,7 +552,6 @@ def update_data(job, args):
     service = job.service
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
-        from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
         job = service.getJob('migrate', args={'node': service.model.data.node})
         j.tools.async.wrappers.sync(job.execute())
     service.model.data.memory = args.get('memory', service.model.data.memory)
@@ -491,12 +559,8 @@ def update_data(job, args):
 
 
 def processChange(job):
-<<<<<<< 8fc8b94d2a3a8ee577c9e7299935e2fbb38ac2f7
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
-=======
-    from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
->>>>>>> WIP : for the migrate vm code
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
