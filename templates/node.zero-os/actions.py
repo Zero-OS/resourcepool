@@ -1,6 +1,19 @@
 from js9 import j
 
 
+def get_stats_collector(service):
+    stats_collectors_services = service.producers.get('stats_collector')
+    if stats_collectors_services:
+        return stats_collectors_services[0]
+
+
+def get_statsdb(service):
+    statsdb_services = service.aysrepo.servicesFind(
+        service.aysrepo, role='statsdb')
+    if statsdb_services:
+        return statsdb_services[0]
+
+
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
@@ -24,12 +37,24 @@ def init(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
-    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    node = Node.from_ays(service, get_jwt_token(service.aysrepo))
     job.logger.info("create storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
 
     storagepool = node.ensure_persistance(poolname)
     storagepool.ays.create(service.aysrepo)
+
+    statsdb_service = get_statsdb(service)
+    if statsdb_service:
+        stats_collector_actor = service.aysrepo.actorGet('stats_collector')
+        args = {
+            'node': service.name,
+            'port': statsdb_service.model.data.port,
+            'ip': statsdb_service.parent.model.data.redisAddr,
+
+        }
+        stats_collector_service = stats_collector_actor.serviceCreate(instance=service.name, args=args)
+        service.consume(stats_collector_service)
 
 
 def getAddresses(job):
@@ -66,6 +91,12 @@ def install(job):
         job = network.getJob('configure', args={'node_name': service.name})
         j.tools.async.wrappers.sync(job.execute())
 
+    stats_collector_service = get_stats_collector(service)
+    statsdb_service = get_statsdb(service)
+    if stats_collector_service and statsdb_service.model.data.status == 'running':
+        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
+            'install', context=job.context))
+
 
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
@@ -91,6 +122,13 @@ def monitor(job):
         if not configured:
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
+
+        stats_collector_service = get_stats_collector(service)
+        statsdb_service = get_statsdb(service)
+        if (stats_collector_service and stats_collector_service.model.data.status != 'running'
+                and statsdb_service.model.data.status == 'running'):
+            j.tools.async.wrappers.sync(stats_collector_service.executeAction(
+                'install', context=job.context))
     else:
         service.model.data.status = 'halted'
     service.saveAll()
@@ -99,12 +137,21 @@ def monitor(job):
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
+    stats_collector_service = get_stats_collector(service)
+    if stats_collector_service and stats_collector_service.model.data.status == 'running':
+        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
+            'stop', context=job.context))
     job.logger.info("reboot node {}".format(service))
     node = Node.from_ays(service, job.context['token'])
     node.client.raw('core.reboot', {})
 
 
 def uninstall(job):
+    stats_collector_service = get_stats_collector(job.service)
+    if stats_collector_service:
+        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
+            'uninstall', context=job.context))
+
     service = job.service
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:

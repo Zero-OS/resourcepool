@@ -25,11 +25,17 @@ def init(job):
     service.consume(influxdb_service)
 
 
-def get_influxdb(job):
-    influxdbs = job.service.producers.get('influxdb')
+def get_influxdb(service):
+    influxdbs = service.producers.get('influxdb')
     if not influxdbs:
         raise RuntimeError('Service didn\'t consume any influxdbs')
     return influxdbs[0]
+
+
+def get_stats_collector(service):
+    stats_collectors_services = service.producers.get('stats_collector')
+    if stats_collectors_services:
+        return stats_collectors_services[0]
 
 
 def install(job):
@@ -37,39 +43,66 @@ def install(job):
 
 
 def start(job):
-    influxdb = get_influxdb(job)
+    influxdb = get_influxdb(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('start', context=job.context))
     job.service.model.data.status = 'running'
     job.service.saveAll()
+    stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
+    node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
+    for node_service in node_services:
+        stats_collector_service = get_stats_collector(node_service)
+        if stats_collector_service and stats_collector_service.model.data.status == 'running':
+            j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
+            j.tools.async.wrappers.sync(stats_collector_service.executeAction('start', context=job.context))
+        if not stats_collector_service:
+                args = {
+                    'node': node_service.name,
+                    'port': job.service.model.data.port,
+                    'ip': job.service.parent.model.data.redisAddr,
+
+                }
+                stats_collector_service = stats_collector_actor.serviceCreate(instance=node_service.name, args=args)
+                node_service.consume(stats_collector_service)
+                j.tools.async.wrappers.sync(stats_collector_service.executeAction('install', context=job.context))
 
 
 def stop(job):
-    influxdb = get_influxdb(job)
+    influxdb = get_influxdb(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
     job.service.model.data.status = 'halted'
     job.service.saveAll()
+    node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
+    for node_service in node_services:
+        stats_collector_service = get_stats_collector(node_service)
+        if stats_collector_service and stats_collector_service.model.data.status == 'running':
+            j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
 
 
 def uninstall(job):
-    influxdb = get_influxdb(job)
+    influxdb = get_influxdb(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
     job.service.delete()
+    node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
+    for node_service in node_services:
+        stats_collector_service = get_stats_collector(node_service)
+        if stats_collector_service:
+            j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
     args = job.model.args
-    if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
+    if args.get('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
     if args.get('port'):
-        influxdb = get_influxdb(job)
-        service.model.data.port = args['port']
-        pc_job = influxdb.getJob('processChange')
-        pc_job.model.args = {'port': args.get('port')}
-        pc_job.executeInProcess()
-        influxdb = get_influxdb(job)
-        job.service.model.data.status = influxdb.model.data.status
+        influxdb = get_influxdb(job.service)
+        job.context['token'] = get_jwt_token_from_job(job)
+        j.tools.async.wrappers.sync(
+            influxdb.executeAction('processChange', context=job.context, args=args))
+        influxdb = get_influxdb(job.service)
+        job.service.model.data.status = str(influxdb.model.data.status)
 
     service.saveAll()
 
