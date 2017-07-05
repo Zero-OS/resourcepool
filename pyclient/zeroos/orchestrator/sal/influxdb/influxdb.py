@@ -18,7 +18,12 @@ class InfluxDB:
     def is_running(self):
         for process in self.container.client.process.list():
             if 'influxd' in process['cmdline']:
-                return True, process['pid']
+                try:
+                    self.list_databases()
+                except:
+                    return False, process['pid']
+                else:
+                    return True, process['pid']
         return False, None
 
     def stop(self, timeout=30):
@@ -59,6 +64,10 @@ class InfluxDB:
         if not is_running:
             self.container.node.client.nft.drop_port(self.port)
             raise RuntimeError('Failed to start influxd.')
+
+    def list_databases(self):
+        client = j.clients.influxdb.get(self.ip, port=self.port)
+        return client.get_list_database()
 
     def create_databases(self, databases):
         client = j.clients.influxdb.get(self.ip, port=self.port)
