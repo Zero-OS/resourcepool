@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/json"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,9 +12,10 @@ import (
 // GetContainer is the handler for GET /nodes/{nodeid}/containers/{containername}
 // Get Container
 func (api NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	containername := vars["containername"]
-	service, res, err := api.AysAPI.Ays.GetServiceByName(containername, "container", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(containername, "container", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return

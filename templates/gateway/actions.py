@@ -13,7 +13,11 @@ def input(job):
         config = nic.get('config', {})
         name = nic.get('name')
         dhcp = nic.get('dhcpserver')
+        zerotierbridge = nic.get('zerotierbridge')
         cidr = config.get('cidr')
+
+        if zerotierbridge and not zerotierbridge.get('id'):
+            raise j.exceptions.Input('Zerotierbridge id not specified')
 
         if not name:
             raise j.exceptions.Input('Gateway nic should have name defined.')
@@ -50,7 +54,11 @@ def init(job):
         nic.pop('dhcpserver', None)
         zerotierbridge = nic.pop('zerotierbridge', None)
         if zerotierbridge:
-            nics.append({'id': zerotierbridge, 'type': 'zerotier', 'name': 'z-{}'.format(nic['name'])})
+            nics.append(
+                {
+                    'id': zerotierbridge['id'], 'type': 'zerotier',
+                    'name': 'z-{}'.format(nic['name']), 'token': zerotierbridge.get('token', '')
+                })
 
     config = get_configuration(service.aysrepo)
 
@@ -87,10 +95,11 @@ def init(job):
 
 def install(job):
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('start'))
+    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
@@ -105,16 +114,16 @@ def processChange(job):
 
     if nicchanges:
         cloudInitServ = service.aysrepo.serviceGet(role='cloudinit', instance=service.name)
-        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', args={'nics': args['nics']}))
+        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', context=job.context, args={'nics': args['nics']}))
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
-        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', args=args))
+        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', context=job.context, args=args))
 
         service.model.data.nics = args['nics']
 
     if nicchanges or portforwardchanges:
         firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', args=args))
+        j.tools.async.wrappers.sync(firewallServ.executeAction('update', context=job.context, args=args))
 
     if portforwardchanges:
         service.model.data.portforwards = args.get('portforwards', [])
@@ -122,8 +131,9 @@ def processChange(job):
     if httproxychanges:
         httpproxies = args.get('httpproxies', [])
         httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
-        http_args = {'httpproxies': httpproxies, 'nics': args.get('nics', gatewaydata['nics'])}
-        j.tools.async.wrappers.sync(httpServ.executeAction('update', args=http_args))
+        http_args = {'httpproxies': httpproxies}
+        job.context['token'] = get_jwt_token_from_job(job)
+        j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
         service.model.data.httpproxies = httpproxies
 
     if args.get("domain", None):
@@ -139,18 +149,20 @@ def uninstall(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
     import time
+    from zerotier import client
+
     service = job.service
     container = service.producers.get('container')[0]
 
     # setup zerotiers bridges
-    containerobj = Container.from_ays(container)
+    containerobj = Container.from_ays(container, job.context['token'])
     nics = service.model.data.to_dict()['nics']  # get dict version of nics
 
     def get_zerotier_nic(zerotierid):
@@ -169,14 +181,24 @@ def start(job):
             time.sleep(0.5)
         raise j.exceptions.RuntimeError("Could not find zerotier network interface")
 
+    ip = containerobj.client.ip
     for nic in nics:
         zerotierbridge = nic.pop('zerotierbridge', None)
         if zerotierbridge:
-            ip = containerobj.client.ip
             nicname = nic['name']
             linkname = 'l-{}'.format(nicname)[:15]
             wait_for_interface()
-            zerotiername = get_zerotier_nic(zerotierbridge)
+            zerotiername = get_zerotier_nic(zerotierbridge['id'])
+            token = zerotierbridge.get('token')
+            if token:
+                zerotier = client.Client()
+                zerotier.set_auth_header('bearer {}'.format(token))
+                resp = zerotier.network.getMember(container.model.data.zerotiernodeid, zerotierbridge['id'])
+                member = resp.json()
+
+                job.logger.info("Enable bridge in member {} on network {}".format(member['nodeId'], zerotierbridge['id']))
+                member['config']['activeBridge'] = True
+                zerotier.network.updateMember(member, member['nodeId'], zerotierbridge['id'])
 
             # check if configuration is already done
             linkmap = {link['name']: link for link in ip.link.list()}
@@ -188,7 +210,9 @@ def start(job):
             ip.link.down(zerotiername)
 
             # remove IP and rename
-            ip.addr.delete(nicname, nic['config']['cidr'])
+            ipaddresses = ip.addr.list(nicname)
+            for ipaddress in ipaddresses:
+                ip.addr.delete(nicname, ipaddress)
             ip.link.name(nicname, linkname)
 
             # create bridge and add interface and IP
@@ -197,7 +221,8 @@ def start(job):
             ip.bridge.addif(nicname, zerotiername)
 
             # readd IP and bring interfaces up
-            ip.addr.add(nicname, nic['config']['cidr'])
+            for ipaddress in ipaddresses:
+                ip.addr.add(nicname, ipaddress)
             ip.link.up(nicname)
             ip.link.up(linkname)
             ip.link.up(zerotiername)
@@ -205,17 +230,23 @@ def start(job):
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
 
+    # setup cloud-init magical ip
+    loaddresses = ip.addr.list('lo')
+    magicip = '169.254.169.254/32'
+    if magicip not in loaddresses:
+        ip.addr.add('lo', magicip)
+
     # start services
     http = container.consumers.get('http')[0]
     dhcp = container.consumers.get('dhcp')[0]
     cloudinit = container.consumers.get('cloudinit')[0]
     firewall = container.consumers.get('firewall')[0]
 
-    j.tools.async.wrappers.sync(container.executeAction('start'))
-    j.tools.async.wrappers.sync(http.executeAction('install'))
-    j.tools.async.wrappers.sync(dhcp.executeAction('install'))
-    j.tools.async.wrappers.sync(firewall.executeAction('install'))
-    j.tools.async.wrappers.sync(cloudinit.executeAction('install'))
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(dhcp.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
     service.model.data.status = "running"
 
 
@@ -223,5 +254,5 @@ def stop(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         service.model.data.status = "halted"

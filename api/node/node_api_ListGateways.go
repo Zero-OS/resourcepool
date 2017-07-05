@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,20 +13,21 @@ import (
 // ListGateways is the handler for GET /nodes/{nodeid}/gws
 // List running gateways
 func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
 	query := map[string]interface{}{
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("gateway", api.AysRepo, nil, query)
+	services, res, err := aysClient.Ays.ListServicesByRole("gateway", api.AysRepo, nil, query)
 	if !tools.HandleAYSResponse(err, res, w, "listing gateways") {
 		return
 	}
 
 	var respBody = make([]ListGW, len(services))
 	for i, serviceData := range services {
-		service, res, err := api.AysAPI.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
+		service, res, err := aysClient.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
 		if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 			return
 		}

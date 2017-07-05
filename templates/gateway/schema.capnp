@@ -1,4 +1,4 @@
-@0xdd2c81fbbecd23c5;
+@0xd3397b8ab433d876;
 
 
 struct Schema {
@@ -19,9 +19,14 @@ struct Schema {
         config @2: NicConfig;
         name @3: Text;
         dhcpserver @4: DHCP;
-        zerotierbridge @5: Text;
+        zerotierbridge @5: Bridge;
+        token @6: Text;
     }
 
+    struct Bridge {
+        id @0: Text;
+        token @1: Text;
+    }
     struct CloudInit {
         userdata @0: Text;
         metadata @1: Text;

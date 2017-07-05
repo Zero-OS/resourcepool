@@ -2,6 +2,7 @@ from zeroos.core0.client import Client
 from .Disk import Disks, DiskType
 from .Container import Containers
 from .StoragePool import StoragePools
+from .Network import Network
 from collections import namedtuple
 from datetime import datetime
 import netaddr
@@ -21,13 +22,14 @@ class Node:
         self.disks = Disks(self)
         self.storagepools = StoragePools(self)
         self.containers = Containers(self)
+        self.network = Network(self)
 
     @classmethod
-    def from_ays(cls, service, timeout=120):
+    def from_ays(cls, service, password=None, timeout=120):
         return cls(
             addr=service.model.data.redisAddr,
             port=service.model.data.redisPort,
-            password=service.model.data.redisPassword or None,
+            password=password,
             timeout=timeout
         )
 
@@ -96,7 +98,7 @@ class Node:
         containerpath = '/var/cache/containers'
         if containerpath not in mountedpaths:
             if storagepool.exists('containercache'):
-                storagepool.delete('containercache')
+                storagepool.get('containercache').delete()
             fs = storagepool.create('containercache')
             self.client.disk.mount(storagepool.devicename, containerpath, ['subvol={}'.format(fs.subvolume)])
         logpath = '/var/log'
@@ -113,6 +115,30 @@ class Node:
             self.client.system('syslogd -n -O /var/log/messages')
             self.client.system('klogd -n')
 
+    def freeports(self, baseport=2000, nrports=3):
+        ports = self.client.info.port()
+        usedports = set()
+        for portInfo in ports:
+            if portInfo['network'] != "tcp":
+                continue
+            usedports.add(portInfo['port'])
+
+        freeports = []
+        while True:
+            if baseport not in usedports:
+                freeports.append(baseport)
+                if len(freeports) >= nrports:
+                    return freeports
+            baseport += 1
+
+    def find_persistance(self, name='fscache'):
+        fscache_sp = None
+        for sp in self.storagepools.list():
+            if sp.name == name:
+                fscache_sp = sp
+                break
+        return fscache_sp
+
     def ensure_persistance(self, name='fscache'):
         """
         look for a disk not used,
@@ -125,11 +151,7 @@ class Node:
             return
 
         # check if there is already a storage pool with the fs_cache label
-        fscache_sp = None
-        for sp in self.storagepools.list():
-            if sp.name == name:
-                fscache_sp = sp
-                break
+        fscache_sp = self.find_persistance(name)
 
         # create the storage pool if we don't have one yet
         if fscache_sp is None:
@@ -144,6 +166,29 @@ class Node:
         # mount the storage pool
         self._mount_fscache(fscache_sp)
         return fscache_sp
+
+    def wipedisks(self):
+        print('Wiping node {hostname}'.format(**self.client.info.os()))
+        mounteddevices = {mount['device']: mount for mount in self.client.info.disk()}
+
+        def getmountpoint(device):
+            for mounteddevice, mount in mounteddevices.items():
+                if mounteddevice.startswith(device):
+                    return mount
+
+        jobs = []
+        for disk in self.client.disk.list()['blockdevices']:
+            devicename = '/dev/{}'.format(disk['kname'])
+            mount = getmountpoint(devicename)
+            if not mount:
+                print('   * Wiping disk {kname}'.format(**disk))
+                jobs.append(self.client.system('dd if=/dev/zero of={} bs=1M count=50'.format(devicename)))
+            else:
+                print('   * Not wiping {device} mounted at {mountpoint}'.format(device=devicename, mountpoint=mount['mountpoint']))
+
+        # wait for wiping to complete
+        for job in jobs:
+            job.get()
 
     def list_mounts(self):
         allmounts = []

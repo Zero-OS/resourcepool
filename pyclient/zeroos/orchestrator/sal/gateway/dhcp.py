@@ -1,8 +1,7 @@
 import signal
 import time
 
-from . import templates
-
+from zeroos.orchestrator.sal import templates
 
 DNSMASQ = '/bin/dnsmasq --conf-file=/etc/dnsmasq.conf -d'
 
@@ -22,15 +21,25 @@ class DHCP:
 
         for process in self.container.client.process.list():
             if 'dnsmasq' in process['cmdline']:
-                self.container.client.process.kill(process['pid'], signal.SIGHUP)
-                return
+                self.container.client.process.kill(process['pid'], signal.SIGTERM)
+                start = time.time()
+                while start + 10 > time.time():
+                    if not self.is_running():
+                        break
+                    time.sleep(0.2)
+                break
 
-        cmd = self.container.client.system(DNSMASQ)
-        # check if command is still running after 2 seconds
-        time.sleep(2)
+        self.container.client.system(DNSMASQ)
+        # check if command is listening for dhcp
+        start = time.time()
+        while start + 10 > time.time():
+            if self.is_running():
+                break
+            time.sleep(0.2)
+        else:
+            raise RuntimeError('Failed to run dnsmasq')
 
-        for job in self.container.client.job.list():
-            if job['cmd']['id'] == cmd.id:
-                return
-
-        raise RuntimeError('Failed to run dnsmasq')
+    def is_running(self):
+        for port in self.container.client.info.port():
+            if port['network'] == 'udp' and port['port'] == 53:
+                return True

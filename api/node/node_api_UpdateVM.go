@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // UpdateVM is the handler for PUT /nodes/{nodeid}/vms/{vmid}
 // Updates the VM
 func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMUpdate
 
 	// decode request
@@ -29,7 +31,7 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
-	srv, res, err := api.AysAPI.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
 		return
 	}
@@ -61,10 +63,10 @@ func (api NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

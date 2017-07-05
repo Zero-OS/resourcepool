@@ -177,7 +177,7 @@ func ValidateIpInRange(cidr string, ip string) error {
 	return fmt.Errorf("%v: ip is not in valid range for cidr %v ", ip, cidr)
 }
 
-func ValidateVdisk(vtype string, tlog string, template string, size int) error {
+func ValidateVdisk(vtype string, tlog string, template string, size int, backup string) error {
 	if template != "" {
 		if vtype != "boot" {
 			return fmt.Errorf("Vdisks of type %v do not have template support", vtype)
@@ -186,6 +186,10 @@ func ValidateVdisk(vtype string, tlog string, template string, size int) error {
 
 	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
 		return fmt.Errorf("Vdisks of type %v can't be redundant", vtype)
+	}
+
+	if backup != "" && tlog == "" {
+		return fmt.Errorf("Tlog storage cluster is required for vdisk backup")
 	}
 
 	if (size % 512) != 0 {
@@ -198,7 +202,7 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	if cidr1 == "" || cidr2 == "" {
 		return false, nil
 	}
-	
+
 	_, subnet1, err := net.ParseCIDR(cidr1)
 	if err != nil {
 		return false, fmt.Errorf("%v: is not a valid cidr", cidr1)
@@ -214,4 +218,16 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func ValidateCluster(ctype string, k int, m int, nrServers int) error {
+	if ctype == "tlog" {
+		if k == 0 || m == 0 {
+			return fmt.Errorf("K and M values required for tlog clusters")
+		}
+	}
+	if (k + m) > nrServers {
+		return fmt.Errorf("Number of servers should be greater than or equal to K + M")
+	}
+	return nil
 }

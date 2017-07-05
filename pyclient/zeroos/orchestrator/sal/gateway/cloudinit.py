@@ -13,6 +13,8 @@ class CloudInit:
         for key, value in self.config.items():
             fpath = "%s/%s" % (self.CONFIGPATH, key)
             self.container.upload_content(fpath, value)
+        if not self.is_running():
+            self.start()
 
     def cleanup(self, macaddresses):
         configs = self.container.client.filesystem.list(self.CONFIGPATH)
@@ -29,13 +31,15 @@ class CloudInit:
                 .format(config=self.CONFIGPATH)
             )
 
-        # TODO: Check with Core0 team if listing ports can be available to check success
-        time.sleep(2)
-        if not self.is_running():
-            raise RuntimeError('Failed to start cloudinit server')
+        start = time.time()
+        while time.time() + 10 > start:
+            if self.is_running():
+                return
+            time.sleep(0.5)
+        raise RuntimeError('Failed to start cloudinit server')
 
     def is_running(self):
-        for job in self.container.client.job.list():
-            if job["cmd"]["arguments"].get("name") == "cloud-init-server":
+        for port in self.container.client.info.port():
+            if port['network'] == 'tcp' and port['port'] == 8080 and port['ip'] == '127.0.0.1':
                 return True
         return False

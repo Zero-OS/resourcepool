@@ -12,6 +12,7 @@ from .ClusterCreate import ClusterCreate
 from .Container import Container
 from .ContainerListItem import ContainerListItem
 from .ContainerNIC import ContainerNIC
+from .ContainerNICconfig import ContainerNICconfig
 from .CoreStateResult import CoreStateResult
 from .CoreSystem import CoreSystem
 from .CreateContainer import CreateContainer
@@ -22,6 +23,7 @@ from .DiskInfo import DiskInfo
 from .DiskPartition import DiskPartition
 from .EnumBridgeCreateNetworkMode import EnumBridgeCreateNetworkMode
 from .EnumBridgeStatus import EnumBridgeStatus
+from .EnumClusterCreateClusterType import EnumClusterCreateClusterType
 from .EnumClusterCreateDriveType import EnumClusterCreateDriveType
 from .EnumClusterDriveType import EnumClusterDriveType
 from .EnumClusterStatus import EnumClusterStatus
@@ -58,6 +60,7 @@ from .GW import GW
 from .GWCreate import GWCreate
 from .GWHost import GWHost
 from .GWNIC import GWNIC
+from .GWNICconfig import GWNICconfig
 from .GetGW import GetGW
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
@@ -75,6 +78,8 @@ from .OSInfo import OSInfo
 from .PortForward import PortForward
 from .Process import Process
 from .ProcessSignal import ProcessSignal
+from .Run import Run
+from .RunState import RunState
 from .Snapshot import Snapshot
 from .StoragePool import StoragePool
 from .StoragePoolCreate import StoragePoolCreate
@@ -97,14 +102,17 @@ from .VdiskResize import VdiskResize
 from .VdiskRollback import VdiskRollback
 from .WriteFile import WriteFile
 from .Zerotier import Zerotier
+from .ZerotierBridge import ZerotierBridge
 from .ZerotierJoin import ZerotierJoin
 from .ZerotierListItem import ZerotierListItem
 from .ZerotierRoute import ZerotierRoute
 
 from .client import Client as APIClient
 
+from .oauth2_client_itsyouonline import Oauth2ClientItsyouonline
 
 class Client:
     def __init__(self, base_uri=""):
         self.api = APIClient(base_uri)
         
+        self.oauth2_client_itsyouonline = Oauth2ClientItsyouonline()

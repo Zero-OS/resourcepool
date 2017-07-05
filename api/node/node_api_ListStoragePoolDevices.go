@@ -18,7 +18,7 @@ func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request
 	storagePoolName := vars["storagepoolname"]
 	nodeId := vars["nodeid"]
 
-	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w)
+	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w, r)
 	if err {
 		return
 	}
@@ -42,10 +42,11 @@ type DeviceInfo struct {
 }
 
 // Get storagepool devices
-func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter) ([]DeviceInfo, bool) {
+func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
+	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
 		return nil, true
 	}

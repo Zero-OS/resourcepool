@@ -1,4 +1,4 @@
-def install(job):
+def start(job):
     gateway = job.service.parent.consumers['gateway'][0]
     gwdata = gateway.model.data.to_dict()
     apply_rules(job, gwdata)
@@ -9,7 +9,7 @@ def apply_rules(job, gwdata=None):
     from zeroos.orchestrator.sal.gateway.firewall import Firewall, Network
 
     gwdata = {} if gwdata is None else gwdata
-    container = Container.from_ays(job.service.parent)
+    container = Container.from_ays(job.service.parent, job.context['token'])
     portforwards = gwdata.get('portforwards', [])
     # lets assume the public ip is the ip of the nic which has a gateway configured
 

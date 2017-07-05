@@ -3,6 +3,7 @@ package vdisk
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
 // Resize Vdisk
 func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskResize
 
 	vdiskID := mux.Vars(r)["vdiskid"]
@@ -28,7 +30,7 @@ func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	srv, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	srv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting info about vdisk %s", vdiskID)) {
 		return
 	}
@@ -58,10 +60,11 @@ func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 	obj[decl] = bp
 
 	// And execute
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s resize", vdiskID)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+
+	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for vdisk %s resize", vdiskID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

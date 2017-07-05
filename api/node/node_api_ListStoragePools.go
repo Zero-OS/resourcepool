@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ListStoragePools is the handler for GET /node/{nodeid}/storagepool
 // List storage pools present in the node
 func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
@@ -19,7 +21,7 @@ func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
 		"fields": "status,freeCapacity",
 	}
-	services, _, err := api.AysAPI.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
+	services, _, err := aysClient.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
 	if err != nil {
 		errmsg := "Error listing storagepool services"
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)

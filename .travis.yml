@@ -17,13 +17,9 @@ matrix:
       go: 1.8
       before_install:
         - sudo apt-get -qq update
-        - sudo apt-get install -y libvirt-dev libcap-dev capnproto nodejs
+        - sudo apt-get install -y libvirt-dev libcap-dev capnproto npm
         - sudo npm install -g raml2html
       install:
         - go get github.com/Jumpscale/go-raml
       script:
         - bash test.sh
-
-
-
-

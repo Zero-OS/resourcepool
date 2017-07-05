@@ -1,4 +1,4 @@
-def install(job):
+def start(job):
     gateway = job.service.parent.consumers['gateway'][0]
     gwdata = gateway.model.data.to_dict()
 
@@ -13,7 +13,7 @@ def config_cloud_init(job, nics=None):
     from zeroos.orchestrator.sal.gateway.cloudinit import CloudInit
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service.parent)
+    container = Container.from_ays(job.service.parent, job.context['token'])
     nics = nics or []
     config = {}
 

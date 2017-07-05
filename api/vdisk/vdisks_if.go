@@ -10,32 +10,32 @@ import (
 )
 
 // VdisksInterface is interface for /vdisks root endpoint
-type VdisksInterface interface { // CreateNewVdisk is the handler for POST /vdisks
-	// ListVdisks is the handler for GET /vdisks
-	// List all vdisks
-	ListVdisks(http.ResponseWriter, *http.Request)
-	// Create a new vdisk, can be a copy from an existing vdisk
-	CreateNewVdisk(http.ResponseWriter, *http.Request)
-	// GetVdiskInfo is the handler for GET /vdisks/{vdiskid}
-	// Get vdisk information
-	GetVdiskInfo(http.ResponseWriter, *http.Request)
-	// DeleteVdisk is the handler for DELETE /vdisks/{vdiskid}
-	// Delete Vdisk
-	DeleteVdisk(http.ResponseWriter, *http.Request)
-	// ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
-	// Resize Vdisk
+type VdisksInterface interface { // ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
+	// Resize vdisk
 	ResizeVdisk(http.ResponseWriter, *http.Request)
 	// RollbackVdisk is the handler for POST /vdisks/{vdiskid}/rollback
 	// Rollback a vdisk to a previous state
 	RollbackVdisk(http.ResponseWriter, *http.Request)
+	// DeleteVdisk is the handler for DELETE /vdisks/{vdiskid}
+	// Delete Vdisk
+	DeleteVdisk(http.ResponseWriter, *http.Request)
+	// GetVdiskInfo is the handler for GET /vdisks/{vdiskid}
+	// Get vdisk information
+	GetVdiskInfo(http.ResponseWriter, *http.Request)
+	// ListVdisks is the handler for GET /vdisks
+	// List vdisks
+	ListVdisks(http.ResponseWriter, *http.Request)
+	// CreateNewVdisk is the handler for POST /vdisks
+	// Create a new vdisk, can be a copy from an existing vdisk
+	CreateNewVdisk(http.ResponseWriter, *http.Request)
 }
 
 // VdisksInterfaceRoutes is routing for /vdisks root endpoint
-func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface) {
-	r.HandleFunc("/vdisks", i.ListVdisks).Methods("GET")
-	r.HandleFunc("/vdisks", i.CreateNewVdisk).Methods("POST")
-	r.HandleFunc("/vdisks/{vdiskid}", i.GetVdiskInfo).Methods("GET")
-	r.HandleFunc("/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
+func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface, org string) {
 	r.HandleFunc("/vdisks/{vdiskid}/resize", i.ResizeVdisk).Methods("POST")
 	r.HandleFunc("/vdisks/{vdiskid}/rollback", i.RollbackVdisk).Methods("POST")
+	r.HandleFunc("/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
+	r.HandleFunc("/vdisks/{vdiskid}", i.GetVdiskInfo).Methods("GET")
+	r.HandleFunc("/vdisks", i.ListVdisks).Methods("GET")
+	r.HandleFunc("/vdisks", i.CreateNewVdisk).Methods("POST")
 }

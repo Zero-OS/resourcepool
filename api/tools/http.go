@@ -10,7 +10,7 @@ import (
 
 func WriteError(w http.ResponseWriter, code int, err error, msg string) {
 	tracebackError := err.Error()
-	log.Printf(tracebackError)
+	log.Errorf(tracebackError)
 	if msg == "" {
 		msg = tracebackError
 	}
@@ -49,6 +49,19 @@ func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWrite
 	if aysRes.StatusCode != http.StatusOK {
 		log.Errorf("AYS returned status %v while %s.\n", aysRes.StatusCode, action)
 		w.WriteHeader(aysRes.StatusCode)
+		return false
+	}
+	return true
+}
+
+func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg string) bool {
+	if err != nil {
+		httpErr := err.(HTTPError)
+		if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
+			WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+			return false
+		}
+		WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return false
 	}
 	return true

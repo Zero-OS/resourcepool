@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
 // Exit the Zerotier network
 func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := mux.Vars(r)["nodeid"]
 	zerotierID := vars["zerotierid"]
@@ -26,17 +28,16 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// And execute
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
 
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for zerotier %s exit ", zerotierID)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
+
+	errmsg := fmt.Sprintf("error executing blueprint for zerotier %s exit ", zerotierID)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("error running blueprint for zerotier %s exit ", zerotierID)
 		if ok {
@@ -47,7 +48,7 @@ func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := api.AysAPI.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
+	res, err := aysClient.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("Exiting zerotier %s", fmt.Sprintf("%s_%s", nodeID, zerotierID))) {
 		return

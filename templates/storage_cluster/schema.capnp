@@ -6,9 +6,18 @@ struct Schema {
     nrServer @2 :UInt32 = 256;
     diskType @3:DiskClass = ssd;
     filesystems @4:List(Text);
-    ardbs @5 :List(Text);
+    storageEngines @5 :List(Text);
 
     nodes @6 :List(Text); # list of node where we can deploy storage server
+
+    clusterType @7 :Type = storage;
+    k @8: UInt32;
+    m @9: UInt32;
+
+    enum Type {
+        storage @0;
+        tlog @1;
+    }
 
     enum Status{
         empty @0;

@@ -1,5 +1,6 @@
-from . import templates
+from zeroos.orchestrator.sal import templates
 import signal
+import time
 
 
 class HTTPServer:
@@ -13,9 +14,15 @@ class HTTPServer:
         self.container.upload_content('/etc/caddy.conf', caddyconfig)
         job = self.get_job()
         if job:
-            self.container.client.job.kill(job['cmd']['id'], int(signal.SIGHUP))
+            self.container.client.job.kill(job['cmd']['id'], int(signal.SIGUSR1))
         else:
             self.container.client.system('caddy -agree -conf /etc/caddy.conf')
+        start = time.time()
+        while start + 10 > time.time():
+            if self.is_running():
+                return True
+            time.sleep(0.5)
+        raise RuntimeError("Failed to start caddy server")
 
     def get_job(self):
         for job in self.container.client.job.list():
@@ -26,4 +33,7 @@ class HTTPServer:
                 return job
 
     def is_running(self):
-        return bool(self.get_job())
+        for port in self.container.client.info.port():
+            if port['network'].startswith('tcp') and port['port'] in [80, 443]:
+                return True
+        return False

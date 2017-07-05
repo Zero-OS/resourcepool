@@ -6,12 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateGWForwards is the handler for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Create a new Portforwarding
 func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody PortForward
 
 	// decode request
@@ -34,7 +36,7 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
-	service, res, err := api.AysAPI.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -78,13 +80,16 @@ func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("gateway__%s", gateway)] = data
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errMessage := fmt.Errorf("error executing blueprint for gateway %s update", gateway)
-		tools.WriteError(w, httpErr.Resp.StatusCode, errMessage, "")
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gateway, reqBody.Srcip, reqBody.Srcport))
 	w.WriteHeader(http.StatusCreated)
+
 }

@@ -13,17 +13,28 @@ def input(job):
 
 
 def validate_configs(configs):
-    js_version = None
-    for config in configs:
-        if config.get('key') == 'js-version':
-            js_version = config.get('value')
-            break
+    import jose
+
+    configurations = {conf['key']: conf['value'] for conf in configs}
+    js_version = configurations.get('js-version')
+    jwt_token = configurations.get('jwt-token')
+    jwt_key = configurations.get('jwt-key')
 
     installed_version = j.core.state.versions.get('JumpScale9')
     if js_version and not js_version.startswith('v') and installed_version.startswith('v'):
         installed_version = installed_version[1:]
-    if js_version and js_version != installed_version:
-        raise j.exceptions.RuntimeError('Required jumpscale version is %s but installed version is %s.' % (js_version, installed_version))
+    if js_version and not installed_version.startswith(js_version):
+        raise j.exceptions.Input('Required jumpscale version is %s but installed version is %s.' % (js_version, installed_version))
+
+    if jwt_token:
+        if not jwt_key:
+            raise j.exceptions.Input('JWT key is not configured')
+        try:
+            jose.jwt.decode(jwt_token, jwt_key)
+        except jose.exceptions.ExpiredSignatureError:
+            pass
+        except Exception:
+            raise j.exceptions.Input('Invalid jwt-token and jwt-key combination')
 
 
 def processChange(job):
