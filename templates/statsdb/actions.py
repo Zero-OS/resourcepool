@@ -10,6 +10,7 @@ def input(job):
 
 
 def init(job):
+    from zeroos.orchestrator.sal.templates import render
     service = job.service
     influxdb_actor = service.aysrepo.actorGet('influxdb')
 
@@ -29,6 +30,14 @@ def init(job):
     }
     grafana_service = grafana_actor.serviceCreate(instance='statsdb', args=args)
     service.consume(grafana_service)
+
+    dashboard_actor = service.aysrepo.actorGet('dashboard')
+
+    args = {
+        'grafana': 'statsdb',
+        'dashboard': render('dashboards/overview.json')
+    }
+    dashboard_actor.serviceCreate(instance='overview', args=args)
 
     # Install stats_collector on all nodes
     stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
