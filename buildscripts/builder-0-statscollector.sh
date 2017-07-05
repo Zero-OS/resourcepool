@@ -13,7 +13,7 @@ fi
 NAME=0-statscollector
 STATS=github.com/zero-os/$NAME
 
-go get -v -d $STATS
+go get -v -d -u $STATS
 
 cd $GOPATH/src/$STATS
 
