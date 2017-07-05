@@ -1,9 +1,9 @@
-# Setup
+# Setup a Zero-OS Cluster
 
 This is the recommended and currently the only supported option to setup a Zero-OS cluster.
 
 In order to have a full Zero-OS cluster you'll need to perform the following steps:
-1. [Create a Docker container with a JumpScale9](#create-a-jumpscale9-docker-container)
+1. [Create a JumpScale9 Docker container](#create-a-jumpscale9-docker-container)
 2. [Install the Zero-OS Orchestrator into the Docker container](#install-the-orchestrator)
 3. [Setup the AYS configuration service](#setup-the-ays-configuration-service)
 4. [Setup the backplane network](#setup-the-backplane-network)
@@ -28,25 +28,25 @@ This script takes the following parameters:
 - `BRANCH`: 0-orchestrator development branch
 - `ZEROTIERNWID`: ZeroTier network ID
 - `ZEROTIERTOKEN`: ZeroTier API token
-- `ITSYOUONLINEORG`: Itsyouonline organization to authenticate against
-- `DOMAIN`: Optional domain to listen on if this is ommited caddy will listen on the zerotier network with a selfsigned certificate
-- `--development`: When domain is passed and you want to force a selfsigned certificate
+- `ITSYOUONLINEORG`: ItsYou.online organization to authenticate against
+- `DOMAIN`: Optional domain to listen on, if omitted Caddy will listen on the Zero-Tier network with a self-signed certificate
+- `--development`: When domain is passed and you want to force a self-signed certificate
 
 So:
 ```bash
 cd /tmp
-export BRANCH="1.1.0-alpha-3"
+export BRANCH="master"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> [<$DOMAIN> [--development]]
+bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN $ITSYOUONLINEORG [$DOMAIN [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:
 ```shell
-tail -s /tmp/install.log
+tail -f /tmp/install.log
 ```
 
 > **Important:**

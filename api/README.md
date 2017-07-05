@@ -14,5 +14,5 @@ If you want to compile a fully static binary use :
 
 `./api --bind :8080 --ays-url http://aysserver.com:5000 --ays-repo grid`
 - `--bind :8080` makes the server listen on all interfaces on port 8080
-- `--ays-url` need to point to the AYS REST API
+- `--ays-url` need to point to the AYS RESTful API
 - `--ays-repo` is the name of the AYS repository the Grid API need to use

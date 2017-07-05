@@ -1,5 +1,5 @@
 from js9 import j
-from .ARDB import ARDB
+from .StorageEngine import StorageEngine
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class StorageCluster:
-    """StorageCluster is a cluster of ardb servers"""
+    """StorageCluster is a cluster of StorageEngine servers"""
 
     def __init__(self, label, nodes=None, disk_type=None):
         """
@@ -30,8 +30,8 @@ class StorageCluster:
 
         nodes = []
         storage_servers = []
-        for ardb_service in service.producers.get('ardb', []):
-            storages_server = StorageServer.from_ays(ardb_service, password)
+        for storageEngine_service in service.producers.get('storage_engine', []):
+            storages_server = StorageServer.from_ays(storageEngine_service, password)
             storage_servers.append(storages_server)
             if storages_server.node not in nodes:
                 nodes.append(storages_server.node)
@@ -50,9 +50,9 @@ class StorageCluster:
                 'nodes': [node.name for node in self.nodes]}
         for storageserver in self.storage_servers:
             if 'metadata' in storageserver.name:
-                data['metadataStorage'] = {'address': storageserver.ardb.bind}
+                data['metadataStorage'] = {'address': storageserver.storageEngine.bind}
             else:
-                data['dataStorage'].append({'address': storageserver.ardb.bind})
+                data['dataStorage'].append({'address': storageserver.storageEngine.bind})
         return data
 
     @property
@@ -117,15 +117,15 @@ class StorageCluster:
         Return a view of the state all storage server running in this cluster
         example :
         {
-        'cluster1_1': {'ardb': True, 'container': True},
-        'cluster1_2': {'ardb': True, 'container': True},
+        'cluster1_1': {'storageEngine': True, 'container': True},
+        'cluster1_2': {'storageEngine': True, 'container': True},
         }
         """
         health = {}
         for server in self.storage_servers:
-            running, _ = server.ardb.is_running()
+            running, _ = server.storageEngine.is_running()
             health[server.name] = {
-                'ardb': running,
+                'storageEngine': running,
                 'container': server.container.is_running(),
             }
         return health
@@ -138,25 +138,25 @@ class StorageCluster:
 
 
 class StorageServer:
-    """ardb servers"""
+    """StorageEngine servers"""
 
     def __init__(self, cluster):
         self.cluster = cluster
         self.container = None
-        self.ardb = None
+        self.storageEngine = None
 
     @classmethod
-    def from_ays(cls, ardb_services, password=None):
-        ardb = ARDB.from_ays(ardb_services, password)
+    def from_ays(cls, storageEngine_services, password=None):
+        storageEngine = StorageEngine.from_ays(storageEngine_services, password)
         storage_server = cls(None)
-        storage_server.container = ardb.container
-        storage_server.ardb = ardb
+        storage_server.container = storageEngine.container
+        storage_server.storageEngine = storageEngine
         return storage_server
 
     @property
     def name(self):
-        if self.ardb:
-            return self.ardb.name
+        if self.storageEngine:
+            return self.storageEngine.name
         return None
 
     @property
@@ -177,19 +177,19 @@ class StorageServer:
         if not self.container.is_running():
             self.container.start()
 
-        ip, port = self.ardb.bind.split(":")
-        self.ardb.bind = '{}:{}'.format(ip, self._find_port(port))
-        self.ardb.start(timeout=timeout)
+        ip, port = self.storageEngine.bind.split(":")
+        self.storageEngine.bind = '{}:{}'.format(ip, self._find_port(port))
+        self.storageEngine.start(timeout=timeout)
 
     def stop(self, timeout=30):
         logger.debug("stop %s", self)
-        self.ardb.stop(timeout=timeout)
+        self.storageEngine.stop(timeout=timeout)
         self.container.stop()
 
     def is_running(self):
         container = self.container.is_running()
-        ardb, _ = self.ardb.is_running()
-        return (container and ardb)
+        storageEngine, _ = self.storageEngine.is_running()
+        return (container and storageEngine)
 
     def __str__(self):
         return "StorageServer <{}>".format(self.container.name)

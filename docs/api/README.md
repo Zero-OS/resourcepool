@@ -1,15 +1,15 @@
-# Zero-OS Orchestrator REST API
+# Zero-OS Orchestrator RESTful API
 
-The Zero-OS Orchestrator exposes all the REST APIs to manage the Zero-OS cluster.
+The Zero-OS Orchestrator exposes all the RESTful APIs to manage the Zero-OS cluster.
 
-This [link](https://htmlpreviewer.github.io/?./raml/api.html) shows all the available REST API endpoints exposed by the Zero-OS Orchestrator and the different calls that can be done on each endpoint along with the expected request body and response.
+This [link](https://htmlpreviewer.github.io/?./raml/api.html) shows all the available RESTful API endpoints exposed by the Zero-OS Orchestrator and the different calls that can be done on each endpoint along with the expected request body and response.
 
 The APIs are split into two categories:
 
 - APIs that use **Direct Access** to return data/perform actions: this is done by using the [Go Client](https://github.com/g8os/go-client) of core0 to directly talk to the nodes and containers
 - APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://htmlpreviewer.github.io/?https://raw.githubusercontent.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
 
-The following are some examples on how to use the REST API:
+The following are some examples on how to use the RESTful API:
 
 - [List core0 nodes](#list-nodes)
 - [Get memory information of a node](#memory-info)
@@ -240,23 +240,23 @@ To enable JWT authentication , both AYS server and the 0-orchestrator must be ru
 This flag allows us to add an **IYO** organization
 to authorize and authenticate with.If the falg is not used orchestrator will not require JWT on requests.
 
-   
-   
+
+
 
 To generate the token the 0-orchestrator , the pyclient has provided an easy wrapper around the request that is used:
-```python 
+```python
 from zeroos.orchestrator.client import oauth2_client_itsyouonline
 
 cls = oauth2_client_itsyouonline.Oauth2ClientItsyouonline() # this class can take different urls to authenticate with but defaults to https://itsyou.online/v1/oauth/access_token?response_type=id_token
 
-response = cls.get_access_token(<client id>, <client secret>, scopes=['user:memberof:<organization name>'], audiences=[]) # at the moment only the scope type organization:memberof:<organization_name> is supported 
+response = cls.get_access_token(<client id>, <client secret>, scopes=['user:memberof:<organization name>'], audiences=[]) # at the moment only the scope type organization:memberof:<organization_name> is supported
 
 print(response.content)
 ```
-  
-  
+
+
 To use the token from the previous steps in the http requests it is passed as follows:
-Using the header, 
+Using the header,
 ```
 Authorization: Bearer <**JWT**>
 

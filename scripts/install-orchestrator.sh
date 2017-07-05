@@ -71,7 +71,7 @@ mkdir -p /etc/my_init.d > ${logfile} 2>&1
 ztinit="/etc/my_init.d/10_zerotier.sh"
 
 echo '#!/bin/bash -x' > ${ztinit}
-echo 'zerotier-one -d' >> ${ztinit}
+echo 'if ! pgrep -x "zerotier-one" ; then zerotier-one -d ; fi' >> ${ztinit}
 echo 'while ! zerotier-cli info > /dev/null 2>&1; do sleep 0.1; done' >> ${ztinit}
 echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 
@@ -79,12 +79,12 @@ chmod +x ${ztinit} >> ${logfile} 2>&1
 bash $ztinit >> ${logfile} 2>&1
 
 echo "[+] Waiting for zerotier connectivity"
-if ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; then
-    echo "[-] ZeroTier interface zt0 does not have an ipaddress."
+if ! zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|OK PUBLIC'; then
+    echo "[-] ZeroTier interface does not have an ipaddress."
     echo "[-] Make sure you authorized this docker into your ZeroTier network"
     echo "[-] ZeroTier Network ID: ${ZEROTIERNWID}"
 
-    while ! zerotier-cli listnetworks | egrep -q 'OK PRIVATE|OK PUBLIC'; do
+    while ! zerotier-cli listnetworks | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|OK PUBLIC'; do
         sleep 0.2
     done
 fi
@@ -174,7 +174,8 @@ fi
 
 echo "[+] Starting orchestrator api server"
 orchinit="/etc/my_init.d/11_orchestrator.sh"
-ZEROTIERIP=`ip -4 addr show zt0 | grep -oP 'inet\s\d+(\.\d+){3}' | sed 's/inet //' | tr -d '\n\r'`
+ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} |awk '{print $NF}' | awk -F / '{print $1}'`
+
 if [ "$ZEROTIERIP" == "" ]; then
     echo "zerotier doesn't have an ip. make sure you have authorize this docker in your netowrk"
     exit 1
