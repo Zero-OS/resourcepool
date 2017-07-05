@@ -21,7 +21,6 @@ def install(job):
 
 
 def start(job):
-    import time
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
