@@ -41,7 +41,7 @@ export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN $ITSYOUONLINEORG [$DOMAIN [--development]]
+bash install-orchestrator.sh "$BRANCH" "$ZEROTIERNWID" "$ZEROTIERTOKEN" "$ITSYOUONLINEORG" ["$DOMAIN" [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:
@@ -62,7 +62,7 @@ The CLI provide and easy way to do it:
 ```shell
 ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG
 ```
-CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)  
+CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)
 From the website, go to your settings, in the `API Keys` panel, generate a new id/secret pair.
 
 This command will output something like:
@@ -92,7 +92,7 @@ configuration__main:
   - key: 'jwt-token'
     value: <The JWT generted at the previous step>
   - key: 'jwt-key'
-    value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'    
+    value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
 ```
 
 See [Versioning](versioning.md) for more details about the AYS configuration service.
