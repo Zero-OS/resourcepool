@@ -3,6 +3,7 @@ package vdisk
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,9 +13,10 @@ import (
 // GetVdiskInfo is the handler for GET /vdisks/{vdiskid}
 // Get vdisk information
 func (api VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vdiskID := mux.Vars(r)["vdiskid"]
 
-	serv, resp, err := api.AysAPI.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting info about vdisk %s", vdiskID)) {
 		return
 	}

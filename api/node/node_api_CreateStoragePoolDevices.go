@@ -6,18 +6,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	runs "github.com/zero-os/0-orchestrator/api/run"
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateStoragePoolDevices is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/device
 // Add extra devices to this storage pool
 func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
 
-	devices, notok := api.getStoragePoolDevices(node, storagepool, w)
+	devices, notok := api.getStoragePoolDevices(node, storagepool, w, r)
 	if notok {
 		return
 	}
@@ -68,18 +69,16 @@ func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Reque
 		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for storagepool device creation "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
+	errmsg := "Error executing blueprint for storagepool device creation "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(&response)
+	w.WriteHeader(http.StatusCreated)
 
 }

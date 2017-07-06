@@ -381,12 +381,6 @@ VMCreate:
     disks:
       description: List of virtual disks
       type: VDiskLink[]
-    userCloudInit:
-      description: User level cloudinit configuration
-      type: object
-    systemCloudInit:
-      description: System level cloudinit configuration
-      type: object
 
 VMUpdate:
   type: object
@@ -1029,6 +1023,13 @@ VdiskCreate:
 
         This property can only be used when the disk is of type boot or db.
       required: false
+    backupStoragecluster:
+      type: string
+      description: |
+        the storagecluster used for this vdisk's main storage.
+
+        This property can only be used when the disk is of type boot or db.
+      required: false
 
 Vdisk:
   properties:
@@ -1127,7 +1128,7 @@ CloudInit:
       type: string
       description: |
         metadata for cloud-init ini YAML format mainly used for setting hostname
-        For more details [see](http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/virtual_machines.html#user-data-and-meta-data)
+        For more details [see](http://cloudinit.readthedocs.io/en/latest/topics/datasources/ec2.html)
 
 GWHost:
   properties:
@@ -1294,14 +1295,3 @@ GetGW:
       description: id of the zerotier daemon
       required: false
 
-RunState:
-  enum: [ok, running, scheduled, error, new, disabled, changed]
-
-Run:
-  properties: 
-      runid:
-        description: Runid of job that was scheduled.
-        type: string
-      state:
-        description: state of job that was scheduled.
-        type: RunState

@@ -2,6 +2,7 @@ package storagecluster
 
 import (
 	"encoding/json"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -10,6 +11,7 @@ import (
 // ListAllClusters is the handler for GET /storageclusters
 // List all running clusters
 func (api StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	respBody := []string{}
 	type data struct {
 		Label string `json:"label"`
@@ -17,7 +19,7 @@ func (api StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Req
 	query := map[string]interface{}{
 		"fields": "label",
 	}
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, query)
+	services, res, err := aysClient.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, query)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error calling ays list service")
 		return

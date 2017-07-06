@@ -6,14 +6,14 @@ def configure(job):
     this method will be called from the node.zero-os install action.
     """
     import netaddr
-    from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.Container import Container
 
     nodeservice = job.service.aysrepo.serviceGet(role='node', instance=job.model.args['node_name'])
     job.logger.info("execute network configure on {}".format(nodeservice))
 
-    node = Node.from_ays(nodeservice)
+    node = Node.from_ays(nodeservice, get_jwt_token(job.service.aysrepo))
     service = job.service
 
     network = netaddr.IPNetwork(service.model.data.cidr)
@@ -28,9 +28,10 @@ def configure(job):
         'flist': config.get('ovs-flist', 'https://hub.gig.tech/gig-official-apps/ovs.flist'),
         'hostNetworking': True,
     }
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)
-    j.tools.async.wrappers.sync(cont_service.executeAction('install'))
-    container_client = Container.from_ays(cont_service).client
+    j.tools.async.wrappers.sync(cont_service.executeAction('install', context=job.context))
+    container_client = Container.from_ays(cont_service, get_jwt_token(job.service.aysrepo)).client
     nics = node.client.info.nic()
     nicmap = {nic['name']: nic for nic in nics}
     freenics = node.network.get_free_nics()
@@ -45,6 +46,7 @@ def configure(job):
         node.client.system('ip address add {storageaddr} dev backplane'.format(**addresses)).get()
         node.client.system('ip link set dev backplane up').get()
     if 'vxbackend' not in nicmap:
-        container_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
+        container_client.json(
+            'ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
         node.client.system('ip address add {vxaddr} dev vxbackend'.format(**addresses)).get()
         node.client.system('ip link set dev vxbackend up').get()

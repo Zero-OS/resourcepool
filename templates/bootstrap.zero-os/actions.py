@@ -24,7 +24,7 @@ def bootstrap(job):
 
     for member in members:
         try:
-            try_authorize(service, job.logger, netid, member, zerotier)
+            try_authorize(job, job.logger, netid, member, zerotier)
         except Exception as err:
             job.logger.error(str(err))
             member['config']['authorized'] = False
@@ -52,41 +52,19 @@ def delete_node(job):
     for member in members:
         if node.model.data.redisAddr in member['config']['ipAssignments']:
             try:
-                if member['config']['authorized']:
-                    member['config']['authorized'] = False
-                    zerotier.network.updateMember(member, member['nodeId'], netid)
+                zerotier.network.deleteMember(member['nodeId'], netid)
             except Exception as err:
                 job.logger.error(str(err))
             break
 
 
-def wipedisks(node):
-    print('Wiping node {hostname}'.format(**node.client.info.os()))
-    mounteddevices = {mount['device']: mount for mount in node.client.info.disk()}
-
-    def getmountpoint(device):
-        for mounteddevice, mount in mounteddevices.items():
-            if mounteddevice.startswith(device):
-                return mount
-
-    jobs = []
-    for disk in node.client.disk.list()['blockdevices']:
-        devicename = '/dev/{}'.format(disk['kname'])
-        mount = getmountpoint(devicename)
-        if not mount:
-            print('   * Wiping disk {kname}'.format(**disk))
-            jobs.append(node.client.system('dd if=/dev/zero of={} bs=1M count=50'.format(devicename)))
-        else:
-            print('   * Not wiping {device} mounted at {mountpoint}'.format(device=devicename, mountpoint=mount['mountpoint']))
-
-    # wait for wiping to complete
-    for job in jobs:
-        job.get()
-
-
-def try_authorize(service, logger, netid, member, zerotier):
+def try_authorize(job, logger, netid, member, zerotier):
     import time
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
 
     if not member['online'] or member['config']['authorized']:
         return
@@ -106,7 +84,7 @@ def try_authorize(service, logger, netid, member, zerotier):
     zerotier_ip = member['config']['ipAssignments'][0]
 
     # test if we can connect to the new member
-    node = Node(zerotier_ip)
+    node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
     node.client.testConnectionAttempts = 0
     node.client.timeout = 10
     for attempt in range(5):
@@ -129,11 +107,11 @@ def try_authorize(service, logger, netid, member, zerotier):
         nodeservice.model.data.redisAddr = zerotier_ip
         nodeservice.model.data.status = 'running'
         # after reboot we also wonna call install
-        j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
+        j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
     except j.exceptions.NotFound:
         # create and install the node.zero-os service
         if service.model.data.wipedisks:
-            wipedisks(node)
+            node.wipedisks()
 
         node_actor = service.aysrepo.actorGet('node.zero-os')
         networks = [n.name for n in service.producers.get('network', [])]
@@ -150,7 +128,7 @@ def try_authorize(service, logger, netid, member, zerotier):
         try:
 
             logger.info("install node.zero-os service {}".format(name))
-            j.tools.async.wrappers.sync(nodeservice.executeAction('install'))
+            j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
         except:
             j.tools.async.wrappers.sync(nodeservice.delete())
             raise

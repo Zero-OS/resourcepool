@@ -25,7 +25,7 @@ class DHCP(object):
         )
 
     def __init__(self, json=None, **kwargs):
-        if not json and not kwargs:
+        if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
         class_name = 'DHCP'

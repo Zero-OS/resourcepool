@@ -3,21 +3,23 @@ package vdisk
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListVdisks is the handler for GET /vdisks
 // Get vdisk information
 func (api VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vdiskID := mux.Vars(r)["vdiskid"]
 	queryParams := map[string]interface{}{
 		"fields": "storageCluster,type",
 	}
 
-	services, resp, err := api.AysAPI.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, queryParams)
+	services, resp, err := aysClient.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("Listing vdisk services %s", vdiskID)) {
 		return
 	}

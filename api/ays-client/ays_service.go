@@ -216,8 +216,6 @@ func (s *AysService) ExecuteBlueprint(blueprint, repository string, headers, que
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
 	return resp, nil
 }
 

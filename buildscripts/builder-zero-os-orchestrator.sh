@@ -31,7 +31,7 @@ git clone -b "${branch}" https://github.com/github.com/zero-os/0-orchestrator.gi
 pip3 install git+https://github.com/zero-os/0-orchestrator.git@"${branch}"#subdirectory=pyclient -U
 pip3 install git+https://github.com/zero-os/0-core.git@"${branch}"#subdirectory=client/py-client -U
 
-pip3 install zerotier -U
+pip3 install 'zerotier>=1.1.2' -U
 
 js 'x = j.tools.cuisine.local; x.apps.atyourservice.install()'
 js 'x = j.tools.cuisine.local; x.apps.caddy.build(); x.apps.caddy.install()'

@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
+go get -u github.com/jteeuwen/go-bindata/...
 pushd api
     echo "Build API"
+    go generate
     go build
 popd
 echo "Generate docs"

@@ -7,7 +7,7 @@ go:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libvirt-dev libcap-dev capnproto nodejs
+  - sudo apt-get install -y libvirt-dev libcap-dev capnproto npm
   - sudo npm install -g raml2html
 
 install:

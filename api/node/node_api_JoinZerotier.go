@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // JoinZerotier is the handler for POST /nodes/{nodeid}/zerotiers
 // Join Zerotier network
 func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ZerotierJoin
 
 	nodeID := mux.Vars(r)["nodeid"]
@@ -48,15 +50,13 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		Force:   true,
 	}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for zerotiers %s join ", reqBody.Nwid)
 		if ok {
@@ -64,7 +64,7 @@ func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		} else {
 			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
-		api.AysAPI.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid), "zerotier", api.AysRepo, nil, nil)
+		aysClient.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid), "zerotier", api.AysRepo, nil, nil)
 		return
 	}
 

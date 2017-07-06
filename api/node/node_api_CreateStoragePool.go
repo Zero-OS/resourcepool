@@ -7,13 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
-	runs "github.com/zero-os/0-orchestrator/api/run"
+	
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateStoragePool is the handler for POST /nodes/{nodeid}/storagepools
 // Create a new storage pool
 func (api NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody StoragePoolCreate
 	node := mux.Vars(r)["nodeid"]
 
@@ -70,24 +71,23 @@ func (api NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 			Service: reqBody.Name}},
 	}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for storagepool creation "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint)
+	errmsg := "Error executing blueprint for storagepool creation "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
+   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
+       return
+   }
+   w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s", node, reqBody.Name))
+   w.WriteHeader(http.StatusCreated)
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s", node, reqBody.Name))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(&response)
 
 }
 
 func (api NodeAPI) GetNodeDevices(w http.ResponseWriter, r *http.Request) (map[string]struct{}, error) {
+
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		return nil, err

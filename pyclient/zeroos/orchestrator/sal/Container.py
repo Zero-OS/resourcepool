@@ -80,10 +80,10 @@ class Container:
                    arguments['storage'])
 
     @classmethod
-    def from_ays(cls, service):
+    def from_ays(cls, service, password=None):
         logger.debug("create container from service (%s)", service)
         from .Node import Node
-        node = Node.from_ays(service.parent)
+        node = Node.from_ays(service.parent, password)
         ports = {}
         for portmap in service.model.data.ports:
             source, dest = portmap.split(':')
@@ -158,10 +158,7 @@ class Container:
             storage=self.storage,
         )
 
-        result = job.get(timeout)
-        if result.state != 'SUCCESS':
-            raise RuntimeError('failed to create container %s' % result.data)
-        containerid = json.loads(result.data)
+        containerid = job.get(timeout)
         self._client = self.node.client.container.client(containerid)
 
     def start(self):

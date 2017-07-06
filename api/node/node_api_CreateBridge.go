@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	runs "github.com/zero-os/0-orchestrator/api/run"
+
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
 )
@@ -14,6 +14,7 @@ import (
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
 func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody BridgeCreate
 	vars := mux.Vars(r)
 	nodeId := vars["nodeid"]
@@ -33,7 +34,7 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
 		"fields": "setting",
 	}
-	services, resp, err := api.AysAPI.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 		return
 	}
@@ -88,18 +89,16 @@ func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Actor:   "bridge",
 		Service: reqBody.Name}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	response := runs.Run{Runid: run.Key, State: runs.EnumRunState(run.State)}
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(&response)
+	w.WriteHeader(http.StatusCreated)
+
 }
