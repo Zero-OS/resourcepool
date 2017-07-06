@@ -42,7 +42,10 @@ class InfluxDB:
         if is_running:
             raise RuntimeError('Failed to stop influxd.')
 
-        self.container.node.client.nft.drop_port(self.port)
+        try:
+            self.container.node.client.nft.drop_port(self.port)
+        except RuntimeError:
+            pass
 
     def start(self, timeout=30):
         is_running, _ = self.is_running()
@@ -50,7 +53,12 @@ class InfluxDB:
             return
 
         self.apply_config()
-        self.container.node.client.nft.open_port(self.port)
+
+        try:
+            self.container.node.client.nft.open_port(self.port)
+        except RuntimeError:
+            pass
+
         self.container.client.system('influxd')
         time.sleep(1)
 

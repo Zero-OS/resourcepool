@@ -23,9 +23,18 @@ def get_init_processes(service):
     ]
 
 
+def get_container(service, force=True):
+    containers = service.producers.get('container')
+    if not containers:
+        if force:
+            raise RuntimeError('Service didn\'t consume any containers')
+        else:
+            return
+    return containers[0]
+
+
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
-    from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
     container_actor = service.aysrepo.actorGet('container')
@@ -38,30 +47,34 @@ def init(job):
         'hostNetworking': True,
         'initProcesses': get_init_processes(service)
     }
-    cont_service = container_actor.serviceCreate(instance=service.name, args=args)
+    cont_service = container_actor.serviceCreate(instance='{}_stats_collector'.format(service.name), args=args)
     service.consume(cont_service)
 
 
 def install(job):
-    service = job.service
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
-    j.tools.async.wrappers.sync(containers[0].executeAction('start', context=job.context))
-    service.model.data.status = 'running'
-    service.saveAll()
+
+def start(job):
+    container = get_container(job.service)
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    job.service.model.data.status = 'running'
+    job.service.saveAll()
+
+
+def stop(job):
+    container = get_container(job.service)
+    j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+    job.service.model.data.status = 'halted'
+    job.service.saveAll()
 
 
 def uninstall(job):
-    service = job.service
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
-
-    j.tools.async.wrappers.sync(containers[0].executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(containers[0].delete())
-    service.delete()
+    container = get_container(job.service, False)
+    if container:
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
+    j.tools.async.wrappers.sync(job.service.delete())
 
 
 def processChange(job):
@@ -72,9 +85,7 @@ def processChange(job):
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+    container = get_container(job.service)
 
     if args.get('ip'):
         service.model.data.ip = args['ip']
@@ -85,17 +96,13 @@ def processChange(job):
     if args.get('retention'):
         service.model.data.retention = args['retention']
 
-    container = containers[0]
+    service.saveAll()
     container.model.data.initProcesses = get_init_processes(service)
     container.saveAll()
 
     job.context['token'] = get_jwt_token_from_job(job)
-    j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-    service.model.data.status = 'halted'
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    service.model.data.status = 'running'
-
-    service.saveAll()
+    j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
+    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
 
 
 def init_actions_(service, args):
