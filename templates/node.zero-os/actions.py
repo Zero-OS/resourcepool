@@ -102,12 +102,12 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
     service = job.service
-
+    token = get_jwt_token(job.service.aysrepo)
     if service.model.actionsState['install'] != 'ok':
         return
 
     try:
-        node = Node.from_ays(service, get_jwt_token(job.service.aysrepo), timeout=15)
+        node = Node.from_ays(service, token, timeout=15)
         node.client.testConnectionAttempts = 0
         state = node.client.ping()
     except RuntimeError:
@@ -122,12 +122,13 @@ def monitor(job):
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
 
-        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        job.context['token'] = token
         stats_collector_service = get_stats_collector(service)
         statsdb_service = get_statsdb(service)
 
         # Check if statsdb is installed on this node and start it if needed
-        if statsdb_service and str(statsdb_service.parent) == str(job.service) and statsdb_service.model.data.status != 'running':
+        if (statsdb_service and str(statsdb_service.parent) == str(job.service)
+                and statsdb_service.model.data.status != 'running'):
             j.tools.async.wrappers.sync(statsdb_service.executeAction(
                 'start', context=job.context))
 
