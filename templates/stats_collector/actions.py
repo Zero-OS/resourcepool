@@ -23,10 +23,13 @@ def get_init_processes(service):
     ]
 
 
-def get_container(job):
+def get_container(job, force=True):
     containers = job.service.producers.get('container')
     if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+        if force:
+            raise RuntimeError('Service didn\'t consume any containers')
+        else:
+            return
     return containers[0]
 
 
@@ -67,11 +70,8 @@ def stop(job):
 
 
 def uninstall(job):
-    try:
-        container = get_container(job)
-    except:
-        pass
-    else:
+    container = get_container(job, False)
+    if container:
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
     job.service.delete()

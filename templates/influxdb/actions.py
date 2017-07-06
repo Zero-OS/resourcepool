@@ -1,6 +1,15 @@
+def get_container(service, force=True):
+    containers = service.producers.get('container')
+    if not containers:
+        if force:
+            raise RuntimeError('Service didn\'t consume any containers')
+        else:
+            return
+    return containers[0]
+
+
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
-    from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
     container_actor = service.aysrepo.actorGet('container')
@@ -25,12 +34,9 @@ def start(job):
     from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
-
-    j.tools.async.wrappers.sync(containers[0].executeAction('start', context=job.context))
-    container = Container.from_ays(containers[0], job.context['token'])
+    container = get_container(service)
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container = Container.from_ays(container, job.context['token'])
     influx = InfluxDB(
         container, service.parent.model.data.redisAddr, service.model.data.port)
     influx.start()
@@ -44,28 +50,25 @@ def stop(job):
     from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+    container = get_container(service)
 
-    container = Container.from_ays(containers[0], job.context['token'])
+    container = Container.from_ays(container, job.context['token'])
     if container.is_running():
         influx = InfluxDB(
             container, service.parent.model.data.redisAddr, service.model.data.port)
         influx.stop()
-        j.tools.async.wrappers.sync(containers[0].executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     service.model.data.status = 'halted'
     service.saveAll()
 
 
 def uninstall(job):
     service = job.service
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+    container = get_container(service, False)
 
-    j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(containers[0].delete())
+    if container:
+        j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
     service.delete()
 
 
@@ -79,11 +82,9 @@ def processChange(job):
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    containers = service.producers.get('container')
-    if not containers:
-        raise RuntimeError('Service didn\'t consume any containers')
+    container_service = get_container(service)
 
-    container = Container.from_ays(containers[0], get_jwt_token_from_job(job))
+    container = Container.from_ays(container_service, get_jwt_token_from_job(job))
     influx = InfluxDB(
         container, service.parent.model.data.redisAddr, service.model.data.port)
 

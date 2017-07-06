@@ -92,7 +92,7 @@ def install(job):
 
     stats_collector_service = get_stats_collector(service)
     statsdb_service = get_statsdb(service)
-    if stats_collector_service and statsdb_service.model.data.status == 'running':
+    if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
         j.tools.async.wrappers.sync(stats_collector_service.executeAction(
             'install', context=job.context))
 
@@ -126,7 +126,7 @@ def monitor(job):
         statsdb_service = get_statsdb(service)
 
         # Check if statsdb is installed on this node and start it if needed
-        if str(statsdb_service.parent) == str(job.service) and statsdb_service.model.data.status != 'running':
+        if statsdb_service and str(statsdb_service.parent) == str(job.service) and statsdb_service.model.data.status != 'running':
             j.tools.async.wrappers.sync(statsdb_service.executeAction(
                 'start', context=job.context))
 
@@ -146,7 +146,7 @@ def reboot(job):
 
     # Check if statsdb is installed on this node and stop it
     statsdb_service = get_statsdb(service)
-    if str(statsdb_service.parent) == str(job.service):
+    if statsdb_service and str(statsdb_service.parent) == str(job.service):
         j.tools.async.wrappers.sync(statsdb_service.executeAction(
             'stop', context=job.context))
 
@@ -169,7 +169,7 @@ def uninstall(job):
             'uninstall', context=job.context))
 
     statsdb_service = get_statsdb(service)
-    if str(statsdb_service.parent) == str(service):
+    if statsdb_service and str(statsdb_service.parent) == str(service):
         j.tools.async.wrappers.sync(statsdb_service.executeAction(
             'uninstall', context=job.context))
 

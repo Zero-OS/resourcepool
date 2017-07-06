@@ -67,7 +67,7 @@ def init(job):
         'hostNetworking': True,
         'initProcesses': [{'name': 'grafana-server', 'args': ['-config', '/etc/grafana/grafana.ini', '-homepath', '/opt/grafana/']}],
     }
-    cont_service = container_actor.serviceCreate(instance=service.name, args=args)
+    cont_service = container_actor.serviceCreate(instance='{}_grafana'.format(service.name), args=args)
     service.consume(cont_service)
 
 
@@ -109,6 +109,7 @@ def uninstall(job):
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
     args = job.model.args
 
@@ -119,6 +120,7 @@ def processChange(job):
         service.model.data.port = args['port']
 
     containers = service.producers.get('container')
+    job.context['token'] = get_jwt_token_from_job(job)
     if containers:
         container = containers[0]
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))

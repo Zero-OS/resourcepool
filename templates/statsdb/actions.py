@@ -18,12 +18,34 @@ def init(job):
     influxdb_service = influxdb_actor.serviceCreate(instance='statsdb', args=args)
     service.consume(influxdb_service)
 
+    grafana_actor = service.aysrepo.actorGet('grafana')
 
-def get_influxdb(service):
+    args = {
+        'node': service.model.data.node,
+        'influxdb': ['statsdb']
+    }
+    grafana_service = grafana_actor.serviceCreate(instance='statsdb', args=args)
+    service.consume(grafana_service)
+
+
+def get_influxdb(service, force=True):
     influxdbs = service.producers.get('influxdb')
     if not influxdbs:
-        raise RuntimeError('Service didn\'t consume any influxdbs')
+        if force:
+            raise RuntimeError('Service didn\'t consume any influxdbs')
+        else:
+            return
     return influxdbs[0]
+
+
+def get_grafana(service, force=True):
+    grafanas = service.producers.get('grafana')
+    if not grafanas:
+        if force:
+            raise RuntimeError('Service didn\'t consume any grafana')
+        else:
+            return
+    return grafanas[0]
 
 
 def get_stats_collector_from_node(service):
@@ -38,7 +60,9 @@ def install(job):
 
 def start(job):
     influxdb = get_influxdb(job.service)
+    grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(grafana.executeAction('start', context=job.context))
     job.service.model.data.status = 'running'
     job.service.saveAll()
     stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
@@ -66,7 +90,9 @@ def start(job):
 
 def stop(job):
     influxdb = get_influxdb(job.service)
+    grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
+    j.tools.async.wrappers.sync(grafana.executeAction('stop', context=job.context))
     job.service.model.data.status = 'halted'
     job.service.saveAll()
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
@@ -77,8 +103,13 @@ def stop(job):
 
 
 def uninstall(job):
-    influxdb = get_influxdb(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
+    influxdb = get_influxdb(job.service, False)
+    grafana = get_grafana(job.service, False)
+
+    if grafana:
+        j.tools.async.wrappers.sync(grafana.executeAction('uninstall', context=job.context))
+    if influxdb:
+        j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
     job.service.delete()
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
@@ -96,10 +127,26 @@ def processChange(job):
 
     if args.get('port'):
         influxdb = get_influxdb(job.service)
+        grafana = get_grafana(job.service)
         job.context['token'] = get_jwt_token_from_job(job)
         j.tools.async.wrappers.sync(
             influxdb.executeAction('processChange', context=job.context, args=args))
+        j.tools.async.wrappers.sync(
+            grafana.executeAction('processChange', context=job.context, args=args))
         influxdb = get_influxdb(job.service)
-        job.service.model.data.status = str(influxdb.model.data.status)
-
+        grafana = get_grafana(job.service)
+        if str(influxdb.model.data.status) == 'running' and str(grafana.model.data.status) == 'running':
+            job.service.model.data.status = str(influxdb.model.data.status)
+        else:
+            job.service.model.data.status = 'halted'
     service.saveAll()
+
+
+def init_actions_(service, args):
+    return {
+        'init': [],
+        'install': ['init'],
+        'monitor': ['start'],
+        'delete': ['uninstall'],
+        'uninstall': [],
+    }

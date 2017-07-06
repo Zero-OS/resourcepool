@@ -5,6 +5,7 @@ struct Schema {
     port @1 :UInt32 = 8086; # port to connect to influxdb
     influxdb @2 :Text; # Influxdb spawned by this service
     status @3 :Status;
+    grafana @4 :Text;
 
     enum Status{
         halted @0;
