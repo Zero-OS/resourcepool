@@ -26,11 +26,12 @@ configuration__main:
 EOL
 
 cd /optvar/cockpit_repos/orchestrator-server
+ays reload 
 ays blueprint configuration.bp
 ays run create --follow
 
 # kill orchestrator server and start it again using new org
-tmux kill-window -t orchestrator
-tmux new-window -n orchestrator
-tmux send -t orchestrator 'orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server -org orchestrator_org' ENTER
+#tmux kill-window -t orchestrator
+#tmux new-window -n orchestrator
+#tmux send -t orchestrator 'orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server -org orchestrator_org' ENTER
 
