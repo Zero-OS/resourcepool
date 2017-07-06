@@ -12,7 +12,7 @@ def init(job):
             'influxdb-flist', 'https://hub.gig.tech/gig-official-apps/influxdb.flist'),
         'hostNetworking': True
     }
-    cont_service = container_actor.serviceCreate(instance=service.name, args=args)
+    cont_service = container_actor.serviceCreate(instance='{}_influxdb'.format(service.name), args=args)
     service.consume(cont_service)
 
 

@@ -1,6 +1,3 @@
-from js9 import j
-
-
 def input(job):
     ays_repo = job.service.aysrepo
     services = ays_repo.servicesFind(actor=job.service.model.dbobj.actorName)
@@ -10,9 +7,6 @@ def input(job):
 
 
 def init(job):
-    from zeroos.orchestrator.configuration import get_configuration
-    from zeroos.orchestrator.configuration import get_jwt_token
-
     service = job.service
     influxdb_actor = service.aysrepo.actorGet('influxdb')
 
@@ -21,7 +15,7 @@ def init(job):
         'port': service.model.data.port,
         'databases': ['statistics']
     }
-    influxdb_service = influxdb_actor.serviceCreate(instance=service.name, args=args)
+    influxdb_service = influxdb_actor.serviceCreate(instance='statsdb', args=args)
     service.consume(influxdb_service)
 
 
@@ -32,8 +26,8 @@ def get_influxdb(service):
     return influxdbs[0]
 
 
-def get_stats_collector(service):
-    stats_collectors_services = service.producers.get('stats_collector')
+def get_stats_collector_from_node(service):
+    stats_collectors_services = service.consumers.get('stats_collector')
     if stats_collectors_services:
         return stats_collectors_services[0]
 
@@ -48,9 +42,13 @@ def start(job):
     job.service.model.data.status = 'running'
     job.service.saveAll()
     stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
+
+    # Install stats_collector on all nodes
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
-        stats_collector_service = get_stats_collector(node_service)
+        stats_collector_service = get_stats_collector_from_node(node_service)
+
+        # If stats collector is already installed just restart it
         if stats_collector_service and stats_collector_service.model.data.status == 'running':
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('start', context=job.context))
@@ -62,7 +60,7 @@ def start(job):
 
                 }
                 stats_collector_service = stats_collector_actor.serviceCreate(instance=node_service.name, args=args)
-                node_service.consume(stats_collector_service)
+                stats_collector_service.consume(node_service)
                 j.tools.async.wrappers.sync(stats_collector_service.executeAction('install', context=job.context))
 
 
@@ -73,7 +71,7 @@ def stop(job):
     job.service.saveAll()
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
-        stats_collector_service = get_stats_collector(node_service)
+        stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service and stats_collector_service.model.data.status == 'running':
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
 
@@ -84,7 +82,7 @@ def uninstall(job):
     job.service.delete()
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
-        stats_collector_service = get_stats_collector(node_service)
+        stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service:
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
 
@@ -105,5 +103,3 @@ def processChange(job):
         job.service.model.data.status = str(influxdb.model.data.status)
 
     service.saveAll()
-
-

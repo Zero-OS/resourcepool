@@ -2,14 +2,13 @@ from js9 import j
 
 
 def get_stats_collector(service):
-    stats_collectors_services = service.producers.get('stats_collector')
+    stats_collectors_services = service.consumers.get('stats_collector')
     if stats_collectors_services:
         return stats_collectors_services[0]
 
 
 def get_statsdb(service):
-    statsdb_services = service.aysrepo.servicesFind(
-        service.aysrepo, role='statsdb')
+    statsdb_services = service.aysrepo.servicesFind(role='statsdb')
     if statsdb_services:
         return statsdb_services[0]
 
@@ -54,7 +53,7 @@ def init(job):
 
         }
         stats_collector_service = stats_collector_actor.serviceCreate(instance=service.name, args=args)
-        service.consume(stats_collector_service)
+        stats_collector_service.consume(service)
 
 
 def getAddresses(job):
@@ -125,10 +124,17 @@ def monitor(job):
 
         stats_collector_service = get_stats_collector(service)
         statsdb_service = get_statsdb(service)
+
+        # Check if statsdb is installed on this node and start it if needed
+        if str(statsdb_service.parent) == str(job.service) and statsdb_service.model.data.status != 'running':
+            j.tools.async.wrappers.sync(statsdb_service.executeAction(
+                'start', context=job.context))
+
+        # Check if there is a running statsdb and if so make sure stats_collector for this node is started
         if (stats_collector_service and stats_collector_service.model.data.status != 'running'
                 and statsdb_service.model.data.status == 'running'):
             j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-                'install', context=job.context))
+                'start', context=job.context))
     else:
         service.model.data.status = 'halted'
     service.saveAll()
@@ -137,22 +143,36 @@ def monitor(job):
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
+
+    # Check if statsdb is installed on this node and stop it
+    statsdb_service = get_statsdb(service)
+    if str(statsdb_service.parent) == str(job.service):
+        j.tools.async.wrappers.sync(statsdb_service.executeAction(
+            'stop', context=job.context))
+
+    # Chceck if stats_collector is installed on this node and stop it
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service and stats_collector_service.model.data.status == 'running':
         j.tools.async.wrappers.sync(stats_collector_service.executeAction(
             'stop', context=job.context))
+
     job.logger.info("reboot node {}".format(service))
     node = Node.from_ays(service, job.context['token'])
     node.client.raw('core.reboot', {})
 
 
 def uninstall(job):
-    stats_collector_service = get_stats_collector(job.service)
+    service = job.service
+    stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
         j.tools.async.wrappers.sync(stats_collector_service.executeAction(
             'uninstall', context=job.context))
 
-    service = job.service
+    statsdb_service = get_statsdb(service)
+    if str(statsdb_service.parent) == str(service):
+        j.tools.async.wrappers.sync(statsdb_service.executeAction(
+            'uninstall', context=job.context))
+
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
         j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())

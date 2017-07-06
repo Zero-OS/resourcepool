@@ -44,7 +44,7 @@ def init(job):
         'hostNetworking': True,
         'initProcesses': get_init_processes(service)
     }
-    cont_service = container_actor.serviceCreate(instance=service.name, args=args)
+    cont_service = container_actor.serviceCreate(instance='{}_stats_collector'.format(service.name), args=args)
     service.consume(cont_service)
 
 
