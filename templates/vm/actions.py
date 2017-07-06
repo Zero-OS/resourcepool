@@ -2,29 +2,35 @@ from js9 import j
 
 
 def input(job):
+    service = job.service
     # Check the blueprint input for errors
     args = job.model.args
     if args.get('vdisks'):
         raise j.exceptions.Input('vdisks property should not be set in the blueprint. Instead use disks property.')
     disks = args.get("disks", [])
+    args['vdisks'] = []
     if disks != []:
-        args['vdisks'] = [disk['vdiskid'] for disk in disks]
+        for disk in disks:
+            if not disk["vdiskid"]:
+                continue
+            service.aysrepo.serviceGet(role='vdisk', instance=disk["vdiskid"])
+            args['vdisks'].append(disk['vdiskid'])
     return args
 
 
-def get_node(service):
+def get_node(job):
     from zeroos.orchestrator.sal.Node import Node
-    return Node.from_ays(service.parent)
+    return Node.from_ays(job.service.parent, job.context['token'])
 
 
-def create_nbdserver_container(service, parent):
+def create_zerodisk_container(job, parent):
     """
     first check if the vdisks container for this vm exists.
     if not it creates it.
     return the container service
     """
     from zeroos.orchestrator.configuration import get_configuration
-
+    service = job.service
     config = get_configuration(service.aysrepo)
     actor = service.aysrepo.actorGet("container")
     args = {
@@ -35,39 +41,47 @@ def create_nbdserver_container(service, parent):
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
-    containerservice.model.changeParent(service.parent)
-    j.tools.async.wrappers.sync(containerservice.executeAction('start'))
+    containerservice.model.changeParent(parent)
+    j.tools.async.wrappers.sync(containerservice.executeAction('start', context=job.context))
 
     return containerservice
 
 
-def create_nbd(service, container):
+def create_service(service, container, role='nbdserver'):
     """
-    first check if the nbd server exists.
+    first check if the nbd server exists.'zerodisk'
     if not it creates it.
     return the nbdserver service
     """
-    nbd_name = service.name
+    service_name = service.name
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role='nbdserver', instance=nbd_name)
+        nbdserver = service.aysrepo.serviceGet(role=role, instance=service_name)
     except j.exceptions.NotFound:
         nbdserver = None
 
     if nbdserver is None:
-        nbd_actor = service.aysrepo.actorGet('nbdserver')
+        nbd_actor = service.aysrepo.actorGet(role)
         args = {
             'container': container.name,
         }
-        nbdserver = nbd_actor.serviceCreate(instance=nbd_name, args=args)
+        nbdserver = nbd_actor.serviceCreate(instance=service_name, args=args)
     return nbdserver
 
 
-def _init_nbd_services(job, vdisk_container):
+def _init_zerodisk_services(job, nbd_container, tlog_container=None):
     service = job.service
-    nbdserver = create_nbd(service, vdisk_container)
+    # Create nbderver service
+    nbdserver = create_service(service, nbd_container)
     job.logger.info("creates nbd server for vm {}".format(service.name))
     service.consume(nbdserver)
+
+    if tlog_container:
+        # Create tlogserver service
+        tlogserver = create_service(service, tlog_container, role='tlogserver')
+        job.logger.info("creates tlog server for vm {}".format(service.name))
+        service.consume(tlogserver)
+        nbdserver.consume(tlogserver)
 
 
 def _nbd_url(container, nbdserver, vdisk):
@@ -77,35 +91,63 @@ def _nbd_url(container, nbdserver, vdisk):
 
 
 def init(job):
+    import random
     service = job.service
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    vdisk_container = create_nbdserver_container(service, service.parent)
-    _init_nbd_services(job, vdisk_container)
+    services = [ node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted" ]
+
+    node = random.choice(services)
+    if len(services) > 1 and node.name == service.parent.name:
+        node = services.index(node)
+        services.pop(node)
+        node = random.choice(services)
+
+    tlog_container = create_zerodisk_container(job, node)
+
+    nbd_container = create_zerodisk_container(job, service.parent)
+    _init_zerodisk_services(job, nbd_container, tlog_container)
 
 
-def _start_nbds(service):
+def _start_nbd(job):
     from zeroos.orchestrator.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = service.producers.get('nbdserver', None)
+    nbdservers = job.service.producers.get('nbdserver', None)
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
     # build full path of the nbdserver unix socket on the host filesystem
-    container = Container.from_ays(nbdserver.parent)
+    container = Container.from_ays(nbdserver.parent, job.context['token'])
     if not container.is_running():
         # start container
-        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start'))
+        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start', context=job.context))
 
     # make sure the nbdserver is started
-    j.tools.async.wrappers.sync(nbdserver.executeAction('start'))
-    for vdisk in service.model.data.vdisks:
+    j.tools.async.wrappers.sync(nbdserver.executeAction('start', context=job.context))
+    for vdisk in job.service.model.data.vdisks:
         url = _nbd_url(container, nbdserver, vdisk)
         medias.append({'url': url})
     return medias
+
+
+def start_tlog(job):
+    from zeroos.orchestrator.sal.Container import Container
+
+    tlogservers = job.service.producers.get('tlogserver', None)
+    if not tlogservers:
+        raise j.exceptions.RuntimeError("Failed to start tlogs, no tlogs created to start")
+    tlogserver = tlogservers[0]
+    # build full path of the tlogserver unix socket on the host filesystem
+    container = Container.from_ays(tlogserver.parent, password=job.context['token'])
+    # make sure container is up
+    if not container.is_running():
+        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
+
+    # make sure the tlogserver is started
+    j.tools.async.wrappers.sync(tlogserver.executeAction('start', context=job.context))
 
 
 def get_media_for_disk(medias, disk):
@@ -121,10 +163,11 @@ def install(job):
     service = job.service
 
     # get all path to the vdisks serve by the nbdservers
-    medias = _start_nbds(service)
+    start_tlog(job)
+    medias = _start_nbd(job)
 
     job.logger.info("create vm {}".format(service.name))
-    node = get_node(service)
+    node = get_node(job)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -136,7 +179,7 @@ def install(job):
             media['iotune'] = {'totaliopssec': disk.maxIOps,
                                'totaliopssecset': True}
 
-    kvm = get_domain(service)
+    kvm = get_domain(job)
     if not kvm:
         node.client.kvm.create(
             service.name,
@@ -148,9 +191,11 @@ def install(job):
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
-            kvm = get_domain(service)
+            kvm = get_domain(job)
             if kvm:
                 service.model.data.vnc = kvm['vnc']
+                if kvm['vnc'] != -1:
+                    node.client.nft.open_port(kvm['vnc'])
                 break
             else:
                 time.sleep(3)
@@ -166,47 +211,78 @@ def start(job):
     service = job.service
     service.model.data.status = 'starting'
     service.saveAll()
-    j.tools.async.wrappers.sync(service.executeAction('install'))
+    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
-def get_domain(service):
-    node = get_node(service)
+def get_domain(job):
+    node = get_node(job)
     for kvm in node.client.kvm.list():
-        if kvm['name'] == service.name:
+        if kvm['name'] == job.service.name:
             return kvm
 
 
 def stop(job):
     service = job.service
     job.logger.info("stop vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
+    cleanupzerodisk(job)
 
+
+def destroy(job):
+    stop(job)
+    service = job.service
+    tlogservers = service.producers.get('tlogserver', [])
+    nbdservers = service.producers.get('nbdserver', [])
+
+    for tlogserver in tlogservers:
+        j.tools.async.wrappers.sync(tlogserver.delete())
+        j.tools.async.wrappers.sync(tlogserver.parent.delete())
+
+    for nbdserver in nbdservers:
+        j.tools.async.wrappers.sync(nbdserver.delete())
+        j.tools.async.wrappers.sync(nbdserver.parent.delete())
+
+
+def cleanupzerodisk(job):
+    service = job.service
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
-        j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
+        j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
+
+    for tlogserver in service.producers.get('tlogserver', []):
+        job.logger.info("stop tlogserver for vm {}".format(service.name))
+        # make sure the tlogserver is stopped
+        j.tools.async.wrappers.sync(tlogserver.executeAction('stop', context=job.context))
 
     job.logger.info("stop vdisks container for vm {}".format(service.name))
     try:
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
-        j.tools.async.wrappers.sync(container.executeAction('stop'))
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
     service.model.data.status = 'halted'
-    service.model.data.vnc = -1
+
+    node = get_node(job)
+
+    vnc = service.model.data.vnc
+    if vnc != -1:
+        node.client.nft.drop_port(vnc)
+        service.model.data.vnc = -1
+
     service.saveAll()
 
 
 def pause(job):
     service = job.service
     job.logger.info("pause vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.pause(kvm['uuid'])
         service.model.data.status = 'paused'
@@ -216,8 +292,8 @@ def pause(job):
 def resume(job):
     service = job.service
     job.logger.info("resume vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         node.client.kvm.resume(kvm['uuid'])
         service.model.data.status = 'running'
@@ -228,18 +304,19 @@ def shutdown(job):
     import time
     service = job.service
     job.logger.info("shutdown vm {}".format(service.name))
-    node = get_node(service)
-    kvm = get_domain(service)
+    node = get_node(job)
+    kvm = get_domain(job)
     if kvm:
         service.model.data.status = 'halting'
         node.client.kvm.shutdown(kvm['uuid'])
         # wait for max 60 seconds for vm to be shutdown
         start = time.time()
         while start + 60 > time.time():
-            kvm = get_domain(service)
+            kvm = get_domain(job)
             if kvm:
                 time.sleep(3)
             else:
+                cleanupzerodisk(job)
                 service.model.data.status = 'halted'
                 break
         else:
@@ -247,6 +324,7 @@ def shutdown(job):
             raise j.exceptions.RuntimeError("Failed to shutdown vm {}".format(service.name))
     else:
         service.model.data.status = 'halted'
+        cleanupzerodisk(job)
 
     service.saveAll()
 
@@ -268,9 +346,9 @@ def migrate(job):
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
-    vdisk_container = create_nbdserver_container(service, target_node)
+    vdisk_container = create_zerodisk_container(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
-    nbdserver = create_nbd(service, vdisk_container)
+    nbdserver = create_service(service, vdisk_container)
     service.consume(nbdserver)
 
     # TODO: migrate domain, not impleented yet in core0
@@ -281,10 +359,10 @@ def migrate(job):
     # delete current nbd services and volue container
     job.logger.info("delete current nbd services and vdisk container")
     for nbdserver in old_nbd:
-        j.tools.async.wrappers.sync(nbdserver.executeAction('stop'))
+        j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(nbdserver.delete())
 
-    j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop'))
+    j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
     j.tools.async.wrappers.sync(old_vdisk_container.delete())
     service.saveAll()
 
@@ -306,11 +384,11 @@ def updateDisks(job, client, args):
     from zeroos.orchestrator.sal.Container import Container
     service = job.service
 
-    uuid = get_domain(service)['uuid']
+    uuid = get_domain(job)['uuid']
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
-        j.tools.async.wrappers.sync(service.executeAction('migrate', args={'node': args['node']}))
+        j.tools.async.wrappers.sync(service.executeAction('migrate', context=job.context, args={'node': args['node']}))
 
     # Get new and old disks
     new_disks = _diff(args.get('disks', []), service.model.data.disks)
@@ -322,8 +400,8 @@ def updateDisks(job, client, args):
 
     # Set model to new data
     service.model.data.disks = args.get('disks', [])
-    vdisk_container = create_nbdserver_container(service, service.parent)
-    container = Container.from_ays(vdisk_container)
+    vdisk_container = create_zerodisk_container(job, service.parent)
+    container = Container.from_ays(vdisk_container, job.context['token'])
 
     # Detatching and Cleaning old disks
     if old_disks != []:
@@ -331,16 +409,16 @@ def updateDisks(job, client, args):
         for old_disk in old_disks:
             url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
-            j.tools.async.wrappers.sync(nbdserver.executeAction('install'))
+            j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
 
     # Attaching new disks
     if new_disks != []:
-        _init_nbd_services(job, vdisk_container)
+        _init_zerodisk_services(job, vdisk_container)
         for disk in new_disks:
             diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
             service.consume(diskservice)
         service.saveAll()
-        _start_nbds(service)
+        _start_nbd(job)
         nbdserver = service.producers.get('nbdserver', [])[0]
         for disk in new_disks:
             media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
@@ -353,7 +431,7 @@ def updateDisks(job, client, args):
 
 def updateNics(job, client, args):
     service = job.service
-    uuid = get_domain(service)['uuid']
+    uuid = get_domain(job)['uuid']
 
     # Get new and old disks
     new_nics = _diff(args.get('nics', []), service.model.data.nics)
@@ -394,12 +472,15 @@ def update_data(job, args):
 
 
 def processChange(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
-            node = get_node(service)
+            job.context['token'] = get_jwt_token_from_job(job)
+            node = get_node(job)
             update_data(job, args)
             updateDisks(job, node, args)
             updateNics(job, node, args)

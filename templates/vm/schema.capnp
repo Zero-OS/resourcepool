@@ -1,4 +1,4 @@
-@0xabbd4793cfc91dff;
+@0xc32684ebe1b5ced0;
 
 struct Schema {
     node @0: Text; # pointer to the parent service
@@ -9,10 +9,7 @@ struct Schema {
     nics @5: List(NicLink);
     disks @6: List(DiskLink);
     vdisks @7: List(Text); # consume vdisk services, should not be set via blueprint, will be calculated from disks
-    userCloudInit @8: Text;
-    systemCloudInit @9: Text;
-
-    vnc @10: Int32 = -1; # the vnc port the machine is listening to
+    vnc @8: Int32 = -1; # the vnc port the machine is listening to
 
     enum Status{
         deploying @0;

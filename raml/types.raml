@@ -381,12 +381,6 @@ VMCreate:
     disks:
       description: List of virtual disks
       type: VDiskLink[]
-    userCloudInit:
-      description: User level cloudinit configuration
-      type: object
-    systemCloudInit:
-      description: System level cloudinit configuration
-      type: object
 
 VMUpdate:
   type: object
@@ -470,6 +464,10 @@ ContainerNIC:
     status:
       enum: [up, down]
       description: Status of the bridge
+    token:
+      type: string
+      description: Zerotier token, only valid for nic of type 'zerotier'. If supplied, the container will be authorized on the zerotier network.
+      required: false
 
 ContainerListItem:
   type: object
@@ -662,9 +660,14 @@ ZerotierListItem:
 
 ZerotierJoin:
   type: object
-  description: Arguments to join a Zerotier network
+  description: |
+    Arguments to join a Zerotier network.
+    If the token is specified, the node will be authorized.
   properties:
     nwid: string
+    token:
+      type: string
+      required: false
 
 Zerotier:
   type: object
@@ -928,6 +931,18 @@ ClusterCreate:
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
+    clusterType:
+      type: string
+      enum: [storage, tlog]
+      description: cluster type
+    k:
+      type: integer
+      description: K variable of the erasure encoding, required for tlog clusters
+      required: false
+    m:
+      type: integer
+      description: M variable of the erasure encoding, required for tlog clusters
+      required: false
   example:
     label: cluster1
     servers: 256
@@ -935,6 +950,7 @@ ClusterCreate:
     nodes:
        - node1
        - node2
+    clusterType: storage
 
 Cluster:
   properties:
@@ -1004,6 +1020,13 @@ VdiskCreate:
       type: string
       description: |
         the storagecluster used for this vdisk's transaction logs
+
+        This property can only be used when the disk is of type boot or db.
+      required: false
+    backupStoragecluster:
+      type: string
+      description: |
+        the storagecluster used for this vdisk's main storage.
 
         This property can only be used when the disk is of type boot or db.
       required: false
@@ -1105,7 +1128,7 @@ CloudInit:
       type: string
       description: |
         metadata for cloud-init ini YAML format mainly used for setting hostname
-        For more details [see](http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/virtual_machines.html#user-data-and-meta-data)
+        For more details [see](http://cloudinit.readthedocs.io/en/latest/topics/datasources/ec2.html)
 
 GWHost:
   properties:
@@ -1137,6 +1160,17 @@ DHCP:
       type: GWHost[]
       description: List of dhcpshosts
 
+ZerotierBridge:
+  properties:
+    id:
+      type: string
+      description: zerotier network id
+    token:
+      type: string
+      description: zerotier authorization token, used to authorize the container if supplied.
+      required: false
+
+
 GWNIC:
   type: object
   properties:
@@ -1157,7 +1191,7 @@ GWNIC:
       description: |
         Zerotier NetworkId we want to use to bridge the private network to.
         This makes it possible to bridge your private network with a private network of an other gateway
-      type: string
+      type: ZerotierBridge
     config:
       required: false
       properties:
@@ -1260,3 +1294,4 @@ GetGW:
       type: string
       description: id of the zerotier daemon
       required: false
+

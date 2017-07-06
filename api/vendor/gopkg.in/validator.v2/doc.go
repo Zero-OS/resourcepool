@@ -200,7 +200,7 @@ rules for different situations. In all the examples above,
 we only used the default validator but you could create a
 new one and set specific rules for it.
 
-For instance, you might use the same struct to decode incoming JSON for a REST API
+For instance, you might use the same struct to decode incoming JSON for a RESTful API
 but your needs will change when you're using it to, say, create a new instance
 in storage vs. when you need to change something.
 

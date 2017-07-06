@@ -4,7 +4,13 @@ links:
     argname: container
     auto: false
     optional: false
-  
+  consume:
+    - auto: false
+      min: 0
+      max: 1
+      role: tlogserver
+      argname: tlogserver
+
 recurring:
   - action: monitor
     log: true

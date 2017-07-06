@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 // ListFilesystems is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // List filesystems
 func (api NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	storagepool := vars["storagepoolname"]
 
@@ -20,7 +22,7 @@ func (api NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("storagepool!%s", storagepool),
 	}
 
-	services, _, err := api.AysAPI.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
+	services, _, err := aysClient.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
 	if err != nil {
 		errmsg := "Error listing storagepool services"
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)

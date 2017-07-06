@@ -3,6 +3,7 @@ package storagecluster
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -11,6 +12,7 @@ import (
 // DeployNewCluster is the handler for POST /storageclusters
 // Deploy New Cluster
 func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ClusterCreate
 
 	// decode request
@@ -31,15 +33,21 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 	}
 
 	blueprint := struct {
-		Label    string   `yaml:"label" json:"label"`
-		NrServer int      `yaml:"nrServer" json:"nrServer"`
-		DiskType string   `yaml:"diskType" json:"diskType"`
-		Nodes    []string `yaml:"nodes" json:"nodes"`
+		Label       string          `yaml:"label" json:"label"`
+		NrServer    int             `yaml:"nrServer" json:"nrServer"`
+		DiskType    string          `yaml:"diskType" json:"diskType"`
+		Nodes       []string        `yaml:"nodes" json:"nodes"`
+		ClusterType EnumClusterType `yaml:"clusterType" json:"clusterType"`
+		K           int             `yaml:"k" json:"k"`
+		M           int             `yaml:"m" json:"m"`
 	}{
-		Label:    reqBody.Label,
-		NrServer: reqBody.Servers,
-		DiskType: string(reqBody.DriveType),
-		Nodes:    reqBody.Nodes,
+		Label:       reqBody.Label,
+		NrServer:    reqBody.Servers,
+		DiskType:    string(reqBody.DriveType),
+		Nodes:       reqBody.Nodes,
+		ClusterType: reqBody.ClusterType,
+		K:           reqBody.K,
+		M:           reqBody.M,
 	}
 
 	obj := make(map[string]interface{})
@@ -50,10 +58,14 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		Service: reqBody.Label,
 	}}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj)
+
+	errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+		return
+	}
+
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
 		return
 	}
 

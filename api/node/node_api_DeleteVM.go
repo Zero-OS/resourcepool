@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,33 +14,31 @@ import (
 // DeleteVM is the handler for DELETE /nodes/{nodeid}/vms/{vmid}
 // Deletes the VM
 func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
-
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	vmId := vars["vmid"]
 
 	obj := make(map[string]interface{})
 	obj["actions"] = []tools.ActionBlock{{
-		Action:  "stop",
+		Action:  "destroy",
 		Actor:   "vm",
 		Service: vmId,
 		Force:   true,
 	}}
 
-	run, err := tools.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
-	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := fmt.Sprintf("Error executing blueprint for vm %s deletion ", vmId)
-		tools.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s deletion ", vmId)
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	if err := tools.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		errmsg := fmt.Sprintf("Error while waiting for vm %s deletion", vmId)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
-	res, err := api.AysAPI.Ays.DeleteServiceByName(vmId, "vm", api.AysRepo, nil, nil)
+	res, err := aysClient.Ays.DeleteServiceByName(vmId, "vm", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "deleting vm") {
 		return
 	}

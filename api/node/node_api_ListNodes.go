@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/json"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -10,11 +11,11 @@ import (
 // ListNodes is the handler for GET /nodes
 // List Nodes
 func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
-
+	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "hostname,status,id,redisAddr",
 	}
-	services, res, err := api.AysAPI.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
+	services, res, err := aysClient.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
 		return
 	}

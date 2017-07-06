@@ -6,7 +6,7 @@ import (
 
 // Definition of a virtual disk
 type VDiskLink struct {
-	MaxIOps  int    `json:"maxIOps" yaml:"maxIOps" validate:"nonzero"`
+	MaxIOps int    `json:"maxIOps" yaml:"maxIOps" validate:"nonzero"`
 	Vdiskid string `json:"vdiskid" yaml:"vdiskid" validate:"nonzero"`
 }
 

@@ -3,6 +3,7 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,10 +13,11 @@ import (
 // GetVM is the handler for GET /nodes/{nodeid}/vms/{vmid}
 // Get detailed virtual machine object
 func (api NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
-	srv, res, err := api.AysAPI.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
 		return
 	}

@@ -1,8 +1,8 @@
 package node
 
 import (
-	"gopkg.in/validator.v2"
 	"github.com/zero-os/0-orchestrator/api/validators"
+	"gopkg.in/validator.v2"
 )
 
 type PortForward struct {
@@ -16,7 +16,7 @@ type PortForward struct {
 func (s PortForward) Validate() error {
 	protocolsEnums := map[interface{}]struct{}{
 		EnumIPProtocoltcp: struct{}{},
-		EnumIPProtocoludp:    struct{}{},
+		EnumIPProtocoludp: struct{}{},
 	}
 
 	for _, protocol := range s.Protocols {

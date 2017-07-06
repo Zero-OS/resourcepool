@@ -545,7 +545,7 @@ func (r *Route) URLPath(pairs ...string) (*url.URL, error) {
 
 // GetPathTemplate returns the template used to build the
 // route match.
-// This is useful for building simple REST API documentation and for instrumentation
+// This is useful for building simple RESTful API documentation and for instrumentation
 // against third-party services.
 // An error will be returned if the route does not define a path.
 func (r *Route) GetPathTemplate() (string, error) {
@@ -560,7 +560,7 @@ func (r *Route) GetPathTemplate() (string, error) {
 
 // GetHostTemplate returns the template used to build the
 // route match.
-// This is useful for building simple REST API documentation and for instrumentation
+// This is useful for building simple RESTful API documentation and for instrumentation
 // against third-party services.
 // An error will be returned if the route does not define a host.
 func (r *Route) GetHostTemplate() (string, error) {

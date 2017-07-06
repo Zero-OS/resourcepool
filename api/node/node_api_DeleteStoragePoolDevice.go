@@ -11,13 +11,14 @@ import (
 // DeleteStoragePoolDevice is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/device/{deviceuuid}
 // Removes the device from the storagepool
 func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Request) {
+	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagePool := vars["storagepoolname"]
 	toDeleteUUID := vars["deviceuuid"]
 
-	devices, err := api.getStoragePoolDevices(node, storagePool, w)
-	if err {
+	devices, errBool := api.getStoragePoolDevices(node, storagePool, w, r)
+	if errBool {
 		return
 	}
 
@@ -45,10 +46,9 @@ func (api NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reques
 		fmt.Sprintf("storagepool__%s", storagePool): bpContent,
 	}
 
-	if _, err := tools.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint); err != nil {
-		httpErr := err.(tools.HTTPError)
-		errmsg := "Error executing blueprint for storagepool device deletion "
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint)
+	errmsg := "Error executing blueprint for storagepool device deletion "
+	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 

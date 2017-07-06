@@ -8,12 +8,22 @@ import (
 // VdisksAPI is API implementation of /vdisks root endpoint
 type VdisksAPI struct {
 	AysRepo string
-	AysAPI  *ays.AtYourServiceAPI
+	AysUrl  string
 }
 
-func NewVdiskAPI(repo string, client *ays.AtYourServiceAPI) VdisksAPI {
+func NewVdiskAPI(repo string, aysurl string) VdisksAPI {
 	return VdisksAPI{
 		AysRepo: repo,
-		AysAPI:  client,
+		AysUrl:  aysurl,
 	}
+}
+
+func (api VdisksAPI) AysAPIClient() *ays.AtYourServiceAPI {
+	aysAPI := ays.NewAtYourServiceAPI()
+	aysAPI.BaseURI = api.AysUrl
+	return aysAPI
+}
+
+func (api VdisksAPI) AysRepoName() string {
+	return api.AysRepo
 }

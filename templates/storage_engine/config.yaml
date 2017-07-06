@@ -1,0 +1,15 @@
+links:
+  parent:
+    role: container
+    auto: false
+    optional: false
+  consume:
+    - argname: master
+      auto: false
+      max: 1
+      min: 0
+      role: storage_engine
+recurring:
+  - action: monitor
+    log: true
+    period: 30m

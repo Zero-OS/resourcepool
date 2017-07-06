@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,8 +16,8 @@ var (
 	ayscl *ays.AtYourServiceAPI
 )
 
-func SetAYSClient(client *ays.AtYourServiceAPI) {
-	ayscl = client
+type AYStool struct {
+	Ays *ays.AysService
 }
 
 type ActionBlock struct {
@@ -26,53 +27,59 @@ type ActionBlock struct {
 	Force   bool   `json:"force" validate:"omitempty"`
 }
 
+func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
+	return AYStool{
+		Ays: client.Ays,
+	}
+}
+
 //ExecuteBlueprint runs ays operations needed to run blueprints, if block is true, the function will block until the run is done
 // create blueprint
 // execute blueprint
 // execute run
 // archive the blueprint
-func ExecuteBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (*ays.AYSRun, error) {
+func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (*ays.AYSRun, error) {
 	blueprintName := fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
 
-	if err := createBlueprint(repoName, blueprintName, blueprint); err != nil {
+	if err := aystool.createBlueprint(repoName, blueprintName, blueprint); err != nil {
 		return nil, err
 	}
 
-	if err := executeBlueprint(blueprintName, repoName); err != nil {
-		archiveBlueprint(blueprintName, repoName)
+	if err := aystool.executeBlueprint(blueprintName, repoName); err != nil {
+		aystool.archiveBlueprint(blueprintName, repoName)
 		return nil, err
 	}
 
-	run, err := runRepo(repoName)
+	run, err := aystool.runRepo(repoName)
 	if err != nil {
-		archiveBlueprint(blueprintName, repoName)
+		aystool.archiveBlueprint(blueprintName, repoName)
 		return nil, err
 	}
 
-	return run, archiveBlueprint(blueprintName, repoName)
+	return run, aystool.archiveBlueprint(blueprintName, repoName)
 }
 
-func WaitRunDone(runid, repoName string) error {
-	run, err := getRun(runid, repoName)
+func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
+	run, err := aystool.getRun(runid, repoName)
 
 	if err != nil {
-		return err
+		return run, err
 	}
 
 	for run.State == "new" || run.State == "running" {
 		time.Sleep(time.Second)
 
-		run, err = getRun(run.Key, repoName)
+		run, err = aystool.getRun(run.Key, repoName)
 		if err != nil {
-			return err
+			return run, err
 		}
 	}
-	return nil
+	return run, nil
 }
 
 // ServiceExists check if an atyourserivce exists
-func ServiceExists(serviceName string, instance string, repoName string) (bool, error) {
-	_, res, err := ayscl.Ays.GetServiceByName(instance, serviceName, repoName, nil, nil)
+func (aystool AYStool) ServiceExists(serviceName string, instance string, repoName string) (bool, error) {
+	_, res, err := aystool.Ays.GetServiceByName(instance, serviceName, repoName, nil, nil)
 	if err != nil {
 		return false, err
 	} else if res.StatusCode == http.StatusOK {
@@ -85,14 +92,14 @@ func ServiceExists(serviceName string, instance string, repoName string) (bool, 
 
 }
 
-func createBlueprint(repoName string, name string, bp map[string]interface{}) error {
+func (aystool AYStool) createBlueprint(repoName string, name string, bp map[string]interface{}) error {
 	bpYaml, err := yaml.Marshal(bp)
 	blueprint := ays.Blueprint{
 		Content: string(bpYaml),
 		Name:    name,
 	}
 
-	_, resp, err := ayscl.Ays.CreateBlueprint(repoName, blueprint, nil, nil)
+	_, resp, err := aystool.Ays.CreateBlueprint(repoName, blueprint, nil, nil)
 	if err != nil {
 		return NewHTTPError(resp, err.Error())
 	}
@@ -104,21 +111,27 @@ func createBlueprint(repoName string, name string, bp map[string]interface{}) er
 	return nil
 }
 
-func executeBlueprint(blueprintName string, repoName string) error {
-
-	resp, err := ayscl.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
+func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) error {
+	errBody := struct {
+		Error string `json:"error"`
+	}{}
+	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
 		return NewHTTPError(resp, err.Error())
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return NewHTTPError(resp, resp.Status)
+		if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+			return NewHTTPError(resp, "Error decoding response body")
+		}
+		return NewHTTPError(resp, errBody.Error)
 	}
 	return nil
 }
 
-func runRepo(repoName string) (*ays.AYSRun, error) {
+func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
 
-	run, resp, err := ayscl.Ays.CreateRun(repoName, nil, nil)
+	run, resp, err := aystool.Ays.CreateRun(repoName, nil, nil)
 	if err != nil {
 		return nil, NewHTTPError(resp, err.Error())
 	}
@@ -128,9 +141,9 @@ func runRepo(repoName string) (*ays.AYSRun, error) {
 	return &run, nil
 }
 
-func archiveBlueprint(blueprintName string, repoName string) error {
+func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) error {
 
-	resp, err := ayscl.Ays.ArchiveBlueprint(blueprintName, repoName, nil, nil)
+	resp, err := aystool.Ays.ArchiveBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
 		return NewHTTPError(resp, err.Error())
 	}
@@ -140,8 +153,8 @@ func archiveBlueprint(blueprintName string, repoName string) error {
 	return nil
 }
 
-func getRun(runid, repoName string) (*ays.AYSRun, error) {
-	run, resp, err := ayscl.Ays.GetRun(runid, repoName, nil, nil)
+func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
+	run, resp, err := aystool.Ays.GetRun(runid, repoName, nil, nil)
 	if err != nil {
 		return nil, NewHTTPError(resp, err.Error())
 	}
@@ -150,14 +163,14 @@ func getRun(runid, repoName string) (*ays.AYSRun, error) {
 		return nil, NewHTTPError(resp, resp.Status)
 	}
 
-	if err = checkRun(run); err != nil {
+	if err = aystool.checkRun(run); err != nil {
 		resp.StatusCode = http.StatusInternalServerError
 		return nil, NewHTTPError(resp, err.Error())
 	}
 	return &run, nil
 }
 
-func checkRun(run ays.AYSRun) error {
+func (aystool AYStool) checkRun(run ays.AYSRun) error {
 	var logs string
 	if run.State == "error" {
 		for _, step := range run.Steps {
