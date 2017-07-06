@@ -84,10 +84,11 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
         nbdserver.consume(tlogserver)
 
 
-def _nbd_url(container, nbdserver, vdisk):
+def _nbd_url(job, container, nbdserver, vdisk):
     from zeroos.orchestrator.sal.Node import Node
+    
     container_root = container.info['container']['root']
-    node = Node.from_ays(nbdserver.parent.parent)._client
+    node = Node.from_ays(nbdserver.parent.parent, password=job.context['token'])._client
     node.filesystem.mkdir("/var/run/nbd-servers/")
     endpoint = nbdserver.model.data.socketPath.lstrip('/')
     socket_path = j.sal.fs.joinPaths(container_root, endpoint)
@@ -116,12 +117,16 @@ def init(job):
     _init_zerodisk_services(job, nbd_container, tlog_container)
 
 
-def _start_nbd(job):
+def _start_nbd(job, nbdname=None):
     from zeroos.orchestrator.sal.Container import Container
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
-    nbdservers = job.service.producers.get('nbdserver', None)
+    if not nbdname:
+        nbdservers = job.service.producers.get('nbdserver', None)
+    else:
+        nbdservers = [job.service.aysrepo.serviceGet(role='nbdserver', instance=nbdname)]
+
     if not nbdservers:
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
@@ -134,7 +139,7 @@ def _start_nbd(job):
     # make sure the nbdserver is started
     j.tools.async.wrappers.sync(nbdserver.executeAction('start', context=job.context))
     for vdisk in job.service.model.data.vdisks:
-        url = _nbd_url(container, nbdserver, vdisk)
+        url = _nbd_url(job, container, nbdserver, vdisk)
         medias.append({'url': url})
     return medias
 
@@ -238,7 +243,7 @@ def stop(job):
 
 
 def destroy(job):
-    stop(job)
+    j.tools.async.wrappers.sync(job.service.executeAction('stop', context=job.context))
     service = job.service
     tlogservers = service.producers.get('tlogserver', [])
     nbdservers = service.producers.get('nbdserver', [])
@@ -253,9 +258,11 @@ def destroy(job):
 
 
 def cleanupzerodisk(job):
+    from zeroos.orchestrator.sal.Node import Node    
     service = job.service
+    node = Node.from_ays(service.parent, password=job.context['token'])
     for nbdserver in service.producers.get('nbdserver', []):
-        node._client.filesystem.remove("/var/run/ndb-servers/%s" % nbdserver.model.data.socketPath.lstrip('/'))
+        # node._client.filesystem.remove("/var/run/ndb-servers/%s" % nbdserver.model.data.socketPath.lstrip('/'))
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
@@ -338,46 +345,77 @@ def shutdown(job):
 
 def start_migartion_channel(job, old_node, node):
     service = job.service
-    actor = service.aysrepo.actorGet("tcp")
+    ssh_config = "/tmp/ssh.config_%s_%s_%s" % (old_node.name, node.name, service.name)
+    cmd = "/usr/sbin/sshd -f {config}"
 
     # Get free ports on node to use for ssh
-    node_args = {"node": node.name}
-    tcp = actor.serviceCreate(instance="tcp_%s" % node.name, args=node_args)
-    node.consume(tcp)
     freeports_node, _ = get_baseports(job, node, 3000, 1)
     node.client.nft.open_port(freeports_node[0])
 
-    cmd = "/usr/sbin/sshd -f {config}"
 
-    # start ssh server on new node for this migration
-    file_discriptor = node.client.filesystem.open("/tmp/ssh.config", mode='x')
-    node.client.filesystem.write(file_discriptor, str.encode("Port %s" % freeports_node[0]))
-    node.client.close(file_discriptor)
-    node.client.system(cmd.format(config='/tmp/ssh.config')).get()
+    try:
+        # check channel does not exist
+        if node.client.filesystem.exists(ssh_config):
+            file_discriptor = node.client.filesystem.open(ssh_config, mode='r')
+            port_data = node.client.filesystem.read(file_discriptor)
+            for cmd in node.client.process.list():
+                if ssh_config in cmd['cmdline']:
+                    return str(port_data.split(" ")[1])
+                res = node.client.system(cmd.format(config=ssh_config))
+                if not res.running:
+                    raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+                                                                                                            node.name))
+                return str(port_data.split(" ")[1])
+        # start ssh server on new node for this migration
+        file_discriptor = node.client.filesystem.open(ssh_config, mode='x')
+        node.client.filesystem.write(file_discriptor, str.encode("Port %s" % freeports_node[0]))
+        node.client.filesystem.close(file_discriptor)
+        res = node.client.system(cmd.format(config=ssh_config))
+        if not res.running:
+            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+                                                                                                    node.name))
 
+        # add host names addr to each node
+        file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
+        host_name = old_node.client.info.os().get("hostname")
+        node.client.filesystem.write(file_discriptor,
+                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr, 
+                                                                                  addr=host_name)))
+        node.client.filesystem.close(file_discriptor)
 
-    # Move keys from old_node to node authorized_keys
-    for item in  old_node.client.filesystem.list("/root/.ssh"):
-        if item.get['name'] == 'id_rsa.pub':
-            break
-    else:
-        old_node.client.system("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
+        file_discriptor = old_node.client.filesystem.open("/etc/hosts", mode='a')
+        host_name = node.client.info.os().get("hostname")
+        old_node.client.filesystem.write(file_discriptor,
+                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr, 
+                                                                                      addr=host_name)))
+        node.client.filesystem.close(file_discriptor)
 
-    file_discriptor = old_node.client.filesystem.open("id_rsa.pub", mode='r')
-    pub_key = old_node.client.read(file_discriptor)
-    old_node.client.close(file_discriptor)
+        # Move keys from old_node to node authorized_keys
+        if not old_node.client.filesystem.exists("/root/.ssh/id_rsa.pub"):
+            old_node.client.system("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
 
-    for item in  node.client.filesystem.list("/root/.ssh"):
-        if item.get['name'] == 'authorized_keys':
+        file_discriptor = old_node.client.filesystem.open("/root/.ssh/id_rsa.pub", mode='r')
+        pub_key = old_node.client.filesystem.read(file_discriptor)
+        old_node.client.filesystem.close(file_discriptor)
+
+        if node.client.filesystem.exists("/root/.ssh/authorized_keys"):
             file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='a')
-            break
-    else:
-        file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='x')
+        else:
+            file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='x')
 
-    node.client.filesystem.write(file_discriptor, str.encode(pub_key))
-    old_node.client.close(file_discriptor)
+        node.client.filesystem.write(file_discriptor, pub_key)
+        old_node.client.filesystem.close(file_discriptor)
+        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
 
-    return freeports_node[0]
+        old_node.client.system('eval `ssh-agent -s`').get()
+        old_node.client.system('ssh-add').get()
+    except Exception as e:
+        node.client.filesystem.remove(ssh_config)
+        service.model.data.node = old_node.name
+        service.saveAll()
+        raise e
+
+    return str(freeports_node[0])
 
 
 def get_baseports(job, node, baseport, nrports):
@@ -419,28 +457,40 @@ def migrate(job):
     target_node = service.aysrepo.serviceGet('node', node)
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
-    ssh_port = start_migartion_channel(job, Node.from_ays(service.parent), Node.from_ays(target_node))
+    # 1 consume tcp to use for finding port (this has to be bfore start_migration_channel method)
+    tcp_actor = service.aysrepo.actorGet("tcp")
+    node_args = {"node": node}
+    tcp = tcp_actor.serviceCreate(instance="tcp_%s" % node, args=node_args)
+    target_node.consume(tcp)
+    ssh_port = start_migartion_channel(job, Node.from_ays(service.parent, job.context['token']), Node.from_ays(target_node, job.context['token']))
     old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
-    # start new nbdserver on target node
+    # 2 start new nbdserver on target node
     vdisk_container = create_zerodisk_container(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
     nbdserver = create_service(service, vdisk_container)
+    nbd_actor = service.aysrepo.actorGet('nbdserver')
+    args = {
+        'container': vdisk_container.name,
+    }
+    nbdserver = nbd_actor.serviceCreate(instance=vdisk_container.name, args=args)
+    nbdserver.consume(vdisk_container)
     service.consume(nbdserver)
-
-    # TODO: migrate domain, not impleented yet in core0
+    service.consume(vdisk_container)
+    node_client = Node.from_ays(service.parent)._client
     service.model.changeParent(target_node)
+    service.saveAll()
+    _start_nbd(job, nbdserver.name)
     service.model.data.status = 'running'
-    node_client = Node.from_ays(service.aysrepo.serviceGet('node', job.model.args["node"]))._client
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]
-            node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % target_node.model.data.redisAddr, ssh_port)
+            node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
             break
 
-    # delete current nbd services and volue container
+    # 3 delete current nbd services and vdisk container(this has to be before the start_nbd method)
     job.logger.info("delete current nbd services and vdisk container")
     for nbdserver in old_nbd:
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
@@ -448,7 +498,13 @@ def migrate(job):
 
     j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
     j.tools.async.wrappers.sync(old_vdisk_container.delete())
+
     service.saveAll()
+
+
+
+def cleanup_sshd(node):
+    node.filesystem.remove('/root/.ssh/')
 
 
 def _remove_duplicates(col):
@@ -491,7 +547,7 @@ def updateDisks(job, client, args):
     if old_disks != []:
         nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
-            url = _nbd_url(container, nbdserver, old_disk['vdiskid'])
+            url = _nbd_url(job, container, nbdserver, old_disk['vdiskid'])
             client.client.kvm.detach_disk(uuid, {'url': url})
             j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
 
@@ -505,7 +561,7 @@ def updateDisks(job, client, args):
         _start_nbd(job)
         nbdserver = service.producers.get('nbdserver', [])[0]
         for disk in new_disks:
-            media = {'url': _nbd_url(container, nbdserver, disk['vdiskid'])}
+            media = {'url': _nbd_url(job, container, nbdserver, disk['vdiskid'])}
             if disk['maxIOps']:
                 media['iotune'] = {'totaliopssec': disk['maxIOps'],
                                    'totaliopssecset': True}
@@ -549,26 +605,33 @@ def monitor(job):
 
 
 def update_data(job, args):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
+
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
+        service.model.data.node = args['node']
+        service.saveAll()    
+        token = get_jwt_token_from_job(job)
         job = service.getJob('migrate', args={'node': service.model.data.node})
+        job.context['token'] = token
         j.tools.async.wrappers.sync(job.execute())
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
-
+    service.saveAll()
 
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
-
+    
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
             job.context['token'] = get_jwt_token_from_job(job)
-            node = get_node(job)
             update_data(job, args)
+            node = get_node(job)
+            print("******************%s*****************" % node)
             updateDisks(job, node, args)
             updateNics(job, node, args)
         except ValueError:
