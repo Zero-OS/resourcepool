@@ -122,6 +122,7 @@ def monitor(job):
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
 
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
         stats_collector_service = get_stats_collector(service)
         statsdb_service = get_statsdb(service)
 
