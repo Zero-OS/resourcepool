@@ -8,6 +8,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 3. [Setup the AYS configuration service](#setup-the-ays-configuration-service)
 4. [Setup the backplane network](#setup-the-backplane-network)
 5. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
+6. [Setup Statistics Monitoring](#setup-statistics-monitoring)
 
 ## Create a JumpScale9 Docker container
 
@@ -163,3 +164,21 @@ Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/<Your Z
 Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/<Your ZeroTier network id>/organization=${ITSYOUONLINEORG}`
 
 Refer to the 0-core repository documentation for more information on booting Zero-OS.
+
+## Setup Statistics Monitoring
+
+To have statistics monitoring, you need need to have influxdb and graphana running on any of the nodes. And you need to run the 0-stats-collector on any node you want to monitor.
+The 0-stats-collector reads the statistics from core0 and dumps them in influxdb, while graphana can be used to visualize the data in influxdb.
+The fastest way to achieve this is to install the service statsdb on any of the nodes. This service will install both influxdb and graphana and once installed, it will iterate all nodes and install the 0-stat-collector on them.
+
+Example of the statsdb blueprint:
+```yaml
+statsdb__statistics:
+  node: '54a9f715dbb1'
+  port: 9086
+
+actions:
+  - action: install
+
+```
+The port will be the port on which influxdb will run. Executing this blueprint will create a container with influxdb running on said port and will add database `statistics` to influxdb. It will also create a container with graphana running on it and add a dataset for `statistics` database.
