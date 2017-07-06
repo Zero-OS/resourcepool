@@ -83,13 +83,15 @@ configuration__main:
   - key: '0-core-version'
     value: 'master'
   - key: 'js-version'
-    value: '9.0.0'
+    value: '9.0.3'
   - key: 'gw-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-master.flist'
   - key: 'ovs-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/ovs-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/ovs.flist'
   - key: '0-disk-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/0-disk-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'
+  - key: '0-statscollector-flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'
   - key: 'jwt-token'
     value: <The JWT generted at the previous step>
   - key: 'jwt-key'
@@ -148,6 +150,7 @@ bootstrap.zero-os__grid1:
   networks:
     - storage
 ```
+
 Now issue the following AYS commands to reinstall the updated bootstrap service:
 ```shell
 cd /optvar/cockpit_repos/orchestrator-server
@@ -159,16 +162,16 @@ ays run create -y
 ## Boot your Zero-OS nodes
 The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
 
-Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/<Your ZeroTier network id>/organization=${ITSYOUONLINEORG}`
+Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG}`
 
-Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/<Your ZeroTier network id>/organization=${ITSYOUONLINEORG}`
+Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG}`
 
 Refer to the 0-core repository documentation for more information on booting Zero-OS.
 
 ## Setup Statistics Monitoring
 
 To have statistics monitoring, you need need to have influxdb and graphana running on any of the nodes. And you need to run the 0-stats-collector on any node you want to monitor.
-The 0-stats-collector reads the statistics from core0 and dumps them in influxdb, while graphana can be used to visualize the data in influxdb.
+The 0-stats-collector reads the statistics from 0-core and dumps them in influxdb, while graphana can be used to visualize the data in influxdb.
 The fastest way to achieve this is to install the service statsdb on any of the nodes. This service will install both influxdb and graphana and once installed, it will iterate all nodes and install the 0-stat-collector on them.
 
 Example of the statsdb blueprint:
@@ -181,4 +184,4 @@ actions:
   - action: install
 
 ```
-The port will be the port on which influxdb will run. Executing this blueprint will create a container with influxdb running on said port and will add database `statistics` to influxdb. It will also create a container with graphana running on it and add a dataset for `statistics` database.
+The port will be the port on which influxdb will run. Executing this blueprint will create a container with influxdb running on said port and will add database `statistics` to influxdb. It will also create a container with graphana running on it and add a datasource for `statistics` database.
