@@ -1,3 +1,6 @@
+from js9 import j
+
+
 def input(job):
     ays_repo = job.service.aysrepo
     services = ays_repo.servicesFind(actor=job.service.model.dbobj.actorName)
@@ -26,6 +29,21 @@ def init(job):
     }
     grafana_service = grafana_actor.serviceCreate(instance='statsdb', args=args)
     service.consume(grafana_service)
+
+    # Install stats_collector on all nodes
+    stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
+    node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
+    for node_service in node_services:
+        stats_collector_service = get_stats_collector_from_node(node_service)
+        if not stats_collector_service:
+            args = {
+                'node': node_service.name,
+                'port': job.service.model.data.port,
+                'ip': job.service.parent.model.data.redisAddr,
+
+            }
+            stats_collector_service = stats_collector_actor.serviceCreate(instance=node_service.name, args=args)
+            stats_collector_service.consume(node_service)
 
 
 def get_influxdb(service, force=True):
@@ -61,31 +79,19 @@ def install(job):
 def start(job):
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(grafana.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(influxdb.executeAction('install', context=job.context))
+    j.tools.async.wrappers.sync(grafana.executeAction('install', context=job.context))
     job.service.model.data.status = 'running'
     job.service.saveAll()
-    stats_collector_actor = job.service.aysrepo.actorGet('stats_collector')
 
     # Install stats_collector on all nodes
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
 
-        # If stats collector is already installed just restart it
-        if stats_collector_service and stats_collector_service.model.data.status == 'running':
+        if stats_collector_service:
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('start', context=job.context))
-        if not stats_collector_service:
-                args = {
-                    'node': node_service.name,
-                    'port': job.service.model.data.port,
-                    'ip': job.service.parent.model.data.redisAddr,
-
-                }
-                stats_collector_service = stats_collector_actor.serviceCreate(instance=node_service.name, args=args)
-                stats_collector_service.consume(node_service)
-                j.tools.async.wrappers.sync(stats_collector_service.executeAction('install', context=job.context))
 
 
 def stop(job):
@@ -110,13 +116,13 @@ def uninstall(job):
         j.tools.async.wrappers.sync(grafana.executeAction('uninstall', context=job.context))
     if influxdb:
         j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
-    job.service.delete()
+
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service:
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
-
+    j.tools.async.wrappers.sync(job.service.delete())
 
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job

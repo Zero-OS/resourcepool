@@ -23,8 +23,8 @@ def get_init_processes(service):
     ]
 
 
-def get_container(job, force=True):
-    containers = job.service.producers.get('container')
+def get_container(service, force=True):
+    containers = service.producers.get('container')
     if not containers:
         if force:
             raise RuntimeError('Service didn\'t consume any containers')
@@ -56,25 +56,25 @@ def install(job):
 
 
 def start(job):
-    container = get_container(job)
+    container = get_container(job.service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     job.service.model.data.status = 'running'
     job.service.saveAll()
 
 
 def stop(job):
-    container = get_container(job)
+    container = get_container(job.service)
     j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     job.service.model.data.status = 'halted'
     job.service.saveAll()
 
 
 def uninstall(job):
-    container = get_container(job, False)
+    container = get_container(job.service, False)
     if container:
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
-    job.service.delete()
+    j.tools.async.wrappers.sync(job.service.delete())
 
 
 def processChange(job):
@@ -85,7 +85,7 @@ def processChange(job):
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    container = get_container(job)
+    container = get_container(job.service)
 
     if args.get('ip'):
         service.model.data.ip = args['ip']

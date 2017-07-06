@@ -36,9 +36,9 @@ def start(job):
     service = job.service
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    container = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'])
     influx = InfluxDB(
-        container, service.parent.model.data.redisAddr, service.model.data.port)
+        container_ays, service.parent.model.data.redisAddr, service.model.data.port)
     influx.start()
     service.model.data.status = 'running'
     influx.create_databases(service.model.data.databases)
@@ -51,11 +51,11 @@ def stop(job):
 
     service = job.service
     container = get_container(service)
+    container_ays = Container.from_ays(container, job.context['token'])
 
-    container = Container.from_ays(container, job.context['token'])
-    if container.is_running():
+    if container_ays.is_running():
         influx = InfluxDB(
-            container, service.parent.model.data.redisAddr, service.model.data.port)
+            container_ays, service.parent.model.data.redisAddr, service.model.data.port)
         influx.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     service.model.data.status = 'halted'
@@ -69,7 +69,7 @@ def uninstall(job):
     if container:
         j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
-    service.delete()
+    j.tools.async.wrappers.sync(service.delete())
 
 
 def processChange(job):
@@ -106,3 +106,13 @@ def processChange(job):
         service.model.data.databases = args['databases']
 
     service.saveAll()
+
+
+def init_actions_(service, args):
+    return {
+        'init': [],
+        'install': ['init'],
+        'monitor': ['start'],
+        'delete': ['uninstall'],
+        'uninstall': [],
+    }
