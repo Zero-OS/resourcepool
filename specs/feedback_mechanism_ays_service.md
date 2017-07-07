@@ -1,9 +1,13 @@
-intro
+# feedback machanism Z-OS
+
+## intro
+
 - ays service can ask Z-OS to launch a container or a vm
 - ays service can ask Z-OS to launch one or more processes in a container
 - ays service can ask Z-OS to launch zerotier network on container or vm
 
-error conditions
+## error conditions
+
 - std error on process in container
 - processes in container stops (exit 0 or 0+ return code)
     - STDERR: 'HALT 0', 'HALT 1', ...
@@ -14,7 +18,7 @@ error conditions
     - is checked by polling local redis aggregated info (so no need to aggregate in golang)
 - vm has too many context switches
     - STDERR: 'CPU_OVERLOAD_CS $avgamount5min'
-    - is checked by polling local redis aggregated info (so no need to aggregate in golang)    
+    - is checked by polling local redis aggregated info (so no need to aggregate in golang)
 - 1 of nics of vm uses too much bandwidth or too many open connections or other wrong network situations...
     - STDERR: 'NIC_OVERLOAD_????'
     - is checked by polling local redis aggregated info (so no need to aggregate in golang)
@@ -22,14 +26,16 @@ error conditions
     - complete...
 - COMPLETE...
 
-feedback
+## feedback
+
 - stdout from process in container
 
-when launching container or vm or zerotier (through redis cmd channel)
+## when launching container or vm or zerotier (through redis cmd channel)
+
 - specify name/instance of ays service
-- the main Zero-OS daemon 
+- the main Zero-OS daemon
     - tracks stdout/stderr and other errorconditions mentioned above
-    - sends the stdout to orchestrator on url 
+    - sends the stdout to orchestrator on url
         - /stdout/$actorname/$serviceinstancename
         - /stderr/$actorname/$serviceinstancename
     - send as json?
@@ -43,6 +49,6 @@ when launching container or vm or zerotier (through redis cmd channel)
         - stdout(processname,output,...)
         - stderr(processname,errortxt,...)
     - these are pre-defined methods and only when filled in will be used
-    
+
 remarks
 - best would be this is core functionality of Z-OS and not a separate daemon
