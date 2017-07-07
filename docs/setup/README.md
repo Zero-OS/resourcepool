@@ -5,10 +5,11 @@ This is the recommended and currently the only supported option to setup a Zero-
 In order to have a full Zero-OS cluster you'll need to perform the following steps:
 1. [Create a JumpScale9 Docker container](#create-a-jumpscale9-docker-container)
 2. [Install the Zero-OS Orchestrator into the Docker container](#install-the-orchestrator)
-3. [Setup the AYS configuration service](#setup-the-ays-configuration-service)
+3. [Setup the AYS Configuration service](#setup-the-ays-configuration-service)
 4. [Setup the backplane network](#setup-the-backplane-network)
-5. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
-6. [Setup Statistics Monitoring](#setup-statistics-monitoring)
+5. [Setup the AYS Bootstrap service](#setup-the-bootstrap-service)
+6. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
+7. [Setup Statistics Monitoring](#setup-statistics-monitoring)
 
 ## Create a JumpScale9 Docker container
 
@@ -93,7 +94,7 @@ configuration__main:
   - key: '0-statscollector-flist'
     value: 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'
   - key: 'jwt-token'
-    value: <The JWT generted at the previous step>
+    value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
 ```
@@ -141,7 +142,11 @@ cd /optvar/cockpit_repos/orchestrator-server
 ays blueprint network.bp
 ```
 
-Then we need to update the bootstrap service so that it deploys the storage network when bootstrapping the nodes. So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp` as follows:
+## Setup the Bootstrap service
+
+Then we need to update the bootstrap service so that it deploys the storage network when bootstrapping the nodes. The bootstrap service also authorizes ZeroTier join requests form Zero-OS nodes if they meet the conditions as set in the Configuration blueprint.
+
+So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp` as follows:
 ```yaml
 bootstrap.zero-os__grid1:
   zerotierNetID: '<Your ZeroTier network id>'
