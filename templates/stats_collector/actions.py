@@ -1,3 +1,6 @@
+from js9 import j
+
+
 def get_init_processes(service):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -5,7 +8,7 @@ def get_init_processes(service):
     cmd_args = []
 
     if token:
-        cmd_args.extend(['--token', token])
+        cmd_args.extend(['--jwt', token])
     if service.model.data.ip:
         cmd_args.extend(['--ip', service.model.data.ip])
     if service.model.data.port:
@@ -44,8 +47,9 @@ def init(job):
         'node': service.model.data.node,
         'flist': config.get(
             '0-statscollector-flist', 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'),
+        'hostname': service.model.data.node,
         'hostNetworking': True,
-        'initProcesses': get_init_processes(service)
+        'initProcesses': get_init_processes(service),
     }
     cont_service = container_actor.serviceCreate(instance='{}_stats_collector'.format(service.name), args=args)
     service.consume(cont_service)
