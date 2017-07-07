@@ -33,7 +33,7 @@
 ## when launching container or vm or zerotier (through redis cmd channel)
 
 - specify name/instance of ays service
-- the main Zero-OS daemon
+- the Core0
     - tracks stdout/stderr and other errorconditions mentioned above
     - sends the stdout to orchestrator on url
         - /stdout/$actorname/$serviceinstancename
@@ -46,9 +46,21 @@
 - orchestrator (AYS service)
     - gives info of json to predefined method on AYS instance
     - method
-        - stdout(processname,output,...)
-        - stderr(processname,errortxt,...)
+        - stdout (processname,output,...)
+        - stderr (processname,errortxt,...)
     - these are pre-defined methods and only when filled in will be used
 
 remarks
 - best would be this is core functionality of Z-OS and not a separate daemon
+
+## alternative
+
+- this approach has following disadvantages
+    - core0 needs to know about orchestrator, this makes it more stateful and I think more messy.
+    - performance +-, lots of load on orchestrator, this could lead to denial of service
+- why not use logger to redis functionality
+    - need to document what we have (so we know what to change)
+    - need see how to send stderr/stdout per process/vm to redis
+    - redis needs to remove too old logs (rolling logs of stdout)
+    - why not use https://redis.io/topics/pubsub to announce changes (not the actual content but pointers to new info on well defined channels)
+    - each stdout/err message needs to be timestamped
