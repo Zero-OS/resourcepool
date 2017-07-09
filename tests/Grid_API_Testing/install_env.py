@@ -87,7 +87,7 @@ ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.github
 echo "Enabling JWT..."
 cd tests/Grid_API_Testing/ 
 scp -P 2222 enable_jwt.sh root@localhost:
-ssh -tA root@localhost -p 2222 "source enable_jwt.sh"
+ssh -tA root@localhost -p 2222 "export ITSYOUONLINE_CL_ID=$ITSYOUONLINE_CL_ID; export ITSYOUONLINE_CL_SECRET=$ITSYOUONLINE_CL_SECRET; export ITSYOUONLINE_ORG=$ITSYOUONLINE_ORG; source enable_jwt.sh"
 
 # get orch-server ip
 orch_ip=$(ssh -At root@localhost -p 2222 "ip addr show zt0 | grep 'inet'")
