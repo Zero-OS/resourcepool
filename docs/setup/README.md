@@ -62,7 +62,7 @@ tail -f /tmp/install.log
 Since AYS is protected with JWT, you have to generate a token so the AYS CLI can authenticate to AYS server.
 The CLI provide and easy way to do it:
 ```shell
-ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG
+ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization "$ITSYOUONLINEORG" --validity 3600
 ```
 CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)
 From the website, go to your settings, in the `API Keys` panel, generate a new id/secret pair.
@@ -167,9 +167,9 @@ ays run create -y
 ## Boot your Zero-OS nodes
 The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
 
-Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG}`
+Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
-Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/${ZEROTIERNWID}/organization=${ITSYOUONLINEORG}`
+Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
 Refer to the 0-core repository documentation for more information on booting Zero-OS.
 
