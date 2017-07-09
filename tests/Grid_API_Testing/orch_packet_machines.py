@@ -5,6 +5,7 @@ import time
 import os
 import sys
 import threading
+import subprocess
 
 
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
@@ -64,9 +65,16 @@ if __name__ == '__main__':
     else:
         zt_net_id = sys.argv[3]
         itsyouonline_org = sys.argv[4]
+        branch = sys.argv[5]
+        command='git ls-remote --heads https://github.com/zero-os/0-orchestrator.git {} | wc -l'.format(branch)
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        process.wait()
+        flag=str(process.communicate()[0], 'utf-8').strip('\n')
+        if flag != '1':
+           branch = 'master'
         threads = []
         for i in range(2):
-            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org), kwargs={'branch': 'master'})
+            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org), kwargs={'branch': '{}'.format(branch)})
             thread.start()
             threads.append(thread)
         for t in threads:
