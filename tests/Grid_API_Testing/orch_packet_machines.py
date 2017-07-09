@@ -7,9 +7,9 @@ import sys
 import threading
 
 
-def create_new_device(manager, hostname, zt_net_id, branch='master'):
+def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
     project = manager.list_projects()[0]
-    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization=orchestrator_org'.format(branch, zt_net_id)
+    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id, itsyouonline_org)
     print('creating new machine: {}  .. '.format(hostname))
     device = manager.create_device(project_id=project.id,
                                    hostname=hostname,
@@ -37,10 +37,10 @@ def delete_devices(manager):
             manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
 
 
-def create_pkt_machine(manager, zt_net_id, branch='master'):
+def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
     hostname = 'orch{}'.format(randint(100, 300))
     try:
-        device = create_new_device(manager, hostname, zt_net_id, branch=branch)
+        device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
     except:
         print('device hasn\'t been created')
         raise
@@ -63,9 +63,10 @@ if __name__ == '__main__':
         delete_devices(manager)
     else:
         zt_net_id = sys.argv[3]
+        itsyouonline_org = sys.argv[4]
         threads = []
         for i in range(2):
-            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id), kwargs={'branch': 'master'})
+            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org), kwargs={'branch': 'master'})
             thread.start()
             threads.append(thread)
         for t in threads:
