@@ -1,7 +1,7 @@
 branch=$1
 zerotierid=$2
 zerotiertoken=$3
-itsyouonlineorg="orchestrator_org"
+itsyouonlineorg=$ITSYOUONLINE_ORG
 
 export SSHKEYNAME=id_rsa
 export GIGBRANCH=master

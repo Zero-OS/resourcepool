@@ -3,12 +3,10 @@ jsversion=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
 ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)
 
 #Generate JWT
-eval "$(ays generatetoken --clientid '"$ITSYOUONLINE_CL_ID"' --clientsecret '"$ITSYOUONLINE_CL_SECRET"' --organization '"$ITSYOUONLINE_ORG)"' "
+eval '$(ays generatetoken --clientid '"$ITSYOUONLINE_CL_ID"' --clientsecret '"$ITSYOUONLINE_CL_SECRET"' --organization '"$ITSYOUONLINE_ORG)"' '
 
-echo 'JWT='
-echo $JWT
-echo "jsversion="
-echo $jsversion
+echo 'JWT='$JWT
+echo "jsversion="$jsversion
 
 cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
 configuration__main:
@@ -38,4 +36,5 @@ ays run create --follow
 #tmux kill-window -t orchestrator
 #tmux new-window -n orchestrator
 #tmux send -t orchestrator 'orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server -org orchestrator_org' ENTER
+
 
