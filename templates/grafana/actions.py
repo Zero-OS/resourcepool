@@ -1,3 +1,6 @@
+from js9 import j
+
+
 def get_container(service, force=True):
     containers = service.producers.get('container')
     if not containers:
@@ -6,6 +9,14 @@ def get_container(service, force=True):
         else:
             return
     return containers[0]
+
+
+def configure_datasources(job, grafana):
+    service = job.service
+    influxes = service.producers.get('influxdb')
+    for influx in influxes:
+        for i, database in enumerate(influx.model.data.databases):
+            grafana.add_data_source(database, influx.name, influx.parent.model.data.redisAddr, influx.model.data.port, i)
 
 
 def init(job):
@@ -18,10 +29,10 @@ def init(job):
     args = {
         'node': service.model.data.node,
         'flist': config.get(
-            'influxdb-flist', 'https://hub.gig.tech/gig-official-apps/influxdb.flist'),
+            '0-grafana-flist', 'https://hub.gig.tech/gig-official-apps/grafana.flist'),
         'hostNetworking': True
     }
-    cont_service = container_actor.serviceCreate(instance='{}_influxdb'.format(service.name), args=args)
+    cont_service = container_actor.serviceCreate(instance='{}_grafana'.format(service.name), args=args)
     service.consume(cont_service)
 
 
@@ -30,34 +41,32 @@ def install(job):
 
 
 def start(job):
+    from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'])
-    influx = InfluxDB(
-        container_ays, service.parent.model.data.redisAddr, service.model.data.port)
-    influx.start()
+    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
+    grafana.start()
     service.model.data.status = 'running'
-    influx.create_databases(service.model.data.databases)
+    configure_datasources(job, grafana)
     service.saveAll()
 
 
 def stop(job):
+    from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'])
-
     if container_ays.is_running():
-        influx = InfluxDB(
-            container_ays, service.parent.model.data.redisAddr, service.model.data.port)
-        influx.stop()
+        grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
+        grafana.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+
     service.model.data.status = 'halted'
     service.saveAll()
 
@@ -73,37 +82,28 @@ def uninstall(job):
 
 
 def processChange(job):
+    from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
     service = job.service
     args = job.model.args
+
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
-
-    container_service = get_container(service)
-
-    container = Container.from_ays(container_service, get_jwt_token_from_job(job))
-    influx = InfluxDB(
-        container, service.parent.model.data.redisAddr, service.model.data.port)
+    container = get_container(service)
+    container_ays = Container.from_ays(container, job.context['token'])
+    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
 
     if args.get('port'):
-        if container.is_running() and influx.is_running()[0]:
-            influx.stop()
+        if container_ays.is_running() and grafana.is_running()[0]:
+            grafana.stop()
             service.model.data.status = 'halted'
-            influx.port = args['port']
-            influx.start()
+            grafana.port = args['port']
+            grafana.start()
             service.model.data.status = 'running'
-        service.model.data.port = args['port']
+    service.model.data.port = args['port']
 
-    if args.get('databases'):
-        if container.is_running() and influx.is_running()[0]:
-            create_dbs = set(args['databases']) - set(service.model.data.databases)
-            drop_dbs = set(service.model.data.databases) - set(args['databases'])
-            influx.create_databases(create_dbs)
-            influx.drop_databases(drop_dbs)
-        service.model.data.databases = args['databases']
+    # @TODO: Handle influxdb list change
 
     service.saveAll()
 
