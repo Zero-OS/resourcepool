@@ -66,7 +66,7 @@ if __name__ == '__main__':
         zt_net_id = sys.argv[3]
         itsyouonline_org = sys.argv[4]
         branch = sys.argv[5]
-        command='git ls-remote --heads https://github.com/zero-os/0-orchestrator.git {} | wc -l'.format(branch)
+        command='git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(branch)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
         flag=str(process.communicate()[0], 'utf-8').strip('\n')
