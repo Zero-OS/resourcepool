@@ -140,8 +140,22 @@ fi
 
 echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
-
 chmod +x ${aysinit} >> ${logfile} 2>&1
+
+# create orchestrator AYS repo
+if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
+    mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
+    pushd /optvar/cockpit_repos/orchestrator-server
+    mkdir services >> ${logfile} 2>&1
+    mkdir actorTemplates >> ${logfile} 2>&1
+    mkdir actors >> ${logfile} 2>&1
+    mkdir blueprints >> ${logfile} 2>&1
+    touch .ays >> ${logfile} 2>&1
+    git init >> ${logfile} 2>&1
+    git remote add origin https://github.com/zero-os/orchestrator >> ${logfile} 2>&1
+    popd
+fi
+# start ays server
 bash $aysinit >> ${logfile} 2>&1
 
 echo "[+] Waiting for AtYourService"
@@ -159,18 +173,7 @@ cd /opt/jumpscale9/go/proj/src/github.com/zero-os/0-orchestrator/api
 go get -u github.com/jteeuwen/go-bindata/... >> ${logfile} 2>&1
 go generate >> ${logfile} 2>&1
 go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
-if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
-    mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
-    pushd /optvar/cockpit_repos/orchestrator-server
-    mkdir services >> ${logfile} 2>&1
-    mkdir actorTemplates >> ${logfile} 2>&1
-    mkdir actors >> ${logfile} 2>&1
-    mkdir blueprints >> ${logfile} 2>&1
-    touch .ays >> ${logfile} 2>&1
-    git init >> ${logfile} 2>&1
-    git remote add origin https://github.com/zero-os/orchestrator >> ${logfile} 2>&1
-    popd
-fi
+
 
 echo "[+] Starting orchestrator api server"
 orchinit="/etc/my_init.d/11_orchestrator.sh"
