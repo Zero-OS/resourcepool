@@ -1,18 +1,25 @@
-language: go
-sudo: true
-dist: trusty
-
-go:
-  - 1.8
-
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libvirt-dev libcap-dev capnproto npm
-  - sudo npm install -g raml2html
-
-install:
-  - go get github.com/Jumpscale/go-raml
-
-script:
-  - bash test.sh
-
+matrix:
+  include: 
+    - language: python
+      sudo: true
+      dist: trusty
+      python: 3.5
+      before_script:
+        - bash tests/Grid_API_Testing/run_tests.sh before
+      script:
+        - bash tests/Grid_API_Testing/run_tests.sh run
+      after_script:
+        - bash tests/Grid_API_Testing/run_tests.sh after
+    
+    - language: go
+      sudo: true
+      dist: trusty
+      go: 1.8
+      before_install:
+        - sudo apt-get -qq update
+        - sudo apt-get install -y libvirt-dev libcap-dev capnproto npm
+        - sudo npm install -g raml2html
+      install:
+        - go get github.com/Jumpscale/go-raml
+      script:
+        - bash test.sh
