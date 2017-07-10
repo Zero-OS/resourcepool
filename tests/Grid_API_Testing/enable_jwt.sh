@@ -3,7 +3,12 @@ jsversion=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
 ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)
 
 #Generate JWT
+echo 'cl_id='$ITSYOUONLINE_CL_ID
+echo 'cl_secret='$ITSYOUONLINE_CL_SECRET
+echo 'organization='$ITSYOUONLINE_ORG
+
 jwt=$(ays generatetoken --clientid $ITSYOUONLINE_CL_ID --clientsecret $ITSYOUONLINE_CL_SECRET --organization $ITSYOUONLINE_ORG)
+echo 'jwt --> '$jwt
 eval $(awk -F'[:]' '{print $2}' <<< $jwt)
 echo 'JWT='$JWT
 echo "jsversion="$jsversion
