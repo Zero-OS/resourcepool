@@ -63,6 +63,13 @@ def install(job):
             rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
             config['storageClusters'][storagecluster] = clusterconfig
 
+        backupStoragecluster = vdiskservice.model.data.backupStoragecluster
+        if backupStoragecluster and backupStoragecluster not in config['storageClusters']:
+            clusterconfig = get_storagecluster_config(job, backupStoragecluster)
+            rootcluster = {'dataStorage': [{'address': rootstorageEngine}], 'metadataStorage': {'address': rootstorageEngine}}
+            rootclustername = hash(j.data.serializer.json.dumps(rootcluster, sort_keys=True))
+            config['storageClusters'][backupStoragecluster] = clusterconfig
+
         if rootclustername not in config['storageClusters']:
             config['storageClusters'][rootclustername] = rootcluster
 
@@ -78,8 +85,13 @@ def install(job):
                        'size': vdiskservice.model.data.size,
                        'storageCluster': vdiskservice.model.data.storageCluster,
                        'rootStorageCluster': rootclustername,
-                       'tlogstoragecluster': vdiskservice.model.data.tlogStoragecluster,
                        'type': vdisk_type}
+
+        if vdiskservice.model.data.tlogStoragecluster:
+            vdiskconfig['tlogstoragecluster'] = vdiskservice.model.data.tlogStoragecluster
+        if vdiskservice.model.data.backupStoragecluster:
+            vdiskconfig['slaveStorageCluster'] = vdiskservice.model.data.backupStoragecluster
+
         config['vdisks'][vdiskservice.name] = vdiskconfig
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
