@@ -1673,7 +1673,7 @@
           }
         ],
         "query": "SHOW TAG VALUES WITH KEY = \"node\"",
-        "refresh": 30,
+        "refresh": 1,
         "regex": "",
         "sort": 0,
         "tagValuesQuery": "",
