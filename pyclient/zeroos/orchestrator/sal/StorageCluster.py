@@ -1,3 +1,5 @@
+import json
+
 from js9 import j
 from .StorageEngine import StorageEngine
 
@@ -41,6 +43,11 @@ class StorageCluster:
         cluster.k = service.model.data.k
         cluster.m = service.model.data.m
         return cluster
+
+    @property
+    def dashboard(self):
+        board = StorageDashboard(self)
+        return board.template
 
     def get_config(self):
         data = {'dataStorage': [],
@@ -196,3 +203,274 @@ class StorageServer:
 
     def __repr__(self):
         return str(self)
+
+
+class StorageDashboard:
+    def __init__(self, cluster):
+        self.cluster = cluster
+        self.store = 'statsdb'
+
+    def build_templating(self):
+        templating = {
+            "list": [],
+            "rows": []
+        }
+        return templating
+
+    def dashboard_template(self):
+        return {
+            "annotations": {
+                "list": []
+            },
+            "editable": True,
+            "gnetId": None,
+            "graphTooltip": 0,
+            "hideControls": False,
+            "id": None,
+            "links": [],
+            "rows": [],
+            "schemaVersion": 14,
+            "style": "dark",
+            "tags": [],
+            "time": {
+                "from": "now-15m",
+                "to": "now"
+            },
+            "timepicker": {
+                "refresh_intervals": [
+                    "5s",
+                    "10s",
+                    "30s",
+                    "1m",
+                    "5m",
+                    "15m",
+                    "30m",
+                    "1h",
+                    "2h",
+                    "1d"
+                ],
+                "time_options": [
+                    "5m",
+                    "15m",
+                    "1h",
+                    "6h",
+                    "12h",
+                    "24h",
+                    "2d",
+                    "7d",
+                    "30d"
+                ]
+            },
+            "timezone": "",
+            "title": self.cluster.name,
+            "version": 8
+        }
+
+    def build_row(self, panel):
+        template = {
+            "collapse": False,
+            "height": 295,
+            "panels": [],
+            "repeat": None,
+            "repeatIteration": None,
+            "repeatRowId": None,
+            "showTitle": False,
+            "title": "Dashboard Row",
+            "titleSize": "h6"
+        }
+        template["panels"] += panel
+        return template
+
+    def build_panel(self, title, target, panel_id, unit):
+        template = {
+            "aliasColors": {},
+            "bars": False,
+            "dashLength": 10,
+            "dashes": False,
+            "datasource": self.store,
+            "fill": 1,
+            "id": panel_id,
+            "legend": {
+                "avg": False,
+                "current": False,
+                "max": False,
+                "min": False,
+                "show": True,
+                "total": False,
+                "values": False
+            },
+            "lines": True,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": False,
+            "pointradius": 5,
+            "points": False,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 6,
+            "stack": True,
+            "steppedLine": False,
+            "targets": [],
+            "thresholds": [],
+            "timeFrom": None,
+            "timeShift": None,
+            "tooltip": {
+                "shared": True,
+                "sort": 0,
+                "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+                "buckets": None,
+                "mode": "time",
+                "name": None,
+                "show": True,
+                "values": []
+            },
+            "yaxes": [
+                {
+                    "format": unit,
+                    "label": None,
+                    "logBase": 1,
+                    "max": None,
+                    "min": None,
+                    "show": True
+                },
+                {
+                    "format": "short",
+                    "label": None,
+                    "logBase": 1,
+                    "max": None,
+                    "min": None,
+                    "show": True
+                }
+            ]
+        }
+        template["title"] = title
+        template["targets"].append(target)
+        return template
+
+    def build_target(self, measurement, disks):
+        template = {
+            "alias": "$tag_node/$tag_id",
+            "dsType": "influxdb",
+            "groupBy": [
+                {
+                    "params": [
+                        "$__interval"
+                    ],
+                    "type": "time"
+                },
+                {
+                    "params": [
+                        "node"
+                    ],
+                    "type": "tag"
+                },
+                {
+                    "params": [
+                        "id"
+                    ],
+                    "type": "tag"
+                },
+                {
+                    "params": [
+                        "none"
+                    ],
+                    "type": "fill"
+                }
+            ],
+            "orderByTime": "ASC",
+            "policy": "default",
+            "rawQuery": False,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+                [
+                    {
+                        "params": [
+                            "value"
+                        ],
+                        "type": "field"
+                    },
+                    {
+                        "params": [],
+                        "type": "mean"
+                    }
+                ]
+            ],
+            "tags": [
+                {
+                    "key": "type",
+                    "operator": "=",
+                    "value": "phys"
+                }
+            ]
+        }
+        template["measurement"] = measurement
+
+        for idx, disk in enumerate(disks):
+            tag = [
+                {
+                    "key": "node",
+                    "operator": "=",
+                    "value": disk.split("_")[0]
+                },
+                {
+                    "condition": "AND",
+                    "key": "id",
+                    "operator": "=",
+                    "value": disk.split("_")[1]
+                }
+            ]
+            if idx == 0:
+                tag[0]["condition"] = "AND"
+            else:
+                tag[0]["condition"] = "OR"
+            template["tags"] += tag
+        return template
+
+    @property
+    def template(self):
+        AGGREGATED_CONFIG = {
+            "Read IOPs": "disk.iops.read|m",
+            "Write IOPs": "disk.iops.write|m",
+            "Free size": "disk.size.free|m",
+        }
+        panel_id = 1
+        disks = set()
+        for server in self.cluster.storage_servers:
+            server = server.name.split("_")
+            disks.add("{}_{}".format(server[1], server[-3]))
+        disks = list(disks)
+        panels = []
+        for title, measurement in AGGREGATED_CONFIG.items():
+            if 'size' in title:
+                partitions = [disk+'1' for disk in disks]
+                target = self.build_target(measurement, partitions)
+                panels.append(self.build_panel(title, target, panel_id, "decbytes"))
+            else:
+                target = self.build_target(measurement, disks)
+                panels.append(self.build_panel(title, target, panel_id, "iops"))
+            panel_id += 1
+
+        for disk in disks:
+            target = self.build_target("disk.iops.read|m", [disk])
+            panels.append(self.build_panel("Read IOPS", target, panel_id, "iops"))
+            panel_id += 1
+            target = self.build_target("disk.iops.write|m", [disk])
+            panels.append(self.build_panel("Write IOPS", target, panel_id, "iops"))
+            panel_id += 1
+            target = self.build_target("disk.size.free|m", [disk+'1'])
+            panels.append(self.build_panel("Free size", target, panel_id, "decbytes"))
+            panel_id += 1
+
+        template = self.dashboard_template()
+        for idx, panel in enumerate(panels):
+            if idx % 2 == 0:
+                row = self.build_row(panels[idx:idx+2])
+                template["rows"].append(row)
+        template = json.dumps(template)
+        return template

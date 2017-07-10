@@ -11,6 +11,7 @@ def input(job):
 
 def init(job):
     from zeroos.orchestrator.sal.templates import render
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     service = job.service
     influxdb_actor = service.aysrepo.actorGet('influxdb')
 
@@ -53,6 +54,19 @@ def init(job):
             }
             stats_collector_service = stats_collector_actor.serviceCreate(instance=node_service.name, args=args)
             stats_collector_service.consume(node_service)
+
+    # Create storage cluster dashboards
+    cluster_services = job.service.aysrepo.servicesFind(actor='storage_cluster')
+    for clusterservice in cluster_services:
+        cluster = StorageCluster.from_ays(clusterservice, '')
+        board = cluster.dashboard
+
+        args = {
+            'grafana': 'statsdb',
+            'dashboard': board
+        }
+        dashboard_actor.serviceCreate(instance=cluster.name, args=args)
+        stats_collector_service.consume(clusterservice)
 
 
 def get_influxdb(service, force=True):
@@ -132,6 +146,7 @@ def uninstall(job):
         if stats_collector_service:
             j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
     j.tools.async.wrappers.sync(job.service.delete())
+
 
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job

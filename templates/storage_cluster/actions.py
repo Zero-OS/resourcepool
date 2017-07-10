@@ -71,7 +71,8 @@ def init(job):
             'devices': diskmap
         }
         storagepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, disk.name)
-        spactor.serviceCreate(instance=storagepoolname, args=args)
+        spservice = spactor.serviceCreate(instance=storagepoolname, args=args)
+        service.consume(spservice)
         containername = '{}_{}_{}'.format(storagepoolname, variant, baseport)
         # adding filesystem
         args = {
@@ -120,6 +121,16 @@ def init(job):
         service.consume(storageEngine)
         service.model.data.storageEngines[index] = storageEngine.name
 
+    grafanasrv = service.aysrepo.serviceGet(role='grafana', instance='statsdb', die=False)
+    if grafanasrv:
+        dashboard_actor = service.aysrepo.actorGet('dashboard')
+        cluster = get_cluster(job)
+        board = cluster.dashboard
+        args = {
+            'grafana': 'statsdb',
+            'dashboard': board
+        }
+        dashboard_actor.serviceCreate(instance=cluster.name, args=args)
     job.service.model.data.status = 'empty'
 
 
