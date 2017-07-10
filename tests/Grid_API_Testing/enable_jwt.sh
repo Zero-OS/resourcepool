@@ -9,7 +9,8 @@ echo 'organization='$ITSYOUONLINE_ORG
 
 jwt=$(ays generatetoken --clientid $ITSYOUONLINE_CL_ID --clientsecret $ITSYOUONLINE_CL_SECRET --organization $ITSYOUONLINE_ORG)
 echo 'jwt --> '$jwt
-eval $(awk -F'[:]' '{print $2}' <<< $jwt)
+eval '$jwt'
+#eval $(awk -F'[:]' '{print $2}' <<< $jwt)
 echo 'JWT='$JWT
 echo "jsversion="$jsversion
 
