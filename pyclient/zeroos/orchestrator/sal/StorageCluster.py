@@ -233,7 +233,7 @@ class StorageDashboard:
             "style": "dark",
             "tags": [],
             "time": {
-                "from": "now-15m",
+                "from": "now/d",
                 "to": "now"
             },
             "timepicker": {
@@ -435,9 +435,9 @@ class StorageDashboard:
     @property
     def template(self):
         AGGREGATED_CONFIG = {
-            "Read IOPs": "disk.iops.read|m",
-            "Write IOPs": "disk.iops.write|m",
-            "Free size": "disk.size.free|m",
+            "Aggregated read IOPs": "disk.iops.read|m",
+            "Aggregated write IOPs": "disk.iops.write|m",
+            "Aggregated free size": "disk.size.free|m",
         }
         panel_id = 1
         disks = set()
@@ -458,10 +458,10 @@ class StorageDashboard:
 
         for disk in disks:
             target = self.build_target("disk.iops.read|m", [disk])
-            panels.append(self.build_panel("Read IOPS", target, panel_id, "iops"))
+            panels.append(self.build_panel("Read IOPs", target, panel_id, "iops"))
             panel_id += 1
             target = self.build_target("disk.iops.write|m", [disk])
-            panels.append(self.build_panel("Write IOPS", target, panel_id, "iops"))
+            panels.append(self.build_panel("Write IOPs", target, panel_id, "iops"))
             panel_id += 1
             target = self.build_target("disk.size.free|m", [disk+'1'])
             panels.append(self.build_panel("Free size", target, panel_id, "decbytes"))
