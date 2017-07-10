@@ -33,8 +33,14 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	process, err := core.Process(processID)
 
 	if err != nil {
-		errmsg := fmt.Sprintf("Error getting process %s info on container", processID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		if err == client.NotFound {
+			errmsg := fmt.Sprintf("No such process %d on container %s", pId, vars["containername"])
+			tools.WriteError(w, http.StatusNotFound, err, errmsg)
+
+		} else {
+			errmsg := fmt.Sprintf("Error getting process %s info on container", processID)
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		}
 		return
 	}
 
