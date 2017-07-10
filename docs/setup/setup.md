@@ -59,7 +59,7 @@ export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<ItsYou.online organization>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> \[<$DOMAIN> \[--development]]
+bash install-orchestrator.sh $BRANCH $ZEROTIERNWID $ZEROTIERTOKEN <$ITSYOUONLINEORG> [<$DOMAIN> [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:
