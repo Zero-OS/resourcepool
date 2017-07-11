@@ -10,6 +10,7 @@ def input(job):
 
 
 def init(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.templates import render
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     service = job.service
@@ -58,7 +59,7 @@ def init(job):
     # Create storage cluster dashboards
     cluster_services = job.service.aysrepo.servicesFind(actor='storage_cluster')
     for clusterservice in cluster_services:
-        cluster = StorageCluster.from_ays(clusterservice, '')
+        cluster = StorageCluster.from_ays(clusterservice, get_jwt_token(service.aysrepo))
         board = cluster.dashboard
 
         args = {
