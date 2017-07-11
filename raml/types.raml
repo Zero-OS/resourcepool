@@ -1186,6 +1186,10 @@ GWNIC:
           default: id can be ommited
           bridge: name of the bridge to connect to
       type: string
+    token:
+      type: string
+      description: Zerotier token, only valid for nic of type 'zerotier'. If supplied, the container will be authorized on the zerotier network.
+      required: false
     zerotierbridge:
       required: false
       description: |
