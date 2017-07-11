@@ -1297,3 +1297,69 @@ types:
               application/json:
                 type: Run
             description: Rollback started successfully
+/graphs:
+  get:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    description: List all graphs
+    displayName: ListGraphs
+    responses:
+      200:
+        body:
+          application/json:
+            type: Graph[]
+  /{graphid}:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Get a graph
+      displayName: GetGraph
+      responses:
+        200:
+          body:
+            application/json:
+              type: Graph
+    /dashboards:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: List dashboards
+        displayName: ListDashboards
+        responses:
+          200:
+            body:
+              application/json:
+                type: DashboardListItem[]
+      post:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Create Dashboard
+        displayName: CreateDashboard
+        body:
+          application/json:
+            type: Dashboard
+        responses:
+          202:
+            description: Dashboard created successfully
+            headers:
+              Location:
+                description: URL to the the Dashboard
+      /{dashboardid}:
+        get:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          description: Get dashboard
+          displayName: GetDashboard
+          responses:
+            200:
+              body:
+                application/json:
+                  type: DashboardListItem
+        delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          description: Delete a dashboard
+          displayName: DeleteDashboard
+          responses:
+            204:
+              description: Dashboard deleted successfully

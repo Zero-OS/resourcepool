@@ -1300,4 +1300,26 @@ GetGW:
       required: false
     status:
       enum: [running, halted]
-      description: Status of the gateway
+
+Graph:
+  type: object
+  description: A graph
+  properties:
+    id: string
+    url: string
+
+Dashboard:
+  type: object
+  description: A dashboard
+  properties:
+    name: string
+    dashboard: string
+
+DashboardListItem:
+  type: object
+  description: A dashboard
+  properties:
+    name: string
+    dashboard: string
+    slug: string
+    url: string
