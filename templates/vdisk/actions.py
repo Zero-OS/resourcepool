@@ -8,7 +8,7 @@ def install(job):
 
     service = job.service
     service.model.data.status = 'halted'
-    if service.model.data.size > 2000:
+    if service.model.data.size > 2048:
         raise j.exceptions.Input("Maximum disk size is 2TB")
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
@@ -210,7 +210,7 @@ def resize(job):
         raise j.exceptions.Input("size is not present in the arguments of the job")
 
     size = int(job.model.args['size'])
-    if size > 2000:
+    if size > 2048:
         raise j.exceptions.Input("Maximun disk size is 2TB")
     if size < service.model.data.size:
         raise j.exceptions.Input("size is smaller then current size, disks can  only be grown")
