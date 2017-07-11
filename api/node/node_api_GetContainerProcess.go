@@ -24,7 +24,7 @@ func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 
 	pId, err := strconv.ParseUint(vars["processid"], 10, 64)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error converting processid string into int")
+		tools.WriteError(w, http.StatusBadRequest, err, "Processid should be valid positive integer")
 		return
 	}
 
