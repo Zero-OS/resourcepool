@@ -1,21 +1,21 @@
 import random, time
 from api_testing.testcases.testcases_base import TestcasesBase
-from api_testing.grid_apis.orchestrator_client.vdisks_apis import VDisksAPIs
-from api_testing.grid_apis.orchestrator_client.storageclusters_apis import Storageclusters
+from api_testing.orchestrator_api.orchestrator_client.vdisks_apis import VDisksAPIs
+from api_testing.orchestrator_api.orchestrator_client.storageclusters_apis import Storageclusters
 from api_testing.utiles.core0_client import Client
 import unittest
 
+# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/644')
 class TestVdisks(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
+    def setUp(self):
+        super().setUp()
         self.vdisks_apis = VDisksAPIs()
         self.storageclusters_api = Storageclusters()
 
-    def setUp(self):
-        super(TestVdisks, self).setUp()
-
         node = self.get_random_node()
         pyclient_ip = [x['ip'] for x in self.nodes if x['id'] == node][0]
+        self.jwt = self.nodes_api.jwt
         self.pyclient = Client(pyclient_ip, password=self.jwt)
 
         free_disks = self.pyclient.getFreeDisks()
@@ -35,7 +35,8 @@ class TestVdisks(TestcasesBase):
                         "clusterType": "storage",
                         "nodes":sc_nodes}
 
-            self.storageclusters_api.post_storageclusters(sc_body)
+            response = self.storageclusters_api.post_storageclusters(sc_body)
+            self.assertEqual(response.status_code, 201)
 
             for _ in range(60):
                 response = self.storageclusters_api.get_storageclusters_label(sc_label)
@@ -69,7 +70,8 @@ class TestVdisks(TestcasesBase):
                      "storagecluster": self.storagecluster,
                      "readOnly":self.readOnly}
 
-        self.vdisks_apis.post_vdisks(self.body)
+        response = self.vdisks_apis.post_vdisks(self.body)
+        self.assertEqual(response.status_code, 201) 
 
     def tearDown(self):
         self.lg.info('Delete vdisk (VD0)')

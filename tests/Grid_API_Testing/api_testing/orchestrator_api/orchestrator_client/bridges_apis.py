@@ -1,9 +1,10 @@
-from api_testing.grid_apis.orchestrator_base import GridPyclientBase
+from api_testing.orchestrator_api.orchestrator_base import GridPyclientBase
 from requests import HTTPError
 
 class BridgesAPI(GridPyclientBase):
     def __init__(self):
         super().__init__()
+        self.createdbridges = []
 
     def get_nodes_bridges(self, nodeid):
         try:
@@ -24,6 +25,8 @@ class BridgesAPI(GridPyclientBase):
     def post_nodes_bridges(self, nodeid, data):
         try:
             response = self.api_client.nodes.CreateBridge(nodeid=nodeid, data=data)
+            if response.status_code == 201:
+                self.createdbridges.append({"node": nodeid, "name": data["name"]})
         except HTTPError as e:
             response = e.response
         finally:
@@ -36,4 +39,3 @@ class BridgesAPI(GridPyclientBase):
             response = e.response
         finally:
             return response
-        

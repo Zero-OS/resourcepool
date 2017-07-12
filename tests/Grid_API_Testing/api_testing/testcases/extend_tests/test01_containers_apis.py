@@ -3,27 +3,26 @@ import time
 import unittest
 from api_testing.testcases.testcases_base import TestcasesBase
 from api_testing.utiles.core0_client import Client
-from api_testing.grid_apis.apis.nodes_apis import NodesAPI
-from api_testing.grid_apis.orchestrator_client.containers_apis import ContainersAPI
+from api_testing.orchestrator_api.apis.nodes_apis import NodesAPI
+from api_testing.orchestrator_api.orchestrator_client.containers_apis import ContainersAPI
 import json
-from api_testing.grid_apis.orchestrator_client.bridges_apis import BridgesAPI
-from api_testing.grid_apis.orchestrator_client.storagepools_apis import StoragepoolsAPI
+from api_testing.orchestrator_api.orchestrator_client.bridges_apis import BridgesAPI
+from api_testing.orchestrator_api.orchestrator_client.storagepools_apis import StoragepoolsAPI
 from urllib.request import urlopen
 
 class TestcontaineridAPI(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
+    def setUp(self):
         self.containers_api = ContainersAPI()
         self.bridges_api = BridgesAPI()
         self.storagepool_api = StoragepoolsAPI()
-
         self.createdcontainer=[]
 
-    def setUp(self):
         self.lg.info('Choose one random node of list of running nodes.')
         self.node_id = self.get_random_node()
         self.zeroCore_ip= [x['ip'] for x in self.nodes if x['id'] == self.node_id]
         self.assertTrue(self.zeroCore_ip,'No node match the random node')
+        self.jwt = self.nodes_api.jwt
         self.zeroCore = Client(self.zeroCore_ip[0], password=self.jwt)
         self.root_url = "https://hub.gig.tech/gig-official-apps/ubuntu1604.flist"
         self.storage = "ardb://hub.gig.tech:16379"
@@ -789,7 +788,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Check that portforward work,should succeed")
         response = C1_client.bash("netstat -nlapt | grep %s"%containerport).get()
         self.assertEqual(response.state, 'SUCCESS')
-        url=' http://{0}:{1}/{2}.text'.format(self.g8os_ip,hostport,file_name)
+        url=' http://{0}:{1}/{2}.text'.format(self.zeroCore_ip, hostport, file_name)
         response = urlopen(url)
         html = response.read()
         self.assertIn("test",html.decode('utf-8'))

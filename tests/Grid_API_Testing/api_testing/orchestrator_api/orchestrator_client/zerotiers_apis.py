@@ -1,4 +1,4 @@
-from api_testing.grid_apis.orchestrator_base import GridPyclientBase
+from api_testing.orchestrator_api.orchestrator_base import GridPyclientBase
 from requests import HTTPError
 
 class ZerotiersAPI(GridPyclientBase):

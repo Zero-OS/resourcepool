@@ -1,4 +1,4 @@
-from api_testing.grid_apis.orchestrator_client.nodes_apis import NodesAPI
+from api_testing.orchestrator_api.orchestrator_client.nodes_apis import NodesAPI
 
 def get_node_info():
     nodes_info = []

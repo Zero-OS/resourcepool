@@ -1,20 +1,18 @@
 from random import randint
 import unittest, time
 from api_testing.testcases.testcases_base import TestcasesBase
-from api_testing.grid_apis.orchestrator_client.bridges_apis import BridgesAPI
+from api_testing.orchestrator_api.orchestrator_client.bridges_apis import BridgesAPI
 from api_testing.utiles.core0_client import Client
 
 class TestBridgesAPI(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.bridges_api = BridgesAPI()
-
     def setUp(self):
-        super(TestBridgesAPI, self).setUp()
-
+        super().setUp()
+        self.bridges_api = BridgesAPI()
+        
         self.lg.info('Get random nodid (N0)')
         self.nodeid = self.get_random_node()
         pyclient_ip = [x['ip'] for x in self.nodes if x['id'] == self.nodeid][0]
+        self.jwt = self.nodes_api.jwt
         self.pyclient = Client(pyclient_ip, password=self.jwt)
 
         self.lg.info('Create bridge (B0) on node (N0)')

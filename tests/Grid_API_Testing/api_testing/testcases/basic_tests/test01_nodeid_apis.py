@@ -1,18 +1,15 @@
 import random
 from api_testing.testcases.testcases_base import TestcasesBase
-from api_testing.grid_apis.orchestrator_client.nodes_apis import NodesAPI
+from api_testing.orchestrator_api.orchestrator_client.nodes_apis import NodesAPI
 from api_testing.utiles.core0_client import Client
 import unittest
 
 
 class TestNodeidAPI(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.nodes_api = NodesAPI()
-
     def setUp(self):
-        super(TestNodeidAPI,  self).setUp()
-
+        super().setUp()
+        self.nodes_api = NodesAPI()
+        self.jwt = self.nodes_api.jwt
         self.lg.info('Choose one random node of list of running nodes.')
         self.node_id = self.get_random_node()
         if self.node_id is None:
@@ -114,7 +111,7 @@ class TestNodeidAPI(TestcasesBase):
         self.lg.info('Check that all jobs has been killed.')
         response = self.nodes_api.get_nodes_nodeid_jobs(node_id=self.node_id)
         jobs_list = response.json()
-        self.assertEqual(len(jobs_list),3)
+        self.assertEqual(len(jobs_list), 6)
 
     def test005_get_job_details(self):
         """ GAT-005

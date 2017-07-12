@@ -1,19 +1,19 @@
 from random import randint
 from api_testing.testcases.testcases_base import TestcasesBase
-from api_testing.grid_apis.orchestrator_client.storageclusters_apis import Storageclusters
+from api_testing.orchestrator_api.orchestrator_client.storageclusters_apis import Storageclusters
 from api_testing.utiles.core0_client import Client
 import unittest, time
 
+# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/644')
 class TestStorageclustersAPI(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.storageclusters_api = Storageclusters()
 
     def setUp(self):
-        super(TestStorageclustersAPI, self).setUp()
+        super().setUp()
+        self.storageclusters_api = Storageclusters()
 
         self.nodeid = self.get_random_node()
         pyclient_ip = [x['ip'] for x in self.nodes if x['id'] == self.nodeid][0]
+        self.jwt = self.nodes_api.jwt
         self.pyclient = Client(pyclient_ip, password=self.jwt)
 
         if self._testMethodName != 'test003_deploy_new_storagecluster':
@@ -35,7 +35,8 @@ class TestStorageclustersAPI(TestcasesBase):
                     "nodes":[self.nodeid]
                 }
 
-            self.storageclusters_api.post_storageclusters(self.body)
+            response = self.storageclusters_api.post_storageclusters(self.body)
+            self.assertEqual(response.status_code, 201)
             
             for _ in range(60):
                 response = self.storageclusters_api.get_storageclusters_label(self.label)

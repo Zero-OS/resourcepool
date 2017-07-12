@@ -1,10 +1,11 @@
-from api_testing.grid_apis.orchestrator_base import GridPyclientBase
+from api_testing.orchestrator_api.orchestrator_base import GridPyclientBase
 from requests import HTTPError
 
 
 class ContainersAPI(GridPyclientBase):
     def __init__(self):
         super().__init__()
+        self.createdcontainer = []
 
     def get_containers(self, nodeid):
         try:
@@ -17,6 +18,8 @@ class ContainersAPI(GridPyclientBase):
     def post_containers(self, nodeid, data):
         try:
             response = self.api_client.nodes.CreateContainer(nodeid=nodeid, data=data)
+            if response.status_code == 201:
+                self.createdcontainer.append({"node": nodeid, "name": data["name"]})
         except HTTPError as e:
             response = e.response
         finally:

@@ -78,9 +78,9 @@ class Client:
                     disk_parts.append({
                         "name": '/dev/{}'.format(part['name']),
                         "size": int(int(part['size'])/1073741824),
-                        "partuuid": part['partuuid'],
-                        "label": part['label'],
-                        "fstype": part['fstype']
+                        "partuuid": part['partuuid'] or '',
+                        "label": part['label'] or '',
+                        "fstype": part['fstype'] or ''
                     })
 
             if int(disk['rota']):
