@@ -190,9 +190,14 @@ def monitor(job):
     service = job.service
     if not service.model.actionsState['install'] == 'ok':
         return
+
+    if str(service.parent.model.data.status) != 'running':
+        return
+
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    running = is_job_running(get_container(service, get_jwt_token(job.service.aysrepo)))
+    container = get_container(service, get_jwt_token(job.service.aysrepo))
+    running = is_job_running(container)
     for vdisk in vdisks:
         if running:
             j.tools.async.wrappers.sync(vdisk.executeAction('start'))
