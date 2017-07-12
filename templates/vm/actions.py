@@ -98,6 +98,10 @@ def _nbd_url(job, container, nbdserver, vdisk):
 
 
 def init(job):
+    start_dependent_services(job)
+
+
+def start_dependent_services(job):
     import random
     service = job.service
 
@@ -262,7 +266,6 @@ def cleanupzerodisk(job):
     service = job.service
     node = Node.from_ays(service.parent, password=job.context['token'])
     for nbdserver in service.producers.get('nbdserver', []):
-        # node._client.filesystem.remove("/var/run/ndb-servers/%s" % nbdserver.model.data.socketPath.lstrip('/'))
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
         j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
@@ -277,6 +280,7 @@ def cleanupzerodisk(job):
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())        
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
@@ -407,8 +411,6 @@ def start_migartion_channel(job, old_node, node):
         old_node.client.filesystem.close(file_discriptor)
         old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
 
-        old_node.client.system('eval `ssh-agent -s`').get()
-        old_node.client.system('ssh-add').get()
     except Exception as e:
         node.client.filesystem.remove(ssh_config)
         service.model.data.node = old_node.name
@@ -502,11 +504,6 @@ def migrate(job):
     service.saveAll()
 
 
-
-def cleanup_sshd(node):
-    node.filesystem.remove('/root/.ssh/')
-
-
 def _remove_duplicates(col):
     try:
         return [dict(t) for t in set([tuple(element.items()) for element in col])]
@@ -523,8 +520,11 @@ def _diff(col1, col2):
 def updateDisks(job, client, args):
     from zeroos.orchestrator.sal.Container import Container
     service = job.service
+    uuid = None
+    if service.model.data.status == 'running':
+        uuid = get_domain(job)['uuid']
 
-    uuid = get_domain(job)['uuid']
+        
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
@@ -548,7 +548,8 @@ def updateDisks(job, client, args):
         nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(job, container, nbdserver, old_disk['vdiskid'])
-            client.client.kvm.detach_disk(uuid, {'url': url})
+            if uuid: 
+                client.client.kvm.detach_disk(uuid, {'url': url})
             j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
 
     # Attaching new disks
@@ -565,12 +566,18 @@ def updateDisks(job, client, args):
             if disk['maxIOps']:
                 media['iotune'] = {'totaliopssec': disk['maxIOps'],
                                    'totaliopssecset': True}
-            client.client.kvm.attach_disk(uuid, media)
+            if uuid:
+                client.client.kvm.attach_disk(uuid, media)
     service.saveAll()
 
 
 def updateNics(job, client, args):
     service = job.service
+    if service.model.data.status == 'halted':
+        service.model.data.nics = args.get('nics', [])
+        service.saveAll()
+        return
+
     uuid = get_domain(job)['uuid']
 
     # Get new and old disks
@@ -613,7 +620,16 @@ def update_data(job, args):
         service.model.data.node = args['node']
         service.saveAll()    
         token = get_jwt_token_from_job(job)
-        job = service.getJob('migrate', args={'node': service.model.data.node})
+        if service.model.data.status == 'halted':
+            # move stopped vm
+            node = service.aysrepo.serviceGet('node', args['node'])
+            service.model.changeParent(node)
+            start_dependent_services(job)
+        elif service.model.data.status == 'running' : 
+            # do live migration
+            job = service.getJob('migrate', args={'node': service.model.data.node})
+        else:
+            raise j.exception.RuntimeError('cannot migrate vm if status is not runnning or halted ')
         job.context['token'] = token
         j.tools.async.wrappers.sync(job.execute())
     service.model.data.memory = args.get('memory', service.model.data.memory)
@@ -624,6 +640,7 @@ def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
     
     service = job.service
+    print(service.parent.name)
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
@@ -631,7 +648,6 @@ def processChange(job):
             job.context['token'] = get_jwt_token_from_job(job)
             update_data(job, args)
             node = get_node(job)
-            print("******************%s*****************" % node)
             updateDisks(job, node, args)
             updateNics(job, node, args)
         except ValueError:
