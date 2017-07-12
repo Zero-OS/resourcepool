@@ -20,7 +20,7 @@ echo 'jwt --> '$jwt
 eval $jwt
 
 echo 'JWT='$JWT
-echo "jsversion="$jsversion
+echo "jsversion="$JSVERSION
 
 cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
 configuration__main:
