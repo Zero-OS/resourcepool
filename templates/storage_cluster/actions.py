@@ -124,15 +124,17 @@ def init(job):
 
     grafanasrv = service.aysrepo.serviceGet(role='grafana', instance='statsdb', die=False)
     if grafanasrv:
+        import json
+        from zeroos.orchestrator.sal.StorageCluster import StorageDashboard
+        board = StorageDashboard(service).dashboard_template()
+        board = json.dumps(board)
         dashboard_actor = service.aysrepo.actorGet('dashboard')
-        job.context['token'] = get_jwt_token(service.aysrepo)
-        cluster = get_cluster(job)
-        board = cluster.dashboard
         args = {
             'grafana': 'statsdb',
             'dashboard': board
         }
-        dashboard_actor.serviceCreate(instance=cluster.name, args=args)
+        dashboardsrv = dashboard_actor.serviceCreate(instance=service.name, args=args)
+        service.consume(dashboardsrv)
     job.service.model.data.status = 'empty'
 
 
@@ -188,6 +190,12 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def install(job):
+    dashboardsrv = dashboard_actor = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
+    if dashboardsrv:
+        cluster = get_cluster(job)
+        dashboardsrv.model.data.dashboard = cluster.dashboard
+        j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
+
     job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
 
