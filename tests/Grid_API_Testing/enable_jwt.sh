@@ -1,16 +1,24 @@
-BRANCH=$1
-jsversion=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
+JSVERSION=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
 ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)
+
+# which branch will be used for 0-core
+VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $TRAVIS_BRANCH | wc -l)
+if [ $VL == 1 ]
+then
+  0CORE_BRANCH=$TRAVIS_BRANCH
+else
+  0CORE_BRANCH=master
+fi
 
 #Generate JWT
 echo 'cl_id='$ITSYOUONLINE_CL_ID
 echo 'cl_secret='$ITSYOUONLINE_CL_SECRET
 echo 'organization='$ITSYOUONLINE_ORG
 
-jwt=$(ays generatetoken --clientid $ITSYOUONLINE_CL_ID --clientsecret $ITSYOUONLINE_CL_SECRET --organization $ITSYOUONLINE_ORG)
+jwt=$(ays generatetoken --clientid $ITSYOUONLINE_CL_ID --clientsecret $ITSYOUONLINE_CL_SECRET --organization $ITSYOUONLINE_ORG --validity 3600)
 echo 'jwt --> '$jwt
 eval $jwt
-#eval $(awk -F'[:]' '{print $2}' <<< $jwt)
+
 echo 'JWT='$JWT
 echo "jsversion="$jsversion
 
@@ -18,9 +26,9 @@ cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp <<
 configuration__main:
   configurations:
   - key: '0-core-version'
-    value: '${BRANCH}'
+    value: '${0CORE_BRANCH}'
   - key: 'js-version'
-    value: '${jsversion}'
+    value: '${JSVERSION}'
   - key: 'gw-flist'
     value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-1.1.0-alpha-3.flist'
   - key: 'ovs-flist'
