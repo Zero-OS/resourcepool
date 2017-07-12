@@ -29,6 +29,18 @@ func (api NodeAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	exists, err := aysClient.ServiceExists("dashboard", reqBody.Name, api.AysRepo)
+
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
+		return
+	}
+
+	if exists {
+		err = fmt.Errorf("Dashboard with the name %s does exist", reqBody.Name)
+		tools.WriteError(w, http.StatusConflict, err, err.Error())
+		return
+	}
 	// Create blueprint
 	bp := struct {
 		Dashboard string `json:"dashboard" yaml:"dashboard"`

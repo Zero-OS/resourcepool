@@ -6,9 +6,9 @@ import (
 
 type DashboardListItem struct {
 	Slug      string `json:"slug" validate:"nonzero"`
-	Dashboard string `json:"dashboard" validate:"nonzero"`
+	Dashboard string `json:"dashboard,omitempty" validate:"nonzero"`
 	Name      string `json:"name" validate:"nonzero"`
-	Url       string `json:"url"`
+	Url       string `json:"url,omitempty"`
 }
 
 func (s DashboardListItem) Validate() error {
