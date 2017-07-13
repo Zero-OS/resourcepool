@@ -41,6 +41,9 @@ configuration__main:
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
 EOL
 
+echo ------------
+cat /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp
+
 cd /optvar/cockpit_repos/orchestrator-server
 ays reload 
 ays blueprint configuration.bp
