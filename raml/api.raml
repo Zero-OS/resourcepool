@@ -1,3 +1,4 @@
+
 #%RAML 1.0
 title: Zero-OS 0 Rest API Server
 version: v1.1.0-alpha
@@ -17,6 +18,29 @@ annotationTypes:
 
 types:
   !include types.raml
+/health:
+  /nodes:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: List all nodes health
+      displayName: ListNodesHealth
+      responses:
+        200:
+          body:
+            application/json:
+              type: NodeHealthCheck[]
+    /{nodeid}:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Get detailed information of a node  health
+        displayName: ListNodeHealth
+        responses:
+          200:
+            body:
+              application/json:
+                type: HealthCheck[]
 
 
 /nodes:
