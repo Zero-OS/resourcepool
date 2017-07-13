@@ -77,7 +77,7 @@ if __name__ == '__main__':
             thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org), kwargs={'branch': '{}'.format(branch)})
             thread.start()
             threads.append(thread)
+        print('sleep for 7 mins')
+        time.sleep(500)
         for t in threads:
             t.join()
-        print('sleep for 5 mins')
-        time.sleep(300)
