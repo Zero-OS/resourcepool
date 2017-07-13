@@ -1,3 +1,8 @@
+echo "getting machine ip.."
+ip a
+echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDh9OvsqboBV1AHblyiLEWKeH6bfC+/MPmsKDAk+9XkFrAC9b2VGmQrIlTg1Su+R9IOWrueywxbtd5GdWHJkC1+2SUlxm2ALWThyNg88MWogHgmR9CDlxr9cCMFyhOkFpIGLfiD/ZKYLqP43a8edxnEEx/PB4O4Utn9zkw6Dp7AFXki6tCJWJkT12AVS1mk8Ii/uRUbKQyxnuy5rSzNMcDyV/i/r7qdg7K5eys4B3VmsdN7y9l9H6p4VHAHALkuyYHrVJNMp/wPVZyd99h7iCB9LnXkFhPw/t6o4R7/2czXTBTxuUbvkxvEFqdNHuDQ0bhF+YuWHzarixKwVA68b4EZ john@john-Inspiron-5423 >> ~/.ssh/authorized_keys
+
+
 branch=$1
 zerotierid=$2
 zerotiertoken=$3
@@ -85,6 +90,7 @@ ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.github
 
 #passing jwt
 echo "Enabling JWT..." 
+cd tests/Grid_API_Testing/
 scp -P 2222 enable_jwt.sh root@localhost:
 ssh -tA root@localhost -p 2222 "export ITSYOUONLINE_CL_ID=$ITSYOUONLINE_CL_ID; export ITSYOUONLINE_CL_SECRET=$ITSYOUONLINE_CL_SECRET; export ITSYOUONLINE_ORG=$ITSYOUONLINE_ORG; source enable_jwt.sh"
 
