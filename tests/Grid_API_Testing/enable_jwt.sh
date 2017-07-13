@@ -48,7 +48,11 @@ cat /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp
 cd /optvar/cockpit_repos/orchestrator-server
 ays reload 
 ays blueprint configuration.bp
-ays run create --follow
+ays run create --follow -y
+
+ays blueprint bootstrap.bp
+ays run create --follow -y
+
 
 # kill orchestrator server and start it again using new org
 #tmux kill-window -t orchestrator
