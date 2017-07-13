@@ -339,6 +339,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// ListGraphs is the handler for GET /graphs
 	// List all graphs
 	ListGraphs(http.ResponseWriter, *http.Request)
+	// GetNodeStats is the handler for GET /nodes/{nodeid}/stats
+	// The aggregated stats of node
+	GetNodeStats(w http.ResponseWriter, r *http.Request)
 }
 
 // NodesInterfaceRoutes is routing for /nodes root endpoint
@@ -410,6 +413,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/processes", i.ListNodeProcesses).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/reboot", i.RebootNode).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/state", i.GetNodeState).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/stats", i.GetNodeStats).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/storagepools/{storagepoolname}/devices/{deviceuuid}", i.DeleteStoragePoolDevice).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/storagepools/{storagepoolname}/devices/{deviceuuid}", i.GetStoragePoolDeviceInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/storagepools/{storagepoolname}/devices", i.ListStoragePoolDevices).Methods("GET")

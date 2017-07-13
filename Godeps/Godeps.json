@@ -1,0 +1,6 @@
+{
+	"ImportPath": "github.com/zero-os/0-orchestrator",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v62",
+	"Deps": []
+}

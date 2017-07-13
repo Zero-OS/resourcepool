@@ -18,6 +18,8 @@ from .CoreSystem import CoreSystem
 from .CreateContainer import CreateContainer
 from .CreateSnapshotReqBody import CreateSnapshotReqBody
 from .DHCP import DHCP
+from .Dashboard import Dashboard
+from .DashboardListItem import DashboardListItem
 from .DeleteFile import DeleteFile
 from .DiskInfo import DiskInfo
 from .DiskPartition import DiskPartition
@@ -33,6 +35,7 @@ from .EnumContainerNICType import EnumContainerNICType
 from .EnumContainerStatus import EnumContainerStatus
 from .EnumDiskInfoType import EnumDiskInfoType
 from .EnumGWNICType import EnumGWNICType
+from .EnumGetGWStatus import EnumGetGWStatus
 from .EnumJobResultName import EnumJobResultName
 from .EnumJobResultState import EnumJobResultState
 from .EnumNicLinkType import EnumNicLinkType
@@ -62,6 +65,7 @@ from .GWHost import GWHost
 from .GWNIC import GWNIC
 from .GWNICconfig import GWNICconfig
 from .GetGW import GetGW
+from .Graph import Graph
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .IPProtocol import IPProtocol
@@ -78,8 +82,6 @@ from .OSInfo import OSInfo
 from .PortForward import PortForward
 from .Process import Process
 from .ProcessSignal import ProcessSignal
-from .Run import Run
-from .RunState import RunState
 from .Snapshot import Snapshot
 from .StoragePool import StoragePool
 from .StoragePoolCreate import StoragePoolCreate

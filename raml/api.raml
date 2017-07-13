@@ -49,6 +49,38 @@ types:
           body:
             application/json:
               type: Node
+
+    /stats:
+      get:
+        (DirectAccess):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        displayName: GetStats
+        description: Get all statskeys of the node
+        responses:
+          200:
+            body:
+              application/json:
+                example: {
+                  "disk.iops.read/sda": {
+                      "current": {
+                          "300": {
+                              "avg": 0.5148148148148148,
+                              "count": 9,
+                              "max": 2.1333333333333333,
+                              "start": 1499930100,
+                              "total": 4.633333333333334
+                          },
+                          "3600": {
+                              "avg": 0.11880341880341881,
+                              "count": 39,
+                              "max": 2.1333333333333333,
+                              "start": 1499929200,
+                              "total": 4.633333333333334
+                          }
+                      }
+                  }
+              }
+
     /jobs:
       description: List all jobs of this node
       get:

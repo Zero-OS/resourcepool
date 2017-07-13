@@ -15,12 +15,13 @@ class GWNIC(object):
     """
 
     @staticmethod
-    def create(id, name, type, config=None, dhcpserver=None, zerotierbridge=None):
+    def create(id, name, type, config=None, dhcpserver=None, token=None, zerotierbridge=None):
         """
         :type config: GWNICconfig
         :type dhcpserver: DHCP
         :type id: str
         :type name: str
+        :type token: str
         :type type: EnumGWNICType
         :type zerotierbridge: ZerotierBridge
         :rtype: GWNIC
@@ -31,6 +32,7 @@ class GWNIC(object):
             dhcpserver=dhcpserver,
             id=id,
             name=name,
+            token=token,
             type=type,
             zerotierbridge=zerotierbridge,
         )
@@ -84,6 +86,15 @@ class GWNIC(object):
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'token'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.token = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'type'
         val = data.get(property_name)
