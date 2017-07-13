@@ -41,7 +41,7 @@ git clone https://github.com/0-complexity/G8_testing
 ```
 #### Install requirements
 ```bash
-cd G8_testing/functional_testing/Grid_API_Testing/
+cd 0-orchestrator/tests/Grid_API_Testing/
 pip3 install -r requirements.txt
 ```
 #### Set your configrations
