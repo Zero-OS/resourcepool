@@ -5,5 +5,5 @@ configparser
 nose-testconfig
 nose
 git+https://github.com/gigforks/packet-python.git
-pip3 install git+https://github.com/zero-os/0-orchestrator.git#subdirectory=pyclient
-pip3 install git+https://github.com/zero-os/0-core.git#subdirectory=client/py-client
+git+https://github.com/zero-os/0-orchestrator.git#subdirectory=pyclient
+git+https://github.com/zero-os/0-core.git#subdirectory=client/py-client
