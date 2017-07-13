@@ -59,7 +59,7 @@ organization = #itsyouonline organization
 
 #### Run tests
 ```bash
-cd G8_testing/functional_testing/Grid_API_Testing/
+cd 0-orchestrator/tests/Grid_API_Testing/
 export PYTHONPATH=./
 nosetests -s -v api_testing/testcases --tc-file api_testing/config.ini
 ```
