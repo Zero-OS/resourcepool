@@ -37,11 +37,11 @@
 
 #### Clone this repo 
 ```bash
-git clone https://github.com/0-complexity/G8_testing
+git clone https://github.com/zero-os/0-orchestrator.git
 ```
 #### Install requirements
 ```bash
-cd G8_testing/functional_testing/Grid_API_Testing/
+cd 0-orchestrator/tests/Grid_API_Testing/
 pip3 install -r requirements.txt
 ```
 #### Set your configrations
