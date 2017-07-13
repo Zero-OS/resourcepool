@@ -84,6 +84,10 @@ def install(job):
     job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
     node.ensure_persistance(poolname)
+    
+    # Set host name 
+    node.client.system("hostname %s" % service.model.data.hostname).get()
+    node.client.bash("echo %s > /etc/hostname" % service.model.data.hostname).get()
 
     job.logger.info("configure networks")
     for network in service.producers.get('network', []):

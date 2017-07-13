@@ -198,6 +198,7 @@ def install(job):
 
     job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
+    job.service.saveAll()
 
 
 def start(job):
