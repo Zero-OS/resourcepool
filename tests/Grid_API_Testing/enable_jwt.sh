@@ -5,9 +5,9 @@ ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+
 VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $TRAVIS_BRANCH | wc -l)
 if [ $VL == 1 ]
 then
-  0CORE_BRANCH=$TRAVIS_BRANCH
+  CORE0_BRANCH=$TRAVIS_BRANCH
 else
-  0CORE_BRANCH=master
+  CORE0_BRANCH=master
 fi
 
 #Generate JWT
@@ -20,13 +20,14 @@ echo 'jwt --> '$jwt
 eval $jwt
 
 echo 'JWT='$JWT
-echo "jsversion="$JSVERSION
+echo "JSVERSION="$JSVERSION
+echo "CORE0_BRANCH="$CORE0_BRANCH
 
 cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
 configuration__main:
   configurations:
   - key: '0-core-version'
-    value: '${0CORE_BRANCH}'
+    value: '${CORE0_BRANCH}'
   - key: 'js-version'
     value: '${JSVERSION}'
   - key: 'gw-flist'
