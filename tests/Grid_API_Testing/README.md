@@ -37,7 +37,7 @@
 
 #### Clone this repo 
 ```bash
-git clone https://github.com/0-complexity/G8_testing
+git clone https://github.com/zero-os/0-orchestrator.git
 ```
 #### Install requirements
 ```bash
