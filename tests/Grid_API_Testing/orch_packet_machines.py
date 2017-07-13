@@ -39,7 +39,7 @@ def delete_devices(manager):
 
 
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
-    hostname = 'orch{}'.format(randint(100, 300))
+    hostname = 'orch{}_auto'.format(randint(100, 300))
     try:
         device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
     except:
