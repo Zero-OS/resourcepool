@@ -2,32 +2,45 @@
 
 The Zero-OS Orchestrator exposes all the RESTful APIs to manage the Zero-OS cluster.
 
-This [link](https://htmlpreviewer.github.io/?./raml/api.html) shows all the available RESTful API endpoints exposed by the Zero-OS Orchestrator and the different calls that can be done on each endpoint along with the expected request body and response.
+![](images/interacting.png)
 
-The APIs are split into two categories:
+See [Zero-OS Orchstrator RESTful API docuementation](https://htmlpreviewer.github.io/?../../raml/api.html) for all the available RESTful API endpoints exposed by the Zero-OS Orchestrator.
 
-- APIs that use **Direct Access** to return data/perform actions: this is done by using the [Go Client](https://github.com/g8os/go-client) of core0 to directly talk to the nodes and containers
-- APIs that use **AYS** to return data/perform actions: this is done by using the [AYS API](https://htmlpreviewer.github.io/?https://raw.githubusercontent.com/Jumpscale/jumpscale_core8/8.2.0/specs/ays_api.html) to contact the AYS server
+For each of the methods you'll see the expected request body and response, e.g. for the `ping` method:
 
-The following are some examples on how to use the RESTful API:
+![](images/ping.png)
 
-- [List core0 nodes](#list-nodes)
-- [Get memory information of a node](#memory-info)
-- [Reboot a node](#reboot-node)
-- [List containers of node](#list-containers)
-- [Create a new container](#create-container)
-- [List jobs on a container](#list-jobs)
-- [Kill a job](#kill-job)
-- [List processes on a container](#list-processes)
-- [Start a process on a container](#start-process)
+On the security tab you'll see that API is secured by ItsYou.online:
 
-In all below examples we will assume that the Zero-OS Orchestrator is listening on 127.0.0.1:8080.
+![](images/security.png)
 
-<a id="list-nodes"></a>
-## List nodes
+The ItsYou.online integration is enabled as part of a typical Zero-OS cluster setup, as documented in [Setup a Zero-OS Cluster](../setup/README.md).
 
-Using the Zero-OS Orchestrator listening on 127.0.0.1:8080:
+Interacting with the RESTful APIs of both the AYS server and the Orchestrator require the same JWT.
+
+> For more information on how to configure AYS see [AYS Configuration](https://github.com/Jumpscale/ays9/blob/master/docs/configuration.md).
+
+The API will only accept JWTs that are valid for maximum 1 hour (3600 seconds). This is to make sure that users that have been  removed from an ItsYou.online organization lose their access as fast as possible. Otherwise the API will reject the token (440) due to having an expiration date that is too late.
+
+Creating a JWT can be done using the AYS command line tool:
+```bash
+ays generatetoken --clientid '{CLIENT_ID}' --clientsecret '{CLIENT_SECRET}' --organization '$ITSYOUONLINEORG' --validity 3600
 ```
+
+Alternativelly you can also generate the JWT using the Zero-OS Python client:
+```python
+from zeroos.orchestrator.client import oauth2_client_itsyouonline
+
+cls = oauth2_client_itsyouonline.Oauth2ClientItsyouonline() # this class can take different urls to authenticate with but defaults to https://itsyou.online/v1/oauth/access_token?response_type=id_token
+
+response = cls.get_access_token(<client id>, <client secret>, scopes=['user:memberof:<organization name>'], audiences=[]) # at the moment only the scope type organization:memberof:<organization_name> is supported
+
+print(response.content)
+```
+
+To use the token in the HTTP requests pass it as follows:
+```
+Authorization: Bearer <**JWT**>
 GET http://127.0.0.1:8080/nodes
 ```
 
@@ -42,13 +55,60 @@ Response:
 ]
 ```
 
+To pass the JWT using the Python client :
+```python
+from zeroos.orchestrator.client import APIClient
+
+test = APIClient("<orchestrator ip >:5000")
+test.set_auth_header("Bearer <JWT token>")
+```
+
+The following are some examples on how to use the RESTful API:
+
+- [List all Zero-OS nodes](#list-nodes)
+- [Get memory information of a node](#memory-info)
+- [Reboot a node](#reboot-node)
+- [List containers of node](#list-containers)
+- [Create a new container](#create-container)
+- [List jobs on a container](#list-jobs)
+- [Kill a job](#kill-job)
+- [List processes on a container](#list-processes)
+- [Start a process on a container](#start-process)
+
+In all below examples we will assume that the Zero-OS Orchestrator is listening on 127.0.0.1:8080.
+
+<a id="list-nodes"></a>
+## List all Zero-OS nodes
+
+Using the Zero-OS Orchestrator listening on 127.0.0.1:8080:
+```
+GET http://127.0.0.1:8080/nodes
+```
+
+Response:
+```json
+[
+	{
+		"hostname": "cpu-05",
+		"id": "0cc47aab6702",
+		"ipaddress": "10.147.19.18",
+		"status": "running"
+	},
+	{
+		"hostname": "cpu-10",
+		"id": "0cc47a3b3d6a",
+		"ipaddress": "10.147.19.31",
+		"status": "running"
+	}
+]
+```
 
 <a id="memory-info"></a>
 ## Get memory information of a node
 
-For node 525400123456:
+For node 0cc47aab6702:
 ```
-GET http://127.0.0.1:8080/nodes/525400123456/mem
+GET http://127.0.0.1:8080/nodes/0cc47aab6702/mem
 ```
 
 Response:
@@ -231,57 +291,3 @@ Payload:
 ```
 
 Response: `202 Accepted`
-
-
-There is also support for JWT tokens , in this case we use itsyou.online ( **IYO** ) to provide the token,  
-To enable JWT authentication , both AYS server and the 0-orchestrator must be running with JWT auth enabled.
- - The documnetation for doing that in ays is available [here](https://github.com/Jumpscale/ays9/blob/master/doc/configuration.md).  
- - As for the api the organization name is passed through --org flag , or passed as the last param to the install develop param
-This flag allows us to add an **IYO** organization
-to authorize and authenticate with.If the falg is not used orchestrator will not require JWT on requests.
-
-
-
-
-To generate the token the 0-orchestrator , the pyclient has provided an easy wrapper around the request that is used:
-```python
-from zeroos.orchestrator.client import oauth2_client_itsyouonline
-
-cls = oauth2_client_itsyouonline.Oauth2ClientItsyouonline() # this class can take different urls to authenticate with but defaults to https://itsyou.online/v1/oauth/access_token?response_type=id_token
-
-response = cls.get_access_token(<client id>, <client secret>, scopes=['user:memberof:<organization name>'], audiences=[]) # at the moment only the scope type organization:memberof:<organization_name> is supported
-
-print(response.content)
-```
-
-> If you going to generate the JWT token using other means, make sure you set the validity of the token to maximum of 1 hour (3600 seconds)
-other wise the api will reject the token (440) due to having very long expiration date. This is make sure
-users that has been taken out of itsyou.online organization loses their access as fast as possible.
-
-To use the token from the previous steps in the http requests it is passed as follows:
-Using the header,
-```
-Authorization: Bearer <**JWT**>
-
-GET http://127.0.0.1:8080/nodes
-```  
-Response:
-
-```json
-[
- {
-   "hostname": "core0node",
-   "id": "525400123456",
-   "status": "running"
- }
-]
-```
-
-To pass the JWT using the python client :
-
-```python
-from zeroos.orchestrator.client import APIClient
-
-test = APIClient("<orchestrator ip >:5000")
-test.set_auth_header("Bearer <JWT token>")
-```
