@@ -15,7 +15,7 @@ def bootstrap(job):
     service = job.service
     token = service.model.data.zerotierToken
     netid = service.model.data.zerotierNetID
-
+    
     zerotier = client.Client()
     zerotier.set_auth_header('bearer {}'.format(token))
 
@@ -82,6 +82,22 @@ def try_authorize(job, logger, netid, member, zerotier):
         resp = zerotier.network.getMember(member['nodeId'], netid)
         member = resp.json()
     zerotier_ip = member['config']['ipAssignments'][0]
+
+    # execute hardwarecheck if necessary
+    hwc_producers=service.producers.get('hardwarecheck')
+    if hwc_producers != None:
+        logger.info("Hardware check necessary")
+        hwcheck_job=hwc_producers[0].getJob('check', args={'ipaddr': zerotier_ip,
+                                                       'node_id': member['nodeId'],
+                                                       'jwt': get_jwt_token(service.aysrepo)})
+        j.tools.async.wrappers.sync(hwcheck_job.execute())
+
+    # execute odoo registration if necessary
+    odoo_producers=service.producers.get('odooregistration')
+    if odoo_producers != None:
+        logger.info("Odoo registration necessary")
+        odoo_job=odoo_producers[0].getJob('register', args={'node_id': member['nodeId']})
+        j.tools.async.wrappers.sync(odoo_job.execute())
 
     # test if we can connect to the new member
     node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))

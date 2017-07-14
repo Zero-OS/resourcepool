@@ -10,6 +10,16 @@ links:
       argname: networks
       min: 0
       max: 9999
+    - auto: false
+      role: hardwarecheck
+      argname: hardwarecheck
+      min: 0
+      max: 1
+    - auto: false
+      role: odooregistration
+      argname: odooregistration
+      min: 0
+      max: 1
 
 recurring:
   - action: bootstrap
