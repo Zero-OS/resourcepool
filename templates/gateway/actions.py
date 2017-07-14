@@ -68,6 +68,7 @@ def init(job):
         'nics': nics,
         'hostname': service.model.data.hostname,
         'hostNetworking': False,
+        "privileged": True
     }
     cont_service = containeractor.serviceCreate(instance=service.name, args=args)
     service.consume(cont_service)
@@ -166,6 +167,8 @@ def start(job):
     # setup zerotiers bridges
     containerobj = Container.from_ays(container, job.context['token'])
     nics = service.model.data.to_dict()['nics']  # get dict version of nics
+    # setup resolv.conf
+    containerobj.upload_content('/etc/resolv.conf', 'nameserver 127.0.0.1\n') 
 
     def get_zerotier_nic(zerotierid):
         for zt in containerobj.client.zerotier.list():
@@ -245,8 +248,8 @@ def start(job):
     firewall = container.consumers.get('firewall')[0]
 
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
     j.tools.async.wrappers.sync(dhcp.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
     j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
     j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
     service.model.data.status = "running"
