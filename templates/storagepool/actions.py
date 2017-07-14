@@ -12,6 +12,7 @@ def install(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
     pservice = service.parent
+
     node = Node.from_ays(pservice, job.context['token'])
 
     devices = [d.device for d in service.model.data.devices]

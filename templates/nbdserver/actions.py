@@ -34,7 +34,7 @@ def install(job):
     service = job.service
 
     tlog = False
-    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
@@ -42,8 +42,8 @@ def install(job):
         'vdisks': {},
     }
 
-    socketpath = '/server.socket.{id}'.format(id=service.name)
-    configpath = "/nbd_{}.config".format(service.name)
+    socketpath = '/server.socket.{id}'.format(id=vm.name)
+    configpath = "/nbd_{}.config".format(vm.name)
 
     for vdiskservice in vdisks:
         if vdiskservice.model.data.tlogStoragecluster:
@@ -101,7 +101,7 @@ def install(job):
 
     if not is_job_running(container):
         if tlog:
-            tlogservice = service.aysrepo.serviceGet(role='tlogserver', instance=service.name)
+            tlogservice = service.aysrepo.serviceGet(role='tlogserver', instance=vm.name)
             tlogip = tlogservice.model.data.bind.split(':')
             cmd = '/bin/nbdserver \
                 -protocol unix \
@@ -125,7 +125,7 @@ def install(job):
                 break
             time.sleep(0.2)
         else:
-            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
+            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
         # make sure nbd is still running
         running = is_job_running(container)
         for vdisk in vdisks:
@@ -133,7 +133,7 @@ def install(job):
                 vdisk.model.data.status = 'running'
                 vdisk.saveAll()
         if not running:
-            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(service.name))
+            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
     else:
         # send a siganl sigub(1) to reload the config in case it was changed.
         import signal
@@ -161,7 +161,7 @@ def stop(job):
     service = job.service
     container = get_container(service, job.context['token'])
 
-    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
 
     # Delete tmp vdisks
@@ -193,8 +193,7 @@ def monitor(job):
 
     if str(service.parent.model.data.status) != 'running':
         return
-
-    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, get_jwt_token(job.service.aysrepo))
     running = is_job_running(container)

@@ -1,56 +1,55 @@
 """
-Auto-generated class for Run
+Auto-generated class for Graph
 """
-from .RunState import RunState
 
 from . import client_support
 
 
-class Run(object):
+class Graph(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(runid, state):
+    def create(id, url):
         """
-        :type runid: str
-        :type state: RunState
-        :rtype: Run
+        :type id: str
+        :type url: str
+        :rtype: Graph
         """
 
-        return Run(
-            runid=runid,
-            state=state,
+        return Graph(
+            id=id,
+            url=url,
         )
 
     def __init__(self, json=None, **kwargs):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'Run'
+        class_name = 'Graph'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'runid'
+        property_name = 'id'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.runid = client_support.val_factory(val, datatypes)
+                self.id = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'state'
+        property_name = 'url'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [RunState]
+            datatypes = [str]
             try:
-                self.state = client_support.val_factory(val, datatypes)
+                self.url = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

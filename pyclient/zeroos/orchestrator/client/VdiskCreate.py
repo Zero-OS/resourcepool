@@ -12,8 +12,9 @@ class VdiskCreate(object):
     """
 
     @staticmethod
-    def create(blocksize, id, size, storagecluster, type, readOnly=None, templatevdisk=None, tlogStoragecluster=None):
+    def create(blocksize, id, size, storagecluster, type, backupStoragecluster=None, readOnly=None, templatevdisk=None, tlogStoragecluster=None):
         """
+        :type backupStoragecluster: str
         :type blocksize: int
         :type id: str
         :type readOnly: bool
@@ -26,6 +27,7 @@ class VdiskCreate(object):
         """
 
         return VdiskCreate(
+            backupStoragecluster=backupStoragecluster,
             blocksize=blocksize,
             id=id,
             readOnly=readOnly,
@@ -45,6 +47,15 @@ class VdiskCreate(object):
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
+
+        property_name = 'backupStoragecluster'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.backupStoragecluster = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'blocksize'
         val = data.get(property_name)
