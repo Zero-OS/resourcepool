@@ -10,40 +10,35 @@ class StoragepoolsAPI(GridPyclientBase):
             response = self.api_client.nodes.ListStoragePools(nodeid=nodeid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def post_storagepools(self, nodeid, data):
         try:
             response = self.api_client.nodes.CreateStoragePool(nodeid=nodeid, data=data)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def get_storagepools_storagepoolname(self, nodeid, storagepoolname):
         try:
             response = self.api_client.nodes.GetStoragePoolInfo(nodeid=nodeid, storagepoolname=storagepoolname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def delete_storagepools_storagepoolname(self, nodeid, storagepoolname):
         try:
             response = self.api_client.nodes.DeleteStoragePool(nodeid=nodeid, storagepoolname=storagepoolname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def get_storagepools_storagepoolname_devices(self, nodeid, storagepoolname):
         try:
             response = self.api_client.nodes.ListStoragePoolDevices(nodeid=nodeid, storagepoolname=storagepoolname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def post_storagepools_storagepoolname_devices(self, nodeid, storagepoolname, data):
         try:
@@ -51,8 +46,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                      data=data)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def get_storagepools_storagepoolname_devices_deviceid(self, nodeid, storagepoolname, deviceuuid):
         try:
@@ -60,8 +54,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                      deviceuuid=deviceuuid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def delete_storagepools_storagepoolname_devices_deviceid(self, nodeid, storagepoolname, deviceuuid):
         try:
@@ -69,24 +62,21 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                     deviceuuid=deviceuuid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
     
     def get_storagepools_storagepoolname_filesystems(self, nodeid, storagepoolname):
         try:
             response = self.api_client.nodes.ListFilesystems(nodeid=nodeid, storagepoolname=storagepoolname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def post_storagepools_storagepoolname_filesystems(self, nodeid, storagepoolname, data):
         try:
             response = self.api_client.nodes.CreateFilesystem(nodeid=nodeid, storagepoolname=storagepoolname, data=data)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def get_storagepools_storagepoolname_filesystems_filesystemname(self, nodeid, storagepoolname, filesystemname):  
         try:
@@ -94,8 +84,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                           filesystemname=filesystemname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def delete_storagepools_storagepoolname_filesystems_filesystemname(self, nodeid, storagepoolname, filesystemname):
         try:
@@ -103,8 +92,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                              filesystemname=filesystemname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
 
     def get_filesystem_snapshots(self, nodeid, storagepoolname, filesystemname):
@@ -113,8 +101,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                     filesystemname=filesystemname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def post_filesystems_snapshots(self, nodeid, storagepoolname, filesystemname, data):
         try:
@@ -123,8 +110,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                            data=data)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
 
     def get_filesystem_snapshots_snapshotname(self, nodeid, storagepoolname, filesystemname, snapshotname):
@@ -134,8 +120,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                       snapshotname=snapshotname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def delete_filesystem_snapshots_snapshotname(self, nodeid, storagepoolname, filesystemname, snapshotname):
         try:
@@ -144,8 +129,7 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                      snapshotname=snapshotname)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
 
     def post_filesystem_snapshots_snapshotname_rollback(self, nodeid, storagepoolname, filesystemname, snapshotname, data):
@@ -156,5 +140,4 @@ class StoragepoolsAPI(GridPyclientBase):
                                                                                        data=data)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response

@@ -16,4 +16,7 @@ class GridPyclientBase(object):
     def get_jwt(self):
         auth = apiclient.oauth2_client_itsyouonline.Oauth2ClientItsyouonline()
         response = auth.get_access_token(client_id, client_secret, scopes=['user:memberof:%s' % organization], audiences=[])
-        return response.content.decode('utf-8')
+        if response.status_code == 200:
+            return response.content.decode('utf-8')
+        else:
+            raise RuntimeError('Cannot generate jwt. Error:{error}'.format(error=response.content))
