@@ -1,0 +1,5 @@
+links:
+  parent:
+    role: container
+    auto: false
+    optional: false
