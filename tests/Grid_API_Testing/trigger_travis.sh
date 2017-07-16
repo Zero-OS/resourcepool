@@ -20,7 +20,7 @@ body='{
   ],
   "python": 3.5,
   "script": [
-    "bash tests/Grid_API_Testing/run_tests.sh run"
+    "bash -x tests/Grid_API_Testing/run_tests.sh run"
   ],
   "os": "linux"
 }}
