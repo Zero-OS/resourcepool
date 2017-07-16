@@ -16,12 +16,17 @@
 
 ##### To trigger a manual build using travis, use one of the following ways:
 
-1- Using Travis Dashboard
+1- Travis Dashboard
 - Go to [travis-beta-features](https://travis-ci.org/features), and enable the the Dashboard option then a click on the Travis CI logo at the top gets you there!
 - Once you are there, you can trigger a manual build as shown in figure. This build is triggered from the default branch
 ![](pics/dashboard-repo.png)
 
-2- Using trigger_travis.sh script
+2- CI-dashboard tool
+- Please find all needed steps [here](https://github.com/ahmedelsayed-93/ci-dashboard) to launch your dashboard.
+- The nice about this tool that it can give you all Travis Dashboard options plus some nice options. For instance you can trigger the build from any branch. 
+- Also it gives you a nicer clear view of the status of your repos.
+   
+3- trigger_travis.sh script
 - The advantage of this script is that the build can be triggered from any branch. Here is the script [trigger_travis](trigger_travis.sh)
 - For this script to work, a travis token need to be provided. To generate token, you need to install line command travis client [travis-client](https://github.com/travis-ci/travis.rb#installation), then use these commands:
     ```
