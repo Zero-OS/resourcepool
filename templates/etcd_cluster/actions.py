@@ -52,7 +52,12 @@ def init(job):
         etcd_service.consume(tcps[0])
         etcd_service.consume(tcps[1])
         service.consume(etcd_service)
+
+
+def install(job):
+    service = job.service
     service.model.data.status = "running"
+    service.saveAll()
 
 
 def get_baseports(job, node, baseport, nrports):
