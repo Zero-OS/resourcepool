@@ -11,6 +11,8 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
       cd tests/Grid_API_Testing; python3 orch_packet_machines.py create $PACKET_TOKEN $ZT_NET_ID $ITSYOUONLINE_ORG $TRAVIS_BRANCH
    elif [ "$point" == "run" ]
     then
+      echo "sleeping 500"
+      sleep 500
       echo "Running tests .."
       cd tests/Grid_API_Testing/
       export PYTHONPATH='./'
