@@ -1,6 +1,7 @@
 import requests
 
 from .graphs_service import GraphsService 
+from .health_service import HealthService 
 from .nodes_service import NodesService 
 from .storageclusters_service import StorageclustersService 
 from .vdisks_service import VdisksService 
@@ -12,6 +13,7 @@ class Client:
         self.session = requests.Session()
         
         self.graphs = GraphsService(self)
+        self.health = HealthService(self)
         self.nodes = NodesService(self)
         self.storageclusters = StorageclustersService(self)
         self.vdisks = VdisksService(self)
