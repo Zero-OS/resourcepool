@@ -45,9 +45,11 @@ def configure(job):
         container_client.json('ovs.bridge-add', {"bridge": "backplane"})
         container_client.json('ovs.port-add', {"bridge": "backplane", "port": interface, "vlan": 0})
         node.client.system('ip address add {storageaddr} dev backplane'.format(**addresses)).get()
+        node.client.system('ip link set dev {} mtu 2000'.format(interface)).get()
         node.client.system('ip link set dev backplane up').get()
     if 'vxbackend' not in nicmap:
         container_client.json(
             'ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
         node.client.system('ip address add {vxaddr} dev vxbackend'.format(**addresses)).get()
+        node.client.system('ip link set dev vxbackend mtu 2000').get()
         node.client.system('ip link set dev vxbackend up').get()

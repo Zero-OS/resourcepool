@@ -165,6 +165,27 @@ class Container:
         containerid = job.get(timeout)
         self._client = self.node.client.container.client(containerid)
 
+    def is_job_running(self, cmd):
+        try:
+            for job in self._client.job.list():
+                arguments = job['cmd']['arguments']
+                if 'name' in arguments and arguments['name'] == cmd:
+                    return job
+            return False
+        except Exception as err:
+            if str(err).find("invalid container id"):
+                return False
+            raise
+
+    def is_port_listening(self, port, timeout=60):
+        import time
+        start = time.time()
+        while start + timeout > time.time():
+            if port not in self.node.freeports(port, nrports=3):
+                return True
+            time.sleep(0.2)
+        return False
+
     def start(self):
         if not self.is_running():
             logger.debug("start %s", self)

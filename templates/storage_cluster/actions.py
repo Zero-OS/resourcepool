@@ -31,7 +31,6 @@ def get_cluster(job):
 
 
 def init(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Node import Node
 
@@ -190,7 +189,7 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def install(job):
-    dashboardsrv = dashboard_actor = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
+    dashboardsrv = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
     if dashboardsrv:
         cluster = get_cluster(job)
         dashboardsrv.model.data.dashboard = cluster.dashboard
