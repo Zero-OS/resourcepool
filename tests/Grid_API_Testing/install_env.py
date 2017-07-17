@@ -1,7 +1,3 @@
-echo "getting machine ip.."
-ip a
-echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDh9OvsqboBV1AHblyiLEWKeH6bfC+/MPmsKDAk+9XkFrAC9b2VGmQrIlTg1Su+R9IOWrueywxbtd5GdWHJkC1+2SUlxm2ALWThyNg88MWogHgmR9CDlxr9cCMFyhOkFpIGLfiD/ZKYLqP43a8edxnEEx/PB4O4Utn9zkw6Dp7AFXki6tCJWJkT12AVS1mk8Ii/uRUbKQyxnuy5rSzNMcDyV/i/r7qdg7K5eys4B3VmsdN7y9l9H6p4VHAHALkuyYHrVJNMp/wPVZyd99h7iCB9LnXkFhPw/t6o4R7/2czXTBTxuUbvkxvEFqdNHuDQ0bhF+YuWHzarixKwVA68b4EZ john@john-Inspiron-5423 >> ~/.ssh/authorized_keys
-
 
 branch=$1
 zerotierid=$2
