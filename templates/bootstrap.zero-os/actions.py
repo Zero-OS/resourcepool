@@ -97,6 +97,11 @@ def try_authorize(job, logger, netid, member, zerotier):
     else:
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
 
+    # connection succeeded, set the hostname of the node to zerotier member
+    member['name'] = node.name
+    member['description'] = node.client.info.os().get('hostname', '')
+    zerotier.network.updateMember(member, member['nodeId'], netid)
+
     # create node.zero-os service
     name = node.name
     try:
