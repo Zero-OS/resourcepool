@@ -11,16 +11,14 @@ class BridgesAPI(GridPyclientBase):
             response = self.api_client.nodes.ListBridges(nodeid=nodeid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def get_nodes_bridges_bridgeid(self, nodeid, bridgeid):
         try:
             response = self.api_client.nodes.GetBridge(nodeid=nodeid, bridgeid=bridgeid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def post_nodes_bridges(self, nodeid, data):
         try:
@@ -29,13 +27,11 @@ class BridgesAPI(GridPyclientBase):
                 self.createdbridges.append({"node": nodeid, "name": data["name"]})
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response
 
     def delete_nodes_bridges_bridgeid(self, nodeid, bridgeid):
         try:
             response = self.api_client.nodes.DeleteBridge(nodeid=nodeid, bridgeid=bridgeid)
         except HTTPError as e:
             response = e.response
-        finally:
-            return response
+        return response

@@ -49,7 +49,8 @@ class TestcasesBase(TestCase):
         pass
 
     def get_random_node(self, except_node=None):
-        response = self.nodes_api.get_nodes()
+        node_apis = NodesAPI()
+        response = node_apis.get_nodes()
         self.assertEqual(response.status_code, 200)
         nodes_list = [x['id'] for x in response.json() if x['status']=='running']
         if nodes_list:
@@ -59,6 +60,9 @@ class TestcasesBase(TestCase):
         if len(nodes_list) > 0:
             node_id = nodes_list[randint(0, len(nodes_list)-1)]
             return node_id
+        else:
+            self.skipTest('no nodes available')
+
 
     def random_string(self, size=10):
         return str(uuid.uuid4()).replace('-', '')[:size]
