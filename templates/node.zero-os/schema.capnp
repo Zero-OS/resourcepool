@@ -24,5 +24,4 @@ struct Schema {
       status @3: Text;
       message @4: Text;
     }
-
 }

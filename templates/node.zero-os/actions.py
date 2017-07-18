@@ -103,9 +103,10 @@ def install(job):
 
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
     service = job.service
+    config = get_configuration(service.aysrepo)
     token = get_jwt_token(job.service.aysrepo)
     if service.model.actionsState['install'] != 'ok':
         return
@@ -143,7 +144,26 @@ def monitor(job):
                 'start', context=job.context))
     else:
         service.model.data.status = 'halted'
+
+    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/deboeckj/js9container.flist')
+    with node.healthcheck.with_container(flist) as cont:
+        update_healthcheck(service, node.healthcheck.run(cont, 'openfiledescriptors'))
+
     service.saveAll()
+
+
+def update_healthcheck(service, messages):
+    for message in messages:
+        health = None
+        for health in service.model.data.healthchecks:
+            if health.id == message['id']:
+                health.name = message['name']
+                health.status = message['status']
+                health.message = message['message']
+                break
+        else:
+            service.model.data.healthchecks = list(service.model.data.healthchecks) + [message]
+
 
 
 def reboot(job):
