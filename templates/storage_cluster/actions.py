@@ -71,7 +71,8 @@ def init(job):
             'devices': diskmap
         }
         storagepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, disk.name)
-        spactor.serviceCreate(instance=storagepoolname, args=args)
+        spservice = spactor.serviceCreate(instance=storagepoolname, args=args)
+        service.consume(spservice)
         containername = '{}_{}_{}'.format(storagepoolname, variant, baseport)
         # adding filesystem
         args = {
@@ -120,6 +121,19 @@ def init(job):
         service.consume(storageEngine)
         service.model.data.storageEngines[index] = storageEngine.name
 
+    grafanasrv = service.aysrepo.serviceGet(role='grafana', instance='statsdb', die=False)
+    if grafanasrv:
+        import json
+        from zeroos.orchestrator.sal.StorageCluster import StorageDashboard
+        board = StorageDashboard(service).dashboard_template()
+        board = json.dumps(board)
+        dashboard_actor = service.aysrepo.actorGet('dashboard')
+        args = {
+            'grafana': 'statsdb',
+            'dashboard': board
+        }
+        dashboardsrv = dashboard_actor.serviceCreate(instance=service.name, args=args)
+        service.consume(dashboardsrv)
     job.service.model.data.status = 'empty'
 
 
@@ -175,8 +189,15 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def install(job):
+    dashboardsrv = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
+    if dashboardsrv:
+        cluster = get_cluster(job)
+        dashboardsrv.model.data.dashboard = cluster.dashboard
+        j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
+
     job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
+    job.service.saveAll()
 
 
 def start(job):
@@ -198,17 +219,19 @@ def stop(job):
 def delete(job):
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
-    filesystems = service.producers.get('filesystem', [])
+    pools = service.producers.get('storagepool', [])
 
     for storageEngine in storageEngines:
+        tcps = storageEngine.producers.get('tcp', [])
+        for tcp in tcps:
+            j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
+            j.tools.async.wrappers.sync(tcp.delete())
+
         container = storageEngine.parent
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
-    for fs in filesystems:
-        if not fs.parent:
-            continue
-        pool = fs.parent
+    for pool in pools:
         j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
         j.tools.async.wrappers.sync(pool.delete())
 

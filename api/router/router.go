@@ -13,6 +13,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/vdisk"
+	"github.com/zero-os/0-orchestrator/api/healthcheck"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -44,12 +45,15 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, tools.ConnectionMiddleware(), LoggingMiddleware)
 
 	r.PathPrefix("/nodes").Handler(apihandler)
+	r.PathPrefix("/graphs").Handler(apihandler)
 	r.PathPrefix("/vdisks").Handler(apihandler)
 	r.PathPrefix("/storageclusters").Handler(apihandler)
+	r.PathPrefix("/health").Handler(apihandler)
 
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
+	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL), org)
 
 	return r
 }

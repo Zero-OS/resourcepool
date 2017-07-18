@@ -4,19 +4,35 @@ This is the recommended and currently the only supported option to setup a Zero-
 
 In order to have a full Zero-OS cluster you'll need to perform the following steps:
 1. [Create a JumpScale9 Docker container](#create-a-jumpscale9-docker-container)
-2. [Install the Zero-OS Orchestrator into the Docker container](#install-the-orchestrator)
-3. [Setup the AYS Configuration service](#setup-the-ays-configuration-service)
-4. [Setup the backplane network](#setup-the-backplane-network)
-5. [Setup the AYS Bootstrap service](#setup-the-bootstrap-service)
-6. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
-7. [Setup Statistics Monitoring](#setup-statistics-monitoring)
+2. [ItsYou.online preparation](#itsyou.online-preparation)
+3. [Install the Zero-OS Orchestrator](#install-the-orchestrator)
+4. [Create a JWT](#create-the-jwt)
+5. [Start the AYS Configuration service](#start-the-ays-configuration-service)
+6. [Setup the backplane network](#setup-the-backplane-network)
+7. [Setup the AYS Bootstrap service](#start-the-bootstrap-service)
+8. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
+9. [Setup Statistics Monitoring](#setup-statistics-monitoring)
+
 
 ## Create a JumpScale9 Docker container
 
 Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
-> **Important:** Make sure you set the `GIGBRANCH` environment variable to 9.0.0 before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
+> **Important:** Make sure you set the `GIGBRANCH` environment variable to **master** before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
 
 > **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires libraries.
+
+
+## ItsYou.online preparation
+
+If not already done so, first register on https://www.ItsYou.online.
+
+Once registered create an API key:
+
+![](images/itsyou.png)
+
+And then create an ItsYou.online organization:
+
+![](images/itsyou2.png)
 
 
 ## Install the Orchestrator
@@ -55,17 +71,35 @@ tail -f /tmp/install.log
 - The ZeroTier network needs to be a private network
 - The script will wait until you authorize your JumpScale9 Docker container into the network
 
-
-## Setup the AYS configuration service
-
-### Create a JWT token for the AYS CLI and configuration service:
-Since AYS is protected with JWT, you have to generate a token so the AYS CLI can authenticate to AYS server.
-The CLI provide and easy way to do it:
-```shell
-ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization "$ITSYOUONLINEORG" --validity 3600
+Once installed a new TMUX session will have been created, in order to attach to it execute:
+```bash
+tmux at
 ```
-CLIENT_ID AND CLIENT_SECRET have to be generated on [Itsyou.online](https://itsyou.online)
-From the website, go to your settings, in the `API Keys` panel, generate a new id/secret pair.
+
+![](images/tmux.png)
+
+You'll see three TMUX session windows, one for each of the following processes:
+- AYS Server
+- Orchestrator
+- Caddy Server, for SSL offloading
+
+You can switch between the TMUX session windows using `CTRL-B` and then `0`, `1` or `3`.
+
+In order to detach for the TMUX session use `CTRL-B` and then `d`.
+
+## Create a JWT
+
+As a preparation to the next step, which requires using the AYS command line tool, we need to create a JSON Web token (JWT).
+
+Since AYS is protected with a JWT, you have to generate a JWT token so the AYS command line tool can authenticate against the AYS server.
+
+The AYS command line tool provides and easy way to do it:
+
+```shell
+ays generatetoken --clientid {CLIENT_ID} --clientsecret {CLIENT_SECRET} --organization $ITSYOUONLINEORG --validity 3600
+```
+
+`CLIENT_ID` AND `CLIENT_SECRET` have to be generated on [ItsYou.online](https://itsyou.online), as discused above.
 
 This command will output something like:
 ```shell
@@ -73,9 +107,11 @@ This command will output something like:
 export JWT='eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCJ9.eyJhenAiOiJLa0Y0c3IyUll4cXVYWTZlWjVtMWtic0dTbVJRIiwiZXhwIjoxNDk4MTM0MDMyLCJpc3MiOiJpdHN5b3VvbmxpbmUiLCJyZWZyZXNoX3Rva2VuIjoiU2xxLWVfY9ktSjBEalRDbmZPNzA1SDN1ZFN5UyIsInNjb3BlIjpbInVzZXI6bWVtYmVyb2Y6Z3JlZW5pdGdsb2JlLmVudmlyb25tZW50cy5iZS1nOC0zIl0sInVzZXJuYW1lIjoiemFpYm9uIn0.sKVUHPxSb6rxOMx1DKV8w0T0dpyuMya4fBgOV66VFl6-R4p53crvSkHidXRjsKbgbyxV2stsbxV67mo5JPvRN9uaf-pnJ9cXxs74lSq8OoFwre6aG9pG0JPmVt9uMy56'
 ```
 
-copy the export and execute it in your terminal. This will allow the AYS CLI to be authenticate from now one.
+Copy the export statetement and execute it in your terminal. This will allow the AYS command line tool to be authenticate against the AYS RESTful API from now one.
 
-### Configuration
+
+## Start the AYS Configuration service
+
 In order for the Orchestrator to know which flists and version of JumpScale to use, and which Zero-OS version is required on the nodes, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
 
 ```yaml
@@ -84,7 +120,7 @@ configuration__main:
   - key: '0-core-version'
     value: 'master'
   - key: 'js-version'
-    value: '9.0.3'
+    value: 'master'
   - key: 'gw-flist'
     value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-master.flist'
   - key: 'ovs-flist'
@@ -128,7 +164,7 @@ network.switchless__storage:
 ```
 > **Important:** Change the vlanTag and the cidr according to the needs of your environment.
 
-See [Switchless Setup](switchless.md) for instructions on how to interconnect the nodes in case there is no Gigabit Ethernet switch.
+See [Switchless Setup](images/switchless.md) for instructions on how to interconnect the nodes in case there is no Gigabit Ethernet switch.
 
 ### Packet.net setup
 
@@ -142,7 +178,7 @@ cd /optvar/cockpit_repos/orchestrator-server
 ays blueprint network.bp
 ```
 
-## Setup the Bootstrap service
+## Start the AYS Bootstrap service
 
 Then we need to update the bootstrap service so that it deploys the storage network when bootstrapping the nodes. The bootstrap service also authorizes ZeroTier join requests form Zero-OS nodes if they meet the conditions as set in the Configuration blueprint.
 
@@ -165,19 +201,22 @@ ays run create -y
 ```
 
 ## Boot your Zero-OS nodes
-The final step of rounding up your Zero-OS cluster is to boot your Zero-OS nodes in to your ZeroTier network.
+
+The final step is to boot your Zero-OS nodes into your ZeroTier network.
 
 Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
 Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
-Refer to the 0-core repository documentation for more information on booting Zero-OS.
+See to the [0-core documentation](https://github.com/zero-os/0-core/blob/master/docs/booting) for more information on booting Zero-OS.
 
 ## Setup Statistics Monitoring
 
-To have statistics monitoring, you need need to have influxdb and graphana running on any of the nodes. And you need to run the 0-stats-collector on any node you want to monitor.
-The 0-stats-collector reads the statistics from 0-core and dumps them in influxdb, while graphana can be used to visualize the data in influxdb.
-The fastest way to achieve this is to install the service statsdb on any of the nodes. This service will install both influxdb and graphana and once installed, it will iterate all nodes and install the 0-stat-collector on them.
+To have statistics monitoring, you need to have an InfluxDB and Grafana running on any of the nodes. And you need to run the [0-stats-collector](https://github.com/zero-os/0-statscollector) on all the nodes you want to monitor.
+
+The [0-stats-collector](https://github.com/zero-os/0-statscollector) reads the statistics from 0-core and dumps them in InfluxDB, fron which Grafana can visualize the data.
+
+The fastest way to achieve this is to install the [statsdb](https://github.com/zero-os/0-orchestrator/tree/master/templates/statsdb) AYS service on any of the nodes. This service will install both InfluxDB and Grafana. Once installed, it will iterate all nodes and install the 0-stat-collector on them.
 
 Example of the statsdb blueprint:
 ```yaml
@@ -189,4 +228,5 @@ actions:
   - action: install
 
 ```
-The port will be the port on which influxdb will run. Executing this blueprint will create a container with influxdb running on said port and will add database `statistics` to influxdb. It will also create a container with graphana running on it and add a datasource for `statistics` database.
+
+The port will be the port on which InfluxDB will run. Executing this blueprint will create a container with InfluxDB running on the specified port and will add database `statistics` to InfluxDB. It will also create a container with Grafana running on it and add a data source for the `statistics` database.

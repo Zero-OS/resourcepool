@@ -609,6 +609,15 @@ class NodesService:
         return self.client.get(uri, None, headers, query_params, content_type)
 
 
+    def GetStats(self, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Get all statskeys of the node
+        It is method for GET /nodes/{nodeid}/stats
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/stats"
+        return self.client.get(uri, None, headers, query_params, content_type)
+
+
     def DeleteStoragePoolDevice(self, deviceuuid, storagepoolname, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Removes the device from the storage pool
