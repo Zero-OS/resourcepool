@@ -1323,3 +1323,21 @@ DashboardListItem:
     dashboard: string
     slug: string
     url: string
+
+NodeHealthCheck:
+  type: object
+  description: Node health check status
+  properties:
+    id: string
+    status: string
+    hostname: string
+
+HealthCheck:
+  type: object
+  description: HealthCheck object
+  properties:
+    id: string
+    name: string
+    resource: string
+    status: string
+    message: string

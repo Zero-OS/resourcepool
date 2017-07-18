@@ -15,7 +15,6 @@ def bootstrap(job):
     service = job.service
     token = service.model.data.zerotierToken
     netid = service.model.data.zerotierNetID
-
     zerotier = client.Client()
     zerotier.set_auth_header('bearer {}'.format(token))
 
@@ -83,6 +82,13 @@ def try_authorize(job, logger, netid, member, zerotier):
         member = resp.json()
     zerotier_ip = member['config']['ipAssignments'][0]
 
+    # do hardwarechecks
+    for prod in service.producers.get('hardwarecheck', []):
+        hwcheck_job=prod.getJob('check', args={'ipaddr': zerotier_ip,
+                                               'node_id': member['nodeId'],
+                                               'jwt': get_jwt_token(service.aysrepo)})
+        j.tools.async.wrappers.sync(hwcheck_job.execute())
+
     # test if we can connect to the new member
     node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
     node.client.testConnectionAttempts = 0
@@ -96,6 +102,11 @@ def try_authorize(job, logger, netid, member, zerotier):
             continue
     else:
         raise RuntimeError("can't connect, unauthorize member IP: {}".format(zerotier_ip))
+
+    # connection succeeded, set the hostname of the node to zerotier member
+    member['name'] = node.name
+    member['description'] = node.client.info.os().get('hostname', '')
+    zerotier.network.updateMember(member, member['nodeId'], netid)
 
     # create node.zero-os service
     name = node.name
@@ -132,6 +143,11 @@ def try_authorize(job, logger, netid, member, zerotier):
         except:
             j.tools.async.wrappers.sync(nodeservice.delete())
             raise
+
+    # do ERP registrations
+    for prod in service.producers.get('erp_registration', []):
+        erp_job=prod.getJob('register', args={'node_id': member['nodeId']})
+        j.tools.async.wrappers.sync(erp_job.execute())
 
 
 def processChange(job):
