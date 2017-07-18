@@ -17,6 +17,29 @@ annotationTypes:
 
 types:
   !include types.raml
+/health:
+  /nodes:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: List all nodes health
+      displayName: ListNodesHealth
+      responses:
+        200:
+          body:
+            application/json:
+              type: NodeHealthCheck[]
+    /{nodeid}:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Get detailed information of a node  health
+        displayName: ListNodeHealth
+        responses:
+          200:
+            body:
+              application/json:
+                type: HealthCheck[]
 
 
 /nodes:
@@ -1327,7 +1350,7 @@ types:
           202:
             body:
               application/json:
-                type: Run
+              type: Run
             description: Rollback started successfully
 /graphs:
   get:
