@@ -9,8 +9,10 @@
 
 #### How Travis works?
 - For this Project, travis is configured to start a matrix to run two different jobs, each using a different environment
-- One environment is using go which is always triggered with each commit, the other one is using python and it is always triggered
-  but will never run the tests unless it was triggered using scheduled cron jobs or manually (using api).
+
+-  One environment is using go while the other is using python. Both of them will always be triggered with each commit 
+   but the python environment will never run the tests unless the trigger is caused due to cron jobs or manually (using api). So for instance if a job has been triggered due to a pull request, the python environment will be created but soon it will be terminated as there are no tests to run.
+
 
 #### Trigger Manual builds
 
