@@ -68,6 +68,7 @@ from .GetGW import GetGW
 from .Graph import Graph
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
+from .HealthCheck import HealthCheck
 from .IPProtocol import IPProtocol
 from .Job import Job
 from .JobListItem import JobListItem
@@ -77,6 +78,7 @@ from .MemInfo import MemInfo
 from .NicInfo import NicInfo
 from .NicLink import NicLink
 from .Node import Node
+from .NodeHealthCheck import NodeHealthCheck
 from .NodeMount import NodeMount
 from .OSInfo import OSInfo
 from .PortForward import PortForward
