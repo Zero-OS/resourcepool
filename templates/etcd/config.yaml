@@ -3,3 +3,7 @@ links:
     role: container
     auto: false
     optional: false
+recurring:
+  - action: monitor
+    log: true
+    period: 1m
