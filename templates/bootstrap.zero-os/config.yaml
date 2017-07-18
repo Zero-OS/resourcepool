@@ -10,6 +10,16 @@ links:
       argname: networks
       min: 0
       max: 9999
+    - auto: false
+      role: hardwarecheck
+      argname: hardwarechecks
+      min: 0
+      max: 9999
+    - auto: false
+      role: erp_registration
+      argname: registrations
+      min: 0
+      max: 9999
 
 recurring:
   - action: bootstrap

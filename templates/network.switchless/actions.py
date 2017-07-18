@@ -27,6 +27,7 @@ def configure(job):
         'hostname': 'ovs',
         'flist': config.get('ovs-flist', 'https://hub.gig.tech/gig-official-apps/ovs.flist'),
         'hostNetworking': True,
+        'privileged': True,
     }
     cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -50,8 +51,11 @@ def configure(job):
         container_client.json('ovs.port-add', {"bridge": "backplane", "port": nics[0], "vlan": 0})
         container_client.json('ovs.port-add', {"bridge": "backplane", "port": nics[1], "vlan": 0})
         node.client.system('ip address add {storageaddr} dev backplane'.format(**addresses)).get()
+        node.client.system('ip link set dev {} mtu 2000'.format(nics[0])).get()
+        node.client.system('ip link set dev {} mtu 2000'.format(nics[1])).get()
         node.client.system('ip link set dev backplane up').get()
     if 'vxbackend' not in nicmap:
         container_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': service.model.data.vlanTag, 'name': 'vxbackend'})
         node.client.system('ip address add {vxaddr} dev vxbackend'.format(**addresses)).get()
+        node.client.system('ip link set dev vxbackend mtu 2000').get()
         node.client.system('ip link set dev vxbackend up').get()

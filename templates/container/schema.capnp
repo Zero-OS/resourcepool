@@ -16,6 +16,7 @@ struct Schema {
     mounts @10: List(Mount); # List mount points mapping to the container
     bridges @11 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
     zerotiernodeid @12:Text;
+    privileged @13 :Bool;
 
     struct Mount {
         filesystem @0 :Text; # Instance name of a filesystem service

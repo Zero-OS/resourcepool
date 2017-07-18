@@ -29,10 +29,10 @@ class Containers:
         return Container.from_containerinfo(containers[0], self.node)
 
     def create(self, name, flist, hostname=None, mounts=None, nics=None,
-               host_network=False, ports=None, storage=None, init_processes=None):
+               host_network=False, ports=None, storage=None, init_processes=None, privileged=False):
         logger.debug("create container %s", name)
         container = Container(name, self.node, flist, hostname, mounts, nics,
-                              host_network, ports, storage, init_processes)
+                              host_network, ports, storage, init_processes, privileged)
         container.start()
         return container
 
@@ -41,7 +41,7 @@ class Container:
     """G8SO Container"""
 
     def __init__(self, name, node, flist, hostname=None, mounts=None, nics=None,
-                 host_network=False, ports=None, storage=None, init_processes=None):
+                 host_network=False, ports=None, storage=None, init_processes=None, privileged=False):
         """
         TODO: write doc string
         filesystems: dict {filesystemObj: target}
@@ -57,6 +57,7 @@ class Container:
         self.storage = storage
         self.init_processes = init_processes or []
         self._client = None
+        self.privileged = privileged
 
         self._ays = None
         for nic in self.nics:
@@ -77,7 +78,8 @@ class Container:
                    arguments['nics'],
                    arguments['host_network'],
                    arguments['port'],
-                   arguments['storage'])
+                   arguments['storage'],
+                   arguments['privileged'])
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -110,6 +112,7 @@ class Container:
             host_network=service.model.data.hostNetworking,
             storage=service.model.data.storage,
             init_processes=[p.to_dict() for p in service.model.data.initProcesses],
+            privileged=service.model.data.privileged,
         )
         return container
 
@@ -156,10 +159,32 @@ class Container:
             tags=tags,
             hostname=self.hostname,
             storage=self.storage,
+            privileged=self.privileged,
         )
 
         containerid = job.get(timeout)
         self._client = self.node.client.container.client(containerid)
+
+    def is_job_running(self, cmd):
+        try:
+            for job in self._client.job.list():
+                arguments = job['cmd']['arguments']
+                if 'name' in arguments and arguments['name'] == cmd:
+                    return job
+            return False
+        except Exception as err:
+            if str(err).find("invalid container id"):
+                return False
+            raise
+
+    def is_port_listening(self, port, timeout=60):
+        import time
+        start = time.time()
+        while start + timeout > time.time():
+            if port not in self.node.freeports(port, nrports=3):
+                return True
+            time.sleep(0.2)
+        return False
 
     def start(self):
         if not self.is_running():

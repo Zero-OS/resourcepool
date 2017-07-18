@@ -1,6 +1,7 @@
 """
 Auto-generated class for GetGW
 """
+from .EnumGetGWStatus import EnumGetGWStatus
 from .GWNIC import GWNIC
 from .HTTPProxy import HTTPProxy
 from .PortForward import PortForward
@@ -14,12 +15,13 @@ class GetGW(object):
     """
 
     @staticmethod
-    def create(domain, nics, httpproxies=None, portforwards=None, zerotiernodeid=None):
+    def create(domain, nics, status, httpproxies=None, portforwards=None, zerotiernodeid=None):
         """
         :type domain: str
         :type httpproxies: list[HTTPProxy]
         :type nics: list[GWNIC]
         :type portforwards: list[PortForward]
+        :type status: EnumGetGWStatus
         :type zerotiernodeid: str
         :rtype: GetGW
         """
@@ -29,6 +31,7 @@ class GetGW(object):
             httpproxies=httpproxies,
             nics=nics,
             portforwards=portforwards,
+            status=status,
             zerotiernodeid=zerotiernodeid,
         )
 
@@ -81,6 +84,17 @@ class GetGW(object):
                 self.portforwards = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+        property_name = 'status'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [EnumGetGWStatus]
+            try:
+                self.status = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'zerotiernodeid'
         val = data.get(property_name)

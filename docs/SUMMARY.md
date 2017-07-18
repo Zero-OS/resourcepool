@@ -8,4 +8,5 @@
 * [Storage Cluster](storagecluster/README.md)
   * [Setup a Storage Cluster](storagecluster/README.md)
 * [Block Storage](blockstorage/README.md)
-* [Gateway](gateway/README.md)
+* [Networking](network/README.md)
+  * [Gateway](network/gateway/README.md)]

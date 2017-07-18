@@ -1186,6 +1186,10 @@ GWNIC:
           default: id can be ommited
           bridge: name of the bridge to connect to
       type: string
+    token:
+      type: string
+      description: Zerotier token, only valid for nic of type 'zerotier'. If supplied, the container will be authorized on the zerotier network.
+      required: false
     zerotierbridge:
       required: false
       description: |
@@ -1294,4 +1298,46 @@ GetGW:
       type: string
       description: id of the zerotier daemon
       required: false
+    status:
+      enum: [running, halted]
 
+Graph:
+  type: object
+  description: A graph
+  properties:
+    id: string
+    url: string
+
+Dashboard:
+  type: object
+  description: A dashboard
+  properties:
+    name: string
+    dashboard: string
+
+DashboardListItem:
+  type: object
+  description: A dashboard
+  properties:
+    name: string
+    dashboard: string
+    slug: string
+    url: string
+
+NodeHealthCheck:
+  type: object
+  description: Node health check status
+  properties:
+    id: string
+    status: string
+    hostname: string
+
+HealthCheck:
+  type: object
+  description: HealthCheck object
+  properties:
+    id: string
+    name: string
+    resource: string
+    status: string
+    message: string
