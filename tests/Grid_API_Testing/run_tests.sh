@@ -7,11 +7,11 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
     then
       pip3 install -r tests/Grid_API_Testing/requirements.txt
       pip3 install git+https://github.com/gigforks/packet-python.git
-      bash tests/Grid_API_Testing/install_env.sh master $ZT_NET_ID $ZT_TOKEN
+      bash tests/Grid_API_Testing/install_env.sh $TRAVIS_BRANCH $ZT_NET_ID $ZT_TOKEN
       cd tests/Grid_API_Testing; python3 orch_packet_machines.py create $PACKET_TOKEN $ZT_NET_ID $ITSYOUONLINE_ORG $TRAVIS_BRANCH
    elif [ "$point" == "run" ]
     then
-      echo "sleeping 500"
+      echo "sleeping 333"
       sleep 333
       echo "Running tests .."
       cd tests/Grid_API_Testing/
