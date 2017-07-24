@@ -212,7 +212,7 @@ def watchdog(job):
     service = job.service
     watched_roles = {
         "nbdserver": {
-            # "message": ["storageengine-failure"],  # TODO: Not implemented yet in 0-disk yet
+            # "message": (re.compile("^storageengine-failure.*$")),  # TODO: Not implemented yet in 0-disk yet
             "eof": True
         },
         "tlogserver": {
@@ -228,8 +228,15 @@ def watchdog(job):
             return
 
         eof = flag & 0x6 != 0
+
+        valid_message = False
         matched_messages = watched_roles[role].get("message", None)
-        if not (matched_messages and message in matched_messages) and not (watched_roles[role]["eof"] and eof):
+        if matched_messages:
+            for msg in matched_messages:
+                if msg.match(message):
+                    valid_message = True
+
+        if not valid_message and not (watched_roles[role]["eof"] and eof):
             return
 
         srv = service.aysrepo.serviceGet(role=role, instance=instance, die=False)
