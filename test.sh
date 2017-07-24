@@ -8,7 +8,7 @@ pushd api
 popd
 echo "Generate docs"
 pushd raml
-    raml2html api.raml > api.html
+    raml2html -p api.raml > api.html
 popd
 echo "Install go-raml"
 pushd $GOPATH/src/github.com/Jumpscale/go-raml
