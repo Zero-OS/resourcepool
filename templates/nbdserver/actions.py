@@ -207,6 +207,6 @@ def watchdog_handler(job):
     eof = job.model.args['eof']
     service = job.service
     if eof:
-        j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
-        vm_service = service.aysrepo.serviceGet(role='vm', instance=service.name, die=False)
-        j.tools.async.wrappers.sync(vm_service.executeAction('reset', context=job.context))
+        vm_service = service.aysrepo.serviceGet(role='vm', instance=service.name)
+        j.tools.async.wrappers.sync(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}))
+        j.tools.async.wrappers.sync(vm_service.executeAction('start', context=job.context))

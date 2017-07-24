@@ -175,7 +175,6 @@ def get_media_for_disk(medias, disk):
 
 def format_media_nics(job, medias):
     service = job.service
-    node = get_node(job)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -187,6 +186,7 @@ def format_media_nics(job, medias):
             media['iotune'] = {'totaliopssec': disk.maxIOps,
                                'totaliopssecset': True}
     return medias, nics
+
 
 def install(job):
     import time
@@ -215,9 +215,9 @@ def install(job):
         while start + 60 > time.time():
             kvm = get_domain(job)
             if kvm:
-                service.model.data.vnc = kvm['vnc']
-                if kvm['vnc'] != -1:
+                if kvm['vnc'] != -1 and service.model.data.vnc != kvm['vnc']:
                     node.client.nft.open_port(kvm['vnc'])
+                service.model.data.vnc = kvm['vnc']
                 break
             else:
                 time.sleep(3)
@@ -250,7 +250,8 @@ def stop(job):
     kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
-    cleanupzerodisk(job)
+    if job.model.args.get('cleanup', None) is not False:
+        cleanupzerodisk(job)
 
 
 def reset(job):
@@ -371,7 +372,6 @@ def start_migartion_channel(job, old_node, node):
     # Get free ports on node to use for ssh
     freeports_node, _ = get_baseports(job, node, 3000, 1)
     node.client.nft.open_port(freeports_node[0])
-
 
     try:
         # check channel does not exist
