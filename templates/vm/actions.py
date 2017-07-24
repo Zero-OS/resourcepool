@@ -215,9 +215,12 @@ def install(job):
         while start + 60 > time.time():
             kvm = get_domain(job)
             if kvm:
-                if kvm['vnc'] != -1 and service.model.data.vnc != kvm['vnc']:
-                    node.client.nft.open_port(kvm['vnc'])
                 service.model.data.vnc = kvm['vnc']
+                if kvm['vnc'] != -1:
+                    try:
+                        node.client.nft.open_port(kvm['vnc'])
+                    except:
+                        pass
                 break
             else:
                 time.sleep(3)
