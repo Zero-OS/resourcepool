@@ -84,7 +84,7 @@ def install(job):
                        'readOnly': vdiskservice.model.data.readOnly,
                        'size': vdiskservice.model.data.size,
                        'storageCluster': vdiskservice.model.data.storageCluster,
-                       'rootStorageCluster': rootclustername,
+                       'templateStorageCluster': rootclustername,
                        'type': vdisk_type}
 
         if vdiskservice.model.data.tlogStoragecluster:
