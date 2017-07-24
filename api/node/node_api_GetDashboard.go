@@ -70,7 +70,7 @@ func (api NodeAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	query = map[string]interface{}{
 		"fields": "RedisAddr",
 	}
-	service, res, err = aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
+	serviceNode, res, err := aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting node service from ays")
 		return
@@ -85,7 +85,7 @@ func (api NodeAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var node nodeItem
-	if err := json.Unmarshal(service.Data, &node); err != nil {
+	if err := json.Unmarshal(serviceNode.Data, &node); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
