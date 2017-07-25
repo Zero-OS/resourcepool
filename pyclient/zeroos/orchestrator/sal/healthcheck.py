@@ -61,3 +61,8 @@ class HealthCheck:
         from .healthchecks.cpu_mem_core_check import action
         results = action(self.node)
         return results
+
+    def rotate_logs(self):
+        from .healthchecks.log_rotator import action
+        result = action(self.node)
+        return result
