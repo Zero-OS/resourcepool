@@ -41,8 +41,12 @@ func (api NodeAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		respBody[i].URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
 		respBody[i].Id = service.Name
+		if graph.URL != "" {
+			respBody[i].URL = graph.URL
+		} else {
+			respBody[i].URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

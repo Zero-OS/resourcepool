@@ -1374,6 +1374,17 @@ types:
           body:
             application/json:
               type: Graph
+    put:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Update Graph
+      displayName: UpdateGraph
+      body:
+        application/json:
+          type: Graph
+      responses:
+        204:
+          description: Grafh updated successfully
     /dashboards:
       get:
         (AYSBased):

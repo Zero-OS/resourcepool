@@ -43,7 +43,11 @@ func (api NodeAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respBody.URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+	if graph.URL != "" {
+		respBody.URL = graph.URL
+	} else {
+		respBody.URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+	}
 	respBody.Id = service.Name
 
 	w.Header().Set("Content-Type", "application/json")

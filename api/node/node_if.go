@@ -339,6 +339,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// ListGraphs is the handler for GET /graphs
 	// List all graphs
 	ListGraphs(http.ResponseWriter, *http.Request)
+	// UpdateGraph is the handler for PUT /graphs/{graphid}
+	// Update graph
+	UpdateGraph(http.ResponseWriter, *http.Request)
 	// GetNodeStats is the handler for GET /nodes/{nodeid}/stats
 	// The aggregated stats of node
 	GetNodeStats(w http.ResponseWriter, r *http.Request)
@@ -455,5 +458,6 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/graphs/{graphid}/dashboards", i.CreateDashboard).Methods("POST")
 	r.HandleFunc("/graphs/{graphid}/dashboards", i.ListDashboards).Methods("GET")
 	r.HandleFunc("/graphs/{graphid}", i.GetGraph).Methods("GET")
+	r.HandleFunc("/graphs/{graphid}", i.UpdateGraph).Methods("PUT")
 	r.HandleFunc("/graphs", i.ListGraphs).Methods("GET")
 }
