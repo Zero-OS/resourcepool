@@ -278,7 +278,7 @@ def watchdog(job):
                 queue = await cl.subscribe("ays.monitor")
                 await cl.global_stream(queue, callback)
             except asyncio.TimeoutError as e:
-                cl = Pubsub(loop, service.model.data.redisAddr)
+                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
                 monitor(job)
             except OSError:
                 monitor(job)
