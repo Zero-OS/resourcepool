@@ -33,20 +33,14 @@ func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
 	}
 }
 
-//ExecuteBlueprint runs ays operations needed to run blueprints, if block is true, the function will block until the run is done
+//ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
 // create blueprint
 // execute blueprint
 // execute run
 // archive the blueprint
 func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (*ays.AYSRun, error) {
-	blueprintName := fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
-
-	if err := aystool.createBlueprint(repoName, blueprintName, blueprint); err != nil {
-		return nil, err
-	}
-
-	if err := aystool.executeBlueprint(blueprintName, repoName); err != nil {
-		aystool.archiveBlueprint(blueprintName, repoName)
+	blueprintName, err := aystool.UpdateBlueprint(repoName, role, name, action, blueprint)
+	if err != nil {
 		return nil, err
 	}
 
@@ -56,7 +50,35 @@ func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blu
 		return nil, err
 	}
 
-	return run, aystool.archiveBlueprint(blueprintName, repoName)
+	return run, nil
+}
+
+//Update blueprint is used to do the ays blueprint action , creating a blueprint jobs (usually in processChange) and then will BLOCK on them.
+func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (string, error) {
+	blueprintName := fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
+
+	if err := aystool.createBlueprint(repoName, blueprintName, blueprint); err != nil {
+		return "", err
+	}
+
+	_, jobs, err := aystool.executeBlueprint(blueprintName, repoName)
+	if err != nil {
+
+		aystool.archiveBlueprint(blueprintName, repoName)
+		return "", err
+	}
+	if len(jobs) > 0 {
+		for _, job := range jobs {
+			_, err := aystool.WaitJobDone(job, repoName)
+			if err != nil {
+				aystool.archiveBlueprint(blueprintName, repoName)
+				return "", err
+			}
+		}
+		return blueprintName, aystool.archiveBlueprint(blueprintName, repoName)
+	}
+	return blueprintName, aystool.archiveBlueprint(blueprintName, repoName)
+
 }
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
@@ -75,6 +97,24 @@ func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) 
 		}
 	}
 	return run, nil
+}
+
+func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
+	job, resp, err := aystool.Ays.GetJob(jobid, repoName, nil, nil)
+
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return job, err
+	}
+
+	for job.State == "new" || job.State == "running" {
+		time.Sleep(time.Second)
+
+		job, resp, err = aystool.Ays.GetJob(job.Key, repoName, nil, nil)
+		if err != nil {
+			return job, err
+		}
+	}
+	return job, nil
 }
 
 // ServiceExists check if an atyourserivce exists
@@ -111,22 +151,31 @@ func (aystool AYStool) createBlueprint(repoName string, name string, bp map[stri
 	return nil
 }
 
-func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) error {
+func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (string, []string, error) {
 	errBody := struct {
 		Error string `json:"error"`
 	}{}
+	respData := struct {
+		Msg               string   `json:"msg"`
+		ProcessChangeJobs []string `json:"processChangeJobs"`
+	}{}
+
 	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
-		return NewHTTPError(resp, err.Error())
+		return "", nil, NewHTTPError(resp, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
-			return NewHTTPError(resp, "Error decoding response body")
+			return "", nil, NewHTTPError(resp, "Error decoding response body")
 		}
-		return NewHTTPError(resp, errBody.Error)
+		return "", nil, NewHTTPError(resp, errBody.Error)
 	}
-	return nil
+	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
+		return "", nil, NewHTTPError(resp, "Error decoding response body")
+	}
+
+	return respData.Msg, respData.ProcessChangeJobs, nil
 }
 
 func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
