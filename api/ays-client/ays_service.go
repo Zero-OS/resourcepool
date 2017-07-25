@@ -306,6 +306,19 @@ func (s *AysService) GetServiceByName(name, role, repository string, headers, qu
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
+// Get a jobid
+func (s *AysService) GetJob(jobid, repository string, headers, queryParams map[string]interface{}) (Job, *http.Response, error) {
+	var u Job
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/job/"+jobid, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
 // delete a service and all its children
 func (s *AysService) DeleteServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
 	// create request object
