@@ -6,6 +6,7 @@ import os
 import sys
 import threading
 import subprocess
+import configparser
 
 
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
@@ -22,24 +23,31 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
 
 
 def delete_devices(manager):
-    project = manager.list_projects()[0]
-    devices = manager.list_devices(project.id)
-    for dev in devices:
-        if 'orch' in dev.hostname:
-            device_id = dev.id
-            params = {
-                     "hostname": dev.hostname,
-                     "description": "string",
-                     "billing_cycle": "hourly",
-                     "userdata": "",
-                     "locked": False,
-                     "tags": []
-                     }
-            manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
+    config = configparser.ConfigParser()
+    config.read('api_testing/config.ini')
+    machines = config['main']['0_core_machines']
+    
+    if machines:
+        machines = machines.split(',')
+        project = manager.list_projects()[0]
+        devices = manager.list_devices(project.id)
+        for hostname in machines:
+            for dev in devices:
+                if dev.hostname == hostname:
+                    device_id = dev.id
+                    params = {
+                             "hostname": dev.hostname,
+                             "description": "string",
+                             "billing_cycle": "hourly",
+                             "userdata": "",
+                             "locked": False,
+                             "tags": []
+                             }
+                    manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
 
 
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
-    hostname = 'orch{}-auto'.format(randint(100, 300))
+    hostname = 'orch{}-travis'.format(randint(100, 300))
     try:
         device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
     except:
@@ -52,6 +60,17 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
         if dev.state == 'active':
             break
     time.sleep(5)
+
+    config = configparser.ConfigParser()
+    config.read('api_testing/config.ini')
+    config['main']['target_ip'] = dev.ip_addresses[0]['address']
+    old_hosts =  config['main']['0_core_machines']
+    if old_hosts:
+        config['main']['0_core_machines'] = old_hosts + ',' + hostname
+    else:
+        config['main']['0_core_machines'] = hostname
+    with open('api_testing/config.ini', 'w') as configfile:
+        config.write(configfile)
 
 
 if __name__ == '__main__':
