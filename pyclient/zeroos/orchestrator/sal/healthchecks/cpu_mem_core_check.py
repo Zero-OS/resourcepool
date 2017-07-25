@@ -12,7 +12,7 @@ def action(node):
     category = 'System Load'
 
     total_mem = node.client.info.mem()['total']/(1024*1024)
-    mem_history = node.client.aggregator.query('machine.memory.ram.available')['machine.memory.ram.available']['history']
+    mem_history = node.client.aggregator.query('machine.memory.ram.available').get('machine.memory.ram.available', {}).get('history', {})
 
 
     if '3600' not in mem_history:
