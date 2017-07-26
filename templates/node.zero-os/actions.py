@@ -84,8 +84,8 @@ def install(job):
     job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
     node.ensure_persistance(poolname)
-    
-    # Set host name 
+
+    # Set host name
     node.client.system("hostname %s" % service.model.data.hostname).get()
     node.client.bash("echo %s > /etc/hostname" % service.model.data.hostname).get()
 
@@ -148,7 +148,9 @@ def monitor(job):
     flist = config.get('healthcheck-flist', 'https://hub.gig.tech/deboeckj/js9container.flist')
     with node.healthcheck.with_container(flist) as cont:
         update_healthcheck(service, node.healthcheck.run(cont, 'openfiledescriptors'))
-
+    update_healthcheck(service, node.healthcheck.calc_cpu_mem())
+    # call log rotator
+    update_healthcheck(service, node.healthcheck.rotate_logs())
     service.saveAll()
 
 
@@ -158,12 +160,22 @@ def update_healthcheck(service, messages):
         for health in service.model.data.healthchecks:
             if health.id == message['id']:
                 health.name = message['name']
+                health.resource = message['resource']
                 health.status = message['status']
                 health.message = message['message']
                 break
         else:
-            service.model.data.healthchecks = list(service.model.data.healthchecks) + [message]
-
+            healthchecks = []
+            for item in service.model.data.healthchecks:
+                healthcheck = {}
+                healthcheck['id'] = item.id
+                healthcheck['name'] = item.name
+                healthcheck['resource'] = item.resource
+                healthcheck['status'] = item.status
+                healthcheck['message'] = item.message
+                healthchecks.append(healthcheck)
+            healthchecks.append(message)
+            service.model.data.healthchecks = healthchecks
 
 
 def reboot(job):
@@ -202,3 +214,73 @@ def uninstall(job):
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
         j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
+
+
+def watchdog(job):
+    from zeroos.orchestrator.sal.Pubsub import Pubsub
+    from zeroos.orchestrator.configuration import get_jwt_token
+    from asyncio import sleep
+    import asyncio
+
+    service = job.service
+    watched_roles = {
+        "nbdserver": {
+            # "message": (re.compile("^storageengine-failure.*$")),  # TODO: Not implemented yet in 0-disk yet
+            "eof": True
+        },
+        "tlogserver": {
+            "eof": True,
+        }
+    }
+
+    async def callback(jobid, level, message, flag):
+        if "." not in jobid:
+            return
+        role, instance = jobid.split(".", 1)
+        if role not in watched_roles:
+            return
+
+        eof = flag & 0x6 != 0
+
+        valid_message = False
+        matched_messages = watched_roles[role].get("message", None)
+        if matched_messages:
+            for msg in matched_messages:
+                if msg.match(message):
+                    valid_message = True
+
+        if not valid_message and not (watched_roles[role]["eof"] and eof):
+            return
+
+        srv = service.aysrepo.serviceGet(role=role, instance=instance, die=False)
+        if srv:
+            args = {"message": message, "eof": eof}
+            job.context['token'] = get_jwt_token(job.service.aysrepo)
+            await srv.executeAction('watchdog_handler', context=job.context, args=args)
+
+    async def streaming(job):
+        # Check if the node is runing
+        while service.model.actionsState["install"] != "ok":
+            await sleep(1)
+
+        while str(service.model.data.status) != "running":
+            await sleep(1)
+
+        # Add the looping here instead of the pubsub sal
+        loop = j.atyourservice.server.loop
+        cl = Pubsub(loop, service.model.data.redisAddr)
+
+        while True:
+            if str(service.model.data.status) != "running":
+                await sleep(1)
+                continue
+            try:
+                queue = await cl.subscribe("ays.monitor")
+                await cl.global_stream(queue, callback)
+            except asyncio.TimeoutError as e:
+                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+                monitor(job)
+            except OSError:
+                monitor(job)
+
+    return streaming(job)

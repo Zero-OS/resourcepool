@@ -1,6 +1,7 @@
 import os
 from zeroos.core0.client.client import Timeout
 import json
+import hashlib
 
 
 class ContainerContext:
@@ -8,14 +9,17 @@ class ContainerContext:
         self.node = node
         self.flist = flist
         self.container = None
+        self._name = 'healthcheck_{}'.format(hashlib.md5(flist.encode()).hexdigest())
 
     def __enter__(self):
-        self.container = self.node.containers.create('heathcheck', self.flist, host_network=True, privileged=True)
+        try:
+            self.container = self.node.containers.get(self._name)
+        except LookupError:
+            self.container = self.node.containers.create(self._name, self.flist, host_network=True, privileged=True)
         return self.container
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.container:
-            self.container.stop()
+        return
 
 
 class HealthCheck:
@@ -52,3 +56,13 @@ class HealthCheck:
                 'message': str(e)
             }
             return [healtcheck]
+
+    def calc_cpu_mem(self):
+        from .healthchecks.cpu_mem_core_check import action
+        results = action(self.node)
+        return results
+
+    def rotate_logs(self):
+        from .healthchecks.log_rotator import action
+        result = action(self.node)
+        return result

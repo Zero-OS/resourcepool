@@ -11,6 +11,7 @@ type HealthCheck struct {
 	Resource string `json:"resource" validate:"nonzero"`
 	Status   string `json:"status" validate:"nonzero"`
 	Message  string `json:"message" validate:"nonzero"`
+	Category string `json:"category" validate:"nonzero"`
 }
 
 type NodeHealthCheck struct {

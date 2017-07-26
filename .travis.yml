@@ -10,6 +10,8 @@ matrix:
         - bash tests/Grid_API_Testing/run_tests.sh run
       after_script:
         - bash tests/Grid_API_Testing/run_tests.sh after
+      after_failure:
+        - bash tests/Grid_API_Testing/run_tests.sh after
 
     - language: go
       sudo: true

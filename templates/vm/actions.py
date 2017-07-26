@@ -86,7 +86,7 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
 
 def _nbd_url(job, container, nbdserver, vdisk):
     from zeroos.orchestrator.sal.Node import Node
-    
+
     container_root = container.info['container']['root']
     node = Node.from_ays(nbdserver.parent.parent, password=job.context['token'])._client
     node.filesystem.mkdir("/var/run/nbd-servers/")
@@ -175,7 +175,6 @@ def get_media_for_disk(medias, disk):
 
 def format_media_nics(job, medias):
     service = job.service
-    node = get_node(job)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -187,6 +186,7 @@ def format_media_nics(job, medias):
             media['iotune'] = {'totaliopssec': disk.maxIOps,
                                'totaliopssecset': True}
     return medias, nics
+
 
 def install(job):
     import time
@@ -217,7 +217,10 @@ def install(job):
             if kvm:
                 service.model.data.vnc = kvm['vnc']
                 if kvm['vnc'] != -1:
-                    node.client.nft.open_port(kvm['vnc'])
+                    try:
+                        node.client.nft.open_port(kvm['vnc'])
+                    except:
+                        pass
                 break
             else:
                 time.sleep(3)
@@ -250,7 +253,17 @@ def stop(job):
     kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
-    cleanupzerodisk(job)
+    if job.model.args.get('cleanup', None) is not False:
+        cleanupzerodisk(job)
+
+
+def reset(job):
+    service = job.service
+    job.logger.info("reset vm {}".format(service.name))
+    node = get_node(job)
+    kvm = get_domain(job)
+    if kvm:
+        node.client.kvm.reset(kvm['uuid'])
 
 
 def destroy(job):
@@ -269,7 +282,7 @@ def destroy(job):
 
 
 def cleanupzerodisk(job):
-    from zeroos.orchestrator.sal.Node import Node    
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     node = Node.from_ays(service.parent, password=job.context['token'])
     for nbdserver in service.producers.get('nbdserver', []):
@@ -287,7 +300,7 @@ def cleanupzerodisk(job):
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())        
+        j.tools.async.wrappers.sync(container.delete())
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
@@ -363,7 +376,6 @@ def start_migartion_channel(job, old_node, node):
     freeports_node, _ = get_baseports(job, node, 3000, 1)
     node.client.nft.open_port(freeports_node[0])
 
-
     try:
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
@@ -374,7 +386,7 @@ def start_migartion_channel(job, old_node, node):
                     return str(port_data.split(" ")[1])
                 res = node.client.system(cmd.format(config=ssh_config))
                 if not res.running:
-                    raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+                    raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                             node.name))
                 return str(port_data.split(" ")[1])
         # start ssh server on new node for this migration
@@ -383,21 +395,21 @@ def start_migartion_channel(job, old_node, node):
         node.client.filesystem.close(file_discriptor)
         res = node.client.system(cmd.format(config=ssh_config))
         if not res.running:
-            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                     node.name))
 
         # add host names addr to each node
         file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = old_node.client.info.os().get("hostname")
         node.client.filesystem.write(file_discriptor,
-                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr, 
+                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr,
                                                                                   addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
         file_discriptor = old_node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = node.client.info.os().get("hostname")
         old_node.client.filesystem.write(file_discriptor,
-                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr, 
+                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr,
                                                                                       addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
@@ -540,7 +552,7 @@ def updateDisks(job, client, args):
     if service.model.data.status == 'running':
         uuid = get_domain(job)['uuid']
 
-        
+
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
@@ -564,7 +576,7 @@ def updateDisks(job, client, args):
         nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(job, container, nbdserver, old_disk['vdiskid'])
-            if uuid: 
+            if uuid:
                 client.client.kvm.detach_disk(uuid, {'url': url})
             j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
 
@@ -634,14 +646,14 @@ def update_data(job, args):
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
         service.model.data.node = args['node']
-        service.saveAll()    
+        service.saveAll()
         token = get_jwt_token_from_job(job)
         if service.model.data.status == 'halted':
             # move stopped vm
             node = service.aysrepo.serviceGet('node', args['node'])
             service.model.changeParent(node)
             start_dependent_services(job)
-        elif service.model.data.status == 'running': 
+        elif service.model.data.status == 'running':
             # do live migration
             job = service.getJob('migrate', args={'node': service.model.data.node})
         else:
@@ -652,9 +664,10 @@ def update_data(job, args):
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
 
+
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
-    
+
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
