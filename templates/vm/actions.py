@@ -428,7 +428,7 @@ def start_migartion_channel(job, old_node, node):
 
         node.client.filesystem.write(file_discriptor, pub_key)
         old_node.client.filesystem.close(file_discriptor)
-        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
+        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr).get()
 
     except Exception as e:
         node.client.filesystem.remove(ssh_config)
@@ -509,12 +509,9 @@ def migrate(job):
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]
-            media, nics = format_media_nics(job, medias)
+            _, nics = format_media_nics(job, medias)
             target_node_client.kvm.prepare_migration_target(
                 service.name,
-                media=media,
-                cpu=service.model.data.cpu,
-                memory=service.model.data.memory,
                 nics=nics,
             )
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
