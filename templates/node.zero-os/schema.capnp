@@ -24,5 +24,7 @@ struct Schema {
       status @3: Text;
       message @4: Text;
       category @5: Text;
+      lasttime @6: Float32;
+      interval @7: Float32;
     }
 }
