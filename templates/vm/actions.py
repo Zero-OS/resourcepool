@@ -428,7 +428,7 @@ def start_migartion_channel(job, old_node, node):
 
         node.client.filesystem.write(file_discriptor, pub_key)
         old_node.client.filesystem.close(file_discriptor)
-        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
+        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr).get()
 
     except Exception as e:
         node.client.filesystem.remove(ssh_config)
