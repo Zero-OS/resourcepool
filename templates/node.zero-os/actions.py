@@ -268,7 +268,8 @@ def watchdog(job):
 
         # Add the looping here instead of the pubsub sal
         loop = j.atyourservice.server.loop
-        cl = Pubsub(loop, service.model.data.redisAddr)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
 
         while True:
             if str(service.model.data.status) != "running":

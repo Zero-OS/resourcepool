@@ -370,7 +370,7 @@ def shutdown(job):
 def start_migartion_channel(job, old_node, node):
     service = job.service
     ssh_config = "/tmp/ssh.config_%s_%s_%s" % (old_node.name, node.name, service.name)
-    cmd = "/usr/sbin/sshd -f {config}"
+    command = "/usr/sbin/sshd -f {config}"
 
     # Get free ports on node to use for ssh
     freeports_node, _ = get_baseports(job, node, 3000, 1)
@@ -384,7 +384,7 @@ def start_migartion_channel(job, old_node, node):
             for cmd in node.client.process.list():
                 if ssh_config in cmd['cmdline']:
                     return str(port_data.split(" ")[1])
-                res = node.client.system(cmd.format(config=ssh_config))
+                res = node.client.system(command.format(config=ssh_config))
                 if not res.running:
                     raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                             node.name))
@@ -428,7 +428,7 @@ def start_migartion_channel(job, old_node, node):
 
         node.client.filesystem.write(file_discriptor, pub_key)
         old_node.client.filesystem.close(file_discriptor)
-        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
+        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr).get()
 
     except Exception as e:
         node.client.filesystem.remove(ssh_config)
@@ -475,7 +475,9 @@ def migrate(job):
     if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
+    # define node services 
     target_node = service.aysrepo.serviceGet('node', node)
+    old_node = service.parent
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     # 1 consume tcp to use for finding port (this has to be bfore start_migration_channel method)
@@ -483,7 +485,7 @@ def migrate(job):
     node_args = {"node": node}
     tcp = tcp_actor.serviceCreate(instance="tcp_%s" % node, args=node_args)
     target_node.consume(tcp)
-    ssh_port = start_migartion_channel(job, Node.from_ays(service.parent, job.context['token']), Node.from_ays(target_node, job.context['token']))
+    ssh_port = start_migartion_channel(job, Node.from_ays(old_node, job.context['token']), Node.from_ays(target_node, job.context['token']))
     old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
@@ -503,18 +505,17 @@ def migrate(job):
     target_node_client = Node.from_ays(target_node, job.context['token'])._client
     node_client = Node.from_ays(service.parent, job.context['token'])._client
     service.model.changeParent(target_node)
+    target_node.saveAll()
+    old_node.saveAll()
     service.saveAll()
     medias = _start_nbd(job, nbdserver.name)
     service.model.data.status = 'running'
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]
-            media, nics = format_media_nics(job, medias)
+            _, nics = format_media_nics(job, medias)
             target_node_client.kvm.prepare_migration_target(
                 service.name,
-                media=media,
-                cpu=service.model.data.cpu,
-                memory=service.model.data.memory,
                 nics=nics,
             )
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
