@@ -59,10 +59,15 @@ class HealthCheck:
 
     def calc_cpu_mem(self):
         from .healthchecks.cpu_mem_core_check import action
-        results = action(self.node)
-        return results
+
+        return action(self.node)
 
     def rotate_logs(self):
         from .healthchecks.log_rotator import action
-        result = action(self.node)
-        return result
+
+        return action(self.node)
+
+    def check_ofd(self):
+        from .healthchecks.openfiledescriptors import action
+
+        return action(self.node)
