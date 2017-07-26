@@ -183,7 +183,7 @@ def processChange(job):
 
         # apply changes in container
         cont_service = service.aysrepo.serviceGet(role='container', instance=service.name)
-        j.tools.async.wrappers.sync(cont_service.executeAction('update', context=job.context, args=nics_args))
+        j.tools.async.wrappers.sync(cont_service.executeAction('processChange', context=job.context, args=nics_args))
 
         # setup new zerotierbridges
         setup_zerotierbridges(job)
