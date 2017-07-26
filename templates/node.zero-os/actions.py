@@ -153,14 +153,18 @@ def monitor(job):
 
 
 def update_healthcheck(service, messages):
+    import time
+    interval = service.model.actionGet('monitor').period
     for message in messages:
         health = None
         for health in service.model.data.healthchecks:
             if health.id == message['id']:
-                health.name = message['name']
-                health.resource = message['resource']
-                health.status = message['status']
-                health.message = message['message']
+                health.name = message.get('name', "")
+                health.resource = message.get('resource', "")
+                health.status = message.get('status', "")
+                health.message = message.get('message', "")
+                health.lasttime =time.time()
+                health.interval = interval
                 break
         else:
             healthchecks = []
@@ -171,6 +175,8 @@ def update_healthcheck(service, messages):
                 healthcheck['resource'] = item.resource
                 healthcheck['status'] = item.status
                 healthcheck['message'] = item.message
+                healthcheck['lasttime'] = time.time()
+                healthcheck['interval'] = interval
                 healthchecks.append(healthcheck)
             healthchecks.append(message)
             service.model.data.healthchecks = healthchecks
