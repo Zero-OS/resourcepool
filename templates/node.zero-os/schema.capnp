@@ -1,4 +1,4 @@
-@0xa3e0db18725d3c7f;
+@0xe57bd212ca5bb013;
 
 struct Schema {
     id @0: Text; # mac address of the mngt network card
