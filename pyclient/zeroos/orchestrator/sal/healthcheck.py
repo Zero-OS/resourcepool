@@ -109,6 +109,11 @@ class HealthCheck:
         result = temperature.start(container)
         return result
 
+    def network_stability(self, nodes):
+        from .healthchecks.networkstability import NetworkStability
+        stability = NetworkStability(self.node)
+        return stability.start(nodes)
+
     def rotate_logs(self):
         from .healthchecks.log_rotator import RotateLogs
         rotator = RotateLogs(self.node)

@@ -105,6 +105,7 @@ def install(job):
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
+    import math
     import redis
     service = job.service
     config = get_configuration(service.aysrepo)
@@ -161,6 +162,17 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.powersupply(cont))
         update_healthcheck(service, node.healthcheck.fan(cont))
 
+
+    nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
+    nodes.sort(key=lambda n:hash(n.model.data.redisAddr))
+    count = min(len(nodes) - 1, int(math.log(len(nodes)) + 1))
+    for i, n in enumerate(nodes + nodes):
+        if n.model.key == service.model.key:
+            relatives = [Node.from_ays(n, token, timeout=15) for n in (nodes + nodes)[i+1:i+1+count]]
+            break
+    else:
+        raise RuntimeError("Cannot find node {} in nodes".format(service.name))
+    update_healthcheck(service, node.healthcheck.network_stability(relatives))
     service.saveAll()
 
 
