@@ -234,15 +234,27 @@ def watchdog(job):
         },
         "tlogserver": {
             "eof": True,
+        },
+        "ork": {
+            "level": 20,
+            "instance": job.service.name,
+            "role": "node",
         }
     }
 
     async def callback(jobid, level, message, flag):
-        if "." not in jobid:
+        if "." not in jobid and jobid not in watched_roles:
             return
-        role, instance = jobid.split(".", 1)
-        if role not in watched_roles:
-            return
+
+        if jobid not in watched_roles:
+            role, instance = jobid.split(".", 1)
+            if role not in watched_roles or watched_roles[role].get("level", level) != level:
+                return
+        else:
+            if watched_roles[jobid].get("level", level) != level:
+                return
+            role = watched_roles[jobid]["role"]
+            instance = watched_roles[jobid]["instance"]
 
         eof = flag & 0x6 != 0
 
@@ -258,7 +270,7 @@ def watchdog(job):
 
         srv = service.aysrepo.serviceGet(role=role, instance=instance, die=False)
         if srv:
-            args = {"message": message, "eof": eof}
+            args = {"message": message, "eof": eof, "level": level}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
             await srv.executeAction('watchdog_handler', context=job.context, args=args)
 
@@ -289,3 +301,41 @@ def watchdog(job):
                 monitor(job)
 
     return streaming(job)
+
+
+def watchdog_handler(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    import json
+
+    service = job.service
+    node = Node.from_ays(service, get_jwt_token(service.aysrepo))
+    message = json.loads(job.args['message'])
+
+    if message['action'] != 'NIC_SHUTDOWN':
+        return
+
+    interface = message['name']
+    if interface.startswith('cont'):
+        container_id = interface.replace('cont', '')
+        from zeroos.orchestrator.sal.Container import Containers
+        for container in node.containers.list():
+            if container.id == container_id:
+                container_service = service.aysrepo.serviceGet(role='container', instance=container.name)
+                container_service.model.data.status = 'networkKilled'
+                container_service.saveAll()
+                break
+    else:
+        vms = node.client.kvm.list()
+        for vm in vms:
+            if interface in vm['ifctargets']:
+                vm_service = service.aysrepo.serviceGet(role='vm', instance=vm['name'])
+                vm_service.model.data.status = 'networkKilled'
+                vm_service.saveAll()
+                break
+
+
+
+
+
+

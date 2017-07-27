@@ -101,7 +101,7 @@ def processChange(job):
     args = job.model.args
 
     containerdata = service.model.data.to_dict()
-    nicchanges = containerdata['nics'] != args.get('nics')
+    nicchanges = containerdata.get('nics', []) != args.get('nics', [])
 
     if nicchanges:
         update(service, job.logger, job.context['token'], args['nics'])
