@@ -1,7 +1,28 @@
+from js9 import j
 import os
 from zeroos.core0.client.client import Timeout
 import json
 import hashlib
+
+
+class HealthCheckRun:
+    def __init__(self):
+        self.result = {
+            'id': '',
+            'name': '',
+            'resource': '',
+            'category': '',
+            'stacktrace': '',
+            'messages': list(),
+        }
+
+    def start(self, *args, **kwargs):
+        try:
+            self.run(*args, **kwargs)
+        except Exception as e:
+            eco = j.errorhandler.parsePythonExceptionObject(e)
+            self.result['stacktrace'] = eco.traceback
+        return self.result
 
 
 class ContainerContext:
@@ -51,16 +72,20 @@ class HealthCheck:
         except Exception as e:
             healtcheck = {
                 'id': name,
-                'resource': '',
                 'status': 'ERROR',
                 'message': str(e)
             }
-            return [healtcheck]
+            return healtcheck
 
     def calc_cpu_mem(self):
         from .healthchecks.cpu_mem_core_check import action
 
         return action(self.node)
+
+    def network_bond(self):
+        from .healthchecks.networkbond import NetworkBond
+        bond = NetworkBond()
+        return bond.start(self.node)
 
     def rotate_logs(self):
         from .healthchecks.log_rotator import action
