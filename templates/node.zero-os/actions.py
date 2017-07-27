@@ -151,6 +151,8 @@ def monitor(job):
     update_healthcheck(service, node.healthcheck.rotate_logs())
     update_healthcheck(service, node.healthcheck.network_bond())
     update_healthcheck(service, node.healthcheck.node_temperature())
+    update_healthcheck(service, node.healthcheck.check_interrupts())
+    update_healthcheck(service, node.healthcheck.check_context_switches())
     service.saveAll()
 
 
