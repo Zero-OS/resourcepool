@@ -10,7 +10,6 @@ class HealthCheckRun:
         self.result = {
             'id': '',
             'name': '',
-            'resource': '',
             'category': '',
             'stacktrace': '',
             'messages': list(),
