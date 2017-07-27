@@ -12,47 +12,28 @@ Result will be shown in the "System Load" section of the Grid Portal / Status Ov
 
 class CPU(HealthCheckRun):
     def __init__(self, node):
-        super().__init__()
+        resource = '/nodes/{}'.format(node.name)
+        super().__init__('MEMORY', 'Memory', 'System Load', resource)
         self.node = node
-
-        self.result = {
-            'id': 'MEMORY',
-            'name': 'Memory',
-            'resource': '/nodes/{}'.format(node.name),
-            'messages': list(),
-            'category': 'System Load',
-        }
 
     def run(self):
         total_mem = self.node.client.info.mem()['total']/(1024*1024)
         mem_history = self.node.client.aggregator.query('machine.memory.ram.available').get('machine.memory.ram.available', {}).get('history', {})
 
         if '3600' not in mem_history:
-            self.result['messages'].append({
-                'id': '-1',
-                'status': 'WARNING',
-                'text': 'Average memory load is not collected yet',
-            })
+            self.add_message('-1', 'WARNING', 'Average memory load is not collected yet')
         else:
             avg_available_mem = mem_history['3600'][-1]['avg']
             avg_used_mem = total_mem - avg_available_mem
             avg_mem_percent = avg_used_mem/float(total_mem) * 100
-            self.result['messages'].append(get_message('memory', avg_mem_percent))
-
-
+            self.add_message(**get_message('memory', avg_mem_percent))
 
 
 class Memory(HealthCheckRun):
     def __init__(self, node):
-        super().__init__()
+        resource = '/nodes/{}'.format(node.name)
+        super().__init__('CPU', 'CPU', 'System Load', resource)
         self.node = node
-        self.result = {
-            'id': 'CPU',
-            'name': 'CPU',
-            'resource': '/nodes/{}'.format(node.name),
-            'messages': list(),
-            'category': 'System Load',
-        }
 
     def run(self):
         cpu_percent = 0
@@ -65,14 +46,10 @@ class Memory(HealthCheckRun):
             count += 1
 
         if count == 0:
-            self.result['messages'].append({
-                'id': '-1',
-                'status': 'WARNING',
-                'text': 'Average CPU load is not collected yet',
-            })
+            self.add_message('-1', 'WARNING', 'Average CPU load is not collected yet')
         else:
             cpu_avg = cpu_percent / float(count)
-            self.result['messages'].append(get_message('cpu', cpu_avg))
+            self.add_message(**get_message('cpu', cpu_avg))
 
 
 def get_message(type_, percent):

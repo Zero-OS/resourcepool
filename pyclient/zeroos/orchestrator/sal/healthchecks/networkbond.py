@@ -8,11 +8,8 @@ Monitors if a network bond (if there is one) has both (or more) interfaces prope
 
 class NetworkBond(HealthCheckRun):
     def __init__(self, node):
-        super().__init__()
-        self.result['id'] = 'networkbond'
-        self.result['name'] = 'Network Bond Check'
-        self.result['category'] = 'Hardware'
-        self.result['resource'] = '/nodes/{}'.format(node.name)
+        resource = '/nodes/{}'.format(node.name)
+        super().__init__('networkbond', 'Network Bond Check', 'Hardware', resource)
         self.node = node
 
     def run(self):
@@ -51,5 +48,4 @@ class NetworkBond(HealthCheckRun):
             else:
                 msg = 'Bond: {}, all slave are ok'.format(bond['name'])
 
-            message = {'text': msg, 'id': bond, 'status': state}
-            self.result['messages'].append(message)
+            self.add_message(bond, state, msg)

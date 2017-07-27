@@ -7,18 +7,12 @@ Monitors if a number of interrupts
 
 
 class Interrupts(HealthCheckRun):
-    ID = 'interrupts'
-
     def __init__(self, node, warn=8000, error=1000):
-        super().__init__()
+        resource = '/nodes/{}'.format(node.name)
+        super().__init__('interrupts', 'CPU Interrupts', 'Hardware', resource)
         self._warn = warn
         self._error = error
         self.node = node
-
-        self.result['id'] = 'interrupts'
-        self.result['name'] = 'CPU Interrupts'
-        self.result['category'] = 'Hardware'
-        self.result['resource'] = '/nodes/{}'.format(node.name)
 
     def _get(self):
         client = self.node.client
@@ -27,7 +21,7 @@ class Interrupts(HealthCheckRun):
         if state is None:
             # nothing to check yet
             return {
-                'id': self.ID,
+                'id': self.id,
                 'status': 'WARNING',
                 'text': 'Number of interrupts per second is not collected yet',
             }
@@ -39,7 +33,7 @@ class Interrupts(HealthCheckRun):
         current_time = current['start']
         if current_time < time.time() - (10*60):
             return {
-                'id': self.ID,
+                'id': self.id,
                 'status': 'WARNING',
                 'text': 'Last collected interrupts are too far in the past',
             }
@@ -64,4 +58,4 @@ class Interrupts(HealthCheckRun):
         }
 
     def run(self):
-        self.result['messages'].append(self._get())
+        self.add_message(**self._get())

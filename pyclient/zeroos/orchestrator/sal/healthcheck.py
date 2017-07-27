@@ -6,22 +6,31 @@ import hashlib
 
 
 class HealthCheckRun:
-    def __init__(self):
-        self.result = {
-            'id': '',
-            'name': '',
-            'category': '',
-            'stacktrace': '',
-            'messages': list(),
-        }
+    def __init__(self, id, name, category, resource):
+        self.id = id
+        self.name = name
+        self.category = category
+        self._messages = []
+        self.resource = resource
+        self.stacktrace = None
 
     def start(self, *args, **kwargs):
         try:
             self.run(*args, **kwargs)
         except Exception as e:
             eco = j.errorhandler.parsePythonExceptionObject(e)
-            self.result['stacktrace'] = eco.traceback
-        return self.result
+            self.stacktrace = eco.traceback
+        return {
+            'id': self.id,
+            'name': self.name,
+            'category': self.category,
+            'resource': self.resource,
+            'stackstrace': self.stacktrace,
+            'messages': self._messages
+        }
+
+    def add_message(self, id, status, text):
+        self._messages.append({'id': id, 'text': text, 'status': status})
 
 
 class ContainerContext:
@@ -93,7 +102,7 @@ class HealthCheck:
         self.node.client.bash("modprobe ipmi_si && modprobe ipmi_devintf").get()
 
         with self.with_container("https://hub.gig.tech/gig-official-apps/healthcheck.flist") as container:
-            temperature = Temperature()
+            temperature = Temperature(self.node)
             result = temperature.start(container)
         return result
 
