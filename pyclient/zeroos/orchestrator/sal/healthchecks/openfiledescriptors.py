@@ -10,14 +10,8 @@ if it exceeds 90% of the hard limit, it raises an error.
 
 class OpenFileDescriptor(HealthCheckRun):
     def __init__(self, node):
-        super().__init__()
-        self.result = {
-            'id': 'OPENFILEDESCRIPTORS',
-            'name': 'Open File Descriptors',
-            'resource': '/nodes/{}'.format(node.name),
-            'category': 'System Load',
-            'messages': list(),
-        }
+        resource = '/nodes/{}'.format(node.name),
+        super().__init__('OPENFILEDESCRIPTORS', 'Open File Descriptors', 'System Load', resource)
         self.node = node
     
     def run(self):
@@ -26,24 +20,10 @@ class OpenFileDescriptor(HealthCheckRun):
                 if rlimit['resource'] == psutil.RLIMIT_NOFILE:
                     pid = str(process['pid'])
                     if (0.9 * rlimit['soft']) <= process['ofd'] < (0.9 * rlimit['hard']):
-                        message = {
-                            'id': pid,
-                            'status': 'WARNING',
-                            'text': 'Open file descriptors for process %s exceeded 90%% of the soft limit' % pid,
-                        }
-                        self.result['messages'].append(message)
+                        self.add_message(pid, 'WARNING', 'Open file descriptors for process %s exceeded 90%% of the soft limit' % pid)
                     elif process['ofd'] >= (0.9 * rlimit['hard']):
-                        message = {
-                            'id': pid,
-                            'status': 'ERROR',
-                            'text': 'Open file descriptors for process %s exceeded 90%% of the hard limit' % pid,
-                        }
-                        self.result['messages'].append(message)
+                        self.add_message(pid, 'ERROR', 'Open file descriptors for process %s exceeded 90%% of the hard limit' % pid)
                     break
 
-        if not self.result['messages']:
-            self.result['messages'] = [{
-                'id': '-1',
-                'status': 'OK',
-                'text': 'Open file descriptors for all processes are within limit',
-            }]
+        if not self._messages:
+            self.add_message('-1', 'OK', 'Open file descriptors for all processes are within limit')
