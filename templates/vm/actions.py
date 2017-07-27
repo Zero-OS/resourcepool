@@ -93,7 +93,10 @@ def _nbd_url(job, container, nbdserver, vdisk):
     endpoint = nbdserver.model.data.socketPath.lstrip('/')
     socket_path = j.sal.fs.joinPaths(container_root, endpoint)
     link = j.sal.fs.joinPaths("/var/run/nbd-servers/", endpoint)
-    node.system("ln -s %s /var/run/nbd-servers/" % socket_path)
+
+    result = node.system("ln -sf %s /var/run/nbd-servers/" % socket_path).get()
+    if result.state.upper() == "ERROR":
+        raise RuntimeError(result.stderr)
     return 'nbd+unix:///{id}?socket={socket}'.format(id=vdisk, socket=link)
 
 
@@ -107,7 +110,7 @@ def start_dependent_services(job):
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    services = [ node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted" ]
+    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
 
     node = random.choice(services)
     if len(services) > 1 and node.name == service.parent.name:
@@ -300,7 +303,6 @@ def cleanupzerodisk(job):
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
@@ -475,7 +477,7 @@ def migrate(job):
     if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
-    # define node services 
+    # define node services
     target_node = service.aysrepo.serviceGet('node', node)
     old_node = service.parent
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
