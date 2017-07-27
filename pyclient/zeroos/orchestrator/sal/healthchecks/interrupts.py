@@ -2,7 +2,7 @@ import time
 from ..healthcheck import HealthCheckRun
 
 descr = """
-Monitors if a network bond (if there is one) has both (or more) interfaces properly active.
+Monitors if a number of interrupts
 """
 
 
