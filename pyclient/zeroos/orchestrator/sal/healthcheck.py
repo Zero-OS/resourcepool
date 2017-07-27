@@ -25,7 +25,7 @@ class HealthCheckRun:
             'name': self.name,
             'category': self.category,
             'resource': self.resource,
-            'stackstrace': self.stacktrace,
+            'stacktrace': self.stacktrace,
             'messages': self._messages
         }
 
