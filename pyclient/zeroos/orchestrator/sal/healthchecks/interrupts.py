@@ -52,7 +52,7 @@ class Interrupts(HealthCheckRun):
             text = 'Interrupts exceeded warning threshold of {} ({})'.format(self._warn, value)
 
         return {
-            'id': self.ID,
+            'id': self.id,
             'status': status,
             'text': text,
         }
