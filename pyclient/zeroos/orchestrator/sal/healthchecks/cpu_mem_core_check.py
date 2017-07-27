@@ -1,4 +1,4 @@
-from js9  import j
+from js9 import j
 
 descr = """
 Checks average memory and CPU usage/load. If average per hour is higher than expected an error condition is thrown.
@@ -8,74 +8,87 @@ For both memory and CPU usage throws WARNING if more than 80% used and throws ER
 Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
+
 def action(node):
     category = 'System Load'
-
+    resource = '/nodes/{}'.format(node.name)
     total_mem = node.client.info.mem()['total']/(1024*1024)
     mem_history = node.client.aggregator.query('machine.memory.ram.available').get('machine.memory.ram.available', {}).get('history', {})
 
-
+    memory_result = {
+        'id': 'MEMORY',
+        'name': 'Memory',
+        'resource': resource,
+        'messages': list(),
+        'category': category,
+    }
     if '3600' not in mem_history:
-        memoryresult = {}
-        memoryresult['status'] = 'WARNING'
-        memoryresult['resource'] = category
-        memoryresult['message'] = 'Average memory load is not collected yet'
-        memoryresult['id'] = 'MEMORY'
-        memoryresult['category'] = 'System'
-        memoryresult['name'] = 'MEMORY'
+        memory_result['messages'].append({
+            'id': '-1',
+            'status': 'WARNING',
+            'text': 'Average memory load is not collected yet',
+        })
     else:
         avg_available_mem = mem_history['3600'][-1]['avg']
         avg_used_mem = total_mem - avg_available_mem
         avg_mem_percent = avg_used_mem/float(total_mem) * 100
-        memoryresult = get_results('memory', avg_mem_percent)
+        memory_result['messages'].append(get_message('memory', avg_mem_percent))
 
-    cpupercent = 0
+    cpu_percent = 0
     count = 0
-
     cpu_usage = node.client.aggregator.query('machine.CPU.percent')
     for cpu, data in cpu_usage.items():
         if '3600' not in data['history']:
             continue
-        cpupercent += (data['history']['3600'][-1]['avg'])
+        cpu_percent += (data['history']['3600'][-1]['avg'])
         count += 1
 
+    cpu_result = {
+        'id': 'CPU',
+        'name': 'Cpu',
+        'resource': resource,
+        'messages': list(),
+        'category': category,
+    }
+
     if count == 0:
-        cpuresult = {}
-        cpuresult['status'] = 'WARNING'
-        cpuresult['resource'] = category
-        cpuresult['message'] = 'Average CPU load is not collected yet'
-        cpuresult['id'] = "CPU"
-        cpuresult['category'] = "System"
-        cpuresult['name'] = "CPU"
+        cpu_result['messages'].append({
+            'id': '-1',
+            'status': 'WARNING',
+            'text': 'Average CPU load is not collected yet',
+        })
     else:
-        cpuavg = cpupercent / float(count)
-        cpuresult = get_results('cpu', cpuavg)
-    return [memoryresult, cpuresult]
+        cpu_avg = cpu_percent / float(count)
+        cpu_result['messages'].append(get_message('cpu', cpu_avg))
+
+    return [memory_result, cpu_result]
 
 
-def get_results(type_, percent):
+def get_message(type_, percent):
     level = None
-    result = dict()
-    result['status'] = 'OK'
-    result['message'] = r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent)
-    result['resource'] = 'System Load'
-    result['id'] = r'%s' % (type_.upper())
-    result['name'] = r'%s' % (type_.upper())
+    message = {
+        'id': '-1',
+        'status': 'OK',
+        'text': r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent),
+    }
+
     if percent > 95:
         level = 1
-        result['status'] = 'ERROR'
-        result['message'] = r'Average %s load during last hour was too high' % (type_.upper())
+        message['status'] = 'ERROR'
+        message['text'] = r'Average %s load during last hour was too high' % (type_.upper())
     elif percent > 80:
         level = 2
-        result['status'] = 'WARNING'
-        result['message'] = r'Avergage %s load during last hour was too high' % (type_.upper())
+        message['status'] = 'WARNING'
+        message['text'] = r'Average %s load during last hour was too high' % (type_.upper())
     if level:
-        msg = 'Avergage %s load during last hour was above threshhold value: %.2f%%' % (type_.upper(), percent)
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
+        msg = 'Average %s load during last hour was above threshold value: %.2f%%' % (type_.upper(), percent)
+        eco = j.errorconditionhandler.getErrorConditionObject(
+            msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = j.application.whoAmI.nid
         eco.gid = j.application.whoAmI.gid
         eco.process()
-    return result
+
+    return message
 
 
 if __name__ == '__main__':

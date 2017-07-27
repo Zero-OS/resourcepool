@@ -31,14 +31,14 @@ func (api HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request
 		respBody[i].Hostname = node.Hostname
 		healthstatus := "OK"
 		for _, healthcheck := range node.HealthChecks {
-			if healthcheck.Status != "OK" {
-				healthstatus = healthcheck.Status
-				if healthcheck.Status == "ERROR" {
-					break
+			for _, message := range healthcheck.Messages {
+				if message.Status != "OK" {
+					healthstatus = message.Status
+					if message.Status == "ERROR" {
+						break
+					}
 				}
-
 			}
-
 		}
 		respBody[i].Status = healthstatus
 

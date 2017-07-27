@@ -145,43 +145,40 @@ def monitor(job):
     else:
         service.model.data.status = 'halted'
 
-    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/deboeckj/js9container.flist')
-    with node.healthcheck.with_container(flist) as cont:
-        update_healthcheck(service, node.healthcheck.run(cont, 'openfiledescriptors'))
+    update_healthcheck(service, node.healthcheck.check_ofd())
     update_healthcheck(service, node.healthcheck.calc_cpu_mem())
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
+    update_healthcheck(service, node.healthcheck.network_bond())
     service.saveAll()
 
 
-def update_healthcheck(service, messages):
+def update_healthcheck(service, healthchecks):
     import time
     interval = service.model.actionGet('monitor').period
-    for message in messages:
-        health = None
+    new_healthchecks = list()
+    if not isinstance(healthchecks, list):
+        healthchecks = [healthchecks]
+    defaultresource = '/nodes/{}'.format(service.name)
+    for health_check in healthchecks:
         for health in service.model.data.healthchecks:
-            if health.id == message['id']:
-                health.name = message.get('name', "")
-                health.resource = message.get('resource', "")
-                health.status = message.get('status', "")
-                health.message = message.get('message', "")
-                health.lasttime =time.time()
+            # If this healthcheck already exists, update its attributes
+            if health.id == health_check['id']:
+                health.name = health_check.get('name', '')
+                health.resource = health_check.get('resource', defaultresource) or defaultresource
+                health.messages = health_check.get('messages', [])
+                health.category = health_check.get('category', '')
+                health.lasttime = time.time()
                 health.interval = interval
+                health.stacktrace = health_check.get('stacktrace', '')
                 break
         else:
-            healthchecks = []
-            for item in service.model.data.healthchecks:
-                healthcheck = {}
-                healthcheck['id'] = item.id
-                healthcheck['name'] = item.name
-                healthcheck['resource'] = item.resource
-                healthcheck['status'] = item.status
-                healthcheck['message'] = item.message
-                healthcheck['lasttime'] = time.time()
-                healthcheck['interval'] = interval
-                healthchecks.append(healthcheck)
-            healthchecks.append(message)
-            service.model.data.healthchecks = healthchecks
+            # healthcheck doesn't exist in the current list, add it to the list of new
+            new_healthchecks.append(health_check)
+
+    old_healthchecks = service.model.data.to_dict().get('healthchecks', [])
+    old_healthchecks.extend(new_healthchecks)
+    service.model.data.healthchecks = old_healthchecks
 
 
 def reboot(job):
@@ -274,7 +271,8 @@ def watchdog(job):
 
         # Add the looping here instead of the pubsub sal
         loop = j.atyourservice.server.loop
-        cl = Pubsub(loop, service.model.data.redisAddr)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
 
         while True:
             if str(service.model.data.status) != "running":
