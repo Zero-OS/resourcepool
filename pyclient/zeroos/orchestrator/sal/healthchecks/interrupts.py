@@ -9,16 +9,19 @@ Monitors if a number of interrupts
 class Interrupts(HealthCheckRun):
     ID = 'interrupts'
 
-    def __init__(self, warn=8000, error=1000):
+    def __init__(self, node, warn=8000, error=1000):
         super().__init__()
         self._warn = warn
         self._error = error
+        self.node = node
+
         self.result['id'] = 'interrupts'
         self.result['name'] = 'CPU Interrupts'
         self.result['category'] = 'Hardware'
+        self.result['resource'] = '/nodes/{}'.format(node.name)
 
-    def _get(self, node):
-        client = node.client
+    def _get(self):
+        client = self.node.client
 
         state = client.aggregator.query('machine.CPU.interrupts').get('machine.CPU.interrupts')
         if state is None:
@@ -60,5 +63,5 @@ class Interrupts(HealthCheckRun):
             'text': text,
         }
 
-    def run(self, node):
-        self.result['messages'].append(self._get(node))
+    def run(self):
+        self.result['messages'].append(self._get())

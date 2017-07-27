@@ -109,5 +109,5 @@ class HealthCheck:
 
     def check_interrupts(self):
         from .healthchecks.interrupts import Interrupts
-        inter = Interrupts()
-        return inter.start(self.node)
+        inter = Interrupts(self.node)
+        return inter.start()
