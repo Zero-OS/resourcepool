@@ -149,20 +149,23 @@ def monitor(job):
     update_healthcheck(service, node.healthcheck.calc_cpu_mem())
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
+    update_healthcheck(service, node.healthcheck.network_bond())
     service.saveAll()
 
 
 def update_healthcheck(service, healthchecks):
     import time
-
     interval = service.model.actionGet('monitor').period
     new_healthchecks = list()
+    if not isinstance(healthchecks, list):
+        healthchecks = [healthchecks]
+    defaultresource = '/nodes/{}'.format(service.name)
     for health_check in healthchecks:
         for health in service.model.data.healthchecks:
             # If this healthcheck already exists, update its attributes
             if health.id == health_check['id']:
                 health.name = health_check.get('name', '')
-                health.resource = health_check.get('resource', '')
+                health.resource = health_check.get('resource', defaultresource) or defaultresource
                 health.messages = health_check.get('messages', [])
                 health.category = health_check.get('category', '')
                 health.lasttime = time.time()
