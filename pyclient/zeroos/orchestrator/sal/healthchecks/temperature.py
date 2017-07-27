@@ -50,7 +50,7 @@ class Temperature(HealthCheckRun):
         self.result["messages"] = messages
         return self.result
 
-    def get_message(self, sensor=None, status='OK', message='', temperature=0):
+    def get_message(self, sensor="", status='OK', message='', temperature=0):
         result = {
             "status": status.upper(),
             "text": "%s: %s" % (sensor, message),
