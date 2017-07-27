@@ -106,3 +106,8 @@ class HealthCheck:
         from .healthchecks.openfiledescriptors import OpenFileDescriptor
         ofd = OpenFileDescriptor(self.node)
         return ofd.start()
+
+    def check_interrupts(self):
+        from .healthchecks.interrupts import Interrupts
+        inter = Interrupts(self.node)
+        return inter.start()
