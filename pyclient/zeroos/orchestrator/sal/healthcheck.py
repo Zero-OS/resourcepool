@@ -76,15 +76,16 @@ class HealthCheck:
             }
             return healtcheck
 
-    def calc_cpu_mem(self):
-        from .healthchecks.cpu_mem_core_check import action
-
-        return action(self.node)
+    def cpu_mem(self):
+        from .healthchecks.cpu_mem_core import CPU, Memory
+        cpu = CPU(self.node)
+        memory = Memory(self.node)
+        return [cpu.start(), memory.start()]
 
     def network_bond(self):
         from .healthchecks.networkbond import NetworkBond
-        bond = NetworkBond()
-        return bond.start(self.node)
+        bond = NetworkBond(self.node)
+        return bond.start()
 
     def node_temperature(self):
         from .healthchecks.temperature import Temperature
@@ -97,11 +98,11 @@ class HealthCheck:
         return result
 
     def rotate_logs(self):
-        from .healthchecks.log_rotator import action
+        from .healthchecks.log_rotator import RotateLogs
+        rotator = RotateLogs(self.node)
+        return rotator.start()
 
-        return action(self.node)
-
-    def check_ofd(self):
-        from .healthchecks.openfiledescriptors import action
-
-        return action(self.node)
+    def openfiledescriptors(self):
+        from .healthchecks.openfiledescriptors import OpenFileDescriptor
+        ofd = OpenFileDescriptor(self.node)
+        return ofd.start()
