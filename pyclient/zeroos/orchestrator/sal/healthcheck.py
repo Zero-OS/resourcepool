@@ -12,7 +12,7 @@ class HealthCheckRun:
         self.category = category
         self._messages = []
         self.resource = resource
-        self.stacktrace = None
+        self.stacktrace = ''
 
     def start(self, *args, **kwargs):
         try:
@@ -25,7 +25,7 @@ class HealthCheckRun:
             'name': self.name,
             'category': self.category,
             'resource': self.resource,
-            'stacktrace': self.stacktrace,
+            'stacktrace': self.stacktrace or '',
             'messages': self._messages
         }
 
