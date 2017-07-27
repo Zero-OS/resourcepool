@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 // GetGraph is the handler for GET /graphs/{graphid}
 // Get Graph
-func (api NodeAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]

@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 
 // ListGraphs is the handler for GET /graphs
 // List Graphs
-func (api NodeAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "node,port",
