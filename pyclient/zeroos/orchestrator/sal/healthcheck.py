@@ -121,6 +121,12 @@ class HealthCheck:
         inter = Interrupts(self.node)
         return inter.start()
 
+    def powersupply(self, container):
+        from .healthchecks.powersupply import PowerSupply
+        powersupply = PowerSupply(self.node)
+        return powersupply.start(container)
+
     def context_switch(self):
         from .healthchecks.context_switch import ContextSwitch
         return ContextSwitch(self.node).start()
+
