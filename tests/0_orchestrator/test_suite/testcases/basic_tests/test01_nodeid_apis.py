@@ -51,7 +51,7 @@ class TestNodeidAPI(TestcasesBase):
         node_info = [x for x in self.nodes_info if x["id"] == self.nodeid][0]
         for key in node_info.keys():
             if key in node_details.keys():
-                self.assertEqual(self.nodes_info[key], node_details[key])
+                self.assertEqual(node_info[key], node_details[key])
 
     def test003_list_jobs(self):
         """ GAT-003
