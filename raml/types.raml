@@ -1341,6 +1341,15 @@ HealthCheck:
     id: string
     name: string
     resource: string
-    status: string
-    message: string
+    messages: Message[]
     category: string
+    interval: float
+    lasttime: float
+    stacktrace: string
+
+Message:
+  type: object
+  properties:
+    id: string
+    status: string
+    text: string

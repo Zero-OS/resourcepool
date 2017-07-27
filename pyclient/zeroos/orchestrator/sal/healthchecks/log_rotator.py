@@ -6,28 +6,36 @@ descr = """
 Rotate know log files if their size hit 10G or more
 """
 
+
 def action(node, locations=['/var/log'], limit=10):
-    result = {}
-    result['id'] = 'LOGROTATOR'
-    result['name'] = 'LOGROTATOR'
-    result['status'] = 'OK'
-    result['resource'] = "LOG ROTATOR"
-    result['message'] = 'Logs did not reach {limit}G'.format(limit=limit)
+    result = {
+        'id': 'LOGROTATOR',
+        'name': 'Log Rotator',
+        'resource': '/nodes/{}'.format(node.name),
+        'category': 'System Load',
+        'messages': list(),
+    }
+
+    message = {
+        'id': '-1',
+        'status': 'OK',
+        'text': 'Logs did not reach {limit}G'.format(limit=limit)
+    }
 
     if "/var/log" not in locations:
         locations.append("/var/log")
     logs = []
     try:
         # Get total size for all log files
-        log_size = getLogSize(node, locations)
+        log_size = get_log_size(node, locations)
 
         # Rotate logs if they are larger than the limit
-        if log_size/(1024 * 1024 * 1024) >= limit: #convert bytes to GIGA
+        if log_size/(1024 * 1024 * 1024) >= limit:  # convert bytes to GIGA
             # Rotate core.log
 
             for location in locations:
                 # Get Files for this location
-                location_files = getFiles(node, location, [])
+                location_files = get_files(node, location, [])
                 logs.extend(location_files)
 
             for file_path in logs:
@@ -45,22 +53,25 @@ def action(node, locations=['/var/log'], limit=10):
                     fd = node.client.filesystem.open(file_path, 'x')
                     node.client.filesystem.close(fd)
             node.client.logger.reopen()
-            result['message'] = 'Logs cleared'
+            message['text'] = 'Logs cleared'
     except Exception as e:
-        result['message'] = "Error happened, Can not clear logs"
-        result['status'] = "ERROR"
+        message['text'] = "Error happened, Can not clear logs"
+        message['status'] = "ERROR"
 
+    result['messages'].append(message)
     return [result]
 
-def getFiles(node, location, files=[]):
+
+def get_files(node, location, files=[]):
     for item in node.client.filesystem.list(location):
         if not item['is_dir']:
             files.append(os.path.join(location, item['name']))
         else:
-            files = getFiles(node, os.path.join(location, item['name']), files)
+            files = get_files(node, os.path.join(location, item['name']), files)
     return files
 
-def getLogSize(node, locations):
+
+def get_log_size(node, locations):
     size = 0
     for location in locations:
         items = node.client.filesystem.list(location)

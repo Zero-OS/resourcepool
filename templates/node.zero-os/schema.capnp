@@ -1,4 +1,4 @@
-@0xa3e0db18725d3c7f;
+@0xe57bd212ca5bb013;
 
 struct Schema {
     id @0: Text; # mac address of the mngt network card
@@ -21,8 +21,16 @@ struct Schema {
       id @0: Text;
       name @1: Text;
       resource @2: Text;
-      status @3: Text;
-      message @4: Text;
-      category @5: Text;
+      messages @3: List(Message);
+      category @4: Text;
+      lasttime @5: Float32;
+      interval @6: Float32;
+      stacktrace @7: Text;
     }
+
+    struct Message {
+          id @0: Text;
+          status @1: Text;
+          text @2: Text;
+        }
 }
