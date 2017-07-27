@@ -146,15 +146,17 @@ def monitor(job):
     else:
         service.model.data.status = 'halted'
 
+    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
     update_healthcheck(service, node.healthcheck.openfiledescriptors())
     update_healthcheck(service, node.healthcheck.cpu_mem())
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
     update_healthcheck(service, node.healthcheck.network_bond())
-    update_healthcheck(service, node.healthcheck.node_temperature())
-    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
     with node.healthcheck.with_container(flist) as cont:
+        update_healthcheck(service, node.healthcheck.node_temperature(cont))
         update_healthcheck(service, node.healthcheck.powersupply(cont))
+        update_healthcheck(service, node.healthcheck.fan(cont))
+
     service.saveAll()
 
 
