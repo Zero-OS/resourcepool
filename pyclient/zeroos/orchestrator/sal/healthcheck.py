@@ -116,11 +116,11 @@ class HealthCheck:
         ofd = OpenFileDescriptor(self.node)
         return ofd.start()
 
-    def check_interrupts(self):
+    def interrupts(self):
         from .healthchecks.interrupts import Interrupts
         inter = Interrupts(self.node)
         return inter.start()
 
-    def check_context_switches(self):
+    def context_switch(self):
         from .healthchecks.context_switch import ContextSwitch
         return ContextSwitch(self.node).start()
