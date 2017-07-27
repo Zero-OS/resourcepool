@@ -13,7 +13,7 @@ class Temperature(HealthCheckRun):
     def __init__(self):
         super().__init__()
         self.result['id'] = 'temperature'
-        self.result['name'] = 'Network Bond Check'
+        self.result['name'] = 'Node Temperature Check'
         self.result['category'] = 'Hardware'
 
     def run(self, container):
@@ -37,14 +37,14 @@ class Temperature(HealthCheckRun):
                             continue
 
                         if sensorstatus != "ok" and "no reading" not in message.lower():
-                            result = self.get_messages(sensor=id_, status='WARNING', message=message)
+                            result = self.get_message(sensor=id_, status='WARNING', message=message)
                             messages.append(result)
                             continue
                         temperature = int(message.split(" ", 1)[0])
-                        result = self.get_messages(sensor=id_, status=sensorstatus, message=message, temperature=temperature)
+                        result = self.get_message(sensor=id_, status=sensorstatus, message=message, temperature=temperature)
                         messages.append(result)
         else:
-            result = self.get_messages(status="SKIPPED", message="NO temp information available")
+            result = self.get_message(status="SKIPPED", message="NO temp information available")
             messages.append(result)
 
         self.result["messages"] = messages

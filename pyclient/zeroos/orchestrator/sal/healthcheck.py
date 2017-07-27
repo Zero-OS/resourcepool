@@ -89,7 +89,7 @@ class HealthCheck:
     def node_temperature(self):
         from .healthchecks.temperature import Temperature
 
-        self.node.client.system("modprobe ipmi_si && modprobe ipmi_devintf").get()
+        self.node.client.bash("modprobe ipmi_si && modprobe ipmi_devintf").get()
 
         with self.with_container("https://hub.gig.tech/gig-official-apps/healthcheck.flist") as container:
             temperature = Temperature()
