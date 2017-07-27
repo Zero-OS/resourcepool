@@ -145,8 +145,8 @@ def monitor(job):
     else:
         service.model.data.status = 'halted'
 
-    update_healthcheck(service, node.healthcheck.check_ofd())
-    update_healthcheck(service, node.healthcheck.calc_cpu_mem())
+    update_healthcheck(service, node.healthcheck.openfiledescriptors())
+    update_healthcheck(service, node.healthcheck.cpu_mem())
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
     update_healthcheck(service, node.healthcheck.network_bond())
