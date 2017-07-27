@@ -395,7 +395,7 @@ def start_migartion_channel(job, old_node, node):
         file_discriptor = node.client.filesystem.open(ssh_config, mode='x')
         node.client.filesystem.write(file_discriptor, str.encode("Port %s" % freeports_node[0]))
         node.client.filesystem.close(file_discriptor)
-        res = node.client.system(cmd.format(config=ssh_config))
+        res = node.client.system(command.format(config=ssh_config))
         if not res.running:
             raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                     node.name))
