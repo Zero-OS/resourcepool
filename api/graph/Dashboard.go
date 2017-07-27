@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"gopkg.in/validator.v2"

@@ -51969,7 +51969,7 @@ details in a user&#39;s account without getting their password.</p>
     </em>
   
 
-<p>Grafana Dashboard, For docs and examples <a href="http://docs.grafana.org/http_api/dashboard/">http://docs.grafana.org/http_api/dashboard/</a></p>
+<p>A JSON representation of a Grafana Dashboard (as a string), For docs and examples <a href="http://docs.grafana.org/http_api/dashboard/">http://docs.grafana.org/http_api/dashboard/</a></p>
 
 
   
@@ -52128,17 +52128,17 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_graphs__graphid__dashboards__dashboardid_">
-          <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardid}
+        <a class="collapsed" data-toggle="collapse" href="#panel_graphs__graphid__dashboards__dashboardname_">
+          <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardname}
         </a>
 
         <span class="methods">
           
-            <a href="#graphs__graphid__dashboards__dashboardid__get"><!-- modal shown by hashchange event -->
+            <a href="#graphs__graphid__dashboards__dashboardname__get"><!-- modal shown by hashchange event -->
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
-            <a href="#graphs__graphid__dashboards__dashboardid__delete"><!-- modal shown by hashchange event -->
+            <a href="#graphs__graphid__dashboards__dashboardname__delete"><!-- modal shown by hashchange event -->
               <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -52146,7 +52146,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_graphs__graphid__dashboards__dashboardid_" class="panel-collapse collapse">
+    <div id="panel_graphs__graphid__dashboards__dashboardname_" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -52154,7 +52154,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#graphs__graphid__dashboards__dashboardid__get'" class="list-group-item">
+            <div onclick="window.location.href = '#graphs__graphid__dashboards__dashboardname__get'" class="list-group-item">
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Get dashboard</p>
@@ -52163,7 +52163,7 @@ the "Authorization" header</p>
               <div class="clearfix"></div>
             </div>
           
-            <div onclick="window.location.href = '#graphs__graphid__dashboards__dashboardid__delete'" class="list-group-item">
+            <div onclick="window.location.href = '#graphs__graphid__dashboards__dashboardname__delete'" class="list-group-item">
               <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Delete a dashboard</p>
@@ -52177,14 +52177,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="graphs__graphid__dashboards__dashboardid__get">
+      <div class="modal fade" tabindex="0" id="graphs__graphid__dashboards__dashboardname__get">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardid}
+                <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardname}
               </h4>
             </div>
 
@@ -52225,19 +52225,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#graphs__graphid__dashboards__dashboardid__get_request" data-toggle="tab">Request</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__get_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#graphs__graphid__dashboards__dashboardid__get_response" data-toggle="tab">Response</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__get_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#graphs__graphid__dashboards__dashboardid__get_securedby" data-toggle="tab">Security</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__get_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -52245,7 +52245,7 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="graphs__graphid__dashboards__dashboardid__get_request">
+                  <div class="tab-pane active" id="graphs__graphid__dashboards__dashboardname__get_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
@@ -52274,7 +52274,7 @@ details in a user&#39;s account without getting their password.</p>
 
                         
                           <li>
-  <strong>dashboardid</strong>:
+  <strong>dashboardname</strong>:
 
   
     <em>required (string)
@@ -52340,7 +52340,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardid__get_response">
+                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardname__get_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
 
@@ -52473,7 +52473,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardid__get_securedby">
+                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardname__get_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -52553,14 +52553,14 @@ the "Authorization" header</p>
         </div>
       </div>
     
-      <div class="modal fade" tabindex="0" id="graphs__graphid__dashboards__dashboardid__delete">
+      <div class="modal fade" tabindex="0" id="graphs__graphid__dashboards__dashboardname__delete">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardid}
+                <span class="parent">/graphs/{graphid}/dashboards</span>/{dashboardname}
               </h4>
             </div>
 
@@ -52601,19 +52601,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#graphs__graphid__dashboards__dashboardid__delete_request" data-toggle="tab">Request</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__delete_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#graphs__graphid__dashboards__dashboardid__delete_response" data-toggle="tab">Response</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__delete_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#graphs__graphid__dashboards__dashboardid__delete_securedby" data-toggle="tab">Security</a>
+                    <a href="#graphs__graphid__dashboards__dashboardname__delete_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -52621,7 +52621,7 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="graphs__graphid__dashboards__dashboardid__delete_request">
+                  <div class="tab-pane active" id="graphs__graphid__dashboards__dashboardname__delete_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
@@ -52650,7 +52650,7 @@ details in a user&#39;s account without getting their password.</p>
 
                         
                           <li>
-  <strong>dashboardid</strong>:
+  <strong>dashboardname</strong>:
 
   
     <em>required (string)
@@ -52716,7 +52716,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardid__delete_response">
+                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardname__delete_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
 <p>Dashboard deleted successfully</p>
@@ -52730,7 +52730,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardid__delete_securedby">
+                  <div class="tab-pane" id="graphs__graphid__dashboards__dashboardname__delete_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>

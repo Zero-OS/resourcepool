@@ -321,27 +321,6 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// ListNodes is the handler for GET /nodes
 	// List all nodes
 	ListNodes(http.ResponseWriter, *http.Request)
-	// DeleteDashboard is the handler for DELETE /graphs/{graphid}/dashboards/{dashboardid}
-	// Delete dashboard
-	DeleteDashboard(http.ResponseWriter, *http.Request)
-	// GetDashboard is the handler for GET /graphs/{graphid}/dashboards/{dashboardid}
-	// Get dashboard
-	GetDashboard(http.ResponseWriter, *http.Request)
-	// CreateDashboard is the handler for POST /graphs/{graphid}/dashboards
-	// Create dashboard
-	CreateDashboard(http.ResponseWriter, *http.Request)
-	// ListDashboards is the handler for GET /graphs/{graphid}/dashboards
-	// List all dashboards
-	ListDashboards(http.ResponseWriter, *http.Request)
-	// GetGraph is the handler for GET /graphs/{graphid}
-	// Get a graph
-	GetGraph(http.ResponseWriter, *http.Request)
-	// ListGraphs is the handler for GET /graphs
-	// List all graphs
-	ListGraphs(http.ResponseWriter, *http.Request)
-	// UpdateGraph is the handler for PUT /graphs/{graphid}
-	// Update graph
-	UpdateGraph(http.ResponseWriter, *http.Request)
 	// GetNodeStats is the handler for GET /nodes/{nodeid}/stats
 	// The aggregated stats of node
 	GetNodeStats(w http.ResponseWriter, r *http.Request)
@@ -453,11 +432,4 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}", i.DeleteNode).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}", i.GetNode).Methods("GET")
 	r.HandleFunc("/nodes", i.ListNodes).Methods("GET")
-	r.HandleFunc("/graphs/{graphid}/dashboards/{dashboardid}", i.DeleteDashboard).Methods("DELETE")
-	r.HandleFunc("/graphs/{graphid}/dashboards/{dashboardid}", i.GetDashboard).Methods("GET")
-	r.HandleFunc("/graphs/{graphid}/dashboards", i.CreateDashboard).Methods("POST")
-	r.HandleFunc("/graphs/{graphid}/dashboards", i.ListDashboards).Methods("GET")
-	r.HandleFunc("/graphs/{graphid}", i.GetGraph).Methods("GET")
-	r.HandleFunc("/graphs/{graphid}", i.UpdateGraph).Methods("PUT")
-	r.HandleFunc("/graphs", i.ListGraphs).Methods("GET")
 }
