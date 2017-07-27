@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	cache "github.com/patrickmn/go-cache"
+	"github.com/zero-os/0-orchestrator/api/graph"
+	"github.com/zero-os/0-orchestrator/api/healthcheck"
 	"github.com/zero-os/0-orchestrator/api/node"
 	"github.com/zero-os/0-orchestrator/api/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -47,10 +49,13 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 	r.PathPrefix("/graphs").Handler(apihandler)
 	r.PathPrefix("/vdisks").Handler(apihandler)
 	r.PathPrefix("/storageclusters").Handler(apihandler)
+	r.PathPrefix("/health").Handler(apihandler)
 
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
+	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
+	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL), org)
 
 	return r
 }

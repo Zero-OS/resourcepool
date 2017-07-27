@@ -8,7 +8,7 @@ def install(job):
     service = job.service
     container = get_container(service, job.context['token'])
 
-    configpath = "/etcd_{}.config".format(service.name)
+    configpath = "/etc/etcd_{}.config".format(service.name)
 
     config = {
         "name": service.name,
@@ -25,7 +25,7 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     cmd = '/bin/etcd --config-file %s' % configpath
-    container.client.system(cmd)
+    container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
 
     if not container.is_port_listening(int(service.model.data.serverBind.split(":")[1])):
         raise j.exceptions.RuntimeError('Failed to start etcd server: {}'.format(service.name))
@@ -50,13 +50,12 @@ def monitor(job):
     if not service.model.actionsState['install'] == 'ok':
         return
 
-    if str(service.model.data.status) != 'running':
-        return
-
     bind = service.model.data.serverBind
     port = int(bind.split(':')[1])
     container = get_container(service, get_jwt_token(job.service.aysrepo))
     if container.is_port_listening(port):
         return
+
+    service.model.data.status = "halted"
 
     j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))

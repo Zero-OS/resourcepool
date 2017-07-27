@@ -5,10 +5,11 @@ from js9 import j
 
 
 class Grafana:
-    def __init__(self, container, ip, port):
+    def __init__(self, container, ip, port, url):
         self.container = container
         self.ip = ip
         self.port = port
+        self.url = url
         self.client = j.clients.grafana.get(url='http://%s:%d' % (
             ip, port), username='admin', password='admin')
 
@@ -20,6 +21,8 @@ class Grafana:
             self.container.client.filesystem.close(f)
 
         template = template.replace(b'3000', str(self.port).encode())
+        if self.url:
+            template = template.replace(b'root_url = %(protocol)s://%(domain)s:%(http_port)s/', b'root_url = %s' % self.url.encode())
         self.container.client.filesystem.mkdir('/etc/grafana/')
         self.container.upload_content('/etc/grafana/grafana.ini', template)
 

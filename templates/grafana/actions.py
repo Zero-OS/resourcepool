@@ -48,7 +48,7 @@ def start(job):
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'])
-    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
+    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
     grafana.start()
     service.model.data.status = 'running'
     configure_datasources(job, grafana)
@@ -101,6 +101,14 @@ def processChange(job):
             grafana.port = args['port']
             grafana.start()
             service.model.data.status = 'running'
+    elif args.get('url'):
+        if container_ays.is_running() and grafana.is_running()[0]:
+            grafana.stop()
+            service.model.data.status = 'halted'
+            grafana.url = args['url']
+            grafana.start()
+            service.model.data.status = 'running'
+
     service.model.data.port = args['port']
 
     # @TODO: Handle influxdb list change

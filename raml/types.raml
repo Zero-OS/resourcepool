@@ -1313,7 +1313,9 @@ Dashboard:
   description: A dashboard
   properties:
     name: string
-    dashboard: string
+    dashboard:
+      type: string
+      description: A JSON representation of a Grafana Dashboard (as a string), For docs and examples http://docs.grafana.org/http_api/dashboard/
 
 DashboardListItem:
   type: object
@@ -1323,3 +1325,31 @@ DashboardListItem:
     dashboard: string
     slug: string
     url: string
+
+NodeHealthCheck:
+  type: object
+  description: Node health check status
+  properties:
+    id: string
+    status: string
+    hostname: string
+
+HealthCheck:
+  type: object
+  description: HealthCheck object
+  properties:
+    id: string
+    name: string
+    resource: string
+    messages: Message[]
+    category: string
+    interval: float
+    lasttime: float
+    stacktrace: string
+
+Message:
+  type: object
+  properties:
+    id: string
+    status: string
+    text: string

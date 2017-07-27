@@ -1,6 +1,6 @@
 #%RAML 1.0
-title: Zero-OS 0 Rest API Server
-version: v1.1.0-alpha
+title: Zero-OS Orchestrator RESTful API
+version: v1.1.0-alpha-x
 securitySchemes:
   itsyouonline: !include itsyouonline-raml/securitySchemes/oauth_2_0.raml
 mediaType:  application/json
@@ -17,6 +17,29 @@ annotationTypes:
 
 types:
   !include types.raml
+/health:
+  /nodes:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: List all nodes health
+      displayName: ListNodesHealth
+      responses:
+        200:
+          body:
+            application/json:
+              type: NodeHealthCheck[]
+    /{nodeid}:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Get detailed information of a node  health
+        displayName: ListNodeHealth
+        responses:
+          200:
+            body:
+              application/json:
+                type: HealthCheck[]
 
 
 /nodes:
@@ -1327,7 +1350,7 @@ types:
           202:
             body:
               application/json:
-                type: Run
+              type: Run
             description: Rollback started successfully
 /graphs:
   get:
@@ -1351,6 +1374,17 @@ types:
           body:
             application/json:
               type: Graph
+    put:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Update Graph
+      displayName: UpdateGraph
+      body:
+        application/json:
+          type: Graph
+      responses:
+        204:
+          description: Grafh updated successfully
     /dashboards:
       get:
         (AYSBased):
@@ -1376,7 +1410,7 @@ types:
             headers:
               Location:
                 description: URL to the the Dashboard
-      /{dashboardid}:
+      /{dashboardname}:
         get:
           (AYSBased):
           securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]

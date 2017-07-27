@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"net/http"
@@ -9,12 +9,12 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// DeleteDashboard is the handler for DELETE /graph/{graphid}/dashboard/{dashboardid}
+// DeleteDashboard is the handler for DELETE /graph/{graphid}/dashboard/{dashboardname}
 // Remove dashboard
-func (api NodeAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
-	dashboard := vars["dashboardid"]
+	dashboard := vars["dashboardname"]
 
 	exists, err := aysClient.ServiceExists("dashboard", dashboard, api.AysRepo)
 
@@ -32,7 +32,7 @@ func (api NodeAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
-			Action:  "delete",
+			Action:  "uninstall",
 			Actor:   "dashboard",
 			Service: dashboard,
 			Force:   true,

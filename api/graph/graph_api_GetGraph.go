@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 // GetGraph is the handler for GET /graphs/{graphid}
 // Get Graph
-func (api NodeAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]
@@ -43,7 +43,11 @@ func (api NodeAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respBody.URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+	if graph.URL != "" {
+		respBody.URL = graph.URL
+	} else {
+		respBody.URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+	}
 	respBody.Id = service.Name
 
 	w.Header().Set("Content-Type", "application/json")

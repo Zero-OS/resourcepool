@@ -37,7 +37,7 @@ class Network:
             if ipgwdev:
                 mgmtaddr = str(ipgwdev.ip)
         if not mgmtaddr:
-            mgmtaddr = self.addr
+            mgmtaddr = self.node.addr
 
         return mgmtaddr
 

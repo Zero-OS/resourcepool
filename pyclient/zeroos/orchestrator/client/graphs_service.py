@@ -4,21 +4,21 @@ class GraphsService:
 
 
 
-    def DeleteDashboard(self, dashboardid, graphid, headers=None, query_params=None, content_type="application/json"):
+    def DeleteDashboard(self, dashboardname, graphid, headers=None, query_params=None, content_type="application/json"):
         """
         Delete a dashboard
-        It is method for DELETE /graphs/{graphid}/dashboards/{dashboardid}
+        It is method for DELETE /graphs/{graphid}/dashboards/{dashboardname}
         """
-        uri = self.client.base_url + "/graphs/"+graphid+"/dashboards/"+dashboardid
+        uri = self.client.base_url + "/graphs/"+graphid+"/dashboards/"+dashboardname
         return self.client.delete(uri, None, headers, query_params, content_type)
 
 
-    def GetDashboard(self, dashboardid, graphid, headers=None, query_params=None, content_type="application/json"):
+    def GetDashboard(self, dashboardname, graphid, headers=None, query_params=None, content_type="application/json"):
         """
         Get dashboard
-        It is method for GET /graphs/{graphid}/dashboards/{dashboardid}
+        It is method for GET /graphs/{graphid}/dashboards/{dashboardname}
         """
-        uri = self.client.base_url + "/graphs/"+graphid+"/dashboards/"+dashboardid
+        uri = self.client.base_url + "/graphs/"+graphid+"/dashboards/"+dashboardname
         return self.client.get(uri, None, headers, query_params, content_type)
 
 
@@ -47,6 +47,15 @@ class GraphsService:
         """
         uri = self.client.base_url + "/graphs/"+graphid
         return self.client.get(uri, None, headers, query_params, content_type)
+
+
+    def UpdateGraph(self, data, graphid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Update Graph
+        It is method for PUT /graphs/{graphid}
+        """
+        uri = self.client.base_url + "/graphs/"+graphid
+        return self.client.put(uri, data, headers, query_params, content_type)
 
 
     def ListGraphs(self, headers=None, query_params=None, content_type="application/json"):

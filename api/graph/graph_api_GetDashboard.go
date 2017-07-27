@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -10,13 +10,13 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// GetDashboard is the handler for GET /graph/{graphid}/dashboards/{dashboardid}
+// GetDashboard is the handler for GET /graph/{graphid}/dashboards/{dashboardname}
 // Get Dashboard
-func (api NodeAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]
-	name := vars["dashboardid"]
+	name := vars["dashboardname"]
 
 	query := map[string]interface{}{
 		"parent": fmt.Sprintf("grafana!%s", graphId),
@@ -70,7 +70,7 @@ func (api NodeAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	query = map[string]interface{}{
 		"fields": "RedisAddr",
 	}
-	service, res, err = aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
+	serviceNode, res, err := aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting node service from ays")
 		return
@@ -85,7 +85,7 @@ func (api NodeAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var node nodeItem
-	if err := json.Unmarshal(service.Data, &node); err != nil {
+	if err := json.Unmarshal(serviceNode.Data, &node); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}

@@ -5,7 +5,11 @@ def input(job):
 
     nodes = job.model.args.get('nodes', [])
     size = job.model.args.get('size', 0)
-    if size < len(nodes) != 0:
+
+    if size % 2 == 0:
+        raise j.exceptions.Input("Size should be odd number")
+
+    if size > len(nodes) != 0:
         raise j.exceptions.Input("Invalid amount of nodes provided")
 
 

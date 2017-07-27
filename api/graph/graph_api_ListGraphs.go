@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 
 // ListGraphs is the handler for GET /graphs
 // List Graphs
-func (api NodeAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "node,port",
@@ -41,8 +41,12 @@ func (api NodeAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		respBody[i].URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
 		respBody[i].Id = service.Name
+		if graph.URL != "" {
+			respBody[i].URL = graph.URL
+		} else {
+			respBody[i].URL = fmt.Sprintf("http://%s:%d", node.RedisAddr, graph.Port)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

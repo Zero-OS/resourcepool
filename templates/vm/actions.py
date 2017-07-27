@@ -86,14 +86,17 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
 
 def _nbd_url(job, container, nbdserver, vdisk):
     from zeroos.orchestrator.sal.Node import Node
-    
+
     container_root = container.info['container']['root']
     node = Node.from_ays(nbdserver.parent.parent, password=job.context['token'])._client
     node.filesystem.mkdir("/var/run/nbd-servers/")
     endpoint = nbdserver.model.data.socketPath.lstrip('/')
     socket_path = j.sal.fs.joinPaths(container_root, endpoint)
     link = j.sal.fs.joinPaths("/var/run/nbd-servers/", endpoint)
-    node.system("ln -s %s /var/run/nbd-servers/" % socket_path)
+
+    result = node.system("ln -sf %s /var/run/nbd-servers/" % socket_path).get()
+    if result.state.upper() == "ERROR":
+        raise RuntimeError(result.stderr)
     return 'nbd+unix:///{id}?socket={socket}'.format(id=vdisk, socket=link)
 
 
@@ -107,7 +110,7 @@ def start_dependent_services(job):
 
     # creates all nbd servers for each vdisk this vm uses
     job.logger.info("creates vdisks container for vm {}".format(service.name))
-    services = [ node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted" ]
+    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
 
     node = random.choice(services)
     if len(services) > 1 and node.name == service.parent.name:
@@ -173,16 +176,8 @@ def get_media_for_disk(medias, disk):
             return media
 
 
-def install(job):
-    import time
+def format_media_nics(job, medias):
     service = job.service
-
-    # get all path to the vdisks serve by the nbdservers
-    start_tlog(job)
-    medias = _start_nbd(job)
-
-    job.logger.info("create vm {}".format(service.name))
-    node = get_node(job)
     nics = []
     for nic in service.model.data.nics:
         nic = nic.to_dict()
@@ -193,12 +188,27 @@ def install(job):
             media = get_media_for_disk(medias, disk.to_dict())
             media['iotune'] = {'totaliopssec': disk.maxIOps,
                                'totaliopssecset': True}
+    return medias, nics
+
+
+def install(job):
+    import time
+    service = job.service
+    node = get_node(job)
+
+    # get all path to the vdisks serve by the nbdservers
+    start_tlog(job)
+    medias = _start_nbd(job)
+
+    job.logger.info("create vm {}".format(service.name))
+
+    media, nics = format_media_nics(job, medias)
 
     kvm = get_domain(job)
     if not kvm:
         node.client.kvm.create(
             service.name,
-            media=medias,
+            media=media,
             cpu=service.model.data.cpu,
             memory=service.model.data.memory,
             nics=nics,
@@ -210,7 +220,10 @@ def install(job):
             if kvm:
                 service.model.data.vnc = kvm['vnc']
                 if kvm['vnc'] != -1:
-                    node.client.nft.open_port(kvm['vnc'])
+                    try:
+                        node.client.nft.open_port(kvm['vnc'])
+                    except:
+                        pass
                 break
             else:
                 time.sleep(3)
@@ -243,7 +256,17 @@ def stop(job):
     kvm = get_domain(job)
     if kvm:
         node.client.kvm.destroy(kvm['uuid'])
-    cleanupzerodisk(job)
+    if job.model.args.get('cleanup', None) is not False:
+        cleanupzerodisk(job)
+
+
+def reset(job):
+    service = job.service
+    job.logger.info("reset vm {}".format(service.name))
+    node = get_node(job)
+    kvm = get_domain(job)
+    if kvm:
+        node.client.kvm.reset(kvm['uuid'])
 
 
 def destroy(job):
@@ -262,7 +285,7 @@ def destroy(job):
 
 
 def cleanupzerodisk(job):
-    from zeroos.orchestrator.sal.Node import Node    
+    from zeroos.orchestrator.sal.Node import Node
     service = job.service
     node = Node.from_ays(service.parent, password=job.context['token'])
     for nbdserver in service.producers.get('nbdserver', []):
@@ -280,7 +303,6 @@ def cleanupzerodisk(job):
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())        
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
@@ -350,12 +372,11 @@ def shutdown(job):
 def start_migartion_channel(job, old_node, node):
     service = job.service
     ssh_config = "/tmp/ssh.config_%s_%s_%s" % (old_node.name, node.name, service.name)
-    cmd = "/usr/sbin/sshd -f {config}"
+    command = "/usr/sbin/sshd -f {config}"
 
     # Get free ports on node to use for ssh
     freeports_node, _ = get_baseports(job, node, 3000, 1)
     node.client.nft.open_port(freeports_node[0])
-
 
     try:
         # check channel does not exist
@@ -365,9 +386,9 @@ def start_migartion_channel(job, old_node, node):
             for cmd in node.client.process.list():
                 if ssh_config in cmd['cmdline']:
                     return str(port_data.split(" ")[1])
-                res = node.client.system(cmd.format(config=ssh_config))
+                res = node.client.system(command.format(config=ssh_config))
                 if not res.running:
-                    raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+                    raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                             node.name))
                 return str(port_data.split(" ")[1])
         # start ssh server on new node for this migration
@@ -376,21 +397,21 @@ def start_migartion_channel(job, old_node, node):
         node.client.filesystem.close(file_discriptor)
         res = node.client.system(cmd.format(config=ssh_config))
         if not res.running:
-            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name, 
+            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                     node.name))
 
         # add host names addr to each node
         file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = old_node.client.info.os().get("hostname")
         node.client.filesystem.write(file_discriptor,
-                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr, 
+                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr,
                                                                                   addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
         file_discriptor = old_node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = node.client.info.os().get("hostname")
         old_node.client.filesystem.write(file_discriptor,
-                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr, 
+                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr,
                                                                                       addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
@@ -409,7 +430,7 @@ def start_migartion_channel(job, old_node, node):
 
         node.client.filesystem.write(file_discriptor, pub_key)
         old_node.client.filesystem.close(file_discriptor)
-        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr)
+        old_node.client.bash('ssh-keyscan %s >> /root/.ssh/known_hosts' % node.addr).get()
 
     except Exception as e:
         node.client.filesystem.remove(ssh_config)
@@ -456,7 +477,9 @@ def migrate(job):
     if not node:
         raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
+    # define node services
     target_node = service.aysrepo.serviceGet('node', node)
+    old_node = service.parent
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     # 1 consume tcp to use for finding port (this has to be bfore start_migration_channel method)
@@ -464,7 +487,7 @@ def migrate(job):
     node_args = {"node": node}
     tcp = tcp_actor.serviceCreate(instance="tcp_%s" % node, args=node_args)
     target_node.consume(tcp)
-    ssh_port = start_migartion_channel(job, Node.from_ays(service.parent, job.context['token']), Node.from_ays(target_node, job.context['token']))
+    ssh_port = start_migartion_channel(job, Node.from_ays(old_node, job.context['token']), Node.from_ays(target_node, job.context['token']))
     old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
@@ -481,14 +504,22 @@ def migrate(job):
     nbdserver.consume(vdisk_container)
     service.consume(nbdserver)
     service.consume(vdisk_container)
-    node_client = Node.from_ays(service.parent)._client
+    target_node_client = Node.from_ays(target_node, job.context['token'])._client
+    node_client = Node.from_ays(service.parent, job.context['token'])._client
     service.model.changeParent(target_node)
+    target_node.saveAll()
+    old_node.saveAll()
     service.saveAll()
-    _start_nbd(job, nbdserver.name)
+    medias = _start_nbd(job, nbdserver.name)
     service.model.data.status = 'running'
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]
+            _, nics = format_media_nics(job, medias)
+            target_node_client.kvm.prepare_migration_target(
+                service.name,
+                nics=nics,
+            )
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
             break
 
@@ -524,7 +555,7 @@ def updateDisks(job, client, args):
     if service.model.data.status == 'running':
         uuid = get_domain(job)['uuid']
 
-        
+
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
@@ -548,7 +579,7 @@ def updateDisks(job, client, args):
         nbdserver = service.producers.get('nbdserver', [])[0]
         for old_disk in old_disks:
             url = _nbd_url(job, container, nbdserver, old_disk['vdiskid'])
-            if uuid: 
+            if uuid:
                 client.client.kvm.detach_disk(uuid, {'url': url})
             j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
 
@@ -618,14 +649,14 @@ def update_data(job, args):
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
         service.model.data.node = args['node']
-        service.saveAll()    
+        service.saveAll()
         token = get_jwt_token_from_job(job)
         if service.model.data.status == 'halted':
             # move stopped vm
             node = service.aysrepo.serviceGet('node', args['node'])
             service.model.changeParent(node)
             start_dependent_services(job)
-        elif service.model.data.status == 'running' : 
+        elif service.model.data.status == 'running':
             # do live migration
             job = service.getJob('migrate', args={'node': service.model.data.node})
         else:
@@ -636,11 +667,11 @@ def update_data(job, args):
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
 
+
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
-    
+
     service = job.service
-    print(service.parent.name)
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':

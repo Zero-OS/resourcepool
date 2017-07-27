@@ -1,7 +1,7 @@
 import requests
 
 class Oauth2ClientItsyouonline():
-    def __init__(self, access_token_uri='https://itsyou.online/v1/oauth/access_token?response_type=id_token'):
+    def __init__(self, access_token_uri='https://itsyou.online/v1/oauth/access_token?response_type=id_token&validity=3600'):
         self.access_token_uri = access_token_uri
 
     def get_access_token(self, client_id, client_secret, scopes=[], audiences=[]):

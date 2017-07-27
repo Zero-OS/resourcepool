@@ -84,7 +84,7 @@ def install(job):
                        'readOnly': vdiskservice.model.data.readOnly,
                        'size': vdiskservice.model.data.size,
                        'storageCluster': vdiskservice.model.data.storageCluster,
-                       'rootStorageCluster': rootclustername,
+                       'templateStorageCluster': rootclustername,
                        'type': vdisk_type}
 
         if vdiskservice.model.data.tlogStoragecluster:
@@ -100,23 +100,17 @@ def install(job):
     container.client.filesystem.upload(configpath, configstream)
 
     if not is_job_running(container):
+        cmd = '/bin/nbdserver \
+            -protocol unix \
+            -address "{socketpath}" \
+            -config {config} \
+            '.format(socketpath=socketpath, config=configpath)
         if tlog:
             tlogservice = service.aysrepo.serviceGet(role='tlogserver', instance=vm.name)
             tlogip = tlogservice.model.data.bind.split(':')
-            cmd = '/bin/nbdserver \
-                -protocol unix \
-                -address "{socketpath}" \
-                -tlogrpc {tlogip}:{tlogport} \
-                -config {config}'.format(tlogip=tlogip[0], tlogport=tlogip[1], socketpath=socketpath, config=configpath)
-            print(cmd)
-            container.client.system(cmd)
-        else:
-            cmd = '/bin/nbdserver \
-                -protocol unix \
-                -address "{socketpath}" \
-                -config {config}'.format(socketpath=socketpath, config=configpath)
-            print(cmd)
-            container.client.system(cmd)
+            cmd += '-tlogrpc {tlogip}:{tlogport}'.format(tlogip=tlogip[0], tlogport=tlogip[1])
+        job.logger.info("Starting nbd server: %s" % cmd)
+        container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
 
         # wait for socket to be created
         start = time.time()
@@ -140,6 +134,7 @@ def install(job):
         job = is_job_running(container)
         container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
     service.model.data.socketPath = socketpath
+    service.model.data.status = 'running'
     service.saveAll()
 
 
@@ -163,7 +158,7 @@ def stop(job):
 
     vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
-
+    service.model.data.status = 'halting'
     # Delete tmp vdisks
     for vdiskservice in vdisks:
         j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
@@ -182,6 +177,7 @@ def stop(job):
                 continue
             return
         raise j.exceptions.RuntimeError("nbdserver didn't stopped")
+    service.model.data.status = 'halted'
 
 
 def monitor(job):
@@ -202,3 +198,15 @@ def monitor(job):
             j.tools.async.wrappers.sync(vdisk.executeAction('start'))
         else:
             j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
+
+
+def watchdog_handler(job):
+    service = job.service
+    if str(service.model.data.status) != 'running':
+        return
+    eof = job.model.args['eof']
+    service = job.service
+    if eof:
+        vm_service = service.aysrepo.serviceGet(role='vm', instance=service.name)
+        j.tools.async.wrappers.sync(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}))
+        j.tools.async.wrappers.sync(vm_service.executeAction('start', context=job.context))

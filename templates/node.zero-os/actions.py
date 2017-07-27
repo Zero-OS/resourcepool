@@ -84,8 +84,8 @@ def install(job):
     job.logger.info("mount storage pool for fuse cache")
     poolname = "{}_fscache".format(service.name)
     node.ensure_persistance(poolname)
-    
-    # Set host name 
+
+    # Set host name
     node.client.system("hostname %s" % service.model.data.hostname).get()
     node.client.bash("echo %s > /etc/hostname" % service.model.data.hostname).get()
 
@@ -103,9 +103,10 @@ def install(job):
 
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
     service = job.service
+    config = get_configuration(service.aysrepo)
     token = get_jwt_token(job.service.aysrepo)
     if service.model.actionsState['install'] != 'ok':
         return
@@ -143,7 +144,42 @@ def monitor(job):
                 'start', context=job.context))
     else:
         service.model.data.status = 'halted'
+
+    update_healthcheck(service, node.healthcheck.openfiledescriptors())
+    update_healthcheck(service, node.healthcheck.cpu_mem())
+    # call log rotator
+    update_healthcheck(service, node.healthcheck.rotate_logs())
+    update_healthcheck(service, node.healthcheck.network_bond())
+    update_healthcheck(service, node.healthcheck.node_temperature())
     service.saveAll()
+
+
+def update_healthcheck(service, healthchecks):
+    import time
+    interval = service.model.actionGet('monitor').period
+    new_healthchecks = list()
+    if not isinstance(healthchecks, list):
+        healthchecks = [healthchecks]
+    defaultresource = '/nodes/{}'.format(service.name)
+    for health_check in healthchecks:
+        for health in service.model.data.healthchecks:
+            # If this healthcheck already exists, update its attributes
+            if health.id == health_check['id']:
+                health.name = health_check.get('name', '')
+                health.resource = health_check.get('resource', defaultresource) or defaultresource
+                health.messages = health_check.get('messages', [])
+                health.category = health_check.get('category', '')
+                health.lasttime = time.time()
+                health.interval = interval
+                health.stacktrace = health_check.get('stacktrace', '')
+                break
+        else:
+            # healthcheck doesn't exist in the current list, add it to the list of new
+            new_healthchecks.append(health_check)
+
+    old_healthchecks = service.model.data.to_dict().get('healthchecks', [])
+    old_healthchecks.extend(new_healthchecks)
+    service.model.data.healthchecks = old_healthchecks
 
 
 def reboot(job):
@@ -182,3 +218,74 @@ def uninstall(job):
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
         j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
+
+
+def watchdog(job):
+    from zeroos.orchestrator.sal.Pubsub import Pubsub
+    from zeroos.orchestrator.configuration import get_jwt_token
+    from asyncio import sleep
+    import asyncio
+
+    service = job.service
+    watched_roles = {
+        "nbdserver": {
+            # "message": (re.compile("^storageengine-failure.*$")),  # TODO: Not implemented yet in 0-disk yet
+            "eof": True
+        },
+        "tlogserver": {
+            "eof": True,
+        }
+    }
+
+    async def callback(jobid, level, message, flag):
+        if "." not in jobid:
+            return
+        role, instance = jobid.split(".", 1)
+        if role not in watched_roles:
+            return
+
+        eof = flag & 0x6 != 0
+
+        valid_message = False
+        matched_messages = watched_roles[role].get("message", None)
+        if matched_messages:
+            for msg in matched_messages:
+                if msg.match(message):
+                    valid_message = True
+
+        if not valid_message and not (watched_roles[role]["eof"] and eof):
+            return
+
+        srv = service.aysrepo.serviceGet(role=role, instance=instance, die=False)
+        if srv:
+            args = {"message": message, "eof": eof}
+            job.context['token'] = get_jwt_token(job.service.aysrepo)
+            await srv.executeAction('watchdog_handler', context=job.context, args=args)
+
+    async def streaming(job):
+        # Check if the node is runing
+        while service.model.actionsState["install"] != "ok":
+            await sleep(1)
+
+        while str(service.model.data.status) != "running":
+            await sleep(1)
+
+        # Add the looping here instead of the pubsub sal
+        loop = j.atyourservice.server.loop
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+
+        while True:
+            if str(service.model.data.status) != "running":
+                await sleep(1)
+                continue
+            try:
+                queue = await cl.subscribe("ays.monitor")
+                await cl.global_stream(queue, callback)
+            except asyncio.TimeoutError as e:
+                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+                monitor(job)
+            except OSError:
+                monitor(job)
+
+    return streaming(job)
