@@ -72,7 +72,7 @@ def start(job):
     if container.is_running():
         service.model.data.status = "running"
     else:
-        raise j.exceptions.RuntimeError("container didn't started")
+        raise j.exceptions.RuntimeError("container didn't start")
 
     for nic in service.model.data.nics:
         if nic.type == 'zerotier':
@@ -150,7 +150,7 @@ def update(service, logger, token, updated_nics):
     for nic in service.model.data.nics:
         nic_dict = nic.to_dict()
         if get_nic_id(nic_dict) not in ids_current_nics:
-            token = nic_dict.pop('token', None)
+            nic_dict.pop('token', None)
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
             cl.nic_add(container.id, nic_dict)
             if nic.type == 'zerotier':
