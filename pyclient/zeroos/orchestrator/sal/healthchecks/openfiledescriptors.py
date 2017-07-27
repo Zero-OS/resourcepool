@@ -10,7 +10,7 @@ if it exceeds 90% of the hard limit, it raises an error.
 
 class OpenFileDescriptor(HealthCheckRun):
     def __init__(self, node):
-        resource = '/nodes/{}'.format(node.name),
+        resource = '/nodes/{}'.format(node.name)
         super().__init__('OPENFILEDESCRIPTORS', 'Open File Descriptors', 'System Load', resource)
         self.node = node
     
