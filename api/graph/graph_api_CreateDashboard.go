@@ -1,4 +1,4 @@
-package node
+package graph
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 // CreateDashboard is the handler for POST /graph/{graphid}/dashboards
 // Creates a new dashboard
-func (api NodeAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
+func (api GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody Dashboard
 	vars := mux.Vars(r)

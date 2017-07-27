@@ -39,7 +39,7 @@ def processChange(job):
     if args.get('dashboard'):
         service.model.data.dashboard = args['dashboard']
     j.tools.async.wrappers.sync(service.uninstall())
-    j.tools.async.wrappers.sync(service.instal(l))
+    j.tools.async.wrappers.sync(service.install())
 
     service.saveAll()
 
