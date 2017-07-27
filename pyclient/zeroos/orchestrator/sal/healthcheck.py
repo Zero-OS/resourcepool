@@ -96,14 +96,10 @@ class HealthCheck:
         bond = NetworkBond(self.node)
         return bond.start()
 
-    def node_temperature(self):
+    def node_temperature(self, container):
         from .healthchecks.temperature import Temperature
-
-        self.node.client.bash("modprobe ipmi_si && modprobe ipmi_devintf").get()
-
-        with self.with_container("https://hub.gig.tech/gig-official-apps/healthcheck.flist") as container:
-            temperature = Temperature(self.node)
-            result = temperature.start(container)
+        temperature = Temperature(self.node)
+        result = temperature.start(container)
         return result
 
     def rotate_logs(self):
@@ -121,10 +117,16 @@ class HealthCheck:
         inter = Interrupts(self.node)
         return inter.start()
 
+
     def powersupply(self, container):
         from .healthchecks.powersupply import PowerSupply
         powersupply = PowerSupply(self.node)
         return powersupply.start(container)
+
+    def fan(self, container):
+        from .healthchecks.fan import Fan
+        fan = Fan(self.node)
+        return fan.start(container)
 
     def context_switch(self):
         from .healthchecks.context_switch import ContextSwitch
