@@ -8,7 +8,7 @@ Monitors if a network bond (if there is one) has both (or more) interfaces prope
 
 class NetworkBond(HealthCheckRun):
     def __init__(self):
-        super(self).__init__()
+        super().__init__()
         self.result['id'] = 'networkbond'
         self.result['name'] = 'Network Bond Check'
         self.result['category'] = 'Hardware'
