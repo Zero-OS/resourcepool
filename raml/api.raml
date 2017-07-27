@@ -1410,7 +1410,7 @@ types:
             headers:
               Location:
                 description: URL to the the Dashboard
-      /{dashboardid}:
+      /{dashboardname}:
         get:
           (AYSBased):
           securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]

@@ -7,17 +7,18 @@ Monitors if a network bond (if there is one) has both (or more) interfaces prope
 
 
 class NetworkBond(HealthCheckRun):
-    def __init__(self):
-        super(self).__init__()
+    def __init__(self, node):
+        super().__init__()
         self.result['id'] = 'networkbond'
         self.result['name'] = 'Network Bond Check'
         self.result['category'] = 'Hardware'
-
-    def run(self, node):
         self.result['resource'] = '/nodes/{}'.format(node.name)
-        ovs = "{}_ovs".format(node.name)
+        self.node = node
+
+    def run(self):
+        ovs = "{}_ovs".format(self.node.name)
         try:
-            container = node.containers.get(ovs)
+            container = self.node.containers.get(ovs)
         except LookupError:
             # no ovs configured nothing to report on
             return
