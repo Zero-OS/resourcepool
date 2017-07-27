@@ -29,8 +29,8 @@ struct Schema {
     }
 
     struct Message {
-          id @0: Text;
-          status @1: Text;
-          text @2: Text;
-        }
+      id @0: Text;
+      status @1: Text;
+      text @2: Text;
+    }
 }

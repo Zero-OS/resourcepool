@@ -150,6 +150,7 @@ def monitor(job):
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
     update_healthcheck(service, node.healthcheck.network_bond())
+    update_healthcheck(service, node.healthcheck.node_temperature())
     service.saveAll()
 
 

@@ -10,7 +10,6 @@ class HealthCheckRun:
         self.result = {
             'id': '',
             'name': '',
-            'resource': '',
             'category': '',
             'stacktrace': '',
             'messages': list(),
@@ -86,6 +85,13 @@ class HealthCheck:
         from .healthchecks.networkbond import NetworkBond
         bond = NetworkBond()
         return bond.start(self.node)
+
+    def node_temperature(self):
+        from .healthchecks.temperature import Temperature
+        with self.with_container("https://hub.gig.tech/gig-official-apps/healthcheck.flist") as container:
+            temperature = Temperature()
+            result = temperature.start(container)
+        return result
 
     def rotate_logs(self):
         from .healthchecks.log_rotator import action
