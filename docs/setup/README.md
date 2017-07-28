@@ -17,7 +17,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 ## Create a JumpScale9 Docker container
 
 Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
-> **Important:** Make sure you set the `GIGBRANCH` environment variable to **9.0.3** before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
+> **Important:** Make sure you set the `GIGBRANCH` environment variable to **9.1.0** before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
 
 > **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires libraries.
 
@@ -120,7 +120,7 @@ configuration__main:
   - key: '0-core-version'
     value: '1.1.0-alpha-5'
   - key: 'js-version'
-    value: '9.0.3'
+    value: '9.1.0'
   - key: 'gw-flist'
     value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-1.1.0-alpha-5.flist'
   - key: 'ovs-flist'
