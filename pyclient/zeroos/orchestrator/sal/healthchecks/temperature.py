@@ -1,4 +1,4 @@
-from ..healthcheck import HealthCheckRun
+from ..healthcheck import IPMIHealthCheck
 
 descr = """
 Checks temperature of the system.
@@ -6,18 +6,18 @@ Result will be shown in the "Temperature" section of the Grid Portal / Status Ov
 """
 
 
-class Temperature(HealthCheckRun):
+class Temperature(IPMIHealthCheck):
     WARNING_TRIPPOINT = 70
     ERROR_TRIPPOINT = 90
 
     def __init__(self, node):
+        self.node = node
         resource = '/nodes/{}'.format(node.name)
         super().__init__('temperature', 'Node Temperature Check', 'Hardware', resource)
 
     def run(self, container):
-        result = container.client.system("ipmitool sdr type 'Temp'").get()
-        if result.state.upper() != "ERROR":
-            out = result.stdout
+        out = self.execute_ipmi(container, "ipmitool sdr type 'Temp'")
+        if out:
             if out:
                 # SAMPLE:
                 # root@du-conv-3-01:~# ipmitool sdr type "Temp"
