@@ -99,6 +99,7 @@ def install(job):
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
         j.tools.async.wrappers.sync(stats_collector_service.executeAction(
             'install', context=job.context))
+    node.client.bash("modprobe ipmi_si && modprobe ipmi_devintf").get()
 
 
 def monitor(job):
@@ -150,7 +151,16 @@ def monitor(job):
     # call log rotator
     update_healthcheck(service, node.healthcheck.rotate_logs())
     update_healthcheck(service, node.healthcheck.network_bond())
-    update_healthcheck(service, node.healthcheck.node_temperature())
+    update_healthcheck(service, node.healthcheck.interrupts())
+    update_healthcheck(service, node.healthcheck.context_switch())
+    update_healthcheck(service, node.healthcheck.threads())
+
+    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
+    with node.healthcheck.with_container(flist) as cont:
+        update_healthcheck(service, node.healthcheck.node_temperature(cont))
+        update_healthcheck(service, node.healthcheck.powersupply(cont))
+        update_healthcheck(service, node.healthcheck.fan(cont))
+
     service.saveAll()
 
 

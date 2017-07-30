@@ -10,14 +10,11 @@ class Temperature(HealthCheckRun):
     WARNING_TRIPPOINT = 70
     ERROR_TRIPPOINT = 90
 
-    def __init__(self):
-        super().__init__()
-        self.result['id'] = 'temperature'
-        self.result['name'] = 'Node Temperature Check'
-        self.result['category'] = 'Hardware'
+    def __init__(self, node):
+        resource = '/nodes/{}'.format(node.name)
+        super().__init__('temperature', 'Node Temperature Check', 'Hardware', resource)
 
     def run(self, container):
-        messages = []
         result = container.client.system("ipmitool sdr type 'Temp'").get()
         if result.state.upper() != "ERROR":
             out = result.stdout
@@ -37,18 +34,12 @@ class Temperature(HealthCheckRun):
                             continue
 
                         if sensorstatus != "ok" and "no reading" not in message.lower():
-                            result = self.get_message(sensor=id_, status='WARNING', message=message)
-                            messages.append(result)
+                            self.add_message(**self.get_message(sensor=id_, status='WARNING', message=message))
                             continue
                         temperature = int(message.split(" ", 1)[0])
-                        result = self.get_message(sensor=id_, status=sensorstatus, message=message, temperature=temperature)
-                        messages.append(result)
+                        self.add_message(**self.get_message(sensor=id_, status=sensorstatus, message=message, temperature=temperature))
         else:
-            result = self.get_message(status="SKIPPED", message="NO temp information available")
-            messages.append(result)
-
-        self.result["messages"] = messages
-        return self.result
+            self.add_message(**self.get_message(status="SKIPPED", message="NO temp information available"))
 
     def get_message(self, sensor="", status='OK', message='', temperature=0):
         result = {
