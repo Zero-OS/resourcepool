@@ -7,7 +7,7 @@ Result will be shown in the "Hardware" section of the Grid Portal / Status Overv
 class Fan(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__(id='FAN', name="Fan", category="Hardware", resource=resource)
+        super().__init__(id='fan', name="Fan", category="Hardware", resource=resource)
 
     def run(self, container):
         out = container.client.bash("""ipmitool sdr type "Fan" """).get()
