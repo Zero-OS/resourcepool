@@ -318,23 +318,17 @@ def watchdog(job):
     return streaming(job)
 
 
-def watchdog_handler(job):
+def nic_shutdown(job, message):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
-    import json
-
-    message = job.model.args.get('message')
-    if not message:
-        return
-
-    message = json.loads(message)
-    service = job.service
-    node = Node.from_ays(service, get_jwt_token(service.aysrepo))
 
     if message['action'] != 'NIC_SHUTDOWN':
         return
 
+    service = job.service
+    node = Node.from_ays(service, get_jwt_token(service.aysrepo))
     interface = message['name']
+
     if interface.startswith('cont'):
         container_id = interface.split('-')[0].replace('cont', '')
         for container in node.containers.list():
@@ -353,7 +347,13 @@ def watchdog_handler(job):
                 break
 
 
+def watchdog_handler(job):
+    import json
 
+    message = job.model.args.get('message')
+    if not message:
+        return
 
-
-
+    if job.model.args.get('level') == 20:
+        message = json.loads(message)
+        nic_shutdown(job, message)
