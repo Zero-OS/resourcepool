@@ -337,7 +337,7 @@ VMListItem:
       description: Unique id of the virtual machine
       type: string
     status:
-      enum: [deploying, running, halted, paused, halting, migrating, starting, error]
+      enum: [deploying, running, halted, paused, halting, migrating, starting, error, networkKilled]
       description: Status of the VM
 
 VM:
@@ -347,7 +347,7 @@ VM:
       description: Unique identifier of the virtual machine
       type: string
     status:
-      enum: [deploying, running, halted, paused, halting, migrating, starting, error]
+      enum: [deploying, running, halted, paused, halting, migrating, starting, error, networkKilled]
       description: Status of the VM
     vnc:
       type: integer
@@ -482,14 +482,14 @@ ContainerListItem:
       type: string
       description: Url to the root filesystem flist
     status:
-      enum: [running, halted]
+      enum: [running, halted, networkKilled]
       description: Status of the container
 
 Container:
   type: object
   properties:
     status:
-      enum: [running, halted]
+      enum: [running, halted, networkKilled]
       description: Status of the container
     hostname:
       description: Hostname for the Container
