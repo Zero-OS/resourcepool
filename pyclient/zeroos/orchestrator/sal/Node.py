@@ -48,6 +48,7 @@ class Node:
 
         defaultgwdev = self.client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
         nics = self.client.info.nic()
+        macgwdev = None
         if defaultgwdev:
             macgwdev = get_nic_hwaddr(nics, defaultgwdev)
         if not macgwdev:
