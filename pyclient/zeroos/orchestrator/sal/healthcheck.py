@@ -33,6 +33,13 @@ class HealthCheckRun:
         self._messages.append({'id': id, 'text': text, 'status': status})
 
 
+class IPMIHealthCheck(HealthCheckRun):
+    def execute_ipmi(self, container, cmd):
+        if self.node.client.filesystem.exists("/dev/ipmi") or self.node.client.filesystem.exists("/dev/ipmi0"):
+            return container.client.system(cmd).get().stdout
+        return ''
+
+
 class ContainerContext:
     def __init__(self, node, flist):
         self.node = node
