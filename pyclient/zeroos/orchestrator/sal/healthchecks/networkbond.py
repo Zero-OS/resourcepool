@@ -9,7 +9,7 @@ Monitors if a network bond (if there is one) has both (or more) interfaces prope
 class NetworkBond(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('networkbond', 'Network Bond Check', 'Hardware', resource)
+        super().__init__('network-bond', 'Network Bond Check', 'Hardware', resource)
         self.node = node
 
     def run(self):

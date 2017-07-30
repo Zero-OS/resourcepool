@@ -5,20 +5,20 @@ Checks the power redundancy of a node using IPMItool.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 """
 
+
 class PowerSupply(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__(id='PWSUPPLY', name='Power Supply',category="Hardware", resource=resource )
+        super().__init__(id='pw-supply', name='Power Supply', category="Hardware", resource=resource)
         self.node = node
         self.ps_errmsgs = [
-        "Power Supply AC lost",
-        "Failure detected",
-        "Predictive failure",
-        "AC lost or out-of-range",
-        "AC out-of-range, but present",
-        "Config Erro",
-        "Power Supply Inactive"]
-
+            "Power Supply AC lost",
+            "Failure detected",
+            "Predictive failure",
+            "AC lost or out-of-range",
+            "AC out-of-range, but present",
+            "Config Erro",
+            "Power Supply Inactive"]
 
     def run(self, container):
         ps_errmsgs = [x.lower() for x in self.ps_errmsgs if x.strip()]

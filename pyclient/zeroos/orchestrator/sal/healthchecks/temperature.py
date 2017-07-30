@@ -12,7 +12,7 @@ class Temperature(HealthCheckRun):
 
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('TEMPERATURE', 'Node Temperature Check', 'Hardware', resource)
+        super().__init__('temperature', 'Node Temperature Check', 'Hardware', resource)
 
     def run(self, container):
         result = container.client.system("ipmitool sdr type 'Temp'").get()
