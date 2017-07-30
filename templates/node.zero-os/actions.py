@@ -143,29 +143,29 @@ def monitor(job):
                 and statsdb_service.model.data.status == 'running'):
             j.tools.async.wrappers.sync(stats_collector_service.executeAction(
                 'start', context=job.context))
+
+        update_healthcheck(service, node.healthcheck.openfiledescriptors())
+        update_healthcheck(service, node.healthcheck.cpu_mem())
+        update_healthcheck(service, node.healthcheck.rotate_logs())
+        update_healthcheck(service, node.healthcheck.network_bond())
+        update_healthcheck(service, node.healthcheck.interrupts())
+        update_healthcheck(service, node.healthcheck.context_switch())
+        update_healthcheck(service, node.healthcheck.threads())
+
+        flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
+        with node.healthcheck.with_container(flist) as cont:
+            update_healthcheck(service, node.healthcheck.node_temperature(cont))
+            update_healthcheck(service, node.healthcheck.powersupply(cont))
+            update_healthcheck(service, node.healthcheck.fan(cont))
     else:
         service.model.data.status = 'halted'
-
-    update_healthcheck(service, node.healthcheck.openfiledescriptors())
-    update_healthcheck(service, node.healthcheck.cpu_mem())
-    # call log rotator
-    update_healthcheck(service, node.healthcheck.rotate_logs())
-    update_healthcheck(service, node.healthcheck.network_bond())
-    update_healthcheck(service, node.healthcheck.interrupts())
-    update_healthcheck(service, node.healthcheck.context_switch())
-    update_healthcheck(service, node.healthcheck.threads())
-
-    flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
-    with node.healthcheck.with_container(flist) as cont:
-        update_healthcheck(service, node.healthcheck.node_temperature(cont))
-        update_healthcheck(service, node.healthcheck.powersupply(cont))
-        update_healthcheck(service, node.healthcheck.fan(cont))
 
     service.saveAll()
 
 
 def update_healthcheck(service, healthchecks):
     import time
+
     interval = service.model.actionGet('monitor').period
     new_healthchecks = list()
     if not isinstance(healthchecks, list):
@@ -235,6 +235,7 @@ def watchdog(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     from asyncio import sleep
     import asyncio
+    import re
 
     service = job.service
     watched_roles = {
@@ -249,6 +250,8 @@ def watchdog(job):
             "level": 20,
             "instance": job.service.name,
             "role": "node",
+            "eof": False,
+            "message": (re.compile(".*"),)
         }
     }
 
@@ -258,12 +261,14 @@ def watchdog(job):
 
         if jobid not in watched_roles:
             role, instance = jobid.split(".", 1)
+            service_role = role
             if role not in watched_roles or watched_roles[role].get("level", level) != level:
                 return
         else:
             if watched_roles[jobid].get("level", level) != level:
                 return
-            role = watched_roles[jobid]["role"]
+            role = jobid
+            service_role = watched_roles[jobid]["role"]
             instance = watched_roles[jobid]["instance"]
 
         eof = flag & 0x6 != 0
@@ -278,7 +283,7 @@ def watchdog(job):
         if not valid_message and not (watched_roles[role]["eof"] and eof):
             return
 
-        srv = service.aysrepo.serviceGet(role=role, instance=instance, die=False)
+        srv = service.aysrepo.serviceGet(role=service_role, instance=instance, die=False)
         if srv:
             args = {"message": message, "eof": eof, "level": level}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -318,19 +323,22 @@ def watchdog_handler(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import json
 
+    message = job.model.args.get('message')
+    if not message:
+        return
+
+    message = json.loads(message)
     service = job.service
     node = Node.from_ays(service, get_jwt_token(service.aysrepo))
-    message = json.loads(job.args['message'])
 
     if message['action'] != 'NIC_SHUTDOWN':
         return
 
     interface = message['name']
     if interface.startswith('cont'):
-        container_id = interface.replace('cont', '')
-        from zeroos.orchestrator.sal.Container import Containers
+        container_id = interface.split('-')[0].replace('cont', '')
         for container in node.containers.list():
-            if container.id == container_id:
+            if str(container.id) == container_id:
                 container_service = service.aysrepo.serviceGet(role='container', instance=container.name)
                 container_service.model.data.status = 'networkKilled'
                 container_service.saveAll()
