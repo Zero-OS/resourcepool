@@ -117,6 +117,10 @@ class HealthCheck:
         inter = Interrupts(self.node)
         return inter.start()
 
+    def threads(self):
+        from .healthchecks.threads import Threads
+        thread = Threads(self.node)
+        return thread.start()
 
     def powersupply(self, container):
         from .healthchecks.powersupply import PowerSupply
