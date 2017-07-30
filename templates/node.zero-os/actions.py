@@ -336,7 +336,7 @@ def nic_shutdown(job, message):
                 container_service = service.aysrepo.serviceGet(role='container', instance=container.name)
                 container_service.model.data.status = 'networkKilled'
                 container_service.saveAll()
-                break
+                return
     else:
         vms = node.client.kvm.list()
         for vm in vms:
@@ -344,7 +344,9 @@ def nic_shutdown(job, message):
                 vm_service = service.aysrepo.serviceGet(role='vm', instance=vm['name'])
                 vm_service.model.data.status = 'networkKilled'
                 vm_service.saveAll()
-                break
+                return
+
+    job.logger.info('Failed to find vm/container interface matching %s' % interface)
 
 
 def watchdog_handler(job):
