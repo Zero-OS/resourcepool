@@ -201,6 +201,8 @@ def monitor(job):
 
 
 def watchdog_handler(job):
+    import asyncio
+    loop = j.atyourservice.server.loop
     service = job.service
     if str(service.model.data.status) != 'running':
         return
@@ -208,5 +210,5 @@ def watchdog_handler(job):
     service = job.service
     if eof:
         vm_service = service.aysrepo.serviceGet(role='vm', instance=service.name)
-        j.tools.async.wrappers.sync(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}))
-        j.tools.async.wrappers.sync(vm_service.executeAction('start', context=job.context))
+        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
+        asyncio.ensure_future(vm_service.executeAction('start', context=job.context), loop=loop)

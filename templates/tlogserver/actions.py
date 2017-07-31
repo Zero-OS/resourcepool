@@ -167,9 +167,11 @@ def monitor(job):
 
 
 def watchdog_handler(job):
+    import asyncio
+    loop = j.atyourservice.server.loop
     service = job.service
     if str(service.model.data.status) != 'running':
         return
     eof = job.model.args['eof']
     if eof:
-        j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=loop)
