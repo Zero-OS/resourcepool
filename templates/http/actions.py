@@ -29,6 +29,9 @@ def update(job):
 
 
 def watchdog_handler(job):
+    import asyncio
+
+    loop = j.atyourservice.server.loop
     gateway = job.service.parent.consumers['gateway'][0]
     if gateway.model.data.status == 'running':
-        start(job)
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
