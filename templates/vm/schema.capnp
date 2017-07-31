@@ -5,7 +5,7 @@ struct Schema {
     status @1: Status;
     id @2: Text;
     memory @3: UInt16; # Amount of memory in MiB
-    cpu @4: UInt16; # Number of virtual CUPs
+    cpu @4: UInt16; # Number of virtual CPUs
     nics @5: List(NicLink);
     disks @6: List(DiskLink);
     vdisks @7: List(Text); # consume vdisk services, should not be set via blueprint, will be calculated from disks

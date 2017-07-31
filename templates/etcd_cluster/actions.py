@@ -1,28 +1,22 @@
-def input(job):
-    from js9 import j
-    if job.model.args.get('etcds', []) != []:
-        raise j.exceptions.Input("etcds should not be set as input")
-
-    nodes = job.model.args.get('nodes', [])
-    size = job.model.args.get('size', 0)
-
-    if size % 2 == 0:
-        raise j.exceptions.Input("Size should be odd number")
-
-    if size > len(nodes) != 0:
-        raise j.exceptions.Input("Invalid amount of nodes provided")
-
-
 def init(job):
     import random
     from zeroos.orchestrator.sal.Node import Node
-    service = job.service
-    nodes = set()
-    for node_service in service.producers['node']:
-        nodes.add(Node.from_ays(node_service, job.context['token']))
-    nodes = list(nodes)
+    from zeroos.orchestrator.configuration import get_jwt_token
 
-    nodes = random.sample(nodes, service.model.data.size)
+    service = job.service
+
+    node_services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
+    if not node_services:
+        j.exceptions.RuntimeError("No nodes are found")
+
+    if len(node_services) % 2 == 0:
+        node_services = random.sample(node_services, len(node_services) - 1)
+
+    nodes = []
+    for node_service in node_services:
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        nodes.append(Node.from_ays(node_service, job.context["token"]))
+
     etcd_actor = service.aysrepo.actorGet("etcd")
     container_actor = service.aysrepo.actorGet("container")
     etcd_args = {}
