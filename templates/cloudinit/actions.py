@@ -39,3 +39,12 @@ def config_cloud_init(job, nics=None):
 
 def update(job):
     config_cloud_init(job, job.model.args["nics"])
+
+
+def watchdog_handler(job):
+    gateway = job.service.parent.consumers['gateway'][0]
+    if gateway.model.status == 'running':
+        start(job)
+
+
+

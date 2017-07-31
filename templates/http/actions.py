@@ -26,3 +26,9 @@ def apply_rules(job, httpproxies=None):
 
 def update(job):
     apply_rules(job, job.model.args["httpproxies"])
+
+
+def watchdog_handler(job):
+    gateway = job.service.parent.consumers['gateway'][0]
+    if gateway.model.status == 'running':
+        start(job)

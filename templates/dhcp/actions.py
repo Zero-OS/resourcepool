@@ -32,3 +32,9 @@ def apply_config(job, gwdata=None):
 
 def update(job):
     apply_config(job, job.model.args)
+
+
+def watchdog_handler(job):
+    gateway = job.service.parent.consumers['gateway'][0]
+    if gateway.model.status == 'running':
+        start(job)

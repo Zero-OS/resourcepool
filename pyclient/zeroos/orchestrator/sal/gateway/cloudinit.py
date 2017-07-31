@@ -28,7 +28,8 @@ class CloudInit:
                 'cloud-init-server \
                 -bind 127.0.0.1:8080 \
                 -config {config}'
-                .format(config=self.CONFIGPATH)
+                .format(config=self.CONFIGPATH,
+                id='cloudinit.{}'.format(self.container.name))
             )
 
         start = time.time()
