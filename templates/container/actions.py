@@ -74,9 +74,14 @@ def start(job):
     else:
         raise j.exceptions.RuntimeError("container didn't start")
 
+    has_zt_nic = False
     for nic in service.model.data.nics:
         if nic.type == 'zerotier':
+            has_zt_nic = True
             zerotier_nic_config(service, job.logger, container, nic)
+
+    if has_zt_nic and not service.model.data.identity:
+        service.model.data.identity = container.client.zerotier.info()['secretIdentity']
 
     service.saveAll()
 
@@ -101,7 +106,7 @@ def processChange(job):
     args = job.model.args
 
     containerdata = service.model.data.to_dict()
-    nicchanges = containerdata['nics'] != args.get('nics')
+    nicchanges = 'nics' in args and containerdata['nics'] != args.get('nics')
 
     if nicchanges:
         update(service, job.logger, job.context['token'], args['nics'])
