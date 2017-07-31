@@ -5,13 +5,13 @@ matrix:
       dist: trusty
       python: 3.5
       before_script:
-        - bash tests/Grid_API_Testing/run_tests.sh before
+        - bash tests/0_orchestrator/run_tests.sh before
       script:
-        - bash tests/Grid_API_Testing/run_tests.sh run
+        - bash tests/0_orchestrator/run_tests.sh run
       after_script:
-        - bash tests/Grid_API_Testing/run_tests.sh after
+        - bash tests/0_orchestrator/run_tests.sh after
       after_failure:
-        - bash tests/Grid_API_Testing/run_tests.sh after
+        - bash tests/0_orchestrator/run_tests.sh after
 
     - language: go
       sudo: true
