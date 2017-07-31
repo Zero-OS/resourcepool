@@ -48,6 +48,7 @@ class Node:
 
         defaultgwdev = self.client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
         nics = self.client.info.nic()
+        macgwdev = None
         if defaultgwdev:
             macgwdev = get_nic_hwaddr(nics, defaultgwdev)
         if not macgwdev:
@@ -67,6 +68,13 @@ class Node:
                             return self._storageAddr
             self._storageAddr = self.addr
         return self._storageAddr
+
+    def get_nic_by_ip(self, addr):
+        try:
+            res = next(nic for nic in self._client.info.nic() if any(addr == a['addr'].split('/')[0] for a in nic['addrs']))
+            return res
+        except StopIteration:
+            return None
 
     def _eligible_fscache_disk(self, disks):
         """

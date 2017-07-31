@@ -517,7 +517,7 @@ def migrate(job):
             uuid = vm["uuid"]
             _, nics = format_media_nics(job, medias)
             target_node_client.kvm.prepare_migration_target(
-                service.name,
+                uuid=uuid,
                 nics=nics,
             )
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
