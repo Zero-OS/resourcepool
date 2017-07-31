@@ -191,26 +191,6 @@ class TestNodeidAPI(TestcasesBase):
                                        client_state[key],
                                        delta=6000000, msg='different value for key%s' % key)
 
-    @unittest.skip("https://github.com/zero-os/0-core/issues/125, wontfix")
-    def test009_reboot_node(self):
-        """ GAT-009
-        *POST:/nodes/{nodeid}/reboot *
-
-        **Test Scenario:**
-
-        #. Choose one random node of list of running nodes.
-        #. post /nodes/{nodeid}/reboot api.
-        #. verify that this node has been rebooted.
-        #. Ping node should succeed
-        """
-        self.lg.info('post /nodes/{nodeid}/reboot api.')
-        response = self.nodes_api.post_nodes_nodeid_reboot(node_id=self.nodeid)
-        self.assertEqual(response.status_code, 204)
-
-        self.lg.info('verify that this node has been rebooted.')
-        content = response.json()
-        self.assertEqual(content, 'Machine reboot signal sent successfully')
-
     def test010_get_cpus_details(self):
         """ GAT-010
         *GET:/nodes/{nodeid}/cpus *
