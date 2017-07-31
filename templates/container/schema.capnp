@@ -1,4 +1,4 @@
-@0xc8f60a10ebb307a6;
+@0x86717517242e3496;
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
@@ -17,6 +17,7 @@ struct Schema {
     bridges @11 :List(Text); # comsumed bridges, automaticly filled don't pass in blueprint
     zerotiernodeid @12:Text;
     privileged @13 :Bool;
+    identity @14 :Text;
 
     struct Mount {
         filesystem @0 :Text; # Instance name of a filesystem service

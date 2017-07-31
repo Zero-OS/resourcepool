@@ -41,7 +41,8 @@ class Container:
     """G8SO Container"""
 
     def __init__(self, name, node, flist, hostname=None, mounts=None, nics=None,
-                 host_network=False, ports=None, storage=None, init_processes=None, privileged=False):
+                 host_network=False, ports=None, storage=None, init_processes=None,
+                 privileged=False, identity=None):
         """
         TODO: write doc string
         filesystems: dict {filesystemObj: target}
@@ -58,6 +59,7 @@ class Container:
         self.init_processes = init_processes or []
         self._client = None
         self.privileged = privileged
+        self.identity = identity
 
         self._ays = None
         for nic in self.nics:
@@ -79,7 +81,8 @@ class Container:
                    arguments['host_network'],
                    arguments['port'],
                    arguments['storage'],
-                   arguments['privileged'])
+                   arguments['privileged'],
+                   arguments['identity'])
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -113,6 +116,7 @@ class Container:
             storage=service.model.data.storage,
             init_processes=[p.to_dict() for p in service.model.data.initProcesses],
             privileged=service.model.data.privileged,
+            identity=service.model.data.identity,
         )
         return container
 
@@ -160,6 +164,7 @@ class Container:
             hostname=self.hostname,
             storage=self.storage,
             privileged=self.privileged,
+            identity=self.identity,
         )
 
         containerid = job.get(timeout)
