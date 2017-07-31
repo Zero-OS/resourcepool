@@ -36,5 +36,5 @@ def update(job):
 
 def watchdog_handler(job):
     gateway = job.service.parent.consumers['gateway'][0]
-    if gateway.model.status == 'running':
+    if gateway.model.data.status == 'running':
         start(job)
