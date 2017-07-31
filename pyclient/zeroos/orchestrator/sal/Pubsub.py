@@ -42,7 +42,7 @@ class Response:
 
 
 class Pubsub:
-    def __init__(self, loop, host, port=6379, password="", db=0, ctx=None, timeout=None, testConnectionAttempts=3):
+    def __init__(self, host, port=6379, password="", db=0, ctx=None, timeout=None, testConnectionAttempts=3):
 
         socket_timeout = (timeout + 5) if timeout else 15
 
@@ -59,7 +59,7 @@ class Pubsub:
             ctx.verify_mode = ssl.CERT_NONE
         self.ssl = ctx
         self.timeout = socket_timeout
-        self.loop = loop
+        self.loop = asyncio.get_event_loop()
 
     async def get(self):
         if self._redis is not None:
@@ -86,7 +86,6 @@ class Pubsub:
 
         if self._redis.connection.closed:
             self._redis = await self.get()
-
         data = await asyncio.wait_for(self._redis.blpop(queue, 10), timeout=timeout)
 
         a, body = data
