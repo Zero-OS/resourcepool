@@ -78,6 +78,9 @@ def start(job):
         if nic.type == 'zerotier':
             zerotier_nic_config(service, job.logger, container, nic)
 
+    if not service.model.data.identity:
+        service.model.data.identity = container.client.zerotier.info()['secretIdentity']
+
     service.saveAll()
 
 
