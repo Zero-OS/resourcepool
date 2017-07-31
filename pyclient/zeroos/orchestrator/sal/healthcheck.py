@@ -148,3 +148,7 @@ class HealthCheck:
         from .healthchecks.context_switch import ContextSwitch
         return ContextSwitch(self.node).start()
 
+    def network_load(self):
+        from .healthchecks.networkload import NetworkLoad
+        load = NetworkLoad(self.node)
+        return load.start()
