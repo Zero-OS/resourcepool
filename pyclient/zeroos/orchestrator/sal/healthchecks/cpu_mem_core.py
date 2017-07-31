@@ -10,7 +10,7 @@ Result will be shown in the "System Load" section of the Grid Portal / Status Ov
 """
 
 
-class CPU(HealthCheckRun):
+class Memory(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
         super().__init__('memory', 'Memory', 'System Load', resource)
@@ -21,7 +21,7 @@ class CPU(HealthCheckRun):
         mem_history = self.node.client.aggregator.query('machine.memory.ram.available').get('machine.memory.ram.available', {}).get('history', {})
 
         if '3600' not in mem_history:
-            self.add_message('-1', 'WARNING', 'Average memory load is not collected yet')
+            self.add_message('MEMORY', 'WARNING', 'Average memory load is not collected yet')
         else:
             avg_available_mem = mem_history['3600'][-1]['avg']
             avg_used_mem = total_mem - avg_available_mem
@@ -29,7 +29,7 @@ class CPU(HealthCheckRun):
             self.add_message(**get_message('memory', avg_mem_percent))
 
 
-class Memory(HealthCheckRun):
+class CPU(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
         super().__init__('CPU', 'CPU', 'System Load', resource)
@@ -46,7 +46,7 @@ class Memory(HealthCheckRun):
             count += 1
 
         if count == 0:
-            self.add_message('-1', 'WARNING', 'Average CPU load is not collected yet')
+            self.add_message('CPU', 'WARNING', 'Average CPU load is not collected yet')
         else:
             cpu_avg = cpu_percent / float(count)
             self.add_message(**get_message('cpu', cpu_avg))
@@ -54,7 +54,7 @@ class Memory(HealthCheckRun):
 
 def get_message(type_, percent):
     message = {
-        'id': '-1',
+        'id': type_.upper(),
         'status': 'OK',
         'text': r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent),
     }
