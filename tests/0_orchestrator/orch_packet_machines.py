@@ -7,6 +7,7 @@ import sys
 import threading
 import subprocess
 import configparser
+import requests
 
 
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
@@ -72,6 +73,23 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
     with open('test_suite/config.ini', 'w') as configfile:
         config.write(configfile)
 
+def create_zerotire_nw(zt_token):
+    print(' [*] Create new zerotier network ... ')
+    session = requests.Session()
+    session.headers['Authorization'] = 'Bearer %s' % zt_token
+    url = 'https://my.zerotier.com/api/network'
+    data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
+                                                'ipRangeStart': '10.147.17.1'}],
+                        'private': 'true',
+                        'routes': [{'target': '10.147.17.0/24', 'via': None}],
+                        'v4AssignMode': {'zt': 'true'}}}
+
+    response = session.post(url=url, json=data)
+    ZEROTIER_NW_ID = response.json()['id']
+    file_ZT = open('ZT_NET_ID', 'w')
+    file_ZT.write(ZEROTIER_NW_ID)
+    file_ZT.close()
+    return ZEROTIER_NW_ID
 
 if __name__ == '__main__':
     action = sys.argv[1]
@@ -82,13 +100,14 @@ if __name__ == '__main__':
         print('deleting the g8os machines ..')
         delete_devices(manager)
     else:
-        zt_net_id = sys.argv[3]
+        zt_token = sys.argv[3]
         itsyouonline_org = sys.argv[4]
         branch = sys.argv[5]
         command='git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(branch)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
         flag=str(process.communicate()[0], 'utf-8').strip('\n')
+        zt_net_id = create_zerotire_nw(zt_token=zt_token)
         if flag != '1':
            branch = 'master'
         threads = []
