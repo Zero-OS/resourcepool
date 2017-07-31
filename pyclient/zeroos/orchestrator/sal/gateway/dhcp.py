@@ -29,7 +29,7 @@ class DHCP:
                     time.sleep(0.2)
                 break
 
-        self.container.client.system(DNSMASQ)
+        self.container.client.system(DNSMASQ, id='dhcp.{}'.format(self.container.name))
         # check if command is listening for dhcp
         start = time.time()
         while start + 10 > time.time():

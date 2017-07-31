@@ -270,7 +270,16 @@ def watchdog(job):
             'eof': False,
             'message': (re.compile('.*'),),
             'handler': 'ork_handler',
-        }
+        },
+        'cloudinit': {
+            'eof': True,
+        },
+        'http': {
+            'eof': True,
+        },
+        'dhcp': {
+            'eof': True,
+        },
     }
 
     async def callback(jobid, level, message, flag):

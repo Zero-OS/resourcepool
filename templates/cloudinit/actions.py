@@ -39,3 +39,12 @@ def config_cloud_init(job, nics=None):
 
 def update(job):
     config_cloud_init(job, job.model.args["nics"])
+
+
+def watchdog_handler(job):
+    import asyncio
+
+    loop = j.atyourservice.server.loop
+    gateway = job.service.parent.consumers['gateway'][0]
+    if gateway.model.data.status == 'running':
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
