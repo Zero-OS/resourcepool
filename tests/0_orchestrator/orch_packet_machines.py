@@ -86,6 +86,7 @@ def create_zerotire_nw(zt_token):
 
     response = session.post(url=url, json=data)
     ZEROTIER_NW_ID = response.json()['id']
+    print(ZEROTIER_NW_ID)
     file_ZT = open('ZT_NET_ID', 'w')
     file_ZT.write(ZEROTIER_NW_ID)
     file_ZT.close()

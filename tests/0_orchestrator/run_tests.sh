@@ -12,6 +12,8 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
       bash tests/0_orchestrator/install_env.sh master $ZT_NET_ID $ZT_TOKEN
    elif [ "$point" == "run" ]
     then
+      echo "sleeping 120"
+      sleep 120
       echo "Running tests .."
       cd tests/0_orchestrator/test_suite
       export PYTHONPATH='./'
