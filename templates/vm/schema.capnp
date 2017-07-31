@@ -20,6 +20,7 @@ struct Schema {
         halting @5;
         migrating @6;
         starting @7;
+        networkKilled @8;
     }
 
     struct NicLink {
