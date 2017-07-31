@@ -33,6 +33,13 @@ class HealthCheckRun:
         self._messages.append({'id': id, 'text': text, 'status': status})
 
 
+class IPMIHealthCheck(HealthCheckRun):
+    def execute_ipmi(self, container, cmd):
+        if self.node.client.filesystem.exists("/dev/ipmi") or self.node.client.filesystem.exists("/dev/ipmi0"):
+            return container.client.system(cmd).get().stdout
+        return ''
+
+
 class ContainerContext:
     def __init__(self, node, flist):
         self.node = node
@@ -102,6 +109,11 @@ class HealthCheck:
         result = temperature.start(container)
         return result
 
+    def network_stability(self, nodes):
+        from .healthchecks.networkstability import NetworkStability
+        stability = NetworkStability(self.node)
+        return stability.start(nodes)
+
     def rotate_logs(self):
         from .healthchecks.log_rotator import RotateLogs
         rotator = RotateLogs(self.node)
@@ -117,6 +129,10 @@ class HealthCheck:
         inter = Interrupts(self.node)
         return inter.start()
 
+    def threads(self):
+        from .healthchecks.threads import Threads
+        thread = Threads(self.node)
+        return thread.start()
 
     def powersupply(self, container):
         from .healthchecks.powersupply import PowerSupply

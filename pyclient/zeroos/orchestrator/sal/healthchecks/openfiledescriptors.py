@@ -11,9 +11,9 @@ if it exceeds 90% of the hard limit, it raises an error.
 class OpenFileDescriptor(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('OPENFILEDESCRIPTORS', 'Open File Descriptors', 'System Load', resource)
+        super().__init__('openfile-descriptors', 'Open File Descriptors', 'System Load', resource)
         self.node = node
-    
+
     def run(self):
         for process in self.node.client.process.list():
             for rlimit in process['rlimit']:

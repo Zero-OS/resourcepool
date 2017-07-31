@@ -11,7 +11,7 @@ Rotate know log files if their size hit 10G or more
 class RotateLogs(HealthCheckRun):
     def __init__(self, node):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('LOGROTATOR', 'Log Rotator', 'System Load', resource)
+        super().__init__('log-rotator', 'Log Rotator', 'System Load', resource)
         self.node = node
 
     def run(self, locations=['/var/log'], limit=10):
