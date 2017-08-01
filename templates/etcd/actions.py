@@ -43,19 +43,9 @@ def get_container(service, password):
     return Container.from_ays(service.parent, password)
 
 
-def monitor(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
+def watchdog_handler(job):
+    import asyncio
     service = job.service
-    if not service.model.actionsState['install'] == 'ok':
-        return
-
-    bind = service.model.data.serverBind
-    port = int(bind.split(':')[1])
-    container = get_container(service, get_jwt_token(job.service.aysrepo))
-    if container.is_port_listening(port):
-        return
-
-    service.model.data.status = "halted"
-
-    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))
+    loop = j.atyourservice.server.loop
+    if service.model.data.status == 'running':
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
