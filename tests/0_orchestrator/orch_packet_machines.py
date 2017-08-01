@@ -2,11 +2,8 @@
 from random import randint
 import packet
 import time
-import os
 import sys
-import threading
 import subprocess
-import configparser
 import requests
 
 
@@ -14,7 +11,7 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
     project = manager.list_projects()[0]
     ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id,
                                                                                      itsyouonline_org)
-    print('creating new machine: {}  .. '.format(hostname))
+    print(' [*] creating new machine: {}  .. '.format(hostname))
     device = manager.create_device(project_id=project.id,
                                    hostname=hostname,
                                    plan='baremetal_2',
@@ -46,10 +43,10 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
     try:
         device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
     except:
-        print('device hasn\'t been created')
+        print(' [*] device hasn\'t been created')
         raise
 
-    print('provisioning the new machine ..')
+    print(' [*] provisioning the new machine ..')
     while True:
         dev = manager.get_device(device.id)
         if dev.state == 'active':
@@ -85,9 +82,9 @@ if __name__ == '__main__':
     manager = packet.Manager(auth_token=token)
     branch = 'master'
     if action == 'delete':
-        print('deleting the g8os machines ..')
+        print(' [*] Deleting the g8os machines ..')
         file_node = open('ZT_NET_ID', 'r')
-        hosts = file_node.read().split('\n')
+        hosts = file_node.read().split('\n')[:-1]
         for hostname in hosts:
             print(' [*] Delete %s machine ' % hostname)
             delete_devices(manager, hostname)
