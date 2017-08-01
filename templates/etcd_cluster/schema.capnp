@@ -3,6 +3,7 @@
 struct Schema {
     etcds @0: List(Text);
     status @1: Status;
+    nodes @2 :List(Text); # list of node where we can deploy etcd servers
 
     enum Status{
         halted @0;

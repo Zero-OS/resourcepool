@@ -1,33 +1,54 @@
+from js9 import j
+
+
+def input(job):
+    if job.model.args.get('etcds', []) != []:
+        raise j.exceptions.Input("etcds should not be set as input")
+
+    nodes = job.model.args.get('nodes', [])
+    if not nodes:
+        raise j.exceptions.Input("Invalid amount of nodes provided")
+
+
 def init(job):
     import random
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.configuration import get_configuration
 
     service = job.service
+    config = get_configuration(service.aysrepo)
 
-    node_services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
-    if not node_services:
-        j.exceptions.RuntimeError("No nodes are found")
-
-    if len(node_services) % 2 == 0:
-        node_services = random.sample(node_services, len(node_services) - 1)
-
-    nodes = []
-    for node_service in node_services:
+    nodes = set()
+    for node_service in service.producers['node']:
         job.context['token'] = get_jwt_token(job.service.aysrepo)
-        nodes.append(Node.from_ays(node_service, job.context["token"]))
+        nodes.add(Node.from_ays(node_service, job.context['token']))
+    nodes = list(nodes)
+
+    if len(nodes) % 2 == 0:
+        nodes = random.sample(nodes, len(nodes) - 1)
 
     etcd_actor = service.aysrepo.actorGet("etcd")
     container_actor = service.aysrepo.actorGet("container")
+    fsactor = service.aysrepo.actorGet("filesystem")
     etcd_args = {}
     peers = []
+    flist = config.get('etcd-flist', 'https://hub.gig.tech/gig-official-apps/etcd-release-3.2.flist')
     for node in nodes:
         baseports, tcpservices = get_baseports(job, node, baseport=2379, nrports=2)
         containername = '{}_{}_{}_{}'.format(service.name, 'etcd', node.name, baseports[1])
+
+        args = {
+            'storagePool': "{}_fscache".format(node.name),
+            'name': containername,
+        }
+        fsactor.serviceCreate(instance=containername, args=args)
+
         # create container
         args = {
             'node': node.name,
-            'flist': 'https://hub.gig.tech/gig-official-apps/etcd-release-3.2.flist',
+            'flist': flist,
+            'mounts': [{'filesystem': containername, 'target': '/mnt/data'}],
             'hostNetworking': True,
         }
         container_actor.serviceCreate(instance=containername, args=args)

@@ -17,6 +17,7 @@ def install(job):
         "listen-client-urls": "http://{}".format(service.model.data.clientBind),
         "advertise-client-urls": "http://{}".format(service.model.data.clientBind),
         "initial-cluster": ",".join(service.model.data.peers),
+        "data-dir": "/mnt/data",
         "initial-cluster-state": "new"
     }
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
