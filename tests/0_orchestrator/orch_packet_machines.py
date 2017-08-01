@@ -64,8 +64,9 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
 
     config = configparser.ConfigParser()
     config.read('test_suite/config.ini')
+    print(' [*] config: %s' % str(config.sections()))
     config['main']['target_ip'] = dev.ip_addresses[0]['address']
-    old_hosts =  config['main']['0_core_machines']
+    old_hosts = config['main']['0_core_machines']
     if old_hosts:
         config['main']['0_core_machines'] = old_hosts + ',' + hostname
     else:
