@@ -296,6 +296,9 @@ def watchdog(job):
         "etcd": {
             "eof": True,
         },
+        'stats_collector': {
+            'eof': True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
