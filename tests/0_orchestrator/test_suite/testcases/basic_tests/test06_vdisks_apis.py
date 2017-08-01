@@ -134,7 +134,8 @@ class TestVdisks(TestcasesBase):
 
         """
         self.lg.info(' [*] Resize vdisk (VD0), should succeed with 204')
-        new_size = self.data['size'] + random.randint(1, 10)
+        current_size = self.data['size']
+        new_size = current_size + random.randint(1, 10)
         body = {"newSize": new_size}
         response = self.vdisks_api.post_vdisks_vdiskid_resize(self.data['id'], body)
         self.assertEqual(response.status_code, 204)
@@ -143,10 +144,10 @@ class TestVdisks(TestcasesBase):
         response = self.vdisks_api.get_vdisks_vdiskid(self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(new_size, response.json()['size'])
-        self.size = new_size
+        current_size = new_size
 
         self.lg.info(' [*] Resize vdisk (VD0) with value less than the current vdisk size, should fail with 400')
-        new_size = self.size - random.randint(1, self.size - 1)
+        new_size = current_size - random.randint(1, current_size - 1)
         body = {"newSize": new_size}
         response = self.vdisks_api.post_vdisks_vdiskid_resize(self.data['id'], body)
         self.assertEqual(response.status_code, 400)
@@ -156,7 +157,7 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(new_size, response.json()['size'])
 
-    @unittest.skip('Not implemented')
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/808')
     def test006_Rollback_vdisk(self):
         """ GAT-066
         *POST:/vdisks/{vdiskid}/rollback*
@@ -169,11 +170,13 @@ class TestVdisks(TestcasesBase):
         #. Rollback vdisk (VD0), should succeed.
         #. Check that vdisk (VD0) size is changed to the initial size, should succeed.
         """
+        epoch = int(time.time())
 
         self.lg.info(' [*]  Resize  created volume.')
-        new_size = self.size + random.randint(1, 10)
+        current_size = self.data['size']
+        new_size = current_size + random.randint(1, 10)
         body = {"newSize": new_size}
-        response = self.vdisks_api.post_volumes_volumeid_resize(self.data['id'], body)
+        response = self.vdisks_api.post_vdisks_vdiskid_resize(self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Check that size of volume changed, should succeed')
@@ -182,11 +185,11 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(new_size, response.json()['size'])
 
         self.lg.info(' [*] Rollback vdisk (VD0), should succeed')
-        body = {"epoch": self.vd_creation_time}
+        body = {"epoch": epoch}
         response = self.vdisks_api.post_vdisks_vdiskid_rollback(self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Check that vdisk (VD0) size is changed to the initial size, should succeed')
         response = self.vdisks_api.get_vdisks_vdiskid(self.data['id'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.size, response.json()['size'])
+        self.assertEqual(current_size, response.json()['size'])
