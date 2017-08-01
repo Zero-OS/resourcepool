@@ -8,9 +8,9 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
       pip3 install -r tests/0_orchestrator/test_suite/requirements.txt
       pip3 install git+https://github.com/gigforks/packet-python.git
       python3 tests/0_orchestrator/orch_packet_machines.py create $PACKET_TOKEN $ZT_TOKEN $ITSYOUONLINE_ORG $TRAVIS_BRANCH
-      ZT_NET_ID=$(cat ZT_NET_ID)
-      bash tests/0_orchestrator/install_env.sh master $ZT_NET_ID $ZT_TOKEN
-   elif [ "$point" == "run" ]
+#      ZT_NET_ID=$(cat ZT_NET_ID)
+#      bash tests/0_orchestrator/install_env.sh master $ZT_NET_ID $ZT_TOKEN
+   elif [ "$point" == "#run" ]
     then
       echo "sleeping 120"
       sleep 120

@@ -24,12 +24,10 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
 
 
 def delete_devices(manager):
-    config = configparser.ConfigParser()
-    config.read('test_suite/config.ini')
-    machines = config['main']['0_core_machines']
-    
+    device_log = open('devices', 'r')
+    machines = device_log.read().split('\n')
+    print(' [*] Machines : ' % str(machines))
     if machines:
-        machines = machines.split(',')
         project = manager.list_projects()[0]
         devices = manager.list_devices(project.id)
         for hostname in machines:
@@ -62,16 +60,10 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
             break
     time.sleep(5)
 
-    config = configparser.ConfigParser()
-    config.read('test_suite/config.ini')
-    config['main']['target_ip'] = dev.ip_addresses[0]['address']
-    old_hosts =  config['main']['0_core_machines']
-    if old_hosts:
-        config['main']['0_core_machines'] = old_hosts + ',' + hostname
-    else:
-        config['main']['0_core_machines'] = hostname
-    with open('test_suite/config.ini', 'w') as configfile:
-        config.write(configfile)
+    device_log = open('devices', 'a')
+    device_log.write(hostname)
+    device_log.write('\n')
+    device_log.close()
 
 def create_zerotire_nw(zt_token):
     print(' [*] Create new zerotier network ... ')
