@@ -20,8 +20,7 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
       nosetests-3.4 -v -s testcases/basic_tests/test01_nodeid_apis.py --tc-file=config.ini --tc=main.zerotier_token:$ZT_TOKEN --tc=main.client_id:$ITSYOUONLINE_CL_ID --tc=main.client_secret:$ITSYOUONLINE_CL_SECRET --tc=main.organization:$ITSYOUONLINE_ORG
    elif [ "$point" == "after" ]
     then
-      cd tests/0_orchestrator/
-      python3 orch_packet_machines.py delete $PACKET_TOKEN
+      python3 tests/0_orchestrator/orch_packet_machines.py delete $PACKET_TOKEN
    fi
  else
    echo "Not a cron job" 
