@@ -106,6 +106,7 @@ def install(job):
 
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import math
     import redis
@@ -124,6 +125,8 @@ def monitor(job):
         state = False
     except redis.ConnectionError:
         state = False
+
+    nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
 
     if state:
         service.model.data.status = 'running'
@@ -148,6 +151,8 @@ def monitor(job):
             j.tools.async.wrappers.sync(stats_collector_service.executeAction(
                 'start', context=job.context))
 
+        # healthchecks
+        nodestatus.add_message('node', 'Node is running', 'OK')
         update_healthcheck(service, node.healthcheck.openfiledescriptors())
         update_healthcheck(service, node.healthcheck.cpu_mem())
         update_healthcheck(service, node.healthcheck.rotate_logs())
@@ -175,7 +180,8 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.network_stability(relatives))
     else:
         service.model.data.status = 'halted'
-
+        nodestatus.add_message('node', 'Node is halted', 'ERROR')
+    update_healthcheck(service, nodestatus.to_dict())
 
     service.saveAll()
 
@@ -202,6 +208,8 @@ def update_healthcheck(service, healthchecks):
                 break
         else:
             # healthcheck doesn't exist in the current list, add it to the list of new
+            health_check['lasttime'] = time.time()
+            health_check['interval'] = interval
             new_healthchecks.append(health_check)
 
     old_healthchecks = service.model.data.to_dict().get('healthchecks', [])
