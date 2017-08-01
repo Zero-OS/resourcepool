@@ -2,18 +2,16 @@
 from random import randint
 import packet
 import time
-import os
 import sys
-import threading
 import subprocess
-import configparser
 import requests
 
 
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
     project = manager.list_projects()[0]
-    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id, itsyouonline_org)
-    print('creating new machine: {}  .. '.format(hostname))
+    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id,
+                                                                                     itsyouonline_org)
+    print(' [*] creating new machine: {}  .. '.format(hostname))
     device = manager.create_device(project_id=project.id,
                                    hostname=hostname,
                                    plan='baremetal_2',
@@ -23,28 +21,21 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
     return device
 
 
-def delete_devices(manager):
-    config = configparser.ConfigParser()
-    config.read('test_suite/config.ini')
-    machines = config['main']['0_core_machines']
-    
-    if machines:
-        machines = machines.split(',')
-        project = manager.list_projects()[0]
-        devices = manager.list_devices(project.id)
-        for hostname in machines:
-            for dev in devices:
-                if dev.hostname == hostname:
-                    device_id = dev.id
-                    params = {
-                             "hostname": dev.hostname,
-                             "description": "string",
-                             "billing_cycle": "hourly",
-                             "userdata": "",
-                             "locked": False,
-                             "tags": []
-                             }
-                    manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
+def delete_devices(manager, hostname):
+    project = manager.list_projects()[0]
+    devices = manager.list_devices(project.id)
+    for dev in devices:
+        if dev.hostname == hostname:
+            device_id = dev.id
+            params = {
+                "hostname": dev.hostname,
+                "description": "string",
+                "billing_cycle": "hourly",
+                "userdata": "",
+                "locked": False,
+                "tags": []
+            }
+            manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
 
 
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
@@ -52,26 +43,18 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
     try:
         device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
     except:
-        print('device hasn\'t been created')
+        print(' [*] device hasn\'t been created')
         raise
 
-    print('provisioning the new machine ..')
+    print(' [*] provisioning the new machine ..')
     while True:
         dev = manager.get_device(device.id)
         if dev.state == 'active':
             break
     time.sleep(5)
 
-    config = configparser.ConfigParser()
-    config.read('test_suite/config.ini')
-    config['main']['target_ip'] = dev.ip_addresses[0]['address']
-    old_hosts =  config['main']['0_core_machines']
-    if old_hosts:
-        config['main']['0_core_machines'] = old_hosts + ',' + hostname
-    else:
-        config['main']['0_core_machines'] = hostname
-    with open('test_suite/config.ini', 'w') as configfile:
-        config.write(configfile)
+    return hostname
+
 
 def create_zerotire_nw(zt_token):
     print(' [*] Create new zerotier network ... ')
@@ -79,10 +62,10 @@ def create_zerotire_nw(zt_token):
     session.headers['Authorization'] = 'Bearer %s' % zt_token
     url = 'https://my.zerotier.com/api/network'
     data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
-                                                'ipRangeStart': '10.147.17.1'}],
-                        'private': 'true',
-                        'routes': [{'target': '10.147.17.0/24', 'via': None}],
-                        'v4AssignMode': {'zt': 'true'}}}
+                                              'ipRangeStart': '10.147.17.1'}],
+                       'private': 'true',
+                       'routes': [{'target': '10.147.17.0/24', 'via': None}],
+                       'v4AssignMode': {'zt': 'true'}}}
 
     response = session.post(url=url, json=data)
     ZEROTIER_NW_ID = response.json()['id']
@@ -92,29 +75,34 @@ def create_zerotire_nw(zt_token):
     file_ZT.close()
     return ZEROTIER_NW_ID
 
+
 if __name__ == '__main__':
     action = sys.argv[1]
     token = sys.argv[2]
     manager = packet.Manager(auth_token=token)
     branch = 'master'
     if action == 'delete':
-        print('deleting the g8os machines ..')
-        delete_devices(manager)
+        print(' [*] Deleting the g8os machines ..')
+        file_node = open('ZT_NET_ID', 'r')
+        hosts = file_node.read().split('\n')[:-1]
+        for hostname in hosts:
+            print(' [*] Delete %s machine ' % hostname)
+            delete_devices(manager, hostname)
     else:
         zt_token = sys.argv[3]
         itsyouonline_org = sys.argv[4]
         branch = sys.argv[5]
-        command='git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(branch)
+        command = 'git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(branch)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
-        flag=str(process.communicate()[0], 'utf-8').strip('\n')
+        flag = str(process.communicate()[0], 'utf-8').strip('\n')
         zt_net_id = create_zerotire_nw(zt_token=zt_token)
         if flag != '1':
-           branch = 'master'
-        threads = []
+            branch = 'master'
+
+        file_node = open('ZT_NET_ID', 'w')
         for i in range(2):
-            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org), kwargs={'branch': '{}'.format(branch)})
-            thread.start()
-            threads.append(thread)
-        for t in threads:
-            t.join()
+            hostname = create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch=branch)
+            file_node.write(hostname)
+            file_node.write('\n')
+        file_node.close()
