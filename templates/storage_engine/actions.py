@@ -11,6 +11,7 @@ def start(job):
     service = job.service
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.start()
+    service.model.data.status = 'running'
 
 
 def stop(job):
@@ -19,6 +20,7 @@ def stop(job):
     service = job.service
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
+    service.model.data.status = 'halted'
 
 
 def monitor(job):
@@ -39,6 +41,11 @@ def monitor(job):
                 running, _ = storageEngine.is_running()
                 if running:
                     service.model.dbobj.state = 'ok'
+                    service.model.data.status = 'running'
             except:
                 job.logger.error("can't restart storageEngine {} not running".format(service.name))
                 service.model.dbobj.state = 'error'
+                service.model.data.status = 'halted'
+        else:
+            if not storageEngine.is_healthy():
+                service.model.data.status = "unhealthy"
