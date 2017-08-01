@@ -1,31 +1,6 @@
 from js9 import j
 
 
-def get_init_processes(service):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    token = get_jwt_token(service.aysrepo)
-    cmd_args = []
-
-    if token:
-        cmd_args.extend(['--jwt', token])
-    if service.model.data.ip:
-        cmd_args.extend(['--ip', service.model.data.ip])
-    if service.model.data.port:
-        cmd_args.extend(['--port', str(service.model.data.port)])
-    if service.model.data.db:
-        cmd_args.extend(['--db', service.model.data.db])
-    if service.model.data.retention:
-        cmd_args.extend(['--retention', service.model.data.retention])
-
-    return [
-        {
-            'name': '0-statscollector',
-            'args': cmd_args
-        }
-    ]
-
-
 def get_container(service, force=True):
     containers = service.producers.get('container')
     if not containers:
@@ -49,7 +24,6 @@ def init(job):
             '0-statscollector-flist', 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'),
         'hostname': service.model.data.node,
         'hostNetworking': True,
-        'initProcesses': get_init_processes(service),
     }
     cont_service = container_actor.serviceCreate(instance='{}_stats_collector'.format(service.name), args=args)
     service.consume(cont_service)
@@ -60,15 +34,37 @@ def install(job):
 
 
 def start(job):
-    container = get_container(job.service)
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
+
+    service = job.service
+    container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container_ays = Container.from_ays(container, job.context['token'])
+    stats_collector = StatsCollector(
+        container_ays, service.model.data.ip,
+        service.model.data.port, service.model.data.db,
+        service.model.data.retention, job.context['token'])
+    stats_collector.start()
     job.service.model.data.status = 'running'
     job.service.saveAll()
 
 
 def stop(job):
-    container = get_container(job.service)
-    j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
+
+    service = job.service
+    container = get_container(service)
+    container_ays = Container.from_ays(container, job.context['token'])
+
+    if container_ays.is_running():
+        stats_collector = StatsCollector(
+            container_ays, service.model.data.ip,
+            service.model.data.port, service.model.data.db,
+            service.model.data.retention, job.context['token'])
+        stats_collector.stop()
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     job.service.model.data.status = 'halted'
     job.service.saveAll()
 
@@ -82,14 +78,18 @@ def uninstall(job):
 
 
 def processChange(job):
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
+
     service = job.service
     args = job.model.args
 
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    container = get_container(job.service)
+    token = get_jwt_token_from_job(job)
+    container = Container.from_ays(get_container(job.service), token)
 
     if args.get('ip'):
         service.model.data.ip = args['ip']
@@ -101,12 +101,13 @@ def processChange(job):
         service.model.data.retention = args['retention']
 
     service.saveAll()
-    container.model.data.initProcesses = get_init_processes(service)
-    container.saveAll()
-
-    job.context['token'] = get_jwt_token_from_job(job)
-    j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    stats_collector = StatsCollector(
+        container, service.model.data.ip,
+        service.model.data.port, service.model.data.db,
+        service.model.data.retention, token)
+    if container.is_running() and stats_collector.is_running():
+        stats_collector.stop()
+        stats_collector.start()
 
 
 def init_actions_(service, args):
@@ -117,3 +118,12 @@ def init_actions_(service, args):
         'delete': ['uninstall'],
         'uninstall': [],
     }
+
+
+def watchdog_handler(job):
+    import asyncio
+
+    loop = j.atyourservice.server.loop
+
+    if job.service.model.data.status == 'running':
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
