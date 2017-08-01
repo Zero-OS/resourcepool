@@ -160,6 +160,7 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.interrupts())
         update_healthcheck(service, node.healthcheck.context_switch())
         update_healthcheck(service, node.healthcheck.threads())
+        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
         update_healthcheck(service, node.healthcheck.network_load())
 
         flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')

@@ -139,6 +139,11 @@ class HealthCheck:
         thread = Threads(self.node)
         return thread.start()
 
+    def ssh_cleanup(self, job):
+        from .healthchecks.ssh_cleanup import SSHCleanup
+        cleaner = SSHCleanup(self.node, job)
+        return cleaner.start()
+
     def powersupply(self, container):
         from .healthchecks.powersupply import PowerSupply
         powersupply = PowerSupply(self.node)
