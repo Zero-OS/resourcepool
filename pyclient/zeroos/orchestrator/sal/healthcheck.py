@@ -5,7 +5,7 @@ import json
 import hashlib
 
 
-class HealthCheckRun:
+class HealthCheckObject:
     def __init__(self, id, name, category, resource):
         self.id = id
         self.name = name
@@ -14,12 +14,10 @@ class HealthCheckRun:
         self.resource = resource
         self.stacktrace = ''
 
-    def start(self, *args, **kwargs):
-        try:
-            self.run(*args, **kwargs)
-        except Exception as e:
-            eco = j.errorhandler.parsePythonExceptionObject(e)
-            self.stacktrace = eco.traceback
+    def add_message(self, id, status, text):
+        self._messages.append({'id': id, 'text': text, 'status': status})
+
+    def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -29,8 +27,15 @@ class HealthCheckRun:
             'messages': self._messages
         }
 
-    def add_message(self, id, status, text):
-        self._messages.append({'id': id, 'text': text, 'status': status})
+
+class HealthCheckRun(HealthCheckObject):
+    def start(self, *args, **kwargs):
+        try:
+            self.run(*args, **kwargs)
+        except Exception as e:
+            eco = j.errorhandler.parsePythonExceptionObject(e)
+            self.stacktrace = eco.traceback
+        return self.to_dict()
 
 
 class IPMIHealthCheck(HealthCheckRun):
@@ -148,3 +153,7 @@ class HealthCheck:
         from .healthchecks.context_switch import ContextSwitch
         return ContextSwitch(self.node).start()
 
+    def network_load(self):
+        from .healthchecks.networkload import NetworkLoad
+        load = NetworkLoad(self.node)
+        return load.start()

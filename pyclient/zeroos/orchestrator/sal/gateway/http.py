@@ -16,7 +16,8 @@ class HTTPServer:
         if job:
             self.container.client.job.kill(job['cmd']['id'], int(signal.SIGUSR1))
         else:
-            self.container.client.system('caddy -agree -conf /etc/caddy.conf', stdin='\n')
+            self.container.client.system(
+                'caddy -agree -conf /etc/caddy.conf', stdin='\n', id='http.{}'.format(self.container.name))
         start = time.time()
         while start + 10 > time.time():
             if self.is_running():
