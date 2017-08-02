@@ -289,6 +289,9 @@ def watchdog(job):
         'dhcp': {
             'eof': True,
         },
+        'storage_engine': {
+            'eof': True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
