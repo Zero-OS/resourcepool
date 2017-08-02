@@ -4,7 +4,7 @@ The Zero-OS Orchestrator exposes all the RESTful APIs to manage the Zero-OS clus
 
 ![](images/interacting.png)
 
-See [Zero-OS Orchestrator RESTful API documentation](https://htmlpreviewer.github.io/?../../raml/api.html) for all the available RESTful API endpoints exposed by the Zero-OS Orchestrator.
+See [Zero-OS Orchestrator RESTful API documentation](https://htmlpreviewer.github.io/?https://raw.githubusercontent.com/zero-os/0-orchestrator/master/raml/api.html) for all the available RESTful API endpoints exposed by the Zero-OS Orchestrator.
 
 For each of the methods you'll see the expected request body and response, e.g. for the `ping` method:
 
@@ -20,7 +20,7 @@ Interacting with the RESTful APIs of both the AYS server and the Orchestrator re
 
 > For more information on how to configure AYS see [AYS Configuration](https://github.com/Jumpscale/ays9/blob/master/docs/configuration.md).
 
-The API will only accept JWTs that are valid for maximum 1 hour (3600 seconds). Otherwise the API will reject the token (440) due to having an expiration date that is too late. This is to make sure that users that have been  removed from an ItsYou.online organization lose their access as fast as possible. 
+The API will only accept JWTs that are valid for maximum 1 hour (3600 seconds). Otherwise the API will reject the token (440) due to having an expiration date that is too late. This is to make sure that users that have been  removed from an ItsYou.online organization lose their access as fast as possible.
 
 Creating a JWT can be done using the AYS command line tool:
 ```bash

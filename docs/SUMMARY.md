@@ -8,5 +8,6 @@
 * [Storage Cluster](storagecluster/README.md)
   * [Setup a Storage Cluster](storagecluster/README.md)
 * [Block Storage](blockstorage/README.md)
-* [Networking](network/README.md)
-  * [Gateway](network/gateway/README.md)]
+* [Networking](networking/README.md)
+  * [Gateway](networking/gateway/README.md)
+  * [Bridging Remote VXLANs](networking/gateway/bridgingVXLANS.md) 

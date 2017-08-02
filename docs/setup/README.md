@@ -214,9 +214,9 @@ See to the [0-core documentation](https://github.com/zero-os/0-core/blob/master/
 
 To have statistics monitoring, you need to have an InfluxDB and Grafana running on any of the nodes. And you need to run the [0-stats-collector](https://github.com/zero-os/0-statscollector) on all the nodes you want to monitor.
 
-The [0-stats-collector](https://github.com/zero-os/0-statscollector) reads the statistics from 0-core and dumps them in InfluxDB, fron which Grafana can visualize the data.
+The [Zero-OS Stats Collector](https://github.com/zero-os/0-statscollector) reads the statistics from 0-core and dumps them in InfluxDB, fron which Grafana can visualize the data.
 
-The fastest way to achieve this is to install the [statsdb](https://github.com/zero-os/0-orchestrator/tree/master/templates/statsdb) AYS service on any of the nodes. This service will install both InfluxDB and Grafana. Once installed, it will iterate all nodes and install the 0-stat-collector on them.
+The fastest way to achieve this is to install the [statsdb](https://github.com/zero-os/0-orchestrator/tree/master/templates/statsdb) AYS service on any of the nodes. This service will install both InfluxDB and Grafana. Once installed, it will iterate over all nodes and install the [Zero-OS Stats Collector](https://github.com/zero-os/0-statscollector) on them.
 
 Example of the statsdb blueprint:
 ```yaml
@@ -229,4 +229,4 @@ actions:
 
 ```
 
-The port will be the port on which InfluxDB will run. Executing this blueprint will create a container with InfluxDB running on the specified port and will add database `statistics` to InfluxDB. It will also create a container with Grafana running on it and add a data source for the `statistics` database.
+Executing this blueprint will create a container with InfluxDB listening on the specified `port` and create the InfluxDB `statistics` database. It will also create a container with Grafana and add a data source for the `statistics` database.

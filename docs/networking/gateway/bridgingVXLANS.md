@@ -1,4 +1,4 @@
-# Prepare Gateway to Bridge Remote VXLANs
+# Bridging Remote VXLANs
 
 How this will work:
   1. Create a ZeroTier network, but without!! allocated route or IP addresses
