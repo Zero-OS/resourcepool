@@ -9,4 +9,11 @@ struct Schema {
     # if this is filled, this instance will behave as a slave
 
     container @3 :Text; # pointer to the parent service
+    status @4: Status;
+
+    enum Status{
+        halted @0;
+        running @1;
+        unhealthy @2;
+    }
 }

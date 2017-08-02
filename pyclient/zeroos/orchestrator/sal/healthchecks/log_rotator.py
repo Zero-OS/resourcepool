@@ -16,7 +16,7 @@ class RotateLogs(HealthCheckRun):
 
     def run(self, locations=['/var/log'], limit=10):
         message = {
-            'id': '-1',
+            'id': 'log-rotator',
             'status': 'OK',
             'text': 'Logs did not reach {limit}G'.format(limit=limit)
         }
