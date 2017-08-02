@@ -373,7 +373,7 @@ def start_migartion_channel(job, old_node, node):
     command = "/usr/sbin/sshd -f {config}"
 
     # Get free ports on node to use for ssh
-    freeports_node, _ = get_baseports(job, node, 3000, 1)
+    freeports_node, _ = get_baseports(job, node, 4000, 1)
     port = freeports_node[0]
     node.client.nft.open_port(port)
     ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
@@ -664,7 +664,6 @@ def update_data(job, args):
     if 'node' in args and args['node'] != service.model.data.node:
         service.model.data.node = args['node']
         service.saveAll()
-        token = get_jwt_token_from_job(job)
         if service.model.data.status == 'halted':
             # move stopped vm
             node = service.aysrepo.serviceGet('node', args['node'])
@@ -672,11 +671,10 @@ def update_data(job, args):
             start_dependent_services(job)
         elif service.model.data.status == 'running':
             # do live migration
-            job = service.getJob('migrate', args={'node': service.model.data.node})
+            job = service.getJob('migrate', args={'node': service.model.data.node}, context=job.context)
+            j.tools.async.wrappers.sync(job.execute())
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')
-        job.context['token'] = token
-        j.tools.async.wrappers.sync(job.execute())
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
