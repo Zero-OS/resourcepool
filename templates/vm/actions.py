@@ -22,6 +22,7 @@ def get_node(job):
     from zeroos.orchestrator.sal.Node import Node
     return Node.from_ays(job.service.parent, job.context['token'])
 
+
 def create_zerodisk_container(job, parent):
     """
     first check if the vdisks container for this vm exists.
@@ -439,7 +440,6 @@ def start_migartion_channel(job, old_node, node):
         node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
         service.model.changeParent(old_node)
         service.saveAll()
-
 
 
 def get_baseports(job, node, baseport, nrports):

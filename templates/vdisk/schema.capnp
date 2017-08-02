@@ -10,7 +10,8 @@ struct Schema {
     storageCluster @6 :Text; # consume
     tlogStoragecluster @7 :Text; # consume
     backupStoragecluster @8 :Text; # consume
-    timestamp @9: UInt64;
+    templateStoragecluster @9 :Text; # consume
+    timestamp @10: UInt64;
     enum Status {
         halted @0;
         running @1;

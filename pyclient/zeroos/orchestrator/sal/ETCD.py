@@ -58,6 +58,8 @@ class ETCD:
     def put(self, key, value):
         if value.startswith("-"):
             value = "-- %s" % value
+        if key.startswith("-"):
+            key = "-- %s" % key
         cmd = '/bin/etcdctl \
           --endpoints {etcd} \
           put {key} "{value}"'.format(etcd=self.clientBind, key=key, value=value)

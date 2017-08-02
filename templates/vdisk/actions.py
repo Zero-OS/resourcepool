@@ -115,13 +115,14 @@ def save_config(job):
     from zeroos.orchestrator.sal.ETCD import ETCD
 
     service = job.service
-    config = {
+    # Save base config
+    base_config = {
         "blockSize": service.model.data.blocksize,
         "readOnly": service.model.data.readOnly,
         "size": service.model.data.size,
         "type": str(service.model.data.type),
     }
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd = random.choice(etcd_cluster.producers['etcd'])
@@ -130,6 +131,21 @@ def save_config(job):
     result = etcd.put(key="%s:zerodisk:conf:static" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
         raise RuntimeError("Failed to save vdisk %s config" % service.name)
+
+    # Save template cluster config
+    templatestorageEngine = get_templatecluster(job)
+    templateclusterconfig = {
+        'dataStorage': [{'address': templatestorageEngine}],
+        'metadataStorage': {'address': templatestorageEngine}
+    }
+    yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
+    templateclusterkey = hash(templatestorageEngine)
+
+    service.model.data.templateStoragecluster = str(templateclusterkey)
+
+    result = etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save template storage")
 
 
 def get_cluster_config(job, type="storage"):
@@ -174,6 +190,23 @@ def start(job):
 def pause(job):
     service = job.service
     service.model.data.status = 'halted'
+
+
+def get_templatecluster(job):
+    from urllib.parse import urlparse
+    from zeroos.orchestrator.sal.Node import Node
+    service = job.service
+
+    template = urlparse(service.model.data.templateVdisk)
+
+    if template.scheme == 'ardb' and template.netloc:
+        templateStorageEngine = template.netloc
+    else:
+        node_srv = service.aysrepo.servicesFind(role='node')[0]
+        node = Node.from_ays(node_srv, password=job.context['token'])
+        conf = node.client.config.get()
+        templateStorageEngine = urlparse(conf['globals']['storage']).netloc
+    return templateStorageEngine
 
 
 def rollback(job):

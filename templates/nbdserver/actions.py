@@ -26,12 +26,39 @@ def is_socket_listening(container, socketpath):
     return False
 
 
+def save_config(job):
+    import yaml
+    import random
+    from zeroos.orchestrator.sal.ETCD import ETCD
+    service = job.service
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+
+    service = job.service
+
+    vm = service.consumers['vm'][0]
+    vdisks = vm.producers.get('vdisk', [])
+
+    for vdiskservice in vdisks:
+        config = {
+            "storageClusterID": vdiskservice.model.data.storageCluster,
+            "templateStorageCluster": vdiskservice.model.data.templateStoragecluster,
+        }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % vdiskservice.name, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save template storage")
+
+
 def install(job):
     import time
     import yaml
     from io import BytesIO
     from urllib.parse import urlparse
     service = job.service
+    save_config(job)
 
     tlog = False
     vm = service.consumers['vm'][0]
