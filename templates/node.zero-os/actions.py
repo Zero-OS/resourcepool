@@ -275,7 +275,7 @@ def watchdog(job):
         'ork': {
             'level': 20,
             'instance': job.service.name,
-            'role': 'node',
+            'service': 'node',
             'eof': False,
             'message': (re.compile('.*'),),
             'handler': 'ork_handler',
@@ -295,20 +295,15 @@ def watchdog(job):
     }
 
     async def callback(jobid, level, message, flag):
-        if '.' not in jobid and jobid not in watched_roles:
+        if '.' not in jobid:
             return
 
-        if jobid not in watched_roles:
-            role, instance = jobid.split('.', 1)
-            service_role = role
-            if role not in watched_roles or watched_roles[role].get('level', level) != level:
-                return
-        else:
-            if watched_roles[jobid].get('level', level) != level:
-                return
-            role = jobid
-            service_role = watched_roles[jobid]['role']
-            instance = watched_roles[jobid]['instance']
+        role, instance = jobid.split('.', 1)
+        if role not in watched_roles or watched_roles[role].get('level', level) != level:
+            return
+
+        service_role = watched_roles[role].get('service', role)
+        instance = watched_roles[role].get('instance', instance)
 
         eof = flag & 0x6 != 0
 
