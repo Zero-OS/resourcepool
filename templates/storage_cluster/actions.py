@@ -154,7 +154,9 @@ def save_config(job):
     etcd_container = Container.from_ays(etcd.parent, job.context['token'])
     cmd = '/bin/etcdctl \
           --endpoints {etcd} \
-          put {key} "{value}"'.format(etcd=etcd.model.data.clientBind, key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
+          put {key} "{value}"'.format(etcd=etcd.model.data.clientBind,
+                                      key="%s:cluster:conf:%s" % (service.name, service.model.data.clusterType),
+                                      value=yamlconfig)
     result = etcd_container.client.system(cmd, env={"ETCDCTL_API": "3"}).get()
     if result.state != "SUCCESS":
         raise RuntimeError("Failed to save storage cluster config")

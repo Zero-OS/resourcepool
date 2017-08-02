@@ -54,6 +54,7 @@ def install(job):
             if result.state != 'SUCCESS':
                 raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
 
+            save_config(job)
         finally:
             volume_container.stop()
 
@@ -106,6 +107,32 @@ def get_srcstorageEngine(container, template):
         return template.netloc
     else:
         raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
+
+
+def save_config(job):
+    import yaml
+    import random
+    from zeroos.orchestrator.sal.Container import Container
+
+    service = job.service
+    config = {
+        "blockSize": service.model.data.blocksize,
+        "readOnly": service.model.data.readOnly,
+        "size": service.model.data.size,
+        "type": str(service.model.data.type),
+    }
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+
+    etcd_container = Container.from_ays(etcd.parent, job.context['token'])
+    cmd = '/bin/etcdctl \
+          --endpoints {etcd} \
+          put {key} "{value}"'.format(etcd=etcd.model.data.clientBind, key="%s:zerodisk:conf:static" % service.name, value=yamlconfig)
+    result = etcd_container.client.system(cmd, env={"ETCDCTL_API": "3"}).get()
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save storage cluster config")
 
 
 def get_cluster_config(job, type="storage"):
@@ -228,6 +255,7 @@ def processChange(job):
         if args.get('size', None):
             job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
+            j.tools.async.wrappers.sync(service.executeAction('save_config', context=job.context))
         if args.get('timestamp', None):
             if str(service.model.data.status) != "halted":
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
