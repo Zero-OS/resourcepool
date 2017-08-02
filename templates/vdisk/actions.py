@@ -112,7 +112,7 @@ def get_srcstorageEngine(container, template):
 def save_config(job):
     import yaml
     import random
-    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.ETCD import ETCD
 
     service = job.service
     config = {
@@ -126,13 +126,10 @@ def save_config(job):
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd = random.choice(etcd_cluster.producers['etcd'])
 
-    etcd_container = Container.from_ays(etcd.parent, job.context['token'])
-    cmd = '/bin/etcdctl \
-          --endpoints {etcd} \
-          put {key} "{value}"'.format(etcd=etcd.model.data.clientBind, key="%s:zerodisk:conf:static" % service.name, value=yamlconfig)
-    result = etcd_container.client.system(cmd, env={"ETCDCTL_API": "3"}).get()
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+    result = etcd.put(key="%s:zerodisk:conf:static" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save storage cluster config")
+        raise RuntimeError("Failed to save vdisk %s config" % service.name)
 
 
 def get_cluster_config(job, type="storage"):

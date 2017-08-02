@@ -141,7 +141,7 @@ def save_config(job):
     import yaml
     import random
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.ETCD import ETCD
 
     service = job.service
     cluster = StorageCluster.from_ays(service, job.context['token'])
@@ -151,13 +151,8 @@ def save_config(job):
     etcd_cluster = service.producers['etcd_cluster'][0]
     etcd = random.choice(etcd_cluster.producers['etcd'])
 
-    etcd_container = Container.from_ays(etcd.parent, job.context['token'])
-    cmd = '/bin/etcdctl \
-          --endpoints {etcd} \
-          put {key} "{value}"'.format(etcd=etcd.model.data.clientBind,
-                                      key="%s:cluster:conf:%s" % (service.name, service.model.data.clusterType),
-                                      value=yamlconfig)
-    result = etcd_container.client.system(cmd, env={"ETCDCTL_API": "3"}).get()
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+    result = etcd.put(key="%s:cluster:conf:%s" % (service.name, service.model.data.clusterType), value=yamlconfig)
     if result.state != "SUCCESS":
         raise RuntimeError("Failed to save storage cluster config")
 

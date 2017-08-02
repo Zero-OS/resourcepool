@@ -195,6 +195,8 @@ def install(job):
     service = job.service
     node = get_node(job)
 
+    save_config(job)
+
     # get all path to the vdisks serve by the nbdservers
     start_tlog(job)
     medias = _start_nbd(job)
@@ -229,7 +231,6 @@ def install(job):
         else:
             service.model.data.status = 'error'
             raise j.exceptions.RuntimeError("Failed to start vm {}".format(service.name))
-
     service.model.data.status = 'running'
     service.saveAll()
 
@@ -467,6 +468,24 @@ def get_baseports(job, node, baseport, nrports):
         baseport += 1
 
 
+def save_config(job, vdisks=None):
+    import yaml
+    import random
+    from zeroos.orchestrator.sal.ETCD import ETCD
+
+    service = job.service
+    config = {"vdisks": list(service.model.data.vdisks)}
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+    result = etcd.put(key="%s:nbdserver:conf:vdisks" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save vm %s vdisks config" % service.name)
+
+
 def migrate(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
@@ -513,7 +532,7 @@ def migrate(job):
     medias = _start_nbd(job, nbdserver.name)
     service.model.data.status = 'running'
 
-    # run the migrate command 
+    # run the migrate command
     for vm in node_client.kvm.list():
         if vm["name"] == service.name:
             uuid = vm["uuid"]

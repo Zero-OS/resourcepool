@@ -45,10 +45,11 @@ def init(job):
         fsactor.serviceCreate(instance=containername, args=args)
 
         # create container
+        data_dir = '/mnt/data'
         args = {
             'node': node.name,
             'flist': flist,
-            'mounts': [{'filesystem': containername, 'target': '/mnt/data'}],
+            'mounts': [{'filesystem': containername, 'target': data_dir}],
             'hostNetworking': True,
         }
         container_actor.serviceCreate(instance=containername, args=args)
@@ -59,7 +60,8 @@ def init(job):
             "serverBind": server_bind,
             "clientBind": client_bind,
             "container": containername,
-            "tcps": tcpservices
+            "tcps": tcpservices,
+            "homeDir": data_dir,
         }
         peers.append("{}_{}_{}=http://{}".format(service.name, node.name, baseports[1], server_bind))
 
