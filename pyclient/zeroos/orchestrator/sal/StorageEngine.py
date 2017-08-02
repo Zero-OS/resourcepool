@@ -52,6 +52,10 @@ class StorageEngine:
         content = content.replace('/mnt/data', self.data_dir)
         content = content.replace('0.0.0.0:16379', self.bind)
 
+        mgmt_bind = "%s:%s" % (self.container.node.addr, self.port)
+        if self.bind != mgmt_bind:
+            content += "server[1].listen %s\n" % mgmt_bind
+
         if self.master is not None:
             _, port = self.master.bind.split(":")
             content = content.replace('#slaveof 127.0.0.1:6379', 'slaveof {}:{}'.format(self.master.container.node.addr, port))
@@ -107,6 +111,22 @@ class StorageEngine:
 
         if is_running:
             raise RuntimeError("storage server {} didn't stopped")
+
+    def is_healthy(self):
+        import redis
+        client = redis.Redis(self.container.node.addr, self.port)
+        key = "keytest"
+        value = b"some test value"
+        if not client.set(key, value):
+            return False
+
+        result = client.get(key)
+        if result != value:
+            return False
+        client.delete(key)
+        if client.exists(key):
+            return False
+        return True
 
     def is_running(self):
         try:
