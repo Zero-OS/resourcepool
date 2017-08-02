@@ -152,7 +152,7 @@ def monitor(job):
                 'start', context=job.context))
 
         # healthchecks
-        nodestatus.add_message('node', 'Node is running', 'OK')
+        nodestatus.add_message('node', 'OK', 'Node is running')
         update_healthcheck(service, node.healthcheck.openfiledescriptors())
         update_healthcheck(service, node.healthcheck.cpu_mem())
         update_healthcheck(service, node.healthcheck.rotate_logs())
@@ -181,7 +181,7 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.network_stability(relatives))
     else:
         service.model.data.status = 'halted'
-        nodestatus.add_message('node', 'Node is halted', 'ERROR')
+        nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(service, nodestatus.to_dict())
 
     service.saveAll()
