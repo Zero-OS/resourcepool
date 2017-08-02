@@ -124,6 +124,11 @@ class HealthCheck:
         stability = NetworkStability(self.node)
         return stability.start(nodes)
 
+    def qemu_vm_logs(self):
+        from .healthchecks.qemu_vm_logs import QemuVMLogs
+        vmCheck = QemuVMLogs(self.node)
+        return vmCheck.start()
+
     def rotate_logs(self):
         from .healthchecks.log_rotator import RotateLogs
         rotator = RotateLogs(self.node)

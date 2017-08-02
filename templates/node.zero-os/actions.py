@@ -160,9 +160,10 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.interrupts())
         update_healthcheck(service, node.healthcheck.context_switch())
         update_healthcheck(service, node.healthcheck.threads())
-        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
+        update_healthcheck(service, node.healthcheck.qemu_vm_logs())
         update_healthcheck(service, node.healthcheck.network_load())
         update_healthcheck(service, node.healthcheck.disk_usage())
+        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
 
         flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
         with node.healthcheck.with_container(flist) as cont:
