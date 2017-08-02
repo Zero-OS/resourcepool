@@ -9,7 +9,7 @@ Clean up ssh deamons and tcp services from migration
 class SSHCleanup(HealthCheckRun):
     def __init__(self, node, job):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('ssh-cleanup', 'SSH Cleanup', 'System Load', resource)
+        super().__init__('ssh-cleanup', 'SSH Cleanup', 'System Cleanup', resource)
         self.node = node
         self.service = job.service
         self.job = job
