@@ -9,4 +9,5 @@
   * [Setup a Storage Cluster](storagecluster/README.md)
 * [Block Storage](blockstorage/README.md)
 * [Networking](network/README.md)
-  * [Gateway](network/gateway/README.md)]
+  * [Gateway](network/gateway/README.md)
+    * [Connect office Network to Zero-OS Gateway](network/gateway/office2gateway.md)
