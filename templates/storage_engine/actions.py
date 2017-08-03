@@ -11,6 +11,7 @@ def start(job):
     service = job.service
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.start()
+    service.model.data.status = 'running'
 
 
 def stop(job):
@@ -19,6 +20,7 @@ def stop(job):
     service = job.service
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
+    service.model.data.status = 'halted'
 
 
 def monitor(job):
@@ -31,14 +33,20 @@ def monitor(job):
         storageEngine = StorageEngine.from_ays(service, get_jwt_token(service.aysrepo))
         running, process = storageEngine.is_running()
 
-        if not running:
-            try:
-                job.logger.warning("storageEngine {} not running, trying to restart".format(service.name))
-                service.model.dbobj.state = 'error'
-                storageEngine.start()
-                running, _ = storageEngine.is_running()
-                if running:
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't restart storageEngine {} not running".format(service.name))
-                service.model.dbobj.state = 'error'
+        if running:
+            if not storageEngine.is_healthy():
+                service.model.data.status = "unhealthy"
+            else:
+                service.model.data.status = "running"
+
+
+def watchdog_handler(job):
+    import asyncio
+    service = job.service
+    if service.model.data.status != 'running':
+        return
+
+    loop = j.atyourservice.server.loop
+    eof = job.model.args['eof']
+    if eof:
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
