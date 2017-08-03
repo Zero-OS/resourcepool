@@ -4,6 +4,7 @@ from js9 import j
 def install(job):
     import random
     from urllib.parse import urlparse
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     service.model.data.status = 'halted'
@@ -21,8 +22,8 @@ def install(job):
             CMD = './bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
 
             etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-            etcd = random.choice(etcd_cluster.producers['etcd'])
-            cmd = CMD.format(etcd=etcd.model.data.clientBind,
+            etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+            cmd = CMD.format(etcd=etcd_cluster.dialstrings,
                              dst_name=service.name,
                              src_name=template.path.lstrip('/'),
                              tgtcluster=storagecluster)
@@ -39,6 +40,7 @@ def install(job):
 
 def delete(job):
     import random
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     clusterconfig = get_cluster_config(job)
@@ -46,8 +48,8 @@ def delete(job):
     container = create_from_template_container(job, node)
     try:
         etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-        etcd = random.choice(etcd_cluster.producers['etcd'])
-        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd.model.data.clientBind)
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
         job.logger.info(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
@@ -70,6 +72,7 @@ def save_template(job):
         "readOnly": service.model.data.readOnly,
         "size": service.model.data.size,
         "type": str(service.model.data.type),
+        "templateVdiskID": template,
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 
@@ -109,15 +112,18 @@ def save_template(job):
 def save_config(job):
     import yaml
     import random
+    from urllib.parse import urlparse
     from zeroos.orchestrator.sal.ETCD import ETCD
 
     service = job.service
     # Save base config
+    template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
     base_config = {
         "blockSize": service.model.data.blocksize,
         "readOnly": service.model.data.readOnly,
         "size": service.model.data.size,
         "type": str(service.model.data.type),
+        "templateVdiskID": template,
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 

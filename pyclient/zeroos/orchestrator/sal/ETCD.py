@@ -6,6 +6,29 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class EtcdCluster:
+    """etced server"""
+
+    def __init__(self, name, dialstrings):
+        self.name = name
+        self.dialstrings = dialstrings
+        self._ays = None
+
+    @classmethod
+    def from_ays(cls, service, password=None):
+        logger.debug("create storageEngine from service (%s)", service)
+
+        dialstrings = set()
+        for etcd_service in service.producers.get('etcd', []):
+            etcd = ETCD.from_ays(etcd_service, password)
+            dialstrings.add(etcd.clientBind)
+
+        return cls(
+            name=service.name,
+            dialstrings=",".join(dialstrings),
+        )
+
+
 class ETCD:
     """etced server"""
 
