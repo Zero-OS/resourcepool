@@ -29,40 +29,6 @@ def is_job_running(container, cmd='/bin/tlogserver'):
         raise
 
 
-def save_config(job):
-    import yaml
-    import random
-    from zeroos.orchestrator.sal.ETCD import ETCD
-    service = job.service
-
-    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
-    etcd = ETCD.from_ays(etcd, job.context['token'])
-
-    service = job.service
-
-    vm = service.consumers['vm'][0]
-    vdisks = vm.producers.get('vdisk', [])
-
-    for vdiskservice in vdisks:
-        config = {}
-
-        tlogcluster = vdiskservice.model.data.tlogStoragecluster
-        backupcluster = vdiskservice.model.data.backupStoragecluster
-
-        if tlogcluster:
-            config["tlogServerClusterID"] = vdiskservice.model.data.storageCluster
-
-        if backupcluster:
-            config["slaveStorageClusterID"] = vdiskservice.model.data.backupStoragecluster
-
-        if config:
-            yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-            result = etcd.put(key="%s:vdisk:conf:storage:tlog" % vdiskservice.name, value=yamlconfig)
-            if result.state != "SUCCESS":
-                raise RuntimeError("Failed to save template storage")
-
-
 def install(job):
     import yaml
     from io import BytesIO
