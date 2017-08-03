@@ -1,39 +1,21 @@
-import random
-import time
-import unittest
-from test_suite.testcases.testcases_base import TestcasesBase
-from test_suite.utiles.core0_client import Client
-from test_suite.orchestrator_objects.orchestrator_apis.containers_apis import ContainersAPI
-from test_suite.orchestrator_objects.orchestrator_apis.bridges_apis import BridgesAPI
-from test_suite.orchestrator_objects.orchestrator_apis.storagepools_apis import StoragepoolsAPI
+import random, time, unittest
+from testcases.testcases_base import TestcasesBase
 from urllib.request import urlopen
 
 
 class TestcontaineridAPI(TestcasesBase):
-
-    def setUp(self):
-        self.containers_api = ContainersAPI()
-        self.bridges_api = BridgesAPI()
-        self.storagepool_api = StoragepoolsAPI()
-        self.createdcontainer = []
-
     def setUp(self):
         super().setUp()
-        self.root_url = "https://hub.gig.tech/gig-official-apps/ubuntu1604.flist"
-        self.storage = "ardb://hub.gig.tech:16379"
-        self.container_name = self.rand_str()
-        self.hostname = self.rand_str()
         self.process_body = {'name': 'yes'}
-        self.container_body = {"name": self.container_name, "hostname": self.hostname, "flist": self.root_url,
-                               "hostNetworking": False, "initProcesses": [], "filesystems": [],
-                               "ports": [], "storage": self.storage
-                               }
+        self.created = {'bridge': [],
+                        'container': []}
 
     def tearDown(self):
         self.lg.info('TearDown:delete all created container ')
-        for container in self.createdcontainer:
-            self.containers_api.delete_containers_containerid(container['node'],
-                                                              container['container'])
+        for container_name in self.created['container']:
+            self.containers_api.delete_containers_containerid(self.nodeid, container_name)
+        for bridge_name in self.created['bridge']:
+            self.containers_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
 
     def test001_check_coonection_with_False_hostNetworking(self):
         """ GAT-082
@@ -46,13 +28,13 @@ class TestcontaineridAPI(TestcasesBase):
         #. Try to connect to internet from created container ,Should fail.
 
         """
-        self.lg.info('Send post nodes/{nodeid}/containers api request.')
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(self.data['name'])
 
-        self.lg.info("Try to connect to internet from created container , Should fail.")
-        container = self.core0_client.get_container_client(self.container_name)
+        self.lg.info(" [*] Try to connect to internet from created container , Should fail.")
+        container = self.core0_client.get_container_client(self.data['name'])
         self.assertTrue(container)
         response = container.bash('ping -c 5 google.com').get()
         self.assertEqual(response.state, 'ERROR')
@@ -68,15 +50,13 @@ class TestcontaineridAPI(TestcasesBase):
         #. Try to connect to internet from created container ,Should succeed.
 
         """
-        self.container_body['hostNetworking'] = True
-
-        self.lg.info('Send post nodes/{nodeid}/containers api request.')
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, hostNetworking=True)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(self.data['name'])
 
         self.lg.info("Try to connect to internet from created container ,Should succeed.")
-        container = self.core0_client.get_container_client(self.container_name)
+        container = self.core0_client.get_container_client(self.data['name'])
         self.assertTrue(container)
         response = container.bash('ping -c 5 google.com').get()
         self.assertEqual(response.state, 'SUCCESS')
@@ -93,26 +73,25 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check that container created with init process.
 
         """
-        self.container_body['flist'] = "https://hub.gig.tech/dina_magdy/initprocess.flist"
-        ## flist which have script which print environment varaibles and print stdin
-        Environmentvaraible = "MYVAR=%s" % self.rand_str()
-        stdin = self.rand_str()
-        self.container_body['initProcesses'] = [{"name": "sh", "pwd": "/",
-                                                 "args": ["sbin/process_init"],
-                                                 "environment": [Environmentvaraible],
-                                                 "stdin": stdin}]
-        self.lg.info('Send post nodes/{nodeid}/containers api request.')
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        flist = "https://hub.gig.tech/dina_magdy/initprocess.flist"
+        initProcesses = [{"name": "sh", "pwd": "/",
+                          "args": ["sbin/process_init"],
+                          "environment": ["MYVAR=%s" % self.rand_str()],
+                          "stdin": self.rand_str()}]
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid,
+                                                                       flist=flist,
+                                                                       initProcesses=initProcesses)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(self.data['name'])
 
-        self.lg.info("Check that container created with init process.")
-        container = self.core0_client.get_container_client(self.container_name)
+        self.lg.info(" [*] Check that container created with init process.")
+        container = self.core0_client.get_container_client(self.data['name'])
         response = container.bash("ls |grep  out.text").get()
         self.assertEqual(response.state, "SUCCESS")
-        response = container.bash("cat out.text | grep %s" % stdin).get()
+        response = container.bash("cat out.text | grep %s" % self.data['initProcesses'][0]['stdin']).get()
         self.assertEqual(response.state, "SUCCESS", "init processes didn't get stdin correctly")
-        response = container.bash("cat out.text | grep %s" % Environmentvaraible).get()
+        response = container.bash("cat out.text | grep %s" % self.data['initProcesses'][0]['environment']).get()
         self.assertEqual(response.state, "SUCCESS", "init processes didn't get Env varaible  correctly")
 
     def test004_create_containers_with_different_flists(self):
@@ -131,26 +110,25 @@ class TestcontaineridAPI(TestcasesBase):
         flistslist = ["ovs.flist", "ubuntu1604.flist", "grid-api-flistbuild.flist",
                       "cloud-init-server-master.flist"]
 
-        flist = random.choice(flistslist)
-        self.container_body['flist'] = "https://hub.gig.tech/gig-official-apps/%s" % flist
-        self.lg.info('Send post nodes/{nodeid}/containers api request.')
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        flist = "https://hub.gig.tech/gig-official-apps/%s" % random.choice(flistslist)
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid,
+                                                                       flist=flist)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(self.data['name'])
 
-        response = self.containers_api.get_containers_containerid(self.node_id, self.container_name)
+        response = self.containers_api.get_containers_containerid(self.nodeid, self.data['name'])
         self.assertEqual(response.status_code, 200)
         response_data = response.json()
         for key in response_data.keys():
             if key == 'initprocesses':
-                self.assertEqual(response_data[key], self.container_body['initProcesses'])
-            if key in self.container_body.keys():
-                self.assertEqual(response_data[key], self.container_body[key])
+                self.assertEqual(response_data[key], self.data['initProcesses'])
+            if key in self.data.keys():
+                self.assertEqual(response_data[key], self.data[key])
 
         self.lg.info("check that container created on node, should succeed")
-        self.assertTrue(self.core0_client.client.container.find(self.container_name))
+        self.assertTrue(self.core0_client.client.container.find(self.data['name']))
 
-    @unittest.skip("https://github.com/g8os/core0/issues/228")
     def test005_Check_container_access_to_host_dev(self):
         """ GAT-086
         *Make sure that container doesn't have access to host dev files *
@@ -162,14 +140,13 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check that container doesn't has access to host dev files .
 
         """
-
-        self.lg.info('Send post nodes/{nodeid}/containers api request.')
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(self.data['name'])
 
         self.lg.info("Check that container doesn't has access to host dev files .")
-        container = self.core0_client.get_container_client(self.container_name)
+        container = self.core0_client.get_container_client(self.data['name'])
         response = container.bash("ls -alh").get().stdout
         for line in response.splitlines():
             if "dev" in line:
@@ -190,71 +167,50 @@ class TestcontaineridAPI(TestcasesBase):
         #. Delete created bridge .
 
         """
-
-        self.lg.info('Create bridge with dnsmasq network, should succeed')
-        bridge_name = self.rand_str()
-        hwaddr = self.randomMAC()
-        ip_range = ["201.100.2.2", "201.100.2.3"]
-        body = {"name": bridge_name,
-                "hwaddr": hwaddr,
-                "networkMode": "dnsmasq",
-                "nat": False,
-                "setting": {"cidr": "201.100.2.1/24", "start": ip_range[0], "end": ip_range[1]}}
-
-        response = self.bridges_api.post_nodes_bridges(self.node_id, body)
+        response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq',
+                                                                    nat=False)
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
+        self.created['bridge'].append(data_bridge['name'])
+        ip_range = [data_bridge['setting']['start'], data_bridge['setting']['start']['end']]
 
-        self.lg.info('Create 2 containers C1, C2 with created bridge, should succeed.')
-        nics = [{"type": "bridge", "id": bridge_name, "config": {"dhcp": True}, "status": "up"}]
-        self.container_body["nics"] = nics
-        C1_name = self.rand_str()
-        C2_name = self.rand_str()
 
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        self.lg.info(' [*] Create 2 containers C1, C2 with created bridge, should succeed.')
+        nics = [{"type": "bridge", "id": data_bridge['name'], "config": {"dhcp": True}, "status": "up"}]
+        response_cont_1, data_cont_1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response_cont_1.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(data_cont_1['name'])
 
-        self.container_body["name"] = C2_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_cont_2, data_cont_2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response_cont_2.status_code, 201, " [*] Can't create new container.")
+        self.created['container'].append(data_cont_2['name'])
 
-        self.lg.info("Get two containers client C1_client and C2_client .")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        self.lg.info("Get two containers client c1_client and c2_client .")
+        c1_client = self.core0_client.get_container_client(data_cont_1['name'])
+        c2_client = self.core0_client.get_container_client(data_cont_2['name'])
 
         self.lg.info("Check that two containers get ip and they are in bridge range, should succeed ")
-        C1_br_ip = self.core0_client.get_container_bridge_ip(C1_client, ip_range)
-        C2_br_ip = self.core0_client.get_container_bridge_ip(C2_client, ip_range)
+        C1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range)
+        C2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range)
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
-        response = C1_client.bash('ping -c 10 %s' % C2_br_ip).get()
+        response = c1_client.bash('ping -c 10 %s' % C2_br_ip).get()
         self.assertEqual(response.state, 'SUCCESS')
 
         self.lg.info("Check if second container (c2) can ping first container (c1), should succeed.")
-        response = C2_client.bash('ping -c 10 %s' % C1_br_ip).get()
+        response = c2_client.bash('ping -c 10 %s' % C1_br_ip).get()
         self.assertEqual(response.state, 'SUCCESS')
 
         self.lg.info("Create C3 without bridge ")
-        C3_name = self.rand_str()
-        nics = []
-        self.container_body["name"] = C3_name
-        self.container_body["nics"] = nics
-
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C3_name})
-        C3_client = self.core0_client.get_container_client(C3_name)
+        response_cont_3, data_cont_3 = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(response_cont_3.status_code, 201, " [*] Can't create new container.")
+        C3_client = self.core0_client.get_container_client(data_cont_3['name'])
+        self.created['container'].append(data_cont_3['name'])
 
         self.lg.info("Check if third container (c3) can ping first container (c1), should fail.")
         response = C3_client.bash('ping -c 10 %s' % C1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
-
-        self.lg.info("Delete created bridge ")
-        self.bridges_api.delete_nodes_bridges_bridgeid(self.node_id, bridge_name)
 
     def test007_create_containers_with_diff_bridges(self):
         """ GAT-088
@@ -271,75 +227,47 @@ class TestcontaineridAPI(TestcasesBase):
         #. Delete created bridges .
 
         """
-
-        self.lg.info('Create bridged (B1),(B2) with dnsmasq network, should succeed')
-        B1_name = self.rand_str()
-        B2_name = self.rand_str()
-        hwaddr1 = self.randomMAC()
-        hwaddr2 = self.randomMAC()
-        cidr1 = "198.101.5.1"
-        cidr2 = "201.100.2.1"
-        ip_range1 = ["198.101.5.2", "198.101.5.3"]
-        ip_range2 = ["201.100.2.2", "201.100.2.3"]
-
-        body1 = {"name": B1_name,
-                 "hwaddr": hwaddr1,
-                 "networkMode": "dnsmasq",
-                 "nat": False,
-                 "setting": {"cidr": "%s/24" % cidr1, "start": ip_range1[0], "end": ip_range1[1]}}
-
-        body2 = {"name": B2_name,
-                 "hwaddr": hwaddr2,
-                 "networkMode": "dnsmasq",
-                 "nat": False,
-                 "setting": {"cidr": "%s/24" % cidr2, "start": ip_range2[0], "end": ip_range2[1]}}
-
-        response = self.bridges_api.post_nodes_bridges(self.node_id, body1)
+        response, data_bridge_1 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq',
+                                                                      nat=False)
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
+        self.created['bridge'].append(data_bridge_1['name'])
+        ip_range1 = [data_bridge_1['setting']['start'], data_bridge_1['setting']['start']['end']]
 
-        response = self.bridges_api.post_nodes_bridges(self.node_id, body2)
+        response, data_bridge_2 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq',
+                                                                      nat=False)
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
+        self.created['bridge'].append(data_bridge_2['name'])
+        ip_range2 = [data_bridge_1['setting']['start'], data_bridge_2['setting']['start']['end']]
 
-        self.lg.info('Create container(C1) with (B1), should succeed.')
-        nics1 = [{"type": "bridge", "id": B1_name, "config": {"dhcp": True}, "status": "up"}]
-        self.container_body["nics"] = nics1
-        C1_name = self.rand_str()
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        self.lg.info(' [*] Create container(C1) with (B1), should succeed.')
+        nics1 = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"dhcp": True}, "status": "up"}]
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics1)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
-        self.lg.info('Create container(C2) with (B2), should succeed.')
-        nics2 = [{"type": "bridge", "id": B2_name, "config": {"dhcp": True}, "status": "up"}]
-        self.container_body["nics"] = nics2
-        C2_name = self.rand_str()
-        self.container_body["name"] = C2_name
+        self.lg.info(' [*] Create container(C2) with (B2), should succeed.')
+        nics2 = [{"type": "bridge", "id": data_bridge_2['name'], "config": {"dhcp": True}, "status": "up"}]
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics2)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        self.lg.info(" [*] Get two containers client c1_client and c2_client .")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
 
-        self.lg.info("Get two containers client C1_client and C2_client .")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        self.lg.info(" [*] Check that two containers get ip and they are in bridge range, should succeed ")
+        c1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range1)
+        c2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range2)
 
-        self.lg.info("Check that two containers get ip and they are in bridge range, should succeed ")
-        C1_br_ip = self.core0_client.get_container_bridge_ip(C1_client, ip_range1)
-        C2_br_ip = self.core0_client.get_container_bridge_ip(C2_client, ip_range2)
-
-        self.lg.info("Check if first container (c1) can ping second container (c2), should fail.")
-        response = C1_client.bash('ping -w 5 %s' % C2_br_ip).get()
+        self.lg.info(" [*] Check if first container (c1) can ping second container (c2), should fail.")
+        response = c1_client.bash('ping -w 5 %s' % c2_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-        self.lg.info("Check if second container (c2) can ping first container (c1), should fail.")
-        response = C2_client.bash('ping -w 5 %s' % C1_br_ip).get()
+        self.lg.info(" [*] Check if second container (c2) can ping first container (c1), should fail.")
+        response = c2_client.bash('ping -w 5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
-
-        self.lg.info("Delete created bridge ")
-        self.bridges_api.delete_nodes_bridges_bridgeid(self.node_id, B2_name)
-        self.bridges_api.delete_nodes_bridges_bridgeid(self.node_id, B1_name)
 
     def test008_Create_container_with_zerotier_network(self):
         """ GAT-089
@@ -355,57 +283,46 @@ class TestcontaineridAPI(TestcasesBase):
 
         Z_Id = self.create_zerotier_network()
 
-        self.lg.info('Create 2 containers C1, C2 with same zerotier network Id , should succeed')
+        self.lg.info(' [*] Create 2 containers C1, C2 with same zerotier network Id , should succeed')
         nic = [{'type': 'default'}, {'type': 'zerotier', 'id': Z_Id}]
-        self.container_body["nics"] = nic
-        C1_name = self.rand_str()
-        C2_name = self.rand_str()
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
-        self.container_body["name"] = C2_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        self.lg.info(" [*] Get two containers client c1_client and c2_client .")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
 
-        self.lg.info("Get two containers client C1_client and C2_client .")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
-
-        self.lg.info("Check that two containers get zerotier ip, should succeed ")
+        self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         time.sleep(5)
-        C1_Zt_ip = self.core0_client.get_client_zt_ip(C1_client)
-        self.assertTrue(C1_Zt_ip)
-        C2_Zt_ip = self.core0_client.get_client_zt_ip(C2_client)
-        self.assertTrue(C2_Zt_ip)
+        c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
+        self.assertTrue(c1_zt_ip)
+        c2_zt_ip = self.core0_client.get_client_zt_ip(c2_client)
+        self.assertTrue(c2_zt_ip)
 
-        self.lg.info("first container C1 ping second container C2 ,should succeed")
-        response = C1_client.bash('ping -c 5 %s' % C2_Zt_ip).get()
+        self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
+        response = c1_client.bash('ping -c 5 %s' % c2_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
-        self.lg.info("second container C2 ping first container C1 ,should succeed")
-        response = C2_client.bash('ping -c 5 %s' % C1_Zt_ip).get()
+        self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
+        response = c2_client.bash('ping -c 5 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
-        self.lg.info("Create C3 without zerotier ")
-        C3_name = self.rand_str()
-        nics = []
-        self.container_body["name"] = C3_name
-        self.container_body["nics"] = nics
+        self.lg.info(" [*] Create C3 without zerotier ")
+        response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(response_c3.status_code, 201)
+        self.created['container'].append(data_c3['name'])
+        C3_client = self.core0_client.get_container_client(data_c3['name'])
 
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C3_name})
-        C3_client = self.core0_client.get_container_client(C3_name)
-
-        self.lg.info("Check if third container (c3) can ping first container (c1), should fail.")
-        response = C3_client.bash('ping -c 10 %s' % C1_Zt_ip).get()
+        self.lg.info(" [*] Check if third container (c3) can ping first container (c1), should fail.")
+        response = C3_client.bash('ping -c 10 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-        self.lg.info("Delete zerotier network ")
+        self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
 
     def test009_create_containers_with_vlan_network(self):
@@ -424,56 +341,48 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check if third container (c3) can ping first container (c1), should fail.
 
         """
-        self.lg.info("create ovs container")
+        self.lg.info(" [*] create ovs container")
         self.core0_client.create_ovs_container()
 
-        self.lg.info("create two container with same vlan tag,should succeed")
+        self.lg.info(" [*] create two container with same vlan tag,should succeed")
         vlan1_id, vlan2_id = random.sample(range(1, 4096), 2)
         C1_ip = "201.100.2.1"
         C2_ip = "201.100.2.2"
 
-        C1_name = self.rand_str()
         nic = [{'type': 'default'}, {'type': 'vlan', 'id': "%s" % vlan1_id, 'config': {'cidr': '%s/24' % C1_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
-        C2_name = self.rand_str()
-        self.container_body["name"] = C2_name
         nic = [{'type': 'default'}, {'type': 'vlan', 'id': "%s" % vlan1_id, 'config': {'cidr': '%s/24' % C2_ip}}]
-        self.container_body["nics"] = nic
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
-        self.lg.info("Get two containers client C1_client and C2_client.")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        self.lg.info(" [*] Get two containers client c1_client and c2_client.")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
 
         self.lg.info("Check that two containers get correct vlan ip, should succeed ")
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C1_client, C1_ip))
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C2_client, C2_ip))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c1_client, C1_ip))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c2_client, C2_ip))
 
         self.lg.info("first container C1 ping second container C2 ,should succeed")
-        response = C1_client.bash('ping -w 2 %s' % C2_ip).get()
+        response = c1_client.bash('ping -w 2 %s' % C2_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
         self.lg.info("second container C2 ping first container C1 ,should succeed")
-        response = C2_client.bash('ping -w 2 %s' % C1_ip).get()
+        response = c2_client.bash('ping -w 2 %s' % C1_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
         self.lg.info("Create C3 with different vlan tag ")
         C3_ip = "201.100.2.3"
-        C3_name = self.rand_str()
         nic = [{'type': 'default'}, {'type': 'vlan', 'id': "%s" % vlan2_id, 'config': {'cidr': '%s/24' % C3_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C3_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C3_name})
-        C3_client = self.core0_client.get_container_client(C3_name)
+        response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c3.status_code, 201)
+        self.created['container'].append(data_c3['name'])
+
+        C3_client = self.core0_client.get_container_client(data_c3['name'])
         self.assertTrue(C3_client)
         self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C3_client, C3_ip))
 
@@ -499,53 +408,47 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("create ovs container")
         self.core0_client.create_ovs_container()
 
-        self.lg.info("create two container with same vxlan id,should succeed")
+        self.lg.info("create two container with same vxlan id,shoc3_nameuld succeed")
 
         vxlan1_id, vxlan2_id = random.sample(range(4096, 8000), 2)
         C1_ip = "201.100.3.1"
         C2_ip = "201.100.3.2"
 
-        C1_name = self.rand_str()
         nic = [{'type': 'default'}, {'type': 'vxlan', 'id': "%s" % vxlan1_id, 'config': {'cidr': '%s/24' % C1_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
-        C2_name = self.rand_str()
-        self.container_body["name"] = C2_name
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
+
         nic = [{'type': 'default'}, {'type': 'vxlan', 'id': "%s" % vxlan1_id, 'config': {'cidr': '%s/24' % C2_ip}}]
-        self.container_body["nics"] = nic
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
-        self.lg.info("Get two containers client C1_client and C2_client.")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        self.lg.info(" [*] Get two containers client c1_client and c2_client.")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
 
-        self.lg.info("Check that two containers get correct vxlan ip, should succeed ")
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C1_client, C1_ip))
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C2_client, C2_ip))
+        self.lg.info(" [*] Check that two containers get correct vxlan ip, should succeed ")
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c1_client, C1_ip))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c2_client, C2_ip))
 
-        self.lg.info("first container C1 ping second container C2 ,should succeed")
-        response = C1_client.bash('ping -w 5 %s' % C2_ip).get()
+        self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
+        response = c1_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
-        self.lg.info("second container C2 ping first container C1 ,should succeed")
-        response = C2_client.bash('ping -w 5 %s' % C1_ip).get()
+        self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
+        response = c2_client.bash('ping -w 5 %s' % C1_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
-        self.lg.info("Create third container c3 with different vxlan Id,should succeed")
+        self.lg.info(" [*] Create third container c3 with different vxlan Id,should succeed")
         C3_ip = "201.100.3.3"
-        C3_name = self.rand_str()
+
         nic = [{'type': 'default'}, {'type': 'vxlan', 'id': "%s" % vxlan2_id, 'config': {'cidr': '%s/24' % C3_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C3_name
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C3_name})
-        C3_client = self.core0_client.get_container_client(C3_name)
+        response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c3.status_code, 201)
+        self.created['container'].append(data_c3['name'])
+
+        C3_client = self.core0_client.get_container_client(data_c3['name'])
         self.assertTrue(C3_client)
         self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C3_client, C3_ip))
 
@@ -573,50 +476,39 @@ class TestcontaineridAPI(TestcasesBase):
         self.core0_client.create_ovs_container()
 
         self.lg.info('Create bridge with static network and nat true , should succeed')
-        bridge_name = self.rand_str()
-        hwaddr = self.randomMAC()
-        bridge_cidr = "192.122.2.5"
-        body = {"name": bridge_name,
-                "hwaddr": hwaddr,
-                "networkMode": "static",
-                "nat": True,
-                "setting": {"cidr": "%s/24" % bridge_cidr}}
-        response = self.bridges_api.post_nodes_bridges(self.node_id, body)
+        response, data_bridge_1 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='static',
+                                                                      nat=True)
+        self.created['bridge'].append(data_bridge_1['name'])
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
 
         self.lg.info("Create container (C1) with (B0) without gateway.")
-        nics = [{"type": "bridge", "id": bridge_name, "config": {"cidr": "190.122.2.4/24"}, "status": "up"}]
-        self.container_body["nics"] = nics
-        C1_name = self.rand_str()
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        nics = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"cidr": "190.122.2.4/24"}, "status": "up"}]
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
         self.lg.info("Create container (C2) with (B0) with gateway same ip of bridge.")
-        nics = [{"type": "bridge", "id": bridge_name, "config": {"cidr": "192.122.2.3/24", "gateway": bridge_cidr},
+        nics = [{"type": "bridge", "id": data_bridge_1['name'],
+                 "config": {"cidr": "192.122.2.3/24", "gateway": data_bridge_1['setting']['static']},
                  "status": "up"}]
-        C2_name = self.rand_str()
-        self.container_body["nics"] = nics
-        self.container_body["name"] = C2_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
 
         self.lg.info("Check that C1 can connect to internet, should fail.")
-        response = C1_client.bash("ping -w 5  8.8.8.8").get()
+        response = c1_client.bash("ping -w 5  8.8.8.8").get()
         self.assertEqual(response.state, "ERROR", response.stdout)
 
         self.lg.info("Check that C2 can connect to internet, should fail.")
-        response = C2_client.bash("ping -w 5 8.8.8.8").get()
+        response = c2_client.bash("ping -w 5 8.8.8.8").get()
         self.assertEqual(response.state, "SUCCESS", response.stdout)
 
         self.lg.info("Delete created bridge ")
-        self.bridges_api.delete_nodes_bridges_bridgeid(self.node_id, bridge_name)
+        self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, data_bridge_1['name'])
 
     def test012_create_container_with_dns_in_config(self):
         """ GAT-093
@@ -637,38 +529,32 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info("create container (C1) with type default in nic with dns , should succeed")
 
-        C1_name = self.rand_str()
         dns = '8.8.4.4'
         cidr = "192.125.2.1"
         nic = [{'type': 'default', "config": {"cidr": "%s/8" % cidr, "dns": ["%s" % dns]}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
         self.lg.info("Check if values of dns in /etc/resolve.conf ,should fail")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        response = C1_client.bash('cat /etc/resolv.conf | grep %s' % dns).get()
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        response = c1_client.bash('cat /etc/resolv.conf | grep %s' % dns).get()
         self.assertEqual(response.state, "ERROR")
 
         self.lg.info(" Create container (c2) with vlan and with dns, should succeed")
         C_ip = "201.100.2.0"
         vlan_Id = random.randint(1, 4096)
-        C2_name = self.rand_str()
-        self.container_body["name"] = C2_name
         nic = [{'type': 'default'},
                {'type': 'vlan', 'id': "%s" % vlan_Id, 'config': {'cidr': '%s/24' % C_ip, 'dns': ['%s' % dns]}}]
-        self.container_body["nics"] = nic
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
         self.lg.info("Check if values of dns in /etc/resolve.conf ,should succeed. ")
-        C2_client = self.core0_client.get_container_client(C2_name)
-        response = C2_client.bash('cat /etc/resolv.conf | grep %s' % dns).get()
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
+        response = c2_client.bash('cat /etc/resolv.conf | grep %s' % dns).get()
         self.assertEqual(response.state, "SUCCESS")
-        response = C2_client.bash('ping -c 2 %s' % dns).get()
+        response = c2_client.bash('ping -c 2 %s' % dns).get()
         self.assertEqual(response.state, "SUCCESS")
 
     def test013_create_container_with_filesystem(self):
@@ -688,20 +574,19 @@ class TestcontaineridAPI(TestcasesBase):
 
         quota = random.randint(1, 100)
         body = {"name": name, "quota": quota}
-        storagepool_name = "%s_fscache" % self.node_id
-        response = self.storagepool_api.post_storagepools_storagepoolname_filesystems(self.node_id, storagepool_name,
-                                                                                      body)
+        storagepool_name = "%s_fscache" % self.nodeid
+        response = self.storagepools_api.post_storagepools_storagepoolname_filesystems(self.nodeid, storagepool_name,
+                                                                                       body)
         self.assertEqual(response.status_code, 201)
         time.sleep(5)
 
         self.lg.info("Create container with created file system,should succeed.")
-        self.container_body["filesystems"].append("%s:%s" % (storagepool_name, name))
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, filesystems=["%s:%s" % (storagepool_name, name)])
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
         self.lg.info("Check that file exist in /fs/storagepool_name/filesystem_name ,should succeed")
-        C_client = self.core0_client.get_container_client(self.container_name)
+        C_client = self.core0_client.get_container_client(data_c1['name'])
         response = C_client.filesystem.list('/fs/%s' % storagepool_name)
         self.assertEqual(response[0]['name'], name)
 
@@ -717,33 +602,28 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check that created file doesn't exicst in C2.
 
         """
-        self.lg.info("Create two conainer  container C1,C2 ,should succeed.")
-        C1_name = self.rand_str()
-        C2_name = self.rand_str()
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertTrue(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        self.lg.info(" [*] Create two conainer  container C1,C2 ,should succeed.")
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
-        C2_name = self.rand_str()
-        self.container_body["name"] = C2_name
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertTrue(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(response_c2.status_code, 201)
 
-        self.lg.info("Create file in C1,should succeed.")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
+
+        self.lg.info(" [*] Create file in C1,should succeed.")
         file_name = self.rand_str()
-        response = C1_client.bash("touch %s" % file_name).get()
+        response = c1_client.bash("touch %s" % file_name).get()
         self.assertEqual(response.state, 'SUCCESS')
 
-        self.lg.info("Check that created file doesn't exicst in C2.")
+        self.lg.info(" [*] Check that created file doesn't exicst in C2.")
 
-        response = C1_client.bash("ls | grep %s" % file_name).get()
+        response = c1_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'SUCCESS')
 
-        response = C2_client.bash("ls | grep %s" % file_name).get()
+        response = c2_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'ERROR')
 
     def test015_create_containers_with_open_ports(self):
@@ -763,27 +643,27 @@ class TestcontaineridAPI(TestcasesBase):
         containerport = "60"
         ports = "%s:%s" % (hostport, containerport)
         nics = [{"type": "default"}]
-        self.container_body["nics"] = nics
-        self.container_body["ports"].append(ports)
 
-        self.lg.info("Create container C1 with open port")
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertTrue(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
-        C1_client = self.core0_client.get_container_client(self.container_name)
+        self.lg.info(" [*] Create container C1 with open port")
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics, ports=[ports])
+        self.created['container'].append(data_c1['name'])
+        self.assertEqual(response_c1.status_code, 201)
+
+
+        c1_client = self.core0_client.get_container_client(data_c1['data'])
         self.core0_client.timeout = 300
         time.sleep(2)
-        self.lg.info("Open server in container port ,should succeed")
-        response = C1_client.bash("apt-get -y install python ").get()
+        self.lg.info(" [*] Open server in container port ,should succeed")
+        response = c1_client.bash("apt-get -y install python ").get()
         self.assertEqual(response.state, "SUCCESS")
-        response = C1_client.bash("mkdir {0} && cd {0}&& echo 'test'>{0}.text ".format(file_name)).get()
+        response = c1_client.bash("mkdir {0} && cd {0}&& echo 'test'>{0}.text ".format(file_name)).get()
         self.assertEqual(response.state, "SUCCESS")
-        C1_client.bash("cd %s &&  nohup python -m SimpleHTTPServer %s & " % (file_name, containerport))
+        c1_client.bash("cd %s &&  nohup python -m SimpleHTTPServer %s & " % (file_name, containerport))
 
         self.lg.info("Check that portforward work,should succeed")
-        response = C1_client.bash("netstat -nlapt | grep %s" % containerport).get()
+        response = c1_client.bash("netstat -nlapt | grep %s" % containerport).get()
         self.assertEqual(response.state, 'SUCCESS')
-        url = ' http://{0}:{1}/{2}.text'.format(self.core0_client_ip, hostport, file_name)
+        url = ' http://{0}:{1}/{2}.text'.format(self.nodeip, hostport, file_name)
         response = urlopen(url)
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
@@ -802,7 +682,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         """
         self.lg.info("Create container C1, should succeed.")
-        self.container_body['flist'] = "https://hub.gig.tech/dina_magdy/initprocess.flist"
+        flist = "https://hub.gig.tech/dina_magdy/initprocess.flist"
         ## flist which have script which print environment varaibles and print stdin
         Environmentvaraible = "MYVAR=%s" % self.rand_str()
         stdin = self.rand_str()
@@ -813,25 +693,26 @@ class TestcontaineridAPI(TestcasesBase):
             "environment": [Environmentvaraible],
             "stdin": stdin
         }
+        self.lg.info(" [*] Create container C1 with open port")
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, flist=flist)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
-        response = self.containers_api.post_containers(nodeid=self.node_id, data=self.container_body)
-        self.assertTrue(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": self.container_name})
-        C1_client = self.core0_client.get_container_client(self.container_name)
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
 
-        self.lg.info('Send post  nodes/{nodeid}/containers/containerid/jobs api request.')
-        response = self.containers_api.post_containers_containerid_jobs(self.node_id, self.container_name,
+        self.lg.info(' [*] Send post  nodes/{nodeid}/containers/containerid/jobs api request.')
+        response = self.containers_api.post_containers_containerid_jobs(self.nodeid, data_c1['name'],
                                                                         job_body)
         self.assertEqual(response.status_code, 202)
         job_id = response.headers['Location'].split('/')[6]
-        self.assertTrue(self.core0_client.wait_on_container_job_update(self.container_name, job_id, 15, False))
+        self.assertTrue(self.core0_client.wait_on_container_job_update(data_c1['name'], job_id, 15, False))
 
         self.lg.info("check that job created successfully with it's specs.")
-        response = C1_client.bash("ls |grep  out.text").get()
+        response = c1_client.bash("ls |grep  out.text").get()
         self.assertEqual(response.state, "SUCCESS")
-        response = C1_client.bash("cat out.text | grep %s" % stdin).get()
+        response = c1_client.bash("cat out.text | grep %s" % stdin).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get stdin correctly")
-        response = C1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
+        response = c1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get Env varaible  correctly")
 
     def test017_Create_containers_with_common_vlan(self):
@@ -851,7 +732,7 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check that C3 can ping C1 and can't ping C2,should succeed.
 
         """
-        self.lg.info("create ovs container")
+        self.lg.info(" [*] create ovs container")
         self.core0_client.create_ovs_container()
         vlan1_id, vlan2_id = random.sample(range(1, 4096), 2)
         C1_ip_vlan1 = "201.100.2.1"
@@ -859,56 +740,46 @@ class TestcontaineridAPI(TestcasesBase):
         C2_ip = "201.100.2.2"
         C3_ip = "201.100.3.2"
 
-        self.lg.info("Create C1 which is binding to vlan1 and vlan2.")
-        C1_name = self.rand_str()
         nic = [{'type': 'vlan', 'id': vlan1_id, 'config': {'cidr': '%s/24' % C1_ip_vlan1}},
                {'type': 'vlan', 'id': vlan2_id, 'config': {'cidr': '%s/24' % C1_ip_vlan2}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C1_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C1_name})
+        self.lg.info(" [*] Create container C1")
+        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c1.status_code, 201)
+        self.created['container'].append(data_c1['name'])
 
         self.lg.info("Create C2 which is binding to vlan1.")
-        C2_name = self.rand_str()
         nic = [{'type': 'vlan', 'id': vlan1_id, 'config': {'cidr': '%s/24' % C2_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C2_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C2_name})
+        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c2.status_code, 201)
+        self.created['container'].append(data_c2['name'])
 
         self.lg.info("Create C3 which is binding to vlan2.")
-        C3_name = self.rand_str()
         nic = [{'type': 'vlan', 'id': vlan2_id, 'config': {'cidr': '%s/24' % C3_ip}}]
-        self.container_body["nics"] = nic
-        self.container_body["name"] = C3_name
-        response = self.containers_api.post_containers(self.node_id, self.container_body)
-        self.assertEqual(response.status_code, 201)
-        self.createdcontainer.append({"node": self.node_id, "container": C3_name})
+        response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
+        self.assertEqual(response_c3.status_code, 201)
 
-        self.lg.info("Get three containers client C1_client ,C2_client ansd C3_client.")
-        C1_client = self.core0_client.get_container_client(C1_name)
-        C2_client = self.core0_client.get_container_client(C2_name)
-        C3_client = self.core0_client.get_container_client(C3_name)
+        self.lg.info("Get three containers client c1_client ,c2_client ansd C3_client.")
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
+        c2_client = self.core0_client.get_container_client(data_c2['name'])
+        C3_client = self.core0_client.get_container_client(data_c3['name'])
 
         self.lg.info("Check that containers get correct vlan ip, should succeed ")
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C1_client, C1_ip_vlan1))
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C1_client, C1_ip_vlan2))
-        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C2_client, C2_ip))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c1_client, C1_ip_vlan1))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c1_client, C1_ip_vlan2))
+        self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(c2_client, C2_ip))
         self.assertTrue(self.core0_client.check_container_vlan_vxlan_ip(C3_client, C3_ip))
 
         self.lg.info("Check that C1 can ping C2 and C3 ,should succeed.")
-        response = C1_client.bash('ping -w 5 %s' % C2_ip).get()
+        response = c1_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, "SUCCESS")
-        response = C1_client.bash('ping -w 5 %s' % C3_ip).get()
+        response = c1_client.bash('ping -w 5 %s' % C3_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
         self.lg.info("Check that C2 can ping C1 and can't ping C3, should succeed.")
-        response = C2_client.bash('ping -w 5 %s' % C1_ip_vlan1).get()
+        response = c2_client.bash('ping -w 5 %s' % C1_ip_vlan1).get()
         self.assertEqual(response.state, "SUCCESS")
 
-        response = C2_client.bash('ping -w 5 %s' % C3_ip).get()
+        response = c2_client.bash('ping -w 5 %s' % C3_ip).get()
         self.assertEqual(response.state, "ERROR")
 
         self.lg.info("Check that C3 can ping C1 and can't ping C2, should succeed.")
