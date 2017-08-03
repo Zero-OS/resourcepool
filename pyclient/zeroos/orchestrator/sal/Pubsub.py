@@ -89,7 +89,7 @@ class Pubsub:
 
         data = await asyncio.wait_for(self._redis.blpop(queue, 10), timeout=timeout)
 
-        a, body = data
+        _, body = data
         payload = json.loads(body.decode())
         message = payload['message']
         line = message['message']
