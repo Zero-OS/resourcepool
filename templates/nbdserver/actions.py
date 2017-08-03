@@ -159,6 +159,7 @@ def stop(job):
     vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
     service.model.data.status = 'halting'
+    service.saveAll()
     # Delete tmp vdisks
     for vdiskservice in vdisks:
         j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
@@ -178,6 +179,8 @@ def stop(job):
             return
         raise j.exceptions.RuntimeError("nbdserver didn't stopped")
     service.model.data.status = 'halted'
+    service.saveAll()
+    
 
 
 def monitor(job):

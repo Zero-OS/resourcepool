@@ -368,7 +368,11 @@ def shutdown(job):
     service.saveAll()
 
 
-def start_migartion_channel(job, old_node, node):
+def start_migartion_channel(job, old_service, new_service):
+    from zeroos.orchestrator.sal.Node import Node
+
+    old_node = Node.from_ays(old_service, job.context['token'])
+    node = Node.from_ays(new_service, job.context['token'])
     service = job.service
     command = "/usr/sbin/sshd -f {config}"
 
@@ -378,15 +382,12 @@ def start_migartion_channel(job, old_node, node):
     node.client.nft.open_port(port)
     ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
 
-
     try:
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
             node.client.filesystem.remove(ssh_config)
         # start ssh server on new node for this migration
-        file_discriptor = node.client.filesystem.open(ssh_config, mode='x')
-        node.client.filesystem.write(file_discriptor, str.encode("Port %s" % freeports_node[0]))
-        node.client.filesystem.close(file_discriptor)
+        node.upload_content(ssh_config, "Port %s" % freeports_node[0])
         res = node.client.system(command.format(config=ssh_config))
         if not res.running:
             raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
@@ -424,9 +425,7 @@ def start_migartion_channel(job, old_node, node):
             raise j.exceptions.RuntimeError('could not get the ssh identity')
         exists = old_node.client.filesystem.exists("/root/.ssh/known_hosts")
         if exists:
-            file_discripter = old_node.client.filesystem.open("/root/.ssh/known_hosts", mode='r')
-            known_hosts = node.client.filesystem.read(file_discripter)
-            old_node.client.filesystem.close(file_discripter)
+            known_hosts = old_node.download_content("/root/.ssh/known_hosts")
         if not exists or ssh_identity not in known_hosts:
             file_discripter = old_node.client.filesystem.open("/root/.ssh/known_hosts", mode='a')
             old_node.client.filesystem.write(file_discripter, str.encode(ssh_identity))
@@ -436,8 +435,9 @@ def start_migartion_channel(job, old_node, node):
     except Exception as e:
         node.client.job.kill(res.id)
         node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
-        service.model.changeParent(old_node)
+        service.model.changeParent(old_service)
         service.saveAll()
+        raise e
 
 
 
@@ -483,7 +483,7 @@ def migrate(job):
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     # start migration channel to copy keys and start ssh deamon
-    ssh_port, job_id = start_migartion_channel(job, Node.from_ays(old_node, job.context['token']), Node.from_ays(target_node, job.context['token']))
+    ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
     old_nbd = service.producers.get('nbdserver', [])
     container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
     old_vdisk_container = service.aysrepo.serviceGet('container', container_name)

@@ -149,6 +149,11 @@ class Container:
         bytes = BytesIO(content)
         self.client.filesystem.upload(remote, bytes)
 
+    def download_content(self, remote):
+        buff = BytesIO()
+        self.client.filesystem.download(remote, buff)
+        return buff.getvalue().decode()
+    
     def _create_container(self, timeout=60):
         logger.debug("send create container command to g8os")
         tags = [self.name]
@@ -190,6 +195,8 @@ class Container:
                 return True
             time.sleep(0.2)
         return False
+
+
 
     def start(self):
         if not self.is_running():
