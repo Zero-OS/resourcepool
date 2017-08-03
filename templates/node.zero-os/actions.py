@@ -407,13 +407,20 @@ def ork_handler(job):
         nic_shutdown(job, message)
 
 
-def start_vm(job, name):
+def start_vm(context, vm):
     import asyncio
 
-    vm = job.service.aysrepo.serviceGet(role='vm', instance=name)
     if vm.model.data.status == 'running':
         loop = j.atyourservice.server.loop
-        asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(vm.executeAction('start', context=context), loop=loop)
+
+
+def shutdown_vm(context, vm):
+    import asyncio
+
+    if vm.model.data.status == 'running':
+        loop = j.atyourservice.server.loop
+        asyncio.ensure_future(vm.executeAction('shutdown', context=context), loop=loop)
 
 
 def vm_handler(job):
@@ -424,6 +431,12 @@ def vm_handler(job):
         return
 
     message = json.loads(message)
+    vm = job.service.aysrepo.serviceGet(role='vm', instance=message['name'])
+    if not vm:
+        return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job, message['name'])
+        start_vm(job.context, vm)
+
+    if message['event'] == 'stopped' and message['detail'] == 'shutdown':
+        shutdown_vm(job.context, vm)
