@@ -11,7 +11,7 @@ class TestcontaineridAPI(TestcasesBase):
                         'container': []}
 
     def tearDown(self):
-        self.lg.info('TearDown:delete all created container ')
+        self.lg.info('TearDown:delete all created containers and bridges')
         for container_name in self.created['container']:
             self.containers_api.delete_containers_containerid(self.nodeid, container_name)
         for bridge_name in self.created['bridge']:
