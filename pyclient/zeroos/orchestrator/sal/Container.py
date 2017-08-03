@@ -64,6 +64,8 @@ class Container:
         self._ays = None
         for nic in self.nics:
             nic.pop('token', None)
+            if nic.get('config', {}).get('gateway', ''):
+                nic['monitor'] = True
 
     @classmethod
     def from_containerinfo(cls, containerinfo, node):
