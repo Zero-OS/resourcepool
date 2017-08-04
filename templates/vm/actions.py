@@ -274,13 +274,22 @@ def destroy(job):
     tlogservers = service.producers.get('tlogserver', [])
     nbdservers = service.producers.get('nbdserver', [])
 
+    parentservices = {}
+
     for tlogserver in tlogservers:
+        parent = tlogserver.parent
+        if parent.model.key not in parentservices:
+            parentservices[parent.model.key] = parent
         j.tools.async.wrappers.sync(tlogserver.delete())
-        j.tools.async.wrappers.sync(tlogserver.parent.delete())
 
     for nbdserver in nbdservers:
+        parent = nbdserver.parent
+        if parent.model.key not in parentservices:
+            parentservices[parent.model.key] = parent
         j.tools.async.wrappers.sync(nbdserver.delete())
-        j.tools.async.wrappers.sync(nbdserver.parent.delete())
+
+    for parent in parentservices.values():
+        j.tools.async.wrappers.sync(parent.delete())
 
 
 def cleanupzerodisk(job):
