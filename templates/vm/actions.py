@@ -493,9 +493,6 @@ def migrate(job):
 
     # start migration channel to copy keys and start ssh deamon
     ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
-    old_nbd = service.producers.get('nbdserver', [])
-    container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
-    old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
 
     # start new nbdserver on target node
     vdisk_container = create_zerodisk_container(job, target_node)
@@ -543,16 +540,6 @@ def migrate(job):
     j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
     tcp_service.delete()
 
-
-    # delete current nbd services and vdisk container(this has to be before the start_nbd method)
-    job.logger.info("delete current nbd services and vdisk container")
-    for nbdserver in old_nbd:
-        j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(nbdserver.delete())
-
-    j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(old_vdisk_container.delete())
-
     service.saveAll()
 
 
@@ -570,6 +557,8 @@ def _diff(col1, col2):
 
 
 def updateDisks(job, client, args):
+    if args.get('disks') is None:
+        return
     from zeroos.orchestrator.sal.Container import Container
     service = job.service
     uuid = None
@@ -577,23 +566,16 @@ def updateDisks(job, client, args):
         domain = get_domain(job)
         if domain:
             uuid = domain['uuid']
-
-
-
-    # mean we want to migrate vm from a node to another
-    if 'node' in args and args['node'] != service.model.data.node:
-        j.tools.async.wrappers.sync(service.executeAction('migrate', context=job.context, args={'node': args['node']}))
-
     # Get new and old disks
-    new_disks = _diff(args.get('disks', []), service.model.data.disks)
-    old_disks = _diff(service.model.data.disks, args.get('disks', []))
+    new_disks = _diff(args['disks'], service.model.data.disks)
+    old_disks = _diff(service.model.data.disks, args['disks'])
 
     # Do nothing if no disk change
     if new_disks == [] and old_disks == []:
         return
 
     # Set model to new data
-    service.model.data.disks = args.get('disks', [])
+    service.model.data.disks = args['disks']
     vdisk_container = create_zerodisk_container(job, service.parent)
     container = Container.from_ays(vdisk_container, job.context['token'])
 
@@ -626,17 +608,19 @@ def updateDisks(job, client, args):
 
 
 def updateNics(job, client, args):
+    if args.get('nics') is None:
+        return
     service = job.service
     if service.model.data.status == 'halted':
-        service.model.data.nics = args.get('nics', [])
+        service.model.data.nics = args['nics']
         service.saveAll()
         return
 
     uuid = get_domain(job)['uuid']
 
     # Get new and old disks
-    new_nics = _diff(args.get('nics', []), service.model.data.nics)
-    old_nics = _diff(service.model.data.nics, args.get('nics', []))
+    new_nics = _diff(args['nics'], service.model.data.nics)
+    old_nics = _diff(service.model.data.nics, args['nics'])
     # Do nothing if no nic change
     if new_nics == [] and old_nics == []:
         return
@@ -656,7 +640,7 @@ def updateNics(job, client, args):
                                      id=nic['id'] or None,
                                      hwaddr=nic['macaddress'] or None)
 
-    service.model.data.nics = args.get('nics', [])
+    service.model.data.nics = args['nics']
     service.saveAll()
 
 
@@ -671,19 +655,33 @@ def update_data(job, args):
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
+        old_node = service.model.data.node
+        container_name = 'vdisks_{}_{}'.format(service.name, old_node)    
+        old_vdisk_container = service.aysrepo.serviceGet('container', container_name)    
+        old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance=service.name)
         service.model.data.node = args['node']
         service.saveAll()
         if service.model.data.status == 'halted':
             # move stopped vm
             node = service.aysrepo.serviceGet('node', args['node'])
             service.model.changeParent(node)
+            service.saveAll()
+            j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
+            j.tools.async.wrappers.sync(old_nbd.delete())
             start_dependent_services(job)
         elif service.model.data.status == 'running':
             # do live migration
             job = service.getJob('migrate', args={'node': service.model.data.node}, context=job.context)
             j.tools.async.wrappers.sync(job.execute())
+            j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
+            j.tools.async.wrappers.sync(old_nbd.delete())
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')
+
+        # delete current nbd services and vdisk container(this has to be before the start_nbd method)
+        job.logger.info("delete current nbd services and vdisk container")
+        j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(old_vdisk_container.delete())
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
