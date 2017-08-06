@@ -3,9 +3,6 @@ from testcases.testcases_base import TestcasesBase
 
 
 class TestcontaineridAPI(TestcasesBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def setUp(self):
         super().setUp()
         if 'test001_list_containers' != self.id().split('.')[2]:
