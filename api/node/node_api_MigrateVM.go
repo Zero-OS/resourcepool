@@ -15,8 +15,27 @@ import (
 func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMMigrate
+	var vmData VMCreate
 
 	vmID := mux.Vars(r)["vmid"]
+
+	// check if vm has bridge
+	service, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+		return
+	}
+	if err := json.Unmarshal(service.Data, &vmData); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		return
+	}
+
+	for _, nic := range vmData.Nics {
+		if nic.Type == EnumNicLinkTypebridge {
+			err := fmt.Errorf("live migration is not supported for vms with bridges")
+			tools.WriteError(w, http.StatusBadRequest, err, "")
+			return
+		}
+	}
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
