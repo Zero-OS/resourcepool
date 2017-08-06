@@ -337,6 +337,7 @@ def watchdog(job):
         # Add the looping here instead of the pubsub sal
         loop = j.atyourservice.server.loop
         cl = None
+        subscribed = None
 
         while True:
             if str(service.model.data.status) != 'running':
@@ -344,25 +345,31 @@ def watchdog(job):
                 continue
             if cl is None:
                 job.context['token'] = get_jwt_token(job.service.aysrepo)
-                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'], callback=callback)
 
             if loop is None:
                 loop = j.atyourservice.server.loop
 
             try:
-                queue = await cl.subscribe('ays.monitor')
-                await cl.global_stream(queue, callback)
+                if not subscribed:
+                    queue = await cl.subscribe('ays.monitor')
+                await cl.global_stream(queue)
             except asyncio.TimeoutError as e:
+                job.logger.error(e)
                 monitor(job)
                 cl = None
-            except OSError:
+                subscribed = None
+            except OSError as e:
+                job.logger.error(e)
                 monitor(job)
                 cl = None
+                subscribed = None
             except RuntimeError as e:
                 job.logger.error(e)
                 monitor(job)
                 cl = None
                 loop = None
+                subscribed = None
 
     return streaming(job)
 
