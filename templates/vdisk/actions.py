@@ -10,8 +10,9 @@ def install(job):
     service.model.data.status = 'halted'
     if service.model.data.size > 2048:
         raise j.exceptions.Input("Maximum disk size is 2TB")
+
+    save_config(job)
     if service.model.data.templateVdisk:
-        save_config(job)
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
