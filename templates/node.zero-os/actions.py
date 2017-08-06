@@ -152,7 +152,7 @@ def monitor(job):
                 'start', context=job.context))
 
         # healthchecks
-        nodestatus.add_message('node', 'Node is running', 'OK')
+        nodestatus.add_message('node', 'OK', 'Node is running')
         update_healthcheck(service, node.healthcheck.openfiledescriptors())
         update_healthcheck(service, node.healthcheck.cpu_mem())
         update_healthcheck(service, node.healthcheck.rotate_logs())
@@ -181,7 +181,7 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.network_stability(relatives))
     else:
         service.model.data.status = 'halted'
-        nodestatus.add_message('node', 'Node is halted', 'ERROR')
+        nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(service, nodestatus.to_dict())
 
     service.saveAll()
@@ -336,21 +336,33 @@ def watchdog(job):
 
         # Add the looping here instead of the pubsub sal
         loop = j.atyourservice.server.loop
-        job.context['token'] = get_jwt_token(job.service.aysrepo)
-        cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+        cl = None
 
         while True:
             if str(service.model.data.status) != 'running':
                 await sleep(1)
                 continue
+            if cl is None:
+                job.context['token'] = get_jwt_token(job.service.aysrepo)
+                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
+
+            if loop is None:
+                loop = j.atyourservice.server.loop
+
             try:
                 queue = await cl.subscribe('ays.monitor')
                 await cl.global_stream(queue, callback)
             except asyncio.TimeoutError as e:
-                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
                 monitor(job)
+                cl = None
             except OSError:
                 monitor(job)
+                cl = None
+            except RuntimeError as e:
+                job.logger.error(e)
+                monitor(job)
+                cl = None
+                loop = None
 
     return streaming(job)
 

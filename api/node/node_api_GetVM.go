@@ -22,6 +22,12 @@ func (api NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if srv.Parent.Name != vars["nodeid"] {
+		err := fmt.Errorf("vm %s does not exists under %s parent", vars["vmid"], vars["nodeid"])
+		tools.WriteError(w, http.StatusNotFound, err, "")
+		return
+	}
+
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")

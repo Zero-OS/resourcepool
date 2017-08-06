@@ -42,9 +42,10 @@ class TestcasesBase(TestCase):
 
         self.nodeid = self.get_random_node()
         self.lg.info('Get random nodeid : %s' % str(self.nodeid))
-        core0_ip = [x['ip'] for x in self.nodes_info if x['id'] == self.nodeid]
-        self.assertNotEqual(core0_ip, [])
-        self.core0_client = Client(core0_ip[0], password=self.jwt)
+        self.nodeipList = [x['ip'] for x in self.nodes_info if x['id'] == self.nodeid]
+        self.assertNotEqual(self.nodeipList, [])
+        self.nodeip = self.nodeipList[0]
+        self.core0_client = Client(self.nodeip, password=self.jwt)
 
     def randomMAC(self):
         random_mac = [0x00, 0x16, 0x3e, random.randint(0x00, 0x7f), random.randint(0x00, 0xff),

@@ -1,5 +1,5 @@
 from zeroos.core0.client import Client as core0_client
-import time
+import time, re
 
 
 class Client:
@@ -233,8 +233,9 @@ class Client:
 
     def get_container_bridge_ip(self, client, ip_range):
         nics = client.info.nic()
+        full_ip_range = self.get_ip_range(ip_range)
         for nic in nics:
-            addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in ip_range]
+            addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in full_ip_range]
             if addresses:
                 address = addresses[0]
                 return address[:address.find('/')]
@@ -260,3 +261,11 @@ class Client:
             time.sleep(2)
             ovs_client.json('ovs.bridge-add', {"bridge": "backplane"})
             ovs_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': 2000, 'name': 'vxbackend'})
+
+    def get_ip_range(self, ip_range):
+        base = re.findall("^\d{1,3}\.\d{1,3}\.\d{1,3}\.", ip_range[0])
+        start = ip_range[0].split('.')[3]
+        end = ip_range[1].split('.')[3]
+        for i in range(start+1, end):
+            ip_range.append(base+str(i))
+        return ip_range
