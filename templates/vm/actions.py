@@ -102,6 +102,7 @@ def _nbd_url(job, container, nbdserver, vdisk):
 
 def init(job):
     start_dependent_services(job)
+    save_config(job)
 
 
 def start_dependent_services(job):
@@ -195,8 +196,6 @@ def install(job):
     import time
     service = job.service
     node = get_node(job)
-
-    save_config(job)
 
     # get all path to the vdisks serve by the nbdservers
     start_tlog(job)

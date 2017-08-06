@@ -11,7 +11,7 @@ def install(job):
     if service.model.data.size > 2048:
         raise j.exceptions.Input("Maximum disk size is 2TB")
     if service.model.data.templateVdisk:
-        save_template(job)
+        save_config(job)
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
@@ -32,8 +32,6 @@ def install(job):
             result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
                 raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
-
-            save_config(job)
         finally:
             volume_container.stop()
 
@@ -58,64 +56,58 @@ def delete(job):
         container.stop()
 
 
-def save_template(job):
-    from urllib.parse import urlparse
-    import random
-    import yaml
-    from zeroos.orchestrator.sal.ETCD import ETCD
-
-    service = job.service
-
-    template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
-    base_config = {
-        "blockSize": service.model.data.blocksize,
-        "readOnly": service.model.data.readOnly,
-        "size": service.model.data.size,
-        "type": str(service.model.data.type),
-        "templateVdiskID": template,
-    }
-    yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
-
-    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
-
-    etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save vdisk %s config" % service.name)
-
-    # Save root cluster
-    templatestorageEngine = get_templatecluster(job)
-    templateclusterconfig = {
-        'dataStorage': [{'address': templatestorageEngine}],
-        'metadataStorage': {'address': templatestorageEngine}
-    }
-    yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
-    templateclusterkey = hash(templatestorageEngine)
-
-    service.model.data.templateStoragecluster = str(templateclusterkey)
-
-    result = etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save template storage")
-
-    #  Save nbd template config
-    config = {
-        "storageClusterID": service.model.data.templateStoragecluster,
-    }
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    result = etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save template storage")
-
-
 def save_config(job):
-    import yaml
-    import random
     from urllib.parse import urlparse
+    import random
+    import yaml
     from zeroos.orchestrator.sal.ETCD import ETCD
 
     service = job.service
+
+    templateStorageclusterId = ""
+    if service.model.data.templateVdisk:
+        template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
+        base_config = {
+            "blockSize": service.model.data.blocksize,
+            "readOnly": service.model.data.readOnly,
+            "size": service.model.data.size,
+            "type": str(service.model.data.type),
+            "templateVdiskID": template,
+        }
+        yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
+
+        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd = random.choice(etcd_cluster.producers['etcd'])
+
+        etcd = ETCD.from_ays(etcd, job.context['token'])
+        result = etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save vdisk %s config" % service.name)
+
+        # Save root cluster
+        templatestorageEngine = get_templatecluster(job)
+        templateclusterconfig = {
+            'dataStorage': [{'address': templatestorageEngine}],
+            'metadataStorage': {'address': templatestorageEngine}
+        }
+        yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
+        templateclusterkey = hash(templatestorageEngine)
+
+        templateStorageclusterId = str(templateclusterkey)
+
+        result = etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save template storage")
+
+        #  Save nbd template config
+        config = {
+            "storageClusterID": templateStorageclusterId,
+        }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save template storage")
+
     # Save base config
     template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
     base_config = {
@@ -126,25 +118,17 @@ def save_config(job):
         "templateVdiskID": template,
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
-
-    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
-
-    etcd = ETCD.from_ays(etcd, job.context['token'])
     result = etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save vdisk %s config" % service.name)
+        raise RuntimeError("Failed to save template storage")
 
     # push nbd config to etcd
     config = {
         "storageClusterID": service.model.data.storageCluster,
-        "templateStorageCluster": service.model.data.templateStoragecluster,
+        "templateStorageClusterID": templateStorageclusterId,
+        "tlogServerClusterID": service.model.data.tlogStoragecluster or "",
+        "slaveStorageClusterID": service.model.data.backupStoragecluster or "",
     }
-    if service.model.data.tlogStoragecluster:
-        config["tlogServerClusterID"] = service.model.data.tlogStoragecluster
-        if service.model.data.backupStoragecluster:
-            config["slaveStorageClusterID"] = service.model.data.backupStoragecluster
-
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
@@ -193,7 +177,7 @@ def create_from_template_container(job, parent):
     node = Node.from_ays(parent, job.context['token'])
     config = get_configuration(job.service.aysrepo)
     container = Container(name=container_name,
-                          flist=config.get('0-disk-flist', 'http://192.168.20.132:8080/khaledkbadr/0-disk-adds-etcdconfig.flist'),
+                          flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
                           host_network=True,
                           node=node)
     container.start()
