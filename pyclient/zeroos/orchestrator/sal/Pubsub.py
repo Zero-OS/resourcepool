@@ -42,7 +42,7 @@ class Response:
 
 
 class Pubsub:
-    def __init__(self, loop, host, port=6379, password="", db=0, ctx=None, timeout=None, testConnectionAttempts=3):
+    def __init__(self, loop, host, port=6379, password="", db=0, ctx=None, timeout=None, testConnectionAttempts=3, callback=None):
 
         socket_timeout = (timeout + 5) if timeout else 15
 
@@ -61,6 +61,15 @@ class Pubsub:
         self.timeout = socket_timeout
         self.loop = loop
 
+        async def default_callback(job_id, level, line, meta):
+            w = sys.stdout if level == 1 else sys.stderr
+            w.write(line)
+            w.write('\n')
+
+        self.callback = callback or default_callback
+        if not callable(self.callback):
+            raise Exception('callback must be callable')
+
     async def get(self):
         if self._redis is not None:
             return self._redis
@@ -73,21 +82,11 @@ class Pubsub:
                                                   timeout=self.timeout)
         return self._redis
 
-    async def global_stream(self, queue, callback=None, timeout=120):
-        async def default_callback(job_id, level, line, meta):
-            w = sys.stdout if level == 1 else sys.stderr
-            w.write(line)
-            w.write('\n')
-
-        if callback is None:
-            callback = default_callback
-        if not callable(callback):
-            raise Exception('callback must be callable')
-
+    async def global_stream(self, queue, timeout=120):
         if self._redis.connection.closed:
             self._redis = await self.get()
 
-        data = await asyncio.wait_for(self._redis.blpop(queue, 10), timeout=timeout)
+        data = await asyncio.wait_for(self._redis.blpop(queue, timeout=timeout), timeout=timeout)
 
         _, body = data
         payload = json.loads(body.decode())
@@ -95,7 +94,7 @@ class Pubsub:
         line = message['message']
         meta = message['meta']
         job_id = payload['command']
-        await callback(job_id, meta >> 16, line, meta & 0xff)
+        await self.callback(job_id, meta >> 16, line, meta & 0xff)
 
     async def raw(self, command, arguments, queue=None, max_time=None, stream=False, tags=None, id=None):
         if not id:
