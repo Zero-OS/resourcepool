@@ -219,10 +219,9 @@ def install(job):
             if kvm:
                 service.model.data.vnc = kvm['vnc']
                 if kvm['vnc'] != -1:
-                    try:
-                        node.client.nft.open_port(kvm['vnc'])
-                    except:
-                        pass
+                    if node.client.nft.rule_exists(kvm['vnc']):
+                        break
+                    node.client.nft.open_port(kvm['vnc'])
                 break
             else:
                 time.sleep(3)
@@ -478,6 +477,8 @@ def get_baseports(job, node, baseport, nrports):
 
 def migrate(job):
     from zeroos.orchestrator.sal.Node import Node
+    import time 
+
     service = job.service
 
     service.model.data.status = 'migrating'
@@ -531,8 +532,25 @@ def migrate(job):
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
             break
 
-    # cleanup to remove ssh job and config file
+    # open vnc port 
     node = Node.from_ays(target_node, job.context['token'])
+    start = time.time()
+    while start + 15 > time.time():
+        kvm = get_domain(job)
+        if kvm:
+            service.model.data.vnc = kvm['vnc']
+            if kvm['vnc'] != -1:
+                if node.client.nft.rule_exists(kvm['vnc']):
+                    break
+                node.client.nft.open_port(kvm['vnc'])
+            break
+        else:
+            time.sleep(3)
+    else:
+        service.model.data.status = 'error'
+        raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
+
+    # cleanup to remove ssh job and config file
     node.client.job.kill(job_id)
     node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
     tcp_name = "tcp_%s_%s" % (node.name, ssh_port)
