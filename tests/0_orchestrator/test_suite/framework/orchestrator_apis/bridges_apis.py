@@ -25,7 +25,7 @@ class BridgesAPI(OrchestratorBase):
 
         settings_draft = {"none": {},
                           "static": {"cidr": "192.168.%i.%i/16" % (random.randint(1, 254), random.randint(1, 254))},
-                          "dnsmasq": {"cidr": "192.168.%i.1/16" % temp, "start": "192.168.%i.2" % temp,
+                          "dnsmasq": {"cidr": "192.168.%i.1/24" % temp, "start": "192.168.%i.2" % temp,
                                       "end": "192.168.%i.254" % temp}}
 
         data = {"name": self.random_string(),

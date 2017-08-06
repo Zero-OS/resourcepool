@@ -6,6 +6,7 @@ from .Network import Network
 from .healthcheck import HealthCheck
 from collections import namedtuple
 from datetime import datetime
+from io import BytesIO
 import netaddr
 
 Mount = namedtuple('Mount', ['device', 'mountpoint', 'fstype', 'options'])
@@ -176,6 +177,17 @@ class Node:
         # mount the storage pool
         self._mount_fscache(fscache_sp)
         return fscache_sp
+
+    def download_content(self, remote):
+        buff = BytesIO()
+        self.client.filesystem.download(remote, buff)
+        return buff.getvalue().decode()
+
+    def upload_content(self, remote, content):
+        if isinstance(content, str):
+            content = content.encode('utf8')
+        bytes = BytesIO(content)
+        self.client.filesystem.upload(remote, bytes)
 
     def wipedisks(self):
         print('Wiping node {hostname}'.format(**self.client.info.os()))
