@@ -72,7 +72,7 @@ def save_config(job):
             "blockSize": service.model.data.blocksize,
             "readOnly": service.model.data.readOnly,
             "size": service.model.data.size,
-            "type": str(service.model.data.type),
+            "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
             "templateVdiskID": template,
         }
         yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
@@ -117,7 +117,7 @@ def save_config(job):
         "blockSize": service.model.data.blocksize,
         "readOnly": service.model.data.readOnly,
         "size": service.model.data.size,
-        "type": str(service.model.data.type),
+        "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
         "templateVdiskID": template,
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
@@ -222,46 +222,26 @@ def get_srcstorageEngine(container, template):
 
 def rollback(job):
     import random
-    import yaml
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
     service = job.service
     service.model.data.status = 'rollingback'
     ts = job.model.args['timestamp']
 
-    storagecluster = service.model.data.storageCluster
-    clusterconfig = get_cluster_config(job)
-
-    tlogcluster = service.model.data.tlogStoragecluster
     tlogclusterconfig = get_cluster_config(job, type='tlog')
 
+    clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(job, node)
     try:
-        configpath = "/config.yaml"
-        disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
-        config = {
-                    "storageClusters": {
-                        storagecluster: clusterconfig['config'],
-                        tlogcluster: tlogclusterconfig['config']
-                    },
-                    "vdisks": {
-                        service.name: {
-                            "blockSize": service.model.data.blocksize,
-                            "readOnly": service.model.data.readOnly,
-                            "size": service.model.data.size,
-                            "storageCluster": storagecluster,
-                            "tlogStorageCluster": tlogcluster,
-                            "type": disktype,
-                        }
-                    }
-                }
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        container.upload_content(configpath, yamlconfig)
+        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         k = tlogclusterconfig.pop('k')
         m = tlogclusterconfig.pop('m')
-        cmd = '/bin/zeroctl restore vdisk {vdisk} --config {config} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
-                                                                                                                 config=configpath,
+        cmd = '/bin/zeroctl restore vdisk {vdisk} --config {dialstrings} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
+                                                                                                                 dialstrings=etcd_cluster.dialstrings,
                                                                                                                  ts=ts, k=k, m=m)
-        print(cmd)
+        job.logger.info(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl restore {} {}".format(result.stdout, result.stderr))
