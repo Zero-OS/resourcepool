@@ -71,7 +71,6 @@ def install(job):
 
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
-    save_config(job, vdisks)
     container = get_container(service, job.context['token'])
     config = {
         'storageClusters': set(),
@@ -91,6 +90,7 @@ def install(job):
                 backup = True
 
     if config['storageClusters']:
+        save_config(job, vdisks)
         k = config.pop('k')
         m = config.pop('m')
 
