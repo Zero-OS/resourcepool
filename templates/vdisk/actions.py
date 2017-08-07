@@ -125,18 +125,6 @@ def save_config(job):
     if result.state != "SUCCESS":
         raise RuntimeError("Failed to save template storage")
 
-    # # push nbd config to etcd
-    # config = {
-    #     "storageClusterID": service.model.data.storageCluster,
-    #     "templateStorageClusterID": templateStorageclusterId,
-    #     "tlogServerClusterID": service.model.data.tlogStoragecluster or "",
-    #     "slaveStorageClusterID": service.model.data.backupStoragecluster or "",
-    # }
-    # yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    # result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
-    # if result.state != "SUCCESS":
-    #     raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
-
     # push tlog config to etcd
     if not service.model.data.tlogStoragecluster:
         return
@@ -145,7 +133,7 @@ def save_config(job):
         "storageClusterID": service.model.data.tlogStoragecluster,
     }
     if service.model.data.backupStoragecluster:
-            config["slaveStorageClusterID"] = service.model.data.backupStoragecluster
+            config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
