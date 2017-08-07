@@ -126,12 +126,16 @@ def try_authorize(job, logger, netid, member, zerotier):
 
         node_actor = service.aysrepo.actorGet('node.zero-os')
         networks = [n.name for n in service.producers.get('network', [])]
+        
+        hostname = node.client.info.os()['hostname']
+        if hostname == 'zero-os':
+            hostname = 'zero-os-%s' % name
 
         node_args = {
             'id': name,
             'status': 'running',
             'networks': networks,
-            'hostname': node.client.info.os()['hostname'],
+            'hostname': hostname,
             'redisAddr': zerotier_ip,
         }
         logger.info("create node.zero-os service {}".format(name))
