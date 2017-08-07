@@ -45,7 +45,6 @@ def install(job):
             -protocol unix \
             -address "{socketpath}" \
             -id "{id}" \
-            -v \
             -config "{dialstrings}" \
             '.format(socketpath=socketpath, id=vm.name, dialstrings=etcd_cluster.dialstrings)
         job.logger.info("Starting nbd server: %s" % cmd)

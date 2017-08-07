@@ -100,7 +100,6 @@ def install(job):
                     -id {id} \
                     -address {bind} \
                     -k {k} \
-                    -v \
                     -m {m} \
                     -config "{dialstrings}" \
                     '.format(id=service.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
