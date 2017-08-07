@@ -293,6 +293,9 @@ def watchdog(job):
         'storage_engine': {
             'eof': True,
         },
+        "etcd": {
+            "eof": True,
+        },
     }
 
     async def callback(jobid, level, message, flag):

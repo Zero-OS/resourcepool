@@ -10,7 +10,7 @@ if [ "$1" != "" ]; then
     branch="$1"
 fi
 
-go get -u -v -d github.com/zero-os/0-Disk/nbdserver
+go get -u -v -d github.com/zero-os/0-Disk/nbd/nbdserver
 go get -u -v -d github.com/zero-os/0-Disk/zeroctl
 go get -u -v -d github.com/zero-os/0-Disk/tlog/tlogserver
 

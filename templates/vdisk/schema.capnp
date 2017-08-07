@@ -1,4 +1,4 @@
-@0xf5773e7b7181183f;
+@0xae3b6c9ecf874190;
 
 struct Schema {
     size @0 :UInt64;
@@ -11,6 +11,7 @@ struct Schema {
     tlogStoragecluster @7 :Text; # consume
     backupStoragecluster @8 :Text; # consume
     timestamp @9: UInt64;
+    templateStorageCluster @10 :Text;
     enum Status {
         halted @0;
         running @1;

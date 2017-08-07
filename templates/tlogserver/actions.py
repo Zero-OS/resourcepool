@@ -6,12 +6,14 @@ def get_container(service, password):
     return Container.from_ays(service.parent, password)
 
 
-def is_port_listening(container, port, timeout=60):
+def is_port_listening(container, port, timeout=30, listen=True):
     import time
     start = time.time()
     while start + timeout > time.time():
         if port not in container.node.freeports(port, nrports=3):
             return True
+        if not listen:
+            return False
         time.sleep(0.2)
     return False
 
@@ -29,16 +31,49 @@ def is_job_running(container, cmd='/bin/tlogserver'):
         raise
 
 
-def install(job):
+def save_config(job, vdisks=None):
     import yaml
-    from io import BytesIO
+    import random
+    from zeroos.orchestrator.sal.ETCD import ETCD
+
     service = job.service
+    config = {"servers": [service.model.data.bind]}
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+    result = etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save tlog %s config" % service.name)
+
+    for vdisk in vdisks:
+        config = {
+            "storageClusterID": vdisk.model.data.storageCluster,
+            "templateStorageClusterID": vdisk.model.data.templateStorageCluster or "",
+            "tlogServerClusterID": service.name,
+            "slaveStorageClusterID": vdisk.model.data.backupStoragecluster or "",
+        }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save nbd conf storage: %s", vdisk.name)
+
+
+def install(job):
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
+    service = job.service
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
     vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
-        'vdisks': {},
-        'storageClusters': {},
+        'storageClusters': set(),
         'k': 0,
         'm': 0,
     }
@@ -47,68 +82,36 @@ def install(job):
     for vdiskservice in vdisks:
         tlogcluster = vdiskservice.model.data.tlogStoragecluster
         if tlogcluster and tlogcluster not in config['storageClusters']:
-            clusterconfig, k, m = get_storagecluster_config(job, tlogcluster)
-            config['storageClusters'][tlogcluster] = {"dataStorage": clusterconfig["dataStorage"]}
-            config['vdisks'][vdiskservice.name] = {'tlogStorageCluster': tlogcluster}
+            _, k, m = get_storagecluster_config(job, tlogcluster)
+            config['storageClusters'].add(tlogcluster)
             config['k'] += k
             config['m'] += m
-
-        backupcluster = vdiskservice.model.data.backupStoragecluster
-        if backupcluster and backupcluster not in config['storageClusters']:
-            vdisk_type = "cache" if str(vdiskservice.model.data.type) == "tmp" else str(vdiskservice.model.data.type)
-            clusterconfig, _, _ = get_storagecluster_config(job, backupcluster)
-            config['storageClusters'][backupcluster] = clusterconfig
-            vdisk = config['vdisks'][vdiskservice.name]
-            vdisk['storageCluster'] = backupcluster
-            vdisk['tlogSlaveSync'] = True
-            vdisk['blockSize'] = vdiskservice.model.data.blocksize
-            vdisk['readOnly'] = vdiskservice.model.data.readOnly
-            vdisk['size'] = vdiskservice.model.data.size
-            vdisk['type'] = vdisk_type
-
-            backup = True
+            if vdiskservice.model.data.backupStoragecluster:
+                backup = True
 
     if config['storageClusters']:
+        save_config(job, vdisks)
         k = config.pop('k')
         m = config.pop('m')
 
-        configpath = "/tlog_{}.config".format(service.name)
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        configstream = BytesIO(yamlconfig.encode('utf8'))
-        configstream.seek(0)
-        container.client.filesystem.upload(configpath, configstream)
-        bind = service.model.data.bind or None
-        if not bind or not is_port_listening(container, int(bind.split(':')[1])):
-            ip = container.node.storageAddr
-            port = container.node.freeports(baseport=11211, nrports=1)[0]
-            logpath = '/tlog_{}.log'.format(service.name)
+        bind = service.model.data.bind
+        if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
             cmd = '/bin/tlogserver \
-                    -address {ip}:{port} \
+                    -id {id} \
+                    -address {bind} \
                     -k {k} \
+                    -v \
                     -m {m} \
-                    -config {config} \
-                    '.format(ip=ip,
-                             port=port,
-                             config=configpath,
-                             k=k,
-                             m=m,
-                             log=logpath)
+                    -config "{dialstrings}" \
+                    '.format(id=service.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
             if backup:
                 cmd += '-with-slave-sync'
+            job.logger.info("Starting tlog server: %s" % cmd)
             container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
-            if not is_port_listening(container, port):
+            if not is_port_listening(container, int(bind.split(":")[1])):
                 raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
-            service.model.data.bind = '%s:%s' % (ip, port)
-            if service.model.data.status != 'running':
-                container.node.client.nft.open_port(port)
-                service.model.data.status = 'running'
-        else:
-            # send a siganl sigub(1) to reload the config in case it was changed.
-            import signal
-            port = int(service.model.data.bind.split(':')[1])
-            job = is_job_running(container)
-            container.client.job.kill(job['cmd']['id'], signal=int(signal.SIGHUP))
-            service.model.data.status = 'running'
+        service.model.data.status = 'running'
+        service.saveAll()
 
 
 def start(job):

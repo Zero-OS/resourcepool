@@ -230,3 +230,20 @@ actions:
 ```
 
 The port will be the port on which InfluxDB will run. Executing this blueprint will create a container with InfluxDB running on the specified port and will add database `statistics` to InfluxDB. It will also create a container with Grafana running on it and add a data source for the `statistics` database.
+
+## Setup etcd cluster
+
+To start deploying storage clusters, vdisks, and vms, [etcd](https://github.com/coreos/etcd) cluster should be deployed first since configurations are stored in etcd.
+
+The fastest way to deploy `etcd cluster` is to install the [etcd_cluster](https://github.com/zero-os/0-orchestrator/tree/master/templates/etcd_cluster) AYS service. This service basically will install the maximum odd number of etcds, which is one per node, on the list of nodes provided in the blueprint
+
+Example of the etcd blueprint:
+```yaml
+etcd_cluster__myetcd:
+  nodes:
+    - '525400123459'
+    - '525400123456'
+
+actions:
+  - action: install
+  ```

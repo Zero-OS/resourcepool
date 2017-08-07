@@ -4,12 +4,14 @@ from js9 import j
 def install(job):
     import random
     from urllib.parse import urlparse
-    import yaml
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     service.model.data.status = 'halted'
     if service.model.data.size > 2048:
         raise j.exceptions.Input("Maximum disk size is 2TB")
+
+    save_config(job)
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
@@ -18,77 +20,36 @@ def install(job):
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            srcstorageEngine = get_srcstorageEngine(volume_container, template)
-            configpath = "/config.yml"
-            disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
-            config = {
-                "storageClusters": {
-                    storagecluster: targetconfig['config'],
-                    "srccluster": {
-                        "metadataStorage": {
-                            "address": srcstorageEngine
-                        },
-                        "dataStorage": [
-                            {"address": srcstorageEngine},
-                        ],
-                    },
-                },
-                "vdisks": {
-                    template.path.lstrip('/'): {
-                        "blockSize": service.model.data.blocksize,  # Random value needed only to complete the config
-                        "readOnly": service.model.data.readOnly,  # Random value needed only to complete the config
-                        "size": service.model.data.size,  # Random value needed only to complete the config
-                        "storageCluster": "srccluster",
-                        "type": disktype,
-                    }
-                }
-            }
-            yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-            volume_container.upload_content(configpath, yamlconfig)
+            CMD = './bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
 
-            CMD = '/bin/zeroctl copy vdisk {src_name} {dst_name} {tgtcluster}'
-            cmd = CMD.format(dst_name=service.name, src_name=template.path.lstrip('/'), tgtcluster=storagecluster)
+            etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+            etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+            cmd = CMD.format(etcd=etcd_cluster.dialstrings,
+                             dst_name=service.name,
+                             src_name=template.path.lstrip('/'),
+                             tgtcluster=storagecluster)
 
-            print(cmd)
+            job.logger.info(cmd)
             result = volume_container.client.system(cmd).get()
             if result.state != 'SUCCESS':
                 raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
-
         finally:
             volume_container.stop()
 
 
 def delete(job):
     import random
-    import yaml
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
-    storagecluster = service.model.data.storageCluster
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(job, node)
     try:
-        configpath = "/config.yaml"
-        disktype = "cache" if str(service.model.data.type) == "tmp" else str(service.model.data.type)
-        config = {
-                    "storageClusters": {
-                        storagecluster: clusterconfig['config']
-                    },
-                    "vdisks": {
-                        service.name: {
-                            "blockSize": service.model.data.blocksize,
-                            "readOnly": service.model.data.readOnly,
-                            "size": service.model.data.size,
-                            "storageCluster": storagecluster,
-                            "type": disktype,
-                        }
-                    }
-                }
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        container.upload_content(configpath, yamlconfig)
-
-        cmd = '/bin/zeroctl delete vdisks --config {}'.format(configpath)
-        print(cmd)
+        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
+        job.logger.info(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
@@ -96,16 +57,96 @@ def delete(job):
         container.stop()
 
 
-def get_srcstorageEngine(container, template):
+def save_config(job):
     from urllib.parse import urlparse
+    import random
+    import yaml
+    from zeroos.orchestrator.sal.ETCD import ETCD
 
-    if template.scheme in ('', 'ardb'):
-        if template.scheme == '' or template.netloc == '':
-            config = container.node.client.config.get()
-            return urlparse(config['globals']['storage']).netloc
-        return template.netloc
-    else:
-        raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
+    service = job.service
+
+    templateStorageclusterId = ""
+    if service.model.data.templateVdisk:
+        template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
+        base_config = {
+            "blockSize": service.model.data.blocksize,
+            "readOnly": service.model.data.readOnly,
+            "size": service.model.data.size,
+            "type": str(service.model.data.type),
+            "templateVdiskID": template,
+        }
+        yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
+
+        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd = random.choice(etcd_cluster.producers['etcd'])
+
+        etcd = ETCD.from_ays(etcd, job.context['token'])
+        result = etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save vdisk %s config" % service.name)
+
+        # Save root cluster
+        templatestorageEngine = get_templatecluster(job)
+        templateclusterconfig = {
+            'dataStorage': [{'address': templatestorageEngine}],
+            'metadataStorage': {'address': templatestorageEngine}
+        }
+        yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
+        templateclusterkey = hash(templatestorageEngine)
+
+        templateStorageclusterId = str(templateclusterkey)
+        service.model.data.templateStorageCluster = templateStorageclusterId
+        service.saveAll()
+
+        result = etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save template storage")
+
+        #  Save nbd template config
+        config = {
+            "storageClusterID": templateStorageclusterId,
+        }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save template storage")
+
+    # Save base config
+    template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
+    base_config = {
+        "blockSize": service.model.data.blocksize,
+        "readOnly": service.model.data.readOnly,
+        "size": service.model.data.size,
+        "type": str(service.model.data.type),
+        "templateVdiskID": template,
+    }
+    yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
+    result = etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save template storage")
+
+    # push tlog config to etcd
+    if not service.model.data.tlogStoragecluster:
+        # push nbd config to etcd
+        config = {
+            "storageClusterID": service.model.data.storageCluster,
+            "templateStorageClusterID": templateStorageclusterId,
+        }
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
+
+    config = {
+        "storageClusterID": service.model.data.tlogStoragecluster,
+    }
+    if service.model.data.backupStoragecluster:
+            config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
+
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save tlog conf storage: %s" % service.name)
 
 
 def get_cluster_config(job, type="storage"):
@@ -150,6 +191,33 @@ def start(job):
 def pause(job):
     service = job.service
     service.model.data.status = 'halted'
+
+
+def get_templatecluster(job):
+    from urllib.parse import urlparse
+    from zeroos.orchestrator.sal.Node import Node
+    service = job.service
+
+    template = urlparse(service.model.data.templateVdisk)
+
+    if template.scheme == 'ardb' and template.netloc:
+        return template.netloc
+
+    node_srv = service.aysrepo.servicesFind(role='node')[0]
+    node = Node.from_ays(node_srv, password=job.context['token'])
+    conf = node.client.config.get()
+    return urlparse(conf['globals']['storage']).netloc
+
+
+def get_srcstorageEngine(container, template):
+    from urllib.parse import urlparse
+    if template.scheme in ('', 'ardb'):
+        if template.scheme == '' or template.netloc == '':
+            config = container.node.client.config.get()
+            return urlparse(config['globals']['storage']).netloc
+        return template.netloc
+    else:
+        raise j.exceptions.RuntimeError("Unsupport protocol {}".format(template.scheme))
 
 
 def rollback(job):
@@ -228,6 +296,7 @@ def processChange(job):
         if args.get('size', None):
             job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
+            j.tools.async.wrappers.sync(service.executeAction('save_config', context=job.context))
         if args.get('timestamp', None):
             if str(service.model.data.status) != "halted":
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")

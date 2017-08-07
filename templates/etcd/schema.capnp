@@ -6,10 +6,11 @@ struct Schema {
     serverBind @2 :Text; # server listen address.
     clientBind @3 :Text; # client bind address.
     status @4: Status;
+    homeDir @5 :Text; # directory where the etcd db will be stored
+
 
     enum Status{
         halted @0;
         running @1;
-        halting @2;
     }
 }

@@ -1,39 +1,55 @@
+from js9 import j
+
+
 def input(job):
-    from js9 import j
     if job.model.args.get('etcds', []) != []:
         raise j.exceptions.Input("etcds should not be set as input")
 
     nodes = job.model.args.get('nodes', [])
-    size = job.model.args.get('size', 0)
-
-    if size % 2 == 0:
-        raise j.exceptions.Input("Size should be odd number")
-
-    if size > len(nodes) != 0:
+    if not nodes:
         raise j.exceptions.Input("Invalid amount of nodes provided")
 
 
 def init(job):
     import random
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.configuration import get_configuration
+
     service = job.service
+    config = get_configuration(service.aysrepo)
+
     nodes = set()
     for node_service in service.producers['node']:
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
         nodes.add(Node.from_ays(node_service, job.context['token']))
     nodes = list(nodes)
 
-    nodes = random.sample(nodes, service.model.data.size)
+    if len(nodes) % 2 == 0:
+        nodes = random.sample(nodes, len(nodes) - 1)
+
     etcd_actor = service.aysrepo.actorGet("etcd")
     container_actor = service.aysrepo.actorGet("container")
+    fsactor = service.aysrepo.actorGet("filesystem")
     etcd_args = {}
     peers = []
+    flist = config.get('etcd-flist', 'https://hub.gig.tech/gig-official-apps/etcd-release-3.2.flist')
     for node in nodes:
         baseports, tcpservices = get_baseports(job, node, baseport=2379, nrports=2)
         containername = '{}_{}_{}_{}'.format(service.name, 'etcd', node.name, baseports[1])
+
+        args = {
+            'storagePool': "{}_fscache".format(node.name),
+            'name': containername,
+        }
+        fsactor.serviceCreate(instance=containername, args=args)
+
         # create container
+        data_dir = '/mnt/data'
         args = {
             'node': node.name,
-            'flist': 'https://hub.gig.tech/gig-official-apps/etcd-release-3.2.flist',
+            'flist': flist,
+            'mounts': [{'filesystem': containername, 'target': data_dir}],
             'hostNetworking': True,
         }
         container_actor.serviceCreate(instance=containername, args=args)
@@ -44,7 +60,8 @@ def init(job):
             "serverBind": server_bind,
             "clientBind": client_bind,
             "container": containername,
-            "tcps": tcpservices
+            "tcps": tcpservices,
+            "homeDir": data_dir,
         }
         peers.append("{}_{}_{}=http://{}".format(service.name, node.name, baseports[1], server_bind))
 

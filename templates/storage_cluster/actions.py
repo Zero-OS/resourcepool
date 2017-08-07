@@ -137,6 +137,28 @@ def init(job):
     job.service.model.data.status = 'empty'
 
 
+def save_config(job):
+    import yaml
+    import random
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.ETCD import ETCD
+
+    service = job.service
+    cluster = StorageCluster.from_ays(service, job.context['token'])
+    config = cluster.get_config()
+    if service.model.data.clusterType == "tlog":
+        config.pop("metadataStorage")
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+    etcd_cluster = service.producers['etcd_cluster'][0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+    result = etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save storage cluster config")
+
+
 def get_availabledisks(job, nodes):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
 
@@ -195,6 +217,7 @@ def install(job):
         dashboardsrv.model.data.dashboard = cluster.dashboard
         j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
 
+    save_config(job)
     job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
     job.service.saveAll()

@@ -8,6 +8,6 @@ links:
 
     - auto: false
       min: 0
-      max: 5
+      max: 9999
       role: etcd
       argname: etcds
