@@ -162,6 +162,7 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.threads())
         update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
         update_healthcheck(service, node.healthcheck.network_load())
+        update_healthcheck(service, node.healthcheck.disk_usage())
 
         flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
         with node.healthcheck.with_container(flist) as cont:
@@ -332,8 +333,8 @@ def watchdog(job):
             await sleep(1)
 
         # Add the looping here instead of the pubsub sal
-        loop = j.atyourservice.server.loop
         cl = None
+        subscribed = None
 
         while True:
             if str(service.model.data.status) != 'running':
@@ -341,25 +342,27 @@ def watchdog(job):
                 continue
             if cl is None:
                 job.context['token'] = get_jwt_token(job.service.aysrepo)
-                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'])
-
-            if loop is None:
-                loop = j.atyourservice.server.loop
+                cl = Pubsub(service._loop, service.model.data.redisAddr, password=job.context['token'], callback=callback)
 
             try:
-                queue = await cl.subscribe('ays.monitor')
-                await cl.global_stream(queue, callback)
+                if not subscribed:
+                    queue = await cl.subscribe('ays.monitor')
+                await cl.global_stream(queue)
             except asyncio.TimeoutError as e:
+                job.logger.error(e)
                 monitor(job)
                 cl = None
-            except OSError:
+                subscribed = None
+            except OSError as e:
+                job.logger.error(e)
                 monitor(job)
                 cl = None
+                subscribed = None
             except RuntimeError as e:
                 job.logger.error(e)
                 monitor(job)
                 cl = None
-                loop = None
+                subscribed = None
 
     return streaming(job)
 
