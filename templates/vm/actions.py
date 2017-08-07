@@ -47,7 +47,7 @@ def create_zerodisk_container(job, parent):
     return containerservice
 
 
-def create_service(service, container, role='nbdserver'):
+def create_service(service, container, role='nbdserver', bind=None):
     """
     first check if the nbd server exists.'zerodisk'
     if not it creates it.
@@ -65,6 +65,8 @@ def create_service(service, container, role='nbdserver'):
         args = {
             'container': container.name,
         }
+        if bind:
+            args["bind"] = bind
         nbdserver = nbd_actor.serviceCreate(instance=service_name, args=args)
     return nbdserver
 
@@ -78,7 +80,10 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
 
     if tlog_container:
         # Create tlogserver service
-        tlogserver = create_service(service, tlog_container, role='tlogserver')
+        ports, tcp = get_baseports(job, tlog_container.node, 11211, 1)
+        bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
+        tlogserver = create_service(service, tlog_container, role='tlogserver', bind=bind)
+        tlogserver.consume(tcp[0])
         job.logger.info("creates tlog server for vm {}".format(service.name))
         service.consume(tlogserver)
         nbdserver.consume(tlogserver)
@@ -107,6 +112,8 @@ def init(job):
 
 def start_dependent_services(job):
     import random
+    from zeroos.orchestrator.sal.Container import Container
+
     service = job.service
 
     # creates all nbd servers for each vdisk this vm uses
@@ -120,6 +127,7 @@ def start_dependent_services(job):
         node = random.choice(services)
 
     tlog_container = create_zerodisk_container(job, node)
+    tlog_container = Container.from_ays(tlog_container, job.context['token'])
 
     nbd_container = create_zerodisk_container(job, service.parent)
     _init_zerodisk_services(job, nbd_container, tlog_container)
@@ -495,7 +503,7 @@ def save_config(job, vdisks=None):
 
 def migrate(job):
     from zeroos.orchestrator.sal.Node import Node
-    import time 
+    import time
 
     service = job.service
 
@@ -550,7 +558,7 @@ def migrate(job):
             node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
             break
 
-    # open vnc port 
+    # open vnc port
     node = Node.from_ays(target_node, job.context['token'])
     start = time.time()
     while start + 15 > time.time():
@@ -692,8 +700,8 @@ def update_data(job, args):
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
         old_node = service.model.data.node
-        container_name = 'vdisks_{}_{}'.format(service.name, old_node)    
-        old_vdisk_container = service.aysrepo.serviceGet('container', container_name)    
+        container_name = 'vdisks_{}_{}'.format(service.name, old_node)
+        old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
         old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance=service.name)
         service.model.data.node = args['node']
         service.saveAll()

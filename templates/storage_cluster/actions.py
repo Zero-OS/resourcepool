@@ -146,13 +146,15 @@ def save_config(job):
     service = job.service
     cluster = StorageCluster.from_ays(service, job.context['token'])
     config = cluster.get_config()
+    if service.model.data.clusterType == "tlog":
+        config.pop("metadataStorage")
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
     etcd_cluster = service.producers['etcd_cluster'][0]
     etcd = random.choice(etcd_cluster.producers['etcd'])
 
     etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:cluster:conf:%s" % (service.name, service.model.data.clusterType), value=yamlconfig)
+    result = etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
         raise RuntimeError("Failed to save storage cluster config")
 
