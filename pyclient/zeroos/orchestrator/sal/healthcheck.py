@@ -103,6 +103,11 @@ class HealthCheck:
         memory = Memory(self.node)
         return [cpu.start(), memory.start()]
 
+    def disk_usage(self):
+        from .healthchecks.diskusage import DiskUsage
+        usage = DiskUsage(self.node)
+        return usage.start()
+
     def network_bond(self):
         from .healthchecks.networkbond import NetworkBond
         bond = NetworkBond(self.node)
