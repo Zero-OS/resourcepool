@@ -333,7 +333,6 @@ def watchdog(job):
             await sleep(1)
 
         # Add the looping here instead of the pubsub sal
-        loop = j.atyourservice.server.loop
         cl = None
         subscribed = None
 
@@ -343,10 +342,7 @@ def watchdog(job):
                 continue
             if cl is None:
                 job.context['token'] = get_jwt_token(job.service.aysrepo)
-                cl = Pubsub(loop, service.model.data.redisAddr, password=job.context['token'], callback=callback)
-
-            if loop is None:
-                loop = j.atyourservice.server.loop
+                cl = Pubsub(service._loop, service.model.data.redisAddr, password=job.context['token'], callback=callback)
 
             try:
                 if not subscribed:
@@ -366,7 +362,6 @@ def watchdog(job):
                 job.logger.error(e)
                 monitor(job)
                 cl = None
-                loop = None
                 subscribed = None
 
     return streaming(job)
