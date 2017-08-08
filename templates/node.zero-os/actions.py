@@ -160,9 +160,10 @@ def monitor(job):
         update_healthcheck(service, node.healthcheck.interrupts())
         update_healthcheck(service, node.healthcheck.context_switch())
         update_healthcheck(service, node.healthcheck.threads())
-        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
+        update_healthcheck(service, node.healthcheck.qemu_vm_logs())
         update_healthcheck(service, node.healthcheck.network_load())
         update_healthcheck(service, node.healthcheck.disk_usage())
+        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
 
         flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
         with node.healthcheck.with_container(flist) as cont:
@@ -281,6 +282,15 @@ def watchdog(job):
             'message': (re.compile('.*'),),
             'handler': 'ork_handler',
         },
+        'kvm': {
+            'level': 20,
+            'instance': job.service.name,
+            'service': 'node',
+            'eof': False,
+            'message': (re.compile('.*'),),
+            'handler': 'vm_handler',
+            'sub_id': 'events',
+        },
         'cloudinit': {
             'eof': True,
         },
@@ -296,18 +306,23 @@ def watchdog(job):
         "etcd": {
             "eof": True,
         },
+        'stats_collector': {
+            'eof': True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
         if '.' not in jobid:
             return
 
-        role, instance = jobid.split('.', 1)
-        if role not in watched_roles or watched_roles[role].get('level', level) != level:
+        role, sub_id = jobid.split('.', 1)
+        if (role not in watched_roles or
+            watched_roles[role].get('level', level) != level or
+            watched_roles[role].get('sub_id', sub_id) != sub_id):
             return
 
         service_role = watched_roles[role].get('service', role)
-        instance = watched_roles[role].get('instance', instance)
+        instance = watched_roles[role].get('instance', sub_id)
 
         eof = flag & 0x6 != 0
 
@@ -408,3 +423,38 @@ def ork_handler(job):
     message = json.loads(message)
     if message['action'] == 'NIC_SHUTDOWN':
         nic_shutdown(job, message)
+
+
+def start_vm(context, vm):
+    import asyncio
+
+    if vm.model.data.status == 'running':
+        loop = j.atyourservice.server.loop
+        asyncio.ensure_future(vm.executeAction('start', context=context), loop=loop)
+
+
+def shutdown_vm(context, vm):
+    import asyncio
+
+    if vm.model.data.status == 'running':
+        loop = j.atyourservice.server.loop
+        asyncio.ensure_future(vm.executeAction('shutdown', context=context), loop=loop)
+
+
+def vm_handler(job):
+    import json
+
+    message = job.model.args.get('message')
+    if not message:
+        return
+
+    message = json.loads(message)
+    vm = job.service.aysrepo.serviceGet(role='vm', instance=message['name'])
+    if not vm:
+        return
+
+    if message['event'] == 'stopped' and message['detail'] == 'failed':
+        start_vm(job.context, vm)
+
+    if message['event'] == 'stopped' and message['detail'] == 'shutdown':
+        shutdown_vm(job.context, vm)

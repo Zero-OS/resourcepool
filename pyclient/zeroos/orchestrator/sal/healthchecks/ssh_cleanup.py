@@ -9,7 +9,7 @@ Clean up ssh deamons and tcp services from migration
 class SSHCleanup(HealthCheckRun):
     def __init__(self, node, job):
         resource = '/nodes/{}'.format(node.name)
-        super().__init__('ssh-cleanup', 'SSH Cleanup', 'System Load', resource)
+        super().__init__('ssh-cleanup', 'SSH Cleanup', 'System Cleanup', resource)
         self.node = node
         self.service = job.service
         self.job = job
@@ -24,7 +24,7 @@ class SSHCleanup(HealthCheckRun):
                 if job_dict['actionName'] == 'processChange' and job_dict['actorName'] == 'vm':
                     if job_dict['state'] == 'running':
                         continue
-                    vm = self.service.aysrepo.serviceGet(name=job_dict['serviceName'], role=job_dict['actorName'])
+                    vm = self.service.aysrepo.serviceGet(instance=job_dict['serviceName'], role=job_dict['actorName'])
                     finished.append("ssh.config_%s" % vm.name)
             for proc in self.node.client.process.list():
                 for partial in finished:

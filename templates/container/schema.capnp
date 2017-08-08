@@ -1,4 +1,5 @@
-@0x86717517242e3496;
+@0x8c634831cfeb14a1; 
+
 
 struct Schema {
     node @0 :Text; # pointer to the parent service
@@ -32,6 +33,7 @@ struct Schema {
         # Environment variables for the process.
         # e.g:  'PATH=/usr/bin/local'
         stdin @4 :Text; # Data that needs to be passed into the stdin of the started process
+        id @5: Text;
     }
 
     struct Nic {

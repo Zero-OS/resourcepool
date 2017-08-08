@@ -208,11 +208,12 @@ class Container:
                 cmd = "{} {}".format(process['name'], ' '.join(process.get('args', [])))
                 pwd = process.get('pwd', '')
                 stdin = process.get('stdin', '')
+                id = process.get('id')
                 env = {}
                 for x in process.get('environment', []):
                     k, v = x.split("=")
                     env[k] = v
-                self.client.system(command=cmd, dir=pwd, stdin=stdin, env=env)
+                self.client.system(command=cmd, dir=pwd, stdin=stdin, env=env, id=id)
 
     def stop(self):
         if not self.is_running():

@@ -29,31 +29,31 @@ class PowerSupply(IPMIHealthCheck):
 
             # SAMPLE 1:
             # root@du-conv-3-01:~# ipmitool -c sdr type "Power Supply"
-            # PS1 Status | C8h | ok | 10.1 | Presence detected
-            # PS2 Status|C9h | ok | 10.2 | Presence detected
+            # PS1 Status , C8h , ok , 10.1 , Presence detected
+            # PS2 Status,C9h , ok , 10.2 , Presence detected
 
             # SAMPLE 2:
             # root@stor-04:~# ipmitool -c sdr type "Power Supply"
-            # PSU1_Status | DEh | ok | 10.1 | Presence detected
-            # PSU2_Status | DFh | ns | 10.2 | No Reading
-            # PSU3_Status | E0h | ok | 10.3 | Presence detected
-            # PSU4_Status | E1h | ns | 10.4 | No Reading
-            # PSU Redundancy | E6h | ok | 21.1 | Fully Redundant
+            # PSU1_Status , DEh , ok , 10.1 , Presence detected
+            # PSU2_Status , DFh , ns , 10.2 , No Reading
+            # PSU3_Status , E0h , ok , 10.3 , Presence detected
+            # PSU4_Status , E1h , ns , 10.4 , No Reading
+            # PSU Redundancy , E6h , ok , 21.1 , Fully Redundant
 
             # SAMPLE 3:
             # root@stor-01:~# ipmitool -c sdr type "Power Supply"
-            # PSU1_Status | DEh | ok | 10.1 | Presence detected |  Power Supply AC lost
-            # PSU2_Status | DFh | ns | 10.2 | No Reading
-            # PSU3_Status | E0h | ok | 10.3 | Presence detected
-            # PSU4_Status | E1h | ok | 10.4 | Presence detected
-            # PSU Redundancy | E6h | ok | 21.1 | Redundancy Lost
-            # PSU Alert | 16h | ns | 208.1 | Event-Only
+            # PSU1_Status , DEh , ok , 10.1 , Presence detected ,  Power Supply AC lost
+            # PSU2_Status , DFh , ns , 10.2 , No Reading
+            # PSU3_Status , E0h , ok , 10.3 , Presence detected
+            # PSU4_Status , E1h , ok , 10.4 , Presence detected
+            # PSU Redundancy , E6h , ok , 21.1 , Redundancy Lost
+            # PSU Alert , 16h , ns , 208.1 , Event-Only
 
             psu_redun_in_out = "PSU Redundancy".lower() in out.lower()
             is_fully_redundant = True if "fully redundant" in out.lower() else False
             for line in out.splitlines():
                 if "status" in line.lower():
-                    parts = [part.strip() for part in line.split("|")]
+                    parts = [part.strip() for part in line.split(",")]
                     id_, presence = parts[0], parts[-1]
                     id_ = id_.strip("Status").strip("_").strip()  # clean the power supply name.
                     if linehaserrmsg(line):
