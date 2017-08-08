@@ -58,6 +58,7 @@ def delete(job):
 
 
 def save_config(job):
+    import hashlib
     from urllib.parse import urlparse
     import random
     import yaml
@@ -92,7 +93,7 @@ def save_config(job):
             'metadataStorage': {'address': templatestorageEngine}
         }
         yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
-        templateclusterkey = hash(templatestorageEngine)
+        templateclusterkey = hashlib.md5(templatestorageEngine.encode("utf-8")).hexdigest()
 
         templateStorageclusterId = str(templateclusterkey)
         service.model.data.templateStorageCluster = templateStorageclusterId
@@ -136,17 +137,17 @@ def save_config(job):
         result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
         if result.state != "SUCCESS":
             raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
+    else:
+        config = {
+            "storageClusterID": service.model.data.tlogStoragecluster,
+        }
+        if service.model.data.backupStoragecluster:
+                config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
 
-    config = {
-        "storageClusterID": service.model.data.tlogStoragecluster,
-    }
-    if service.model.data.backupStoragecluster:
-            config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
-
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save tlog conf storage: %s" % service.name)
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+        result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save tlog conf storage: %s" % service.name)
 
 
 def get_cluster_config(job, type="storage"):

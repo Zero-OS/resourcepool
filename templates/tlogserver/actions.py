@@ -89,28 +89,34 @@ def install(job):
             if vdiskservice.model.data.backupStoragecluster:
                 backup = True
 
-    if config['storageClusters']:
-        save_config(job, vdisks)
-        k = config.pop('k')
-        m = config.pop('m')
+    if not config['storageClusters']:
+        return
 
-        bind = service.model.data.bind
-        if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
-            cmd = '/bin/tlogserver \
-                    -id {id} \
-                    -address {bind} \
-                    -k {k} \
-                    -m {m} \
-                    -config "{dialstrings}" \
-                    '.format(id=service.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
-            if backup:
-                cmd += '-with-slave-sync'
-            job.logger.info("Starting tlog server: %s" % cmd)
-            container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
-            if not is_port_listening(container, int(bind.split(":")[1])):
-                raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
-        service.model.data.status = 'running'
-        service.saveAll()
+    save_config(job, vdisks)
+    k = config.pop('k')
+    m = config.pop('m')
+
+    bind = service.model.data.bind
+    if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
+        cmd = '/bin/tlogserver \
+                -id {id} \
+                -address {bind} \
+                -k {k} \
+                -m {m} \
+                -config "{dialstrings}" \
+                '.format(id=service.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
+        if backup:
+            cmd += '-with-slave-sync'
+        job.logger.info("Starting tlog server: %s" % cmd)
+        container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
+        if not is_port_listening(container, int(bind.split(":")[1])):
+            raise j.exceptions.RuntimeError('Failed to start tlogserver {}'.format(service.name))
+    service.model.data.status = 'running'
+    service.saveAll()
+
+    tcpsrv = service.producers['tcp'][0]
+    if tcpsrv.model.data.status == "dropped":
+        j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
 def start(job):
@@ -129,24 +135,31 @@ def get_storagecluster_config(job, storagecluster):
 def stop(job):
     import time
     service = job.service
+    if service.model.data.status != 'running':
+        return
+
     service.model.data.status = 'halting'
+    service.saveAll()
     container = get_container(service, job.context['token'])
     bind = service.model.data.bind
-    if bind:
-        port = int(bind.split(':')[1])
-        container.node.client.nft.drop_port(port)
-        tlogjob = is_job_running(container)
-        if tlogjob:
-            job.logger.info("killing job {}".format(tlogjob['cmd']['arguments']['name']))
-            container.client.job.kill(tlogjob['cmd']['id'])
+    port = int(bind.split(':')[1])
+    tlogjob = is_job_running(container)
+    if tlogjob:
+        job.logger.info("killing job {}".format(tlogjob['cmd']['arguments']['name']))
+        container.client.job.kill(tlogjob['cmd']['id'])
 
-            job.logger.info("wait for tlogserver to stop")
-            for i in range(60):
-                time.sleep(1)
-                if not is_port_listening(container, port):
-                    break
-                raise j.exceptions.RuntimeError("Failed to stop Tlog server")
+        job.logger.info("wait for tlogserver to stop")
+        for i in range(60):
+            time.sleep(1)
+            if not is_port_listening(container, port):
+                break
+            raise j.exceptions.RuntimeError("Failed to stop Tlog server")
     service.model.data.status = 'halted'
+    service.saveAll()
+
+    tcpsrv = service.producers['tcp'][0]
+    if tcpsrv.model.data.status == "opened":
+        j.tools.async.wrappers.sync(service.executeAction('drop', context=job.context))
 
 
 def monitor(job):
