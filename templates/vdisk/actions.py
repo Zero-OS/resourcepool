@@ -74,7 +74,6 @@ def save_config(job):
             "readOnly": service.model.data.readOnly,
             "size": service.model.data.size,
             "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
-            "templateVdiskID": template,
         }
         yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 
@@ -119,7 +118,6 @@ def save_config(job):
         "readOnly": service.model.data.readOnly,
         "size": service.model.data.size,
         "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
-        "templateVdiskID": template,
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
     result = etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
