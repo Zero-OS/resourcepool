@@ -5,6 +5,8 @@ def install(job):
     if node.client.nft.rule_exists(service.model.data.port):
         return
     node.client.nft.open_port(service.model.data.port)
+    service.model.data.status = "opened"
+    service.saveAll()
 
 
 def drop(job):
@@ -14,3 +16,5 @@ def drop(job):
     if not node.client.nft.rule_exists(service.model.data.port):
         return
     node.client.nft.drop_port(service.model.data.port)
+    service.model.data.status = "dropped"
+    service.saveAll()
