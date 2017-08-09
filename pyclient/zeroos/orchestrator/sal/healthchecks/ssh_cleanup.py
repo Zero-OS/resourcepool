@@ -25,8 +25,10 @@ class SSHCleanup(HealthCheckRun):
                     if job_dict['state'] == 'running':
                         continue
                     vm = self.service.aysrepo.serviceGet(instance=job_dict['serviceName'], role=job_dict['actorName'])
-                    tcp_service = vm.producers.get('tcp')
-                    if tcp_service:
+                    tcp_services = vm.producers.get('tcp')
+                    for tcp_service in tcp_services:
+                        if 'migrationtcp' not in tcp_service.name:
+                            continue
                         j.tools.async.wrappers.sync(tcp_service.executeAction("drop"), context=self.job.context)
                         j.tools.async.wrappers.sync(tcp_service.delete())
                     finished.append("ssh.config_%s" % vm.name)

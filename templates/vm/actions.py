@@ -404,14 +404,14 @@ def start_migartion_channel(job, old_service, new_service):
 
     try:
         # Get free ports on node to use for ssh
-        freeports_node, _ = get_baseports(job, node, 4000, 1)
+        freeports_node, _ = get_baseports(job, node, 4000, 1, 'migrationtcp')
     
         # testing should br changed to not 
         if not freeports_node:
             raise j.exceptions.RuntimeError('No free port availble on taget node for migration')
 
         port = freeports_node[0]
-        tcp_service = service.aysrepo.serviceGet(instance='tcp_%s_%s' % (node.name, freeports_node[0]), role='tcp')
+        tcp_service = service.aysrepo.serviceGet(instance='migrationtcp_%s_%s' % (node.name, freeports_node[0]), role='tcp')
         j.tools.async.wrappers.sync(tcp_service.executeAction('install', context=job.context))
         service.consume(tcp_service)
         service.saveAll()
@@ -468,6 +468,7 @@ def start_migartion_channel(job, old_service, new_service):
         return str(port), res.id
     except Exception as e:
         service.model.changeParent(old_service)
+        service.model.data.node = old_service.name
         service.model.data.status = 'running'
         service.saveAll()
         old_service.saveAll()
@@ -478,7 +479,7 @@ def start_migartion_channel(job, old_service, new_service):
             node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
         if not port:
             raise e
-        tcp_name = "tcp_%s_%s" % (new_service.name, str(port))
+        tcp_name = "migrationtcp_%s_%s" % (new_service.name, str(port))
         tcp_services = service.aysrepo.servicesFind(role='tcp', name=tcp_name)
         if tcp_services:
             tcp_service = tcp_services[0]
@@ -488,7 +489,7 @@ def start_migartion_channel(job, old_service, new_service):
         raise e
 
 
-def get_baseports(job, node, baseport, nrports):
+def get_baseports(job, node, baseport, nrports, name=None):
     service = job.service
     tcps = service.aysrepo.servicesFind(role='tcp', parent='node.zero-os!%s' % node.name)
 
@@ -511,6 +512,8 @@ def get_baseports(job, node, baseport, nrports):
                 'port': baseport,
             }
             tcp = 'tcp_{}_{}'.format(node.name, baseport)
+            if name:
+                tcp = '{}_{}_{}'.format(name, node.name, baseport)
             tcpservices.append(tcpactor.serviceCreate(instance=tcp, args=args))
             freeports.append(baseport)
             if len(freeports) >= nrports:
@@ -589,8 +592,14 @@ def migrate(job):
                 uuid=uuid,
                 nics=nics,
             )
-            node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
-            break
+            try:
+                node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
+                break
+            except Exception as e:
+                service.model.data.node = old_node.name
+                service.changeParent(old_node)
+                service.saveAll()
+                raise e
 
     # open vnc port
     node = Node.from_ays(target_node, job.context['token'])
@@ -617,7 +626,7 @@ def migrate(job):
     # cleanup to remove ssh job and config file
     node.client.job.kill(job_id)
     node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
-    tcp_name = "tcp_%s_%s" % (node.name, ssh_port)
+    tcp_name = "migrationtcp_%s_%s" % (node.name, ssh_port)
     tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
     j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
     j.tools.async.wrappers.sync(tcp_service.delete())
