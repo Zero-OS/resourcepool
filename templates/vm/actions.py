@@ -13,6 +13,13 @@ def input(job):
         for disk in disks:
             if not disk["vdiskid"]:
                 continue
+            # make sure this disk is not used anywhere
+            vm_services = job.service.aysrepo.servicesFind(actor="vm")
+            for vm_service in vm_services:
+                for vdisk in vm_service.model.data.vdisks:
+                    if vdisk == disk["vdiskid"]:
+                        raise j.exceptions.Input('vdisk {vdisk} is used by other machine {vm}'.format(vdisk=vdisk, vm=vm_service.name))
+
             service.aysrepo.serviceGet(role='vdisk', instance=disk["vdiskid"])
             args['vdisks'].append(disk['vdiskid'])
     return args
