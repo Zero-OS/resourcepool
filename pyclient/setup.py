@@ -21,7 +21,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        'zeroos.orchestrator.sal.templates': ['*', 'dashboards/*']
+        'zeroos.orchestrator.sal.templates': ['*.conf', 'dhcp', 'dashboards/*']
     },
     namespace_packages=['zeroos'],
     install_requires=['python-dateutil', 'Jinja2'],
