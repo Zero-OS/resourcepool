@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -15,7 +16,8 @@ func (api HealthCheckApi) ListNodeHealth(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	service, res, err := aysClient.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
+	serviceName := fmt.Sprintf("node_%s", nodeID)
+	service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes health checks") {
 		return
