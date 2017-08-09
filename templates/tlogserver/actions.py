@@ -116,7 +116,7 @@ def install(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "dropped":
-        j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+        j.tools.async.wrappers.sync(tcpsrv.executeAction('install', context=job.context))
 
 
 def start(job):
@@ -159,7 +159,7 @@ def stop(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "opened":
-        j.tools.async.wrappers.sync(service.executeAction('drop', context=job.context))
+        j.tools.async.wrappers.sync(tcpsrv.executeAction('drop', context=job.context))
 
 
 def monitor(job):
