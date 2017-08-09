@@ -25,19 +25,17 @@ class SSHCleanup(HealthCheckRun):
                     if job_dict['state'] == 'running':
                         continue
                     vm = self.service.aysrepo.serviceGet(instance=job_dict['serviceName'], role=job_dict['actorName'])
+                    tcp_service = vm.producers.get('tcp')
+                    if tcp_service:
+                        j.tools.async.wrappers.sync(tcp_service.executeAction("drop"), context=self.job.context)
+                        j.tools.async.wrappers.sync(tcp_service.delete())
                     finished.append("ssh.config_%s" % vm.name)
             for proc in self.node.client.process.list():
                 for partial in finished:
                     if partial not in proc['cmdline']:
                         continue
                     config_file = proc['cmdline'].split()[-1]
-                    port = config_file.split('_')[-1]
-                    
                     self.node.client.process.kill(proc['pid'])
-                    tcp_name = "tcp_%s_%s" % (self.node.name, port)
-                    tcp_service = self.service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
-                    j.tools.async.wrappers.sync(tcp_service.executeAction("drop"), context=self.job.context)
-                    tcp_service.delete()
                     if self.node.client.filesystem.exists('/tmp'):
                         self.node.client.filesystem.remove(config_file)
 

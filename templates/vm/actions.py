@@ -60,7 +60,7 @@ def create_service(service, container, role='nbdserver', bind=None):
     if not it creates it.
     return the nbdserver service
     """
-    service_name = service.name
+    service_name = '{}_{}_{}'.format(role, service.name, service.parent.name)
 
     try:
         nbdserver = service.aysrepo.serviceGet(role=role, instance=service_name)
@@ -399,14 +399,24 @@ def start_migartion_channel(job, old_service, new_service):
     node = Node.from_ays(new_service, job.context['token'])
     service = job.service
     command = "/usr/sbin/sshd -f {config}"
-
-    # Get free ports on node to use for ssh
-    freeports_node, _ = get_baseports(job, node, 4000, 1)
-    port = freeports_node[0]
-    node.client.nft.open_port(port)
-    ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
+    res = None
+    port = None
 
     try:
+        # Get free ports on node to use for ssh
+        freeports_node, _ = get_baseports(job, node, 4000, 1)
+    
+        # testing should br changed to not 
+        if not freeports_node:
+            raise j.exceptions.RuntimeError('No free port availble on taget node for migration')
+
+        port = freeports_node[0]
+        tcp_service = service.aysrepo.serviceGet(instance='tcp_%s_%s' % (node.name, freeports_node[0]), role='tcp')
+        j.tools.async.wrappers.sync(tcp_service.executeAction('install', context=job.context))
+        service.consume(tcp_service)
+        service.saveAll()
+        ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
+
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
             node.client.filesystem.remove(ssh_config)
@@ -457,10 +467,24 @@ def start_migartion_channel(job, old_service, new_service):
 
         return str(port), res.id
     except Exception as e:
-        node.client.job.kill(res.id)
-        node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
         service.model.changeParent(old_service)
+        service.model.data.status = 'running'
         service.saveAll()
+        old_service.saveAll()
+        new_service.saveAll()
+        if res:
+            node.client.job.kill(res.id)
+        if node.client.filesystem.exists('/tmp/ssh.config_%s_%s' % (service.name, port)):
+            node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
+        if not port:
+            raise e
+        tcp_name = "tcp_%s_%s" % (new_service.name, str(port))
+        tcp_services = service.aysrepo.servicesFind(role='tcp', name=tcp_name)
+        if tcp_services:
+            tcp_service = tcp_services[0]
+            j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
+            j.tools.async.wrappers.sync(tcp_service.delete())    
+
         raise e
 
 
@@ -477,7 +501,11 @@ def get_baseports(job, node, baseport, nrports):
     tcpservices = []
     while True:
         if baseport not in usedports:
-            baseport = node.freeports(baseport=baseport, nrports=1)[0]
+            port = node.freeports(baseport=baseport, nrports=1)
+            if not port:
+                return None
+            baseport = port[0]
+
             args = {
                 'node': node.name,
                 'port': baseport,
@@ -529,17 +557,17 @@ def migrate(job):
     ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
 
     # start new nbdserver on target node
-    vdisk_container = create_zerodisk_container(job, target_node)
+    nbd_container = create_zerodisk_container(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
-    nbdserver = create_service(service, vdisk_container)
+    nbdserver = create_service(service, nbd_container)
     nbd_actor = service.aysrepo.actorGet('nbdserver')
     args = {
-        'container': vdisk_container.name,
+        'container': nbd_container.name,
     }
-    nbdserver = nbd_actor.serviceCreate(instance=vdisk_container.name, args=args)
-    nbdserver.consume(vdisk_container)
+    nbdserver = nbd_actor.serviceCreate(instance='nbdserver_%s_%s' % (service.name, target_node.name), args=args)
+    nbdserver.consume(nbd_container)
     service.consume(nbdserver)
-    service.consume(vdisk_container)
+    service.consume(nbd_container)
     target_node_client = Node.from_ays(target_node, job.context['token']).client
     node_client = Node.from_ays(service.parent, job.context['token']).client
 
@@ -551,7 +579,6 @@ def migrate(job):
 
     # start nbds
     medias = _start_nbd(job, nbdserver.name)
-    service.model.data.status = 'running'
 
     # run the migrate command
     for vm in node_client.kvm.list():
@@ -583,14 +610,17 @@ def migrate(job):
         service.model.data.status = 'error'
         raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
 
+    service.model.data.status = 'running'
+
+
+
     # cleanup to remove ssh job and config file
     node.client.job.kill(job_id)
     node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
     tcp_name = "tcp_%s_%s" % (node.name, ssh_port)
     tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
     j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
-    tcp_service.delete()
-
+    j.tools.async.wrappers.sync(tcp_service.delete())
     service.saveAll()
 
 
@@ -709,7 +739,7 @@ def update_data(job, args):
         old_node = service.model.data.node
         container_name = 'vdisks_{}_{}'.format(service.name, old_node)
         old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
-        old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance=service.name)
+        old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance="nbdserver_%s_%s" % (service.name, old_node))
         service.model.data.node = args['node']
         service.saveAll()
         if service.model.data.status == 'halted':

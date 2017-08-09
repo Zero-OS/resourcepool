@@ -69,7 +69,8 @@ def install(job):
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vmName = service.name.split('_')[1]
+    vm = service.aysrepo.serviceGet(role='vm', instance=vmName)
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
