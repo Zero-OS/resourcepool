@@ -117,6 +117,12 @@ def monitor(job):
     if service.model.actionsState['install'] != 'ok':
         return
 
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
+    if healthcheck_service is None:
+        healthcheck_actor = service.aysrepo.actorGet('healthcheck')
+        healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
+        service.consume(healthcheck_service)
+
     try:
         node = Node.from_ays(service, token, timeout=15)
         node.client.testConnectionAttempts = 0
@@ -153,23 +159,23 @@ def monitor(job):
 
         # healthchecks
         nodestatus.add_message('node', 'OK', 'Node is running')
-        update_healthcheck(service, node.healthcheck.openfiledescriptors())
-        update_healthcheck(service, node.healthcheck.cpu_mem())
-        update_healthcheck(service, node.healthcheck.rotate_logs())
-        update_healthcheck(service, node.healthcheck.network_bond())
-        update_healthcheck(service, node.healthcheck.interrupts())
-        update_healthcheck(service, node.healthcheck.context_switch())
-        update_healthcheck(service, node.healthcheck.threads())
-        update_healthcheck(service, node.healthcheck.qemu_vm_logs())
-        update_healthcheck(service, node.healthcheck.network_load())
-        update_healthcheck(service, node.healthcheck.disk_usage())
-        update_healthcheck(service, node.healthcheck.ssh_cleanup(job=job))
+        update_healthcheck(job, healthcheck_service, node.healthcheck.openfiledescriptors())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.cpu_mem())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.rotate_logs())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.network_bond())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.interrupts())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.context_switch())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.threads())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.qemu_vm_logs())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.network_load())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.disk_usage())
+        update_healthcheck(job, healthcheck_service, node.healthcheck.ssh_cleanup(job=job))
 
         flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
         with node.healthcheck.with_container(flist) as cont:
-            update_healthcheck(service, node.healthcheck.node_temperature(cont))
-            update_healthcheck(service, node.healthcheck.powersupply(cont))
-            update_healthcheck(service, node.healthcheck.fan(cont))
+            update_healthcheck(job, healthcheck_service, node.healthcheck.node_temperature(cont))
+            update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
+            update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
         nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
         nodes.sort(key=lambda n: hash(n.model.data.redisAddr))
@@ -180,17 +186,19 @@ def monitor(job):
                 break
         else:
             raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
-        update_healthcheck(service, node.healthcheck.network_stability(relatives))
+        update_healthcheck(job, healthcheck_service, node.healthcheck.network_stability(relatives))
     else:
         service.model.data.status = 'halted'
         nodestatus.add_message('node', 'ERROR', 'Node is halted')
-    update_healthcheck(service, nodestatus.to_dict())
+    update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
 
     service.saveAll()
 
 
-def update_healthcheck(service, healthchecks):
+def update_healthcheck(job, health_service, healthchecks):
     import time
+
+    service = job.service
 
     interval = service.model.actionGet('monitor').period
     new_healthchecks = list()
@@ -198,7 +206,7 @@ def update_healthcheck(service, healthchecks):
         healthchecks = [healthchecks]
     defaultresource = '/nodes/{}'.format(service.name)
     for health_check in healthchecks:
-        for health in service.model.data.healthchecks:
+        for health in health_service.model.data.healthchecks:
             # If this healthcheck already exists, update its attributes
             if health.id == health_check['id']:
                 health.name = health_check.get('name', '')
@@ -215,9 +223,9 @@ def update_healthcheck(service, healthchecks):
             health_check['interval'] = interval
             new_healthchecks.append(health_check)
 
-    old_healthchecks = service.model.data.to_dict().get('healthchecks', [])
+    old_healthchecks = health_service.model.data.to_dict().get('healthchecks', [])
     old_healthchecks.extend(new_healthchecks)
-    service.model.data.healthchecks = old_healthchecks
+    health_service.model.data.healthchecks = old_healthchecks
 
 
 def reboot(job):
