@@ -94,7 +94,7 @@ class TestNodeidAPI(TestcasesBase):
         self.lg.info('Check that all jobs has been killed.')
         response = self.nodes_api.get_nodes_nodeid_jobs(node_id=self.nodeid)
         jobs_list = response.json()
-        self.assertEqual(len(jobs_list), 7)
+        self.assertGreater(len(jobs_list), 5)
 
     def test005_get_job_details(self):
         """ GAT-005
