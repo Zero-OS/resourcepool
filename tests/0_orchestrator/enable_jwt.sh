@@ -96,7 +96,7 @@ ays blueprint network.bp
 ays service delete -n grid1 -y
 ays blueprint bootstrap.bp
 
-echo "sleeping 180 second"
+echo " [*] sleeping 180 second"
 sleep 180
 
 export_runnig_nodes
