@@ -326,6 +326,8 @@ def watchdog(job):
             job.context['token'] = get_jwt_token(job.service.aysrepo)
             handler = watched_roles[role].get('handler', 'watchdog_handler')
             await srv.executeAction(handler, context=job.context, args=args)
+        else:
+            job.logger.error("service %s__%s" % (service_role, instance))
 
     async def streaming(job):
         # Check if the node is runing
