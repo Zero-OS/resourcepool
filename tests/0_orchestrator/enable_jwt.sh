@@ -96,8 +96,8 @@ ays blueprint network.bp
 ays service delete -n grid1 -y
 ays blueprint bootstrap.bp
 
-echo " [*] sleeping 180 second"
-sleep 180
+echo " [*] sleeping 240 second"
+sleep 240
 
 export_runnig_nodes
 create_etcd_cluster_blueprint ${nodes}
