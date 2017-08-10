@@ -15,7 +15,7 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
       echo " [*] Running tests .."
       cd tests/0_orchestrator/test_suite
       export PYTHONPATH='./'
-      nosetests-3.4 -v -s testcases/basic_tests/test04_storageclusters_apis.py --tc-file=config.ini --tc=main.zerotier_token:$ZT_TOKEN --tc=main.client_id:$ITSYOUONLINE_CL_ID --tc=main.client_secret:$ITSYOUONLINE_CL_SECRET --tc=main.organization:$ITSYOUONLINE_ORG
+      nosetests-3.4 -v -s testcases/${TEST_CASES_PATH} --tc-file=config.ini --tc=main.zerotier_token:$ZT_TOKEN --tc=main.client_id:$ITSYOUONLINE_CL_ID --tc=main.client_secret:$ITSYOUONLINE_CL_SECRET --tc=main.organization:$ITSYOUONLINE_ORG
    elif [ "$point" == "after" ]
     then
       python3 tests/0_orchestrator/orch_packet_machines.py delete $PACKET_TOKEN
@@ -23,3 +23,4 @@ if [ "$TRAVIS_EVENT_TYPE" == "cron" ] || [ "$TRAVIS_EVENT_TYPE" == "api" ]
  else
    echo "Not a cron job"
 fi
+
