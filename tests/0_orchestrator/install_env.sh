@@ -1,8 +1,11 @@
+#!/usr/bin/env bash
 
-branch=$1
+TRAVIS_BRANCH=$1
 zerotierid=$2
 zerotiertoken=$3
 itsyouonlineorg=$ITSYOUONLINE_ORG
+JS9_BRANCH=$4
+CORE_0_BRANCH=$5
 
 export SSHKEYNAME=id_rsa
 export GIGBRANCH=master
@@ -21,8 +24,8 @@ sudo apt-get install libffi-dev -y
 sudo apt-get install python3-pip -y
 sudo pip3 install paramiko
 sudo pip3 install configargparse
-sudo pip3 install -U git+https://github.com/zero-os/0-orchestrator.git#subdirectory=pyclient
-sudo pip3 install -U git+https://github.com/zero-os/0-core.git#subdirectory=client/py-client
+sudo pip3 install -U git+https://github.com/zero-os/0-orchestrator.git${TRAVIS_BRANCH}#subdirectory=pyclient
+sudo pip3 install -U git+https://github.com/zero-os/0-core.git@${CORE_0_BRANCH}#subdirectory=client/py-client
 
 ## install docker-ce
 echo "[#] Installing docker ..."
@@ -38,20 +41,21 @@ stable"
 sudo apt-get update
 sudo apt-get -y install docker-ce
 
-## install zerotier in packet machine 
+## install zerotier in packet machine
 echo "[#] Installing Zerotier ..."
 curl -s https://install.zerotier.com/ | sudo bash
 
 ## install Jumpscale 9
-echo "[#] Installing Jumpscale 9 ..."
-curl -s https://raw.githubusercontent.com/Jumpscale/developer/master/jsinit.sh | bash
-source ~/.jsenv.sh 
+url="https://raw.githubusercontent.com/Jumpscale/developer/${JS9_BRANCH}/jsinit.sh"
+echo "[#] Installing Jumpscale 9 from ${url}"
+curl -s $url | bash
+source ~/.jsenv.sh
 
 js9_build -l
 
 ## start js9 docker
 echo "[#] Starting JS9 container ..."
-js9_start 
+js9_start
 
 ## make local machine join zerotier network
 echo "[#] Joining zerotier network (local machine) ..."
@@ -72,23 +76,23 @@ docker exec -d js9 bash -c "zerotier-one -d" || true
 sleep 5
 
 docker exec js9 bash -c "zerotier-cli join ${zerotierid}"
-sleep 5 
+sleep 5
 
 ## authorized js9 container as zerotier member
 echo "[#] Authorizing zerotier member ..."
 memberid=$(docker exec js9 bash -c "zerotier-cli info" | awk '{print $3}')
 curl -H "Content-Type: application/json" -H "Authorization: Bearer ${zerotiertoken}" -X POST -d '{"config": {"authorized": true}}' https://my.zerotier.com/api/network/${zerotierid}/member/${memberid}
-sleep 5 
+sleep 5
 
 ## install orchestrator
 echo "[#] Installing orchestrator ..."
-ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/master/scripts/install-orchestrator.sh | bash -s ${branch} ${zerotierid} ${zerotiertoken} ${itsyouonlineorg}"
+ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/master/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
 
 #passing jwt
-echo "Enabling JWT..." 
+echo "Enabling JWT..."
 cd tests/0_orchestrator/
 scp -P 2222 enable_jwt.sh root@localhost:
-ssh -tA root@localhost -p 2222 "export ITSYOUONLINE_CL_ID=$ITSYOUONLINE_CL_ID; export ITSYOUONLINE_CL_SECRET=$ITSYOUONLINE_CL_SECRET; export ITSYOUONLINE_ORG=$ITSYOUONLINE_ORG; source enable_jwt.sh"
+ssh -tA root@localhost -p 2222 "export ITSYOUONLINE_CL_ID=$ITSYOUONLINE_CL_ID; export ITSYOUONLINE_CL_SECRET=$ITSYOUONLINE_CL_SECRET; export ITSYOUONLINE_ORG=$ITSYOUONLINE_ORG; export $CORE_0_BRANCH source enable_jwt.sh"
 
 # get orch-server ip
 orch_ip=$(ssh -At root@localhost -p 2222 "ip addr show zt0 | grep 'inet'")
