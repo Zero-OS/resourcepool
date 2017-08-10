@@ -80,6 +80,7 @@ if [ $VL == 0 ]
 then
   core_0_branch=master
 fi
+echo " [*] 0_core_branch " ${core_0_branch}
 
 export_jwt
 export_server_ip
