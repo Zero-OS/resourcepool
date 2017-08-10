@@ -20,6 +20,21 @@ def input(job):
 
     return args
 
+def init(job):
+    from zeroos.orchestrator.sal.Node import Node
+    service = job.service
+    for nic in service.model.data.nics:
+        if nic.type == 'vlan':
+            break
+    else:
+        return
+
+    node = Node.from_ays(service.parent)
+    ovs_container = node.client.container.find('ovs')
+    if not ovs_container:
+        raise j.exceptions.Input('OVS container needed to run this blueprint')
+
+
 
 def install(job):
     job.service.model.data.status = "halted"
