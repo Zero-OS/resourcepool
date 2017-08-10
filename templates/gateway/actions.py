@@ -12,6 +12,10 @@ def input(job):
     for nic in nics:
         config = nic.get('config', {})
         name = nic.get('name')
+        if not name:
+            raise j.exceptions.Input("NIC should has a name".format(name=name))
+        if name[0].isnumeric():
+            raise j.exceptions.Input("Bad nic definition '{name}', name shouldn't start with a number".format(name=name))
         dhcp = nic.get('dhcpserver')
         zerotierbridge = nic.get('zerotierbridge')
         cidr = config.get('cidr')
