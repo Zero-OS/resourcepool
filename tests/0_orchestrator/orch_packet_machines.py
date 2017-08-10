@@ -99,7 +99,7 @@ if __name__ == '__main__':
             CORE_0_BRANCH = 'master'
 
         file_node = open('ZT_HOSTS', 'w')
-        for i in range(2):
+        for i in range(6):
             hostname = create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch=CORE_0_BRANCH)
             file_node.write(hostname)
             file_node.write('\n')
