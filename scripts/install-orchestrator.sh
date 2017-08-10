@@ -34,6 +34,11 @@ if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
   echo "  DOMAIN: the domain to use for caddy."
   echo "  --development: an optional parameter to use self signed certificates."
+  echo ""
+  echo "Moreover, you can add (only at the end of the command) theses optional arguments:"
+  echo ""
+  echo "  --core: branch name specifically for 0-core"
+  echo "  --orchestrator: branch name specifically for 0-orchestrator"
   echo
   exit 1
 fi
