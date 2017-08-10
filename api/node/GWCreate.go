@@ -2,8 +2,8 @@ package node
 
 import (
 	"fmt"
-
 	"gopkg.in/validator.v2"
+	"strconv"
 )
 
 type ListGW struct {
@@ -34,6 +34,13 @@ func (s GWCreate) Validate() error {
 		if err := nic.Validate(); err != nil {
 			return err
 		}
+		// check if the first char is not number
+		first_char := string(nic.Name[0])
+		_, err := strconv.ParseInt(first_char, 10, 64)
+		if err == nil {
+			return fmt.Errorf("NIC name can not start with number")
+		}
+
 		if _, exists := nicnames[nic.Name]; exists {
 			return fmt.Errorf("Duplicate nic names detected")
 		}

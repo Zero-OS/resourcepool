@@ -69,7 +69,8 @@ def install(job):
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    vm = service.aysrepo.serviceGet(role='vm', instance=service.name)
+    vmName = service.name.split('_')[1]
+    vm = service.aysrepo.serviceGet(role='vm', instance=vmName)
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
@@ -116,7 +117,7 @@ def install(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "dropped":
-        j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+        j.tools.async.wrappers.sync(tcpsrv.executeAction('install', context=job.context))
 
 
 def start(job):
@@ -159,7 +160,7 @@ def stop(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "opened":
-        j.tools.async.wrappers.sync(service.executeAction('drop', context=job.context))
+        j.tools.async.wrappers.sync(tcpsrv.executeAction('drop', context=job.context))
 
 
 def monitor(job):
