@@ -262,6 +262,122 @@ def delete(job):
     job.service.model.data.status = 'empty'
 
 
+def list_vdisks(job):
+    import random
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
+    service = job.service
+
+    nodes = [node for node in service.producers['node'] if node.model.data.status != "halted"]
+    node = random.choice(nodes)
+
+    # create temp container of 0-disk
+    container_name = 'vdisk_list_{}'.format(service.name)
+    node = Node.from_ays(node, job.context['token'])
+    config = get_configuration(job.service.aysrepo)
+
+    container = Container(name=container_name,
+                          flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
+                          host_network=True,
+                          node=node)
+    container.start()
+    try:
+        cluster = StorageCluster.from_ays(service, job.context['token'])
+        clusterconfig = cluster.get_config()
+
+        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadata'])
+        job.logger.debug(cmd)
+        result = container.client.system(cmd).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
+        return {vdisk.strip("lba:") for vdisk in result.stdout.splitlines()}
+    finally:
+        container.stop()
+
+
+def monitor(job):
+    import time
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+    job.context['token'] = get_jwt_token_from_job(job)
+    service = job.service
+
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='cluster_%s' % service.name, die=False)
+    if healthcheck_service is None:
+        healthcheck_actor = service.aysrepo.actorGet('healthcheck')
+        healthcheck_service = healthcheck_actor.serviceCreate(instance='cluster_%s' % service.name)
+        service.consume(healthcheck_service)
+
+    # Get orphans
+    vdisks = list_vdisks(job)
+    vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer=service.name)
+    vdisk_names = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
+
+    old_orphans = set(vdisk_services) - vdisk_names
+    new_orphans = vdisk_names - vdisks
+    total_orphans = new_orphans + old_orphans
+
+    for orphan in new_orphans:
+        actor = service.aysrepo.actorGet('vdisk')
+        args = {
+            "status": "orphan",
+            "timestamp": int(time.time()),
+            "storagecluster": service.name,
+        }
+        actor.serviceCreate(instance=orphan, args=args)
+
+    healthcheck = {
+        "id": "storageclusters",
+        "name": "storagecluster orphan vdisk report",
+        "messages": [],
+    }
+    for orphan in total_orphans:
+        healthcheck["messages"].append({
+            "id": orphan,
+            "status": "WARNING",
+            "text": "Orphan vdisk %s is found" % orphan,
+        })
+    update_healthcheck(job, healthcheck_service, healthcheck)
+
+
+def update_healthcheck(job, health_service, healthchecks):
+    import time
+
+    service = job.service
+
+    interval = service.model.actionGet('monitor').period
+    new_healthchecks = list()
+    if not isinstance(healthchecks, list):
+        healthchecks = [healthchecks]
+    defaultresource = '/storageclusters/{}'.format(service.name)
+    for health_check in healthchecks:
+        for health in health_service.model.data.healthchecks:
+            # If this healthcheck already exists, update its attributes
+            if health.id == health_check['id']:
+                health.name = health_check.get('name', '')
+                health.resource = health_check.get('resource', defaultresource) or defaultresource
+                health.messages = health_check.get('messages', [])
+                health.category = health_check.get('category', '')
+                health.lasttime = time.time()
+                health.interval = interval
+                health.stacktrace = health_check.get('stacktrace', '')
+                break
+        else:
+            # healthcheck doesn't exist in the current list, add it to the list of new
+            health_check['lasttime'] = time.time()
+            health_check['interval'] = interval
+            new_healthchecks.append(health_check)
+
+    old_healthchecks = health_service.model.data.to_dict().get('healthchecks', [])
+    old_healthchecks.extend(new_healthchecks)
+    health_service.model.data.healthchecks = old_healthchecks
+
+
 def addStorageServer(job):
     raise NotImplementedError()
 
