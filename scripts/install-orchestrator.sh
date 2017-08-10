@@ -50,10 +50,11 @@ ZEROTIERTOKEN=$1
 shift
 ITSYOUONLINEORG=$1
 shift
-DOMAIN=$1
 
-if [ -n "$DOMAIN" ]; then
+if [ "${1:0:1}" != "-" ]; then
+    DOMAIN=$1
     shift
+
     if [ "$1" = "--development" ]; then
         DEVELOPMENT=true
         shift
@@ -86,6 +87,12 @@ while true; do
     esac
 done
 
+echo "[+] global branch: ${BRANCH}"
+echo "[+] zerotier network id: ${ZEROTIERNWID}"
+echo "[+] zerotier token: ${ZEROTIERTOKEN}"
+echo "[+] itsyou.online organization: ${ITSYOUONLINEORG}"
+echo "[+] optional domain: ${DOMAIN}"
+echo "[+] development mode: ${DEVELOPMENT}"
 echo "[+] 0-core branch: ${CORE_BRANCH}"
 echo "[+] 0-orchestrator branch: ${ORCHESTRATOR_BRANCH}"
 
