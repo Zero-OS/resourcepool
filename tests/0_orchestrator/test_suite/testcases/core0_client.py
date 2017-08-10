@@ -132,7 +132,7 @@ class Client:
         self.client.system("tailf /etc/nsswitch.conf")
         processes = self.get_processes_list()
         for process in processes:
-            if process['cmdline'] == "tailf /etc/nsswitch.conf":
+            if "/etc/nsswitch.conf" in process['cmdline']:
                 return process['pid']
         return False
 
