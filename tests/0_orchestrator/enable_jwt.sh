@@ -2,10 +2,10 @@ JSVERSION=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
 ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)
 
 # which branch will be used for 0-core
-VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $TRAVIS_BRANCH | wc -l)
+VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $CORE_0_BRANCH | wc -l)
 if [ $VL == 1 ]
 then
-  CORE0_BRANCH=$TRAVIS_BRANCH
+  CORE0_BRANCH=$CORE0_BRANCH
 else
   CORE0_BRANCH=master
 fi
