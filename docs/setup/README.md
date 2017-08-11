@@ -17,7 +17,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 ## Create a JumpScale9 Docker container
 
 Create the Docker container with JumpScale9 development environment by following the documentation at https://github.com/Jumpscale/developer#jumpscale-9.
-> **Important:** Make sure you set the `GIGBRANCH` environment variable to **master** before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
+> **Important:** Make sure you set the `GIGBRANCH` environment variable to **9.1.1** before running `jsinit.sh`. This version of 0-orchestrator will only work with this version of JumpScale.
 
 > **Important:**: Make sure to build the js9 docker with `js9_build -l` and not directly start the docker with `js9_start -b` cause this will not install all the requires libraries.
 
@@ -53,7 +53,7 @@ This script takes the following parameters:
 So:
 ```bash
 cd /tmp
-export BRANCH="master"
+export BRANCH="1.1.0-alpha-7"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
@@ -118,17 +118,17 @@ In order for the Orchestrator to know which flists and version of JumpScale to u
 configuration__main:
   configurations:
   - key: '0-core-version'
-    value: 'master'
+    value: '1.1.0-alpha-7'
   - key: 'js-version'
-    value: 'master'
+    value: '9.1.1'
   - key: 'gw-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-master.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-1.1.0-alpha-7.flist'
   - key: 'ovs-flist'
     value: 'https://hub.gig.tech/gig-official-apps/ovs.flist'
   - key: '0-disk-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-disk-1.1.0-alpha-7.flist'
   - key: '0-statscollector-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-statscollector-1.1.0-alpha-7.flist'
   - key: 'jwt-token'
     value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
@@ -204,11 +204,11 @@ ays run create -y
 
 The final step is to boot your Zero-OS nodes into your ZeroTier network.
 
-Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
+Via iPXE from the following URL: `https://bootstrap.gig.tech/ipxe/1.1.0-alpha-7/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
-Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/master/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
+Or download your ISO from the following URL: `https://bootstrap.gig.tech/iso/1.1.0-alpha-7/${ZEROTIERNWID}/organization="${ITSYOUONLINEORG}"`
 
-See to the [0-core documentation](https://github.com/zero-os/0-core/blob/master/docs/booting) for more information on booting Zero-OS.
+See to the [0-core documentation](https://github.com/zero-os/0-core/blob/1.1.0-alpha-7/docs/booting) for more information on booting Zero-OS.
 
 ## Setup Statistics Monitoring
 
@@ -216,7 +216,7 @@ To have statistics monitoring, you need to have an InfluxDB and Grafana running 
 
 The [0-stats-collector](https://github.com/zero-os/0-statscollector) reads the statistics from 0-core and dumps them in InfluxDB, fron which Grafana can visualize the data.
 
-The fastest way to achieve this is to install the [statsdb](https://github.com/zero-os/0-orchestrator/tree/master/templates/statsdb) AYS service on any of the nodes. This service will install both InfluxDB and Grafana. Once installed, it will iterate all nodes and install the 0-stat-collector on them.
+The fastest way to achieve this is to install the [statsdb](https://github.com/zero-os/0-orchestrator/tree/1.1.0-alpha-7/templates/statsdb) AYS service on any of the nodes. This service will install both InfluxDB and Grafana. Once installed, it will iterate all nodes and install the 0-stat-collector on them.
 
 Example of the statsdb blueprint:
 ```yaml
@@ -235,7 +235,7 @@ The port will be the port on which InfluxDB will run. Executing this blueprint w
 
 To start deploying storage clusters, vdisks, and vms, [etcd](https://github.com/coreos/etcd) cluster should be deployed first since configurations are stored in etcd.
 
-The fastest way to deploy `etcd cluster` is to install the [etcd_cluster](https://github.com/zero-os/0-orchestrator/tree/master/templates/etcd_cluster) AYS service. This service basically will install the maximum odd number of etcds, which is one per node, on the list of nodes provided in the blueprint
+The fastest way to deploy `etcd cluster` is to install the [etcd_cluster](https://github.com/zero-os/0-orchestrator/tree/1.1.0-alpha-7/templates/etcd_cluster) AYS service. This service basically will install the maximum odd number of etcds, which is one per node, on the list of nodes provided in the blueprint
 
 Example of the etcd blueprint:
 ```yaml
