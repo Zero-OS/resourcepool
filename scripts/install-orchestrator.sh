@@ -34,6 +34,11 @@ if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
   echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
   echo "  DOMAIN: the domain to use for caddy."
   echo "  --development: an optional parameter to use self signed certificates."
+  echo ""
+  echo "Moreover, you can add (only at the end of the command) theses optional arguments:"
+  echo ""
+  echo "  --core: branch name specifically for 0-core"
+  echo "  --orchestrator: branch name specifically for 0-orchestrator"
   echo
   exit 1
 fi
@@ -45,10 +50,11 @@ ZEROTIERTOKEN=$1
 shift
 ITSYOUONLINEORG=$1
 shift
-DOMAIN=$1
 
-if [ -n "$DOMAIN" ]; then
+if [ "${1:0:1}" != "-" ]; then
+    DOMAIN=$1
     shift
+
     if [ "$1" = "--development" ]; then
         DEVELOPMENT=true
         shift
@@ -59,7 +65,36 @@ else
     DEVELOPMENT=true
 fi
 
-# NOTE that you can't add any arguments after here, if you want to do so, please use argparse
+# With the current argument parsing implementation,
+# to keep backward compatibility, any extra argument need to
+# be parsed only right now
+
+CORE_BRANCH=${BRANCH}
+ORCHESTRATOR_BRANCH=${BRANCH}
+
+OPTS=$(getopt -o c:o: --long core:,orchestrator: -n 'parse-options' -- "$@")
+if [ $? != 0 ]; then
+    echo "Failed parsing options." >&2
+    exit 1
+fi
+
+while true; do
+    case "$1" in
+        -c | --core)          CORE_BRANCH=${2};                shift 2 ;;
+        -o | --orchestrator)  ORCHESTRATOR_BRANCH=${2};        shift 2 ;;
+        -- ) shift; break ;;
+        * ) break ;;
+    esac
+done
+
+echo "[+] global branch: ${BRANCH}"
+echo "[+] zerotier network id: ${ZEROTIERNWID}"
+echo "[+] zerotier token: ${ZEROTIERTOKEN}"
+echo "[+] itsyou.online organization: ${ITSYOUONLINEORG}"
+echo "[+] optional domain: ${DOMAIN}"
+echo "[+] development mode: ${DEVELOPMENT}"
+echo "[+] 0-core branch: ${CORE_BRANCH}"
+echo "[+] 0-orchestrator branch: ${ORCHESTRATOR_BRANCH}"
 
 CODEDIR="/root/gig/code"
 if [ "$GIGDIR" != "" ]; then
@@ -90,8 +125,8 @@ if ! zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | egrep -q 'OK PRIVATE|O
 fi
 
 echo "[+] Installing orchestrator dependencies"
-pip3 install -U "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
-pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${BRANCH}#subdirectory=pyclient" >> ${logfile} 2>&1
+pip3 install -U "git+https://github.com/zero-os/0-core.git@${CORE_BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
+pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${ORCHESTRATOR_BRANCH}#subdirectory=pyclient" >> ${logfile} 2>&1
 pip3 install -U zerotier >> ${logfile} 2>&1
 python3 -c "from js9 import j; j.tools.prefab.local.development.golang.install()" >> ${logfile} 2>&1
 mkdir -p /usr/local/go >> ${logfile} 2>&1
@@ -107,7 +142,7 @@ if [ ! -d "0-orchestrator" ]; then
 fi
 pushd 0-orchestrator
 git pull
-git checkout ${BRANCH} >> ${logfile} 2>&1
+git checkout ${ORCHESTRATOR_BRANCH} >> ${logfile} 2>&1
 popd
 
 if [ ! -d "0-core" ]; then
@@ -115,7 +150,7 @@ if [ ! -d "0-core" ]; then
 fi
 pushd 0-core
 git pull
-git checkout ${BRANCH} >> ${logfile} 2>&1
+git checkout ${CORE_BRANCH} >> ${logfile} 2>&1
 popd
 
 echo "[+] Start AtYourService server"
