@@ -100,6 +100,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// CreateContainer is the handler for POST /nodes/{nodeid}/containers
 	// Create a new container
 	CreateContainer(http.ResponseWriter, *http.Request)
+	// Update container is the handler for the PUT /nodes/{nodeid}/containers/{containername}
+	// Update existing container
+	UpdateContainer(http.ResponseWriter, *http.Request)
 	// GetCPUInfo is the handler for GET /nodes/{nodeid}/cpus
 	// Get detailed information of all CPUs in the node
 	GetCPUInfo(http.ResponseWriter, *http.Request)
@@ -356,6 +359,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/stop", i.StopContainer).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.DeleteContainer).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.GetContainer).Methods("GET")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.UpdateContainer).Methods("PUT")
 	r.HandleFunc("/nodes/{nodeid}/containers", i.ListContainers).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers", i.CreateContainer).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/cpus", i.GetCPUInfo).Methods("GET")

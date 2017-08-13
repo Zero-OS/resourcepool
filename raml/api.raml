@@ -888,6 +888,17 @@ types:
               body:
                 application/json:
                   type: Container
+        put:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: UpdateContainer
+          description: Updates the container Nic
+          body:
+            application/json:
+              type: ContainerUpdate
+          responses:
+            204:
+              description: Virtual machine updated successfully
         /start:
           post:
             (AYSBased):
