@@ -5,8 +5,10 @@ import time
 import sys
 import subprocess
 import requests
+import threading
+import queue
 
-
+hostname_qu = queue.Queue()
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
     project = manager.list_projects()[0]
     ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id,
@@ -39,6 +41,7 @@ def delete_devices(manager, hostname):
 
 
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
+    global hostname_qu
     hostname = 'orch{}-travis'.format(randint(100, 300))
     try:
         device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
@@ -56,7 +59,8 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
             print(' [*] Waiting The new machine is activation ....')
             time.sleep(5)
     time.sleep(5)
-    return hostname
+    hostname_qu.put(hostname)
+
 
 def create_zerotire_nw(zt_token):
     print(' [*] Create new zerotier network ... ')
@@ -101,9 +105,19 @@ if __name__ == '__main__':
         if flag != '1':
             CORE_0_BRANCH = 'master'
 
+        threads = []
+        for i in range(3):
+            thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org),
+                                      kwargs={'branch': '{}'.format(CORE_0_BRANCH)})
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
+
         file_node = open('ZT_HOSTS', 'w')
-        for i in range(4):
-            hostname = create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch=CORE_0_BRANCH)
+        for thread in threads:
+            hostname = hostname_qu.get()
             file_node.write(hostname)
             file_node.write('\n')
         file_node.close()
