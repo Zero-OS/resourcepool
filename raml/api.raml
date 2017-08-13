@@ -40,6 +40,28 @@ types:
             body:
               application/json:
                 type: HealthCheck[]
+  /storageclusters:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: List all storage clusters health
+      displayName: ListStorageClustersHealth
+      responses:
+        200:
+          body:
+            application/json:
+              type: StorageClusterHealthCheck[]
+    /{storageclusterid}:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Get detailed information of a stoage cluster health
+        displayName: ListStorageClusterHealth
+        responses:
+          200:
+            body:
+              application/json:
+                type: HealthCheck[]
 
 
 /nodes:

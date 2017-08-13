@@ -4,7 +4,7 @@
     <title>Zero-OS Orchestrator RESTful API API documentation</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="generator" content="https://github.com/raml2html/raml2html 6.4.0">
+    <meta name="generator" content="https://github.com/raml2html/raml2html 6.4.1">
 
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/styles/default.min.css">
@@ -1038,6 +1038,895 @@ details in a user&#39;s account without getting their password.</p>
 
                 
                   <div class="tab-pane" id="health_nodes__nodeid__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_health_storageclusters">
+          <span class="parent">/health</span>/storageclusters
+        </a>
+
+        <span class="methods">
+          
+            <a href="#health_storageclusters_get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_health_storageclusters" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#health_storageclusters_get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>List all storage clusters health</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="health_storageclusters_get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/health</span>/storageclusters
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>List all storage clusters health</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+
+                
+                  <li class="active">
+                    <a href="#health_storageclusters_get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#health_storageclusters_get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+
+                
+                  <div class="tab-pane active" id="health_storageclusters_get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: array of StorageClusterHealthCheck</p>
+                              
+                            
+                          
+
+                          
+
+                          
+                            
+
+                            
+                              <p><strong>Items</strong>: StorageClusterHealthCheck</p>
+
+                              
+                                <div class="items">
+                                  
+                                    <ul>
+                                      
+                                        <li>
+  <strong>label</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>status</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                    </ul>
+                                  
+
+                                  
+                                  
+                                  
+                                </div>
+                              
+                            
+                          
+
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="health_storageclusters_get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_health_storageclusters__storageclusterid_">
+          <span class="parent">/health/storageclusters</span>/{storageclusterid}
+        </a>
+
+        <span class="methods">
+          
+            <a href="#health_storageclusters__storageclusterid__get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_health_storageclusters__storageclusterid_" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#health_storageclusters__storageclusterid__get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Get detailed information of a stoage cluster health</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="health_storageclusters__storageclusterid__get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/health/storageclusters</span>/{storageclusterid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Get detailed information of a stoage cluster health</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#health_storageclusters__storageclusterid__get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#health_storageclusters__storageclusterid__get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#health_storageclusters__storageclusterid__get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="health_storageclusters__storageclusterid__get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>storageclusterid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="health_storageclusters__storageclusterid__get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: array of HealthCheck</p>
+                              
+                            
+                          
+
+                          
+
+                          
+                            
+
+                            
+                              <p><strong>Items</strong>: HealthCheck</p>
+
+                              
+                                <div class="items">
+                                  
+                                    <ul>
+                                      
+                                        <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>name</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>resource</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>messages</strong>:
+
+  
+    <em>required (array of Message)
+    </em>
+  
+
+
+
+  
+    
+
+    
+      <p><strong>Items</strong>: Message</p>
+
+      
+        <div class="items">
+          
+            <ul>
+              
+                <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+              
+                <li>
+  <strong>status</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+              
+                <li>
+  <strong>text</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+              
+            </ul>
+          
+
+          
+          
+          
+        </div>
+      
+    
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>category</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>interval</strong>:
+
+  
+    <em>required (float)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>lasttime</strong>:
+
+  
+    <em>required (float)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>stacktrace</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                    </ul>
+                                  
+
+                                  
+                                  
+                                  
+                                </div>
+                              
+                            
+                          
+
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="health_storageclusters__storageclusterid__get_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>

@@ -1,4 +1,4 @@
-@0xae3b6c9ecf874190;
+@0xb238d2ae3aa01ee0;
 
 struct Schema {
     size @0 :UInt64;
@@ -16,6 +16,7 @@ struct Schema {
         halted @0;
         running @1;
         rollingback @2;
+        orphan @3;
     }
 
     enum VdiskType {
