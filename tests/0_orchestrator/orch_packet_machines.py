@@ -56,8 +56,8 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
             print(' [*] The new machine is active now.')
             break
         else:
-            print(' [*] Waiting The new machine is activation ....')
-            time.sleep(5)
+            print(' [*] Waiting The activation of the new machine ....')
+            time.sleep(10)
     time.sleep(5)
     hostname_qu.put(hostname)
 
@@ -94,9 +94,10 @@ if __name__ == '__main__':
             print(' [*] Delete %s machine ' % hostname)
             delete_devices(manager, hostname)
     else:
-        CORE_0_BRANCH = sys.argv[6]
         zt_token = sys.argv[3]
         itsyouonline_org = sys.argv[4]
+        CORE_0_BRANCH = sys.argv[5]
+        NUMBER_OF_MACHINES = sys.argv[6]
         command = 'git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(CORE_0_BRANCH)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
@@ -106,7 +107,7 @@ if __name__ == '__main__':
             CORE_0_BRANCH = 'master'
 
         threads = []
-        for i in range(3):
+        for i in range(NUMBER_OF_MACHINES):
             thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org),
                                       kwargs={'branch': '{}'.format(CORE_0_BRANCH)})
             thread.start()
