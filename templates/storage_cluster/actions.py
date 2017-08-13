@@ -291,11 +291,11 @@ def list_vdisks(job):
 
         etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
-        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadata'])
+        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
-            raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
+            raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
         return {vdisk.strip("lba:") for vdisk in result.stdout.splitlines()}
     finally:
         container.stop()
@@ -307,27 +307,30 @@ def monitor(job):
     job.context['token'] = get_jwt_token_from_job(job)
     service = job.service
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='cluster_%s' % service.name, die=False)
+    if service.model.data.clusterType == "tlog":
+        return
+
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
-        healthcheck_service = healthcheck_actor.serviceCreate(instance='cluster_%s' % service.name)
+        healthcheck_service = healthcheck_actor.serviceCreate(instance='storage_cluster_%s' % service.name)
         service.consume(healthcheck_service)
 
     # Get orphans
-    vdisks = list_vdisks(job)
-    vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer=service.name)
-    vdisk_names = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
+    total_disks = list_vdisks(job)
+    vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer="%s!%s" % (service.model.role, service.name))
+    nonorphans = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
+    old_orphans = {disk.name for disk in vdisk_services if disk.model.data.status == "orphan"}
 
-    old_orphans = set(vdisk_services) - vdisk_names
-    new_orphans = vdisk_names - vdisks
-    total_orphans = new_orphans + old_orphans
+    new_orphans = total_disks - nonorphans
+    total_orphans = new_orphans | old_orphans
 
     for orphan in new_orphans:
         actor = service.aysrepo.actorGet('vdisk')
         args = {
             "status": "orphan",
             "timestamp": int(time.time()),
-            "storagecluster": service.name,
+            "storageCluster": service.name,
         }
         actor.serviceCreate(instance=orphan, args=args)
 
