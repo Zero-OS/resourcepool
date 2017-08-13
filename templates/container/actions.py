@@ -136,8 +136,8 @@ def update(service, logger, token, updated_nics):
     current_nics = service.model.data.to_dict()['nics']
 
     def get_nic_id(nic):
-        # use combination of type and name as identifier
-        return "{}:{}".format(nic['type'], nic['name'])
+        # use combination of type and id as identifier, cannot use name as it is optional and not unique while id is.
+        return "{}:{}".format(nic['type'], nic['id'])
 
     # find the index of the nic in the list returned by client.container.list()
     def get_nic_index(nic):
@@ -148,7 +148,6 @@ def update(service, logger, token, updated_nics):
                 logger.info("nic with id {} found on index {}".format(nic_id, i))
                 return i
         raise j.exceptions.RuntimeError("Nic with id {} not found".format(nic_id))
-
 
     ids_current_nics = [get_nic_id(n) for n in current_nics]
     ids_updated_nics = [get_nic_id(n) for n in updated_nics]

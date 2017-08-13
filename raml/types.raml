@@ -572,6 +572,13 @@ CreateContainer:
       required: false
       description: A Url to the ardb storage to use to mount the root plist
 
+ContainerUpdate:
+  type: object
+  properties:
+    nics:
+      description: List of NIC specifications
+      type: ContainerNIC[]
+
 JobListItem:
   type: object
   description: Result object of a job
