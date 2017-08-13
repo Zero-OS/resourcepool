@@ -67,6 +67,11 @@ def save_config(job):
     service = job.service
 
     templateStorageclusterId = ""
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = random.choice(etcd_cluster.producers['etcd'])
+    etcd = ETCD.from_ays(etcd, job.context['token'])
+
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
         base_config = {
@@ -78,10 +83,6 @@ def save_config(job):
         }
         yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 
-        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-        etcd = random.choice(etcd_cluster.producers['etcd'])
-
-        etcd = ETCD.from_ays(etcd, job.context['token'])
         result = etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
         if result.state != "SUCCESS":
             raise RuntimeError("Failed to save vdisk %s config" % service.name)
