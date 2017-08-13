@@ -52,6 +52,9 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
         if dev.state == 'active':
             print(' [*] The new machine is active now.')
             break
+        else:
+            print(' [*] Waiting The new machine is activation ....')
+            time.sleep(5)
     time.sleep(5)
     return hostname
 
