@@ -97,7 +97,7 @@ if __name__ == '__main__':
         zt_token = sys.argv[3]
         itsyouonline_org = sys.argv[4]
         CORE_0_BRANCH = sys.argv[5]
-        NUMBER_OF_MACHINES = sys.argv[6]
+        NUMBER_OF_MACHINES = int(sys.argv[6])
         command = 'git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(CORE_0_BRANCH)
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
@@ -107,6 +107,7 @@ if __name__ == '__main__':
             CORE_0_BRANCH = 'master'
 
         threads = []
+        print(' [*] Number of machines : %s' % str(NUMBER_OF_MACHINES))
         for i in range(NUMBER_OF_MACHINES):
             thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org),
                                       kwargs={'branch': '{}'.format(CORE_0_BRANCH)})
