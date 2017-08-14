@@ -1,62 +1,106 @@
-JSVERSION=$(js9 "print(j.core.state.versions.get('JumpScale9')[1:])")
-ZEROTIERIP=$(ip addr show zt0 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)
+zerotier_network=$1
+zerotier_token=$2
+js_branch=$3
+travis_branch=$4
+core_0_branch=$5
+client_id=$6
+client_secret=$7
+organization=$8
 
-# which branch will be used for 0-core
-VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $TRAVIS_BRANCH | wc -l)
-if [ $VL == 1 ]
-then
-  CORE0_BRANCH=$TRAVIS_BRANCH
-else
-  CORE0_BRANCH=master
-fi
 
-#Generate JWT
-echo 'cl_id='$ITSYOUONLINE_CL_ID
-echo 'cl_secret='$ITSYOUONLINE_CL_SECRET
-echo 'organization='$ITSYOUONLINE_ORG
+export_jwt(){
+    jwt=$(ays generatetoken --clientid ${client_id} --clientsecret ${client_secret} --organization ${organization} --validity 3600)
+    eval $jwt
+}
 
-jwt=$(ays generatetoken --clientid $ITSYOUONLINE_CL_ID --clientsecret $ITSYOUONLINE_CL_SECRET --organization $ITSYOUONLINE_ORG --validity 3600)
-echo 'jwt --> '$jwt
-eval $jwt
+export_server_ip(){
+    server_ip=$(ip addr show zt0 | grep 'inet')
+    export server_ip=$(echo ${server_ip} | awk '{print $2}' | awk -F"/" '{print $1}')
+}
 
-echo 'JWT='$JWT
-echo "JSVERSION="$JSVERSION
-echo "CORE0_BRANCH="$CORE0_BRANCH
+export_runnig_nodes(){
+    export nodes=$(curl -H 'Authorization: Bearer '${JWT} -X  GET http://${server_ip}:8080/nodes | python3 -c "import sys, json; print(','.join([str(x['id']) for x in json.load(sys.stdin)]))")
+}
 
+create_bootstrap_blueprint(){
+cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
+bootstrap.zero-os__grid1:
+  zerotierNetID: '${zerotier_network}'
+  zerotierToken: '${zerotier_token}'
+  wipedisks: true
+  networks:
+    - storage
+EOL
+}
+
+create_packet_network_blueprint(){
+ echo "network.publicstorage__storage:" >> /optvar/cockpit_repos/orchestrator-server/blueprints/network.bp
+}
+
+create_configration_blueprint(){
 cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
 configuration__main:
   configurations:
   - key: '0-core-version'
-    value: '${CORE0_BRANCH}'
+    value: '${core_0_branch}'
   - key: 'js-version'
-    value: '${JSVERSION}'
+    value: '${js_branch}'
   - key: 'gw-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-${core_0_branch}.flist'
   - key: 'ovs-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/ovs-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/ovs-${core_0_branch}.flist'
   - key: '0-disk-flist'
-    value: 'https://hub.gig.tech/gig-official-apps/0-disk-1.1.0-alpha-3.flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-disk-${core_0_branch}.flist'
   - key: 'jwt-token'
     value: '${JWT}'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
 EOL
+}
 
-echo ------------
-cat /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp
+create_etcd_cluster_blueprint(){
+cat > /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
+etcd_cluster__myetcd:
+  nodes:
+EOL
+
+for node in ${1//,/ }
+do
+    echo "  - ${node}" >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp
+done 
+
+cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
+actions:
+  - action: install
+EOL
+}
+
+VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $core_0_branch | wc -l)
+if [ $VL == 0 ]
+then
+  core_0_branch=master
+fi
+echo " [*] 0_core_branch " ${core_0_branch}
+
+export_jwt
+export_server_ip
+echo " [*] server IP : " ${server_ip}
+
+create_configration_blueprint
+create_packet_network_blueprint
+create_bootstrap_blueprint
 
 cd /optvar/cockpit_repos/orchestrator-server
-ays reload 
+
 ays blueprint configuration.bp
-ays run create --follow -y
-
+ays blueprint network.bp
+ays service delete -n grid1 -y
 ays blueprint bootstrap.bp
-ays run create --follow -y
 
+echo " [*] sleeping 240 second"
+sleep 240
 
-# kill orchestrator server and start it again using new org
-#tmux kill-window -t orchestrator
-#tmux new-window -n orchestrator
-#tmux send -t orchestrator 'orchestratorapiserver --bind '"${ZEROTIERIP}"':8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server -org orchestrator_org' ENTER
-
-
+export_runnig_nodes
+create_etcd_cluster_blueprint ${nodes}
+ays blueprint etcd_cluster.bp
+ays run create -fy
