@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from random import randint
+from random import randint, choice
 import packet
 import time
 import sys
@@ -17,7 +17,7 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
                                    plan='baremetal_2',
                                    operating_system='custom_ipxe',
                                    ipxe_script_url=ipxe_script_url,
-                                   facility='ams1')
+                                   facility=choice(['ams1', 'nrt1', 'sjc1', 'ewr1']))
     return device
 
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     manager = packet.Manager(auth_token=token)
     if action == 'delete':
         print(' [*] Deleting the g8os machines ..')
-        file_node = open('ZT_HOSTS', 'r')
+        file_node = open('ZT_HOST   S', 'r')
         hosts = file_node.read().split('\n')[:-1]
         for hostname in hosts:
             print(' [*] Delete %s machine ' % hostname)
