@@ -93,10 +93,8 @@ if __name__ == '__main__':
             print(' [*] Delete %s machine ' % hostname)
             delete_devices(manager, hostname)
     else:
-        CORE_0_BRANCH = sys.argv[6]
         zt_token = sys.argv[3]
         itsyouonline_org = sys.argv[4]
-
         CORE_0_BRANCH = sys.argv[5]
         NUMBER_OF_MACHINES = int(sys.argv[6])
         command = 'git ls-remote --heads https://github.com/zero-os/0-core.git {} | wc -l'.format(CORE_0_BRANCH)
