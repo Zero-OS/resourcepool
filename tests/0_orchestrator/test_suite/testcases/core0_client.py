@@ -140,16 +140,9 @@ class Client:
         freeDisks = []
         disks = self.client.disk.list()['blockdevices']
         for disk in disks:
-            if not disk['mountpoint']:
-                if 'children' not in disk.keys():
-                    freeDisks.append('/dev/{}'.format(disk['kname']))
-                else:
-                    for children in disk['children']:
-                        if children['mountpoint']:
-                            break
-                    else:
-                        freeDisks.append('/dev/{}'.format(disk['kname']))
-
+            if 'children' not in disk.keys():
+                freeDisks.append('/dev/{}'.format(disk['kname']))
+                
         return freeDisks
 
     def get_processes_list(self):

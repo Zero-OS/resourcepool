@@ -65,7 +65,7 @@ class TestcasesBase(TestCase):
         nodes_list = [x['id'] for x in response.json() if x['status'] == 'running']
         if nodes_list:
             if except_node is not None and except_node in nodes_list:
-                nodes_list = nodes_list.remove(except_node)
+                nodes_list.remove(except_node)
 
         if len(nodes_list) > 0:
             node_id = nodes_list[random.randint(0, len(nodes_list) - 1)]
