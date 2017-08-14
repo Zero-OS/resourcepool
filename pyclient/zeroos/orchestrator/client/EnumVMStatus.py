@@ -10,3 +10,4 @@ class EnumVMStatus(Enum):
     migrating = "migrating"
     starting = "starting"
     error = "error"
+    networkKilled = "networkKilled"

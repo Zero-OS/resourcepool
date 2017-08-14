@@ -69,8 +69,7 @@ def install(job):
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    vmName = service.name.split('_')[1]
-    vm = service.aysrepo.serviceGet(role='vm', instance=vmName)
+    vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, job.context['token'])
     config = {
@@ -105,7 +104,7 @@ def install(job):
                 -k {k} \
                 -m {m} \
                 -config "{dialstrings}" \
-                '.format(id=service.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
+                '.format(id=vm.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
         if backup:
             cmd += '-with-slave-sync'
         job.logger.info("Starting tlog server: %s" % cmd)

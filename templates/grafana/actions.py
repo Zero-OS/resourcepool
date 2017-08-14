@@ -11,12 +11,16 @@ def get_container(service, force=True):
     return containers[0]
 
 
-def configure_datasources(job, grafana):
-    service = job.service
-    influxes = service.producers.get('influxdb')
+def add_datasources(grafana, influxes):
     for influx in influxes:
         for i, database in enumerate(influx.model.data.databases):
             grafana.add_data_source(database, influx.name, influx.parent.model.data.redisAddr, influx.model.data.port, i)
+
+
+def delete_datasources(grafana, influxes):
+    for influx in influxes:
+        for i, database in enumerate(influx.model.data.databases):
+            grafana.delete_data_source(influx.name)
 
 
 def init(job):
@@ -51,7 +55,7 @@ def start(job):
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
     grafana.start()
     service.model.data.status = 'running'
-    configure_datasources(job, grafana)
+    add_datasources(grafana, service.producers.get('influxdb'))
     service.saveAll()
 
 
@@ -92,26 +96,45 @@ def processChange(job):
         return
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'])
-    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
+    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
 
     if args.get('port'):
+        service.model.data.port = args['port']
         if container_ays.is_running() and grafana.is_running()[0]:
             grafana.stop()
             service.model.data.status = 'halted'
             grafana.port = args['port']
             grafana.start()
+
             service.model.data.status = 'running'
     elif args.get('url'):
+        service.model.data.url = args['url']
         if container_ays.is_running() and grafana.is_running()[0]:
             grafana.stop()
             service.model.data.status = 'halted'
             grafana.url = args['url']
             grafana.start()
             service.model.data.status = 'running'
-
-    service.model.data.port = args['port']
-
-    # @TODO: Handle influxdb list change
+    elif args.get('influxdb'):
+        service.model.data.influxdb = args['influxdb']
+        added = []
+        removed = []
+        new = set(args['influxdb'])
+        old = set(s.name for s in service.producers.get('influxdb'))
+        for name in new - old:
+            s = service.aysrepo.serviceGet(role='influxdb', instance=name)
+            service.consume(s)
+            added.append(s)
+        for name in old - new:
+            s = service.aysrepo.serviceGet(role='influxdb', instance=name)
+            service.model.producerRemove(s)
+            removed.append(s)
+        if container_ays.is_running() and grafana.is_running()[0]:
+            grafana.influxdb = args['influxdb']
+            container = get_container(service)
+            container_ays = Container.from_ays(container, job.context['token'])
+            add_datasources(grafana, added)
+            delete_datasources(grafana, removed)
 
     service.saveAll()
 

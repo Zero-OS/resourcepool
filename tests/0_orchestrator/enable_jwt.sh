@@ -85,6 +85,8 @@ echo " [*] 0_core_branch " ${core_0_branch}
 export_jwt
 export_server_ip
 
+echo " [*] server IP : " ${server_ip}
+
 create_configration_blueprint
 create_packet_network_blueprint
 create_bootstrap_blueprint

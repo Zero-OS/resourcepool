@@ -92,7 +92,7 @@ def try_authorize(job, logger, netid, member, zerotier):
     # test if we can connect to the new member
     node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
     node.client.testConnectionAttempts = 0
-    node.client.timeout = 10
+    node.client.timeout = 30
     for attempt in range(5):
         try:
             logger.info("connection to g8os with IP: {}".format(zerotier_ip))

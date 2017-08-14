@@ -78,24 +78,37 @@ class Grafana:
             raise RuntimeError('Failed to start grafana.')
 
     def add_data_source(self, database, name, ip, port, count):
-                data = {
-                    'type': 'influxdb',
-                    'access': 'proxy',
-                    'database': database,
-                    'name': name,
-                    'url': 'http://%s:%u' % (ip, port),
-                    'user': 'admin',
-                    'password': 'passwd',
-                    'default': True,
-                }
+        data = {
+            'type': 'influxdb',
+            'access': 'proxy',
+            'database': database,
+            'name': name,
+            'url': 'http://%s:%u' % (ip, port),
+            'user': 'admin',
+            'password': 'passwd',
+            'default': True,
+        }
 
-                now = time.time()
-                while time.time() - now < 10:
-                    try:
-                        self.client.addDataSource(data)
-                        if len(self.client.listDataSources()) == count + 1:
-                            continue
-                        break
-                    except requests.exceptions.ConnectionError:
-                        time.sleep(1)
-                        pass
+        now = time.time()
+        while time.time() - now < 10:
+            try:
+                self.client.addDataSource(data)
+                if len(self.client.listDataSources()) == count + 1:
+                    continue
+                break
+            except requests.exceptions.ConnectionError:
+                time.sleep(1)
+                pass
+
+    def delete_data_source(self, name):
+        count = len(self.client.listDataSources())
+        now = time.time()
+        while time.time() - now < 10:
+            try:
+                self.client.deleteDataSource(name)
+                if len(self.client.listDataSources()) == count - 1:
+                    continue
+                break
+            except requests.exceptions.ConnectionError:
+                time.sleep(1)
+                pass

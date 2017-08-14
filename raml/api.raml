@@ -40,6 +40,28 @@ types:
             body:
               application/json:
                 type: HealthCheck[]
+  /storageclusters:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: List all storage clusters health
+      displayName: ListStorageClustersHealth
+      responses:
+        200:
+          body:
+            application/json:
+              type: StorageClusterHealthCheck[]
+    /{storageclusterid}:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        description: Get detailed information of a stoage cluster health
+        displayName: ListStorageClusterHealth
+        responses:
+          200:
+            body:
+              application/json:
+                type: HealthCheck[]
 
 
 /nodes:
@@ -866,6 +888,17 @@ types:
               body:
                 application/json:
                   type: Container
+        put:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: UpdateContainer
+          description: Updates the container Nic
+          body:
+            application/json:
+              type: ContainerUpdate
+          responses:
+            204:
+              description: Virtual machine updated successfully
         /start:
           post:
             (AYSBased):
