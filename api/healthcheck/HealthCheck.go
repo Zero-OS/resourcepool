@@ -22,6 +22,11 @@ type NodeHealthCheck struct {
 	Status   string `json:"status" validate:"nonzero"`
 }
 
+type StorageClusterHealthCheck struct {
+	Label  string `yaml:"label" json:"label" validate:"nonzero"`
+	Status string `yaml:"status" json:"status" validate:"nonzero"`
+}
+
 type Message struct {
 	ID     string `json:"id" validate:"nonzero"`
 	Status string `json:"status" validate:"nonzero"`
@@ -29,9 +34,13 @@ type Message struct {
 }
 
 type Node struct {
-	Hostname     string        `json:"hostname" validate:"nonzero"`
-	ID           string        `json:"id" validate:"nonzero"`
-	HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
+	Hostname string `json:"hostname" validate:"nonzero"`
+	ID       string `json:"id" validate:"nonzero"`
+}
+
+type StorageCluster struct {
+	Label       string `json:"label" validate:"nonzero"`
+	ClusterType string `json:"clusterType" validate:"nonzero"`
 }
 
 func (s HealthCheck) Validate() error {

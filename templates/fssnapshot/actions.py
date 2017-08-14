@@ -18,7 +18,7 @@ def get_filesystem(job):
     from zeroos.orchestrator.sal.Node import Node
     nodeservice = job.service.parent.parent.parent
     poolname = job.service.parent.parent.name
-    fsname = str(job.ervice.parent.model.data.name)
+    fsname = str(job.service.parent.model.data.name)
     node = Node.from_ays(nodeservice, job.context['token'])
     pool = node.storagepools.get(poolname)
     return pool.get(fsname)
