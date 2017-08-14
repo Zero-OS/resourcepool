@@ -47,7 +47,7 @@ class ContainersAPI(OrchestratorBase):
     @catch_exception_decoration
     def post_containers_containerid_filesystem(self, nodeid, containername, data, params):
         return self.orchestrator_client.nodes.FileUpload(nodeid=nodeid, containername=containername, data=data,
-                                                         query_params=params)
+                                                         query_params=params, content_type='multipart/form-data')
 
     @catch_exception_decoration
     def get_containers_containerid_filesystem(self, nodeid, containername, params):

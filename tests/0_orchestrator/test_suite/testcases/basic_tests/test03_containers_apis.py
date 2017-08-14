@@ -277,12 +277,13 @@ class TestcontaineridAPI(TestcasesBase):
         response = self.containers_api.delete_containers_containerid_jobs_jobid(self.nodeid, self.data['name'], job_id)
         self.assertEqual(response.status_code, 204)
 
+        time.sleep(3)
+        
         self.lg.info(' [*] Check that job deleted from running jobs list.')
         response = self.containers_api.get_containers_containerid_jobs(self.nodeid, self.data['name'])
         self.assertEqual(response.status_code, 200)
         running_jobs_list = response.json()
-        for job in running_jobs_list:
-            self.assertNotEqual(job['id'], job_id)
+        self.assertNotIn(job_id, running_jobs_list)
 
         self.lg.info('Check that job delted from client list.')
         self.assertTrue(self.core0_client.wait_on_container_job_update(self.data['name'],
@@ -462,7 +463,7 @@ class TestcontaineridAPI(TestcasesBase):
         for process in golden_value:
             self.assertNotEqual(process['pid'], process_id)
 
-    @unittest.skip('https://github.com/Jumpscale/go-raml/issues/642')
+
     def test017_post_signal_to_process_in_container(self):
         """ GAT-038
         *get:/node/{nodeid}/containers/containerid/processes/processid Expected: get container details *
