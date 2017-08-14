@@ -87,7 +87,7 @@ if __name__ == '__main__':
     manager = packet.Manager(auth_token=token)
     if action == 'delete':
         print(' [*] Deleting the g8os machines ..')
-        file_node = open('ZT_HOST   S', 'r')
+        file_node = open('ZT_HOSTS', 'r')
         hosts = file_node.read().split('\n')[:-1]
         for hostname in hosts:
             print(' [*] Delete %s machine ' % hostname)
