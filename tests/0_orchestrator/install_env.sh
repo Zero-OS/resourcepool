@@ -8,7 +8,7 @@ JS9_BRANCH=$4
 CORE_0_BRANCH=$5
 
 export SSHKEYNAME=id_rsa
-export GIGBRANCH=master
+export GIGBRANCH=$JS9_BRANCH
 export GIGSAFE=1
 export TERM=xterm-256color
 
@@ -86,7 +86,7 @@ sleep 5
 
 ## install orchestrator
 echo "[#] Installing orchestrator ..."
-ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/master/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
+ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
 
 #passing jwt
 echo "Enabling JWT..."
