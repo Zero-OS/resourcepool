@@ -44,7 +44,7 @@ func (api NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 
 	if uuid == "" {
 		err = fmt.Errorf("VM %s is not found", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err, "")
+		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 

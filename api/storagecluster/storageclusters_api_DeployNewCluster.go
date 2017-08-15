@@ -27,6 +27,17 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
+	if err != nil {
+		errmsg := fmt.Sprintf("error getting storage cluster service by name %s ", reqBody.Label)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		return
+	}
+	if exists {
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A storage cluster with label %s already exists", reqBody.Label), "")
+		return
+	}
+
 	if reqBody.Servers%len(reqBody.Nodes) != 0 {
 		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Amount of servers is not equally divisible by amount of nodes"), "")
 		return
