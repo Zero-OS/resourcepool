@@ -126,17 +126,7 @@ def save_config(job):
         raise RuntimeError("Failed to save template storage")
 
     # push tlog config to etcd
-    if not service.model.data.tlogStoragecluster:
-        # push nbd config to etcd
-        config = {
-            "storageClusterID": service.model.data.storageCluster,
-            "templateStorageClusterID": templateStorageclusterId,
-        }
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
-    else:
+    if service.model.data.tlogStoragecluster:
         config = {
             "storageClusterID": service.model.data.tlogStoragecluster,
         }
@@ -147,6 +137,17 @@ def save_config(job):
         result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
         if result.state != "SUCCESS":
             raise RuntimeError("Failed to save tlog conf storage: %s" % service.name)
+
+    # push nbd config to etcd
+    config = {
+        "storageClusterID": service.model.data.storageCluster,
+        "templateStorageClusterID": templateStorageclusterId,
+    }
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+    result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
+    if result.state != "SUCCESS":
+        raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
+
 
 
 def get_cluster_config(job, type="storage"):
@@ -225,10 +226,14 @@ def rollback(job):
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
+    if 'vm' not in service.consumers:
+        raise j.exceptions.Input('Can not rollback a disk that is not attached to a vm')
     service.model.data.status = 'rollingback'
     ts = job.model.args['timestamp']
-
     tlogclusterconfig = get_cluster_config(job, type='tlog')
+    if not tlogclusterconfig:
+        raise j.exceptions.RuntimeError("Can not rollback, there is not tlog for this disk: {}".format(service.name))
+
 
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig['nodes'])
@@ -238,7 +243,7 @@ def rollback(job):
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         k = tlogclusterconfig.pop('k')
         m = tlogclusterconfig.pop('m')
-        cmd = '/bin/zeroctl restore vdisk {vdisk} --config {dialstrings} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
+        cmd = '/bin/zeroctl restore vdisk -f {vdisk} --config {dialstrings} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
                                                                                                                  dialstrings=etcd_cluster.dialstrings,
                                                                                                                  ts=ts, k=k, m=m)
         job.logger.info(cmd)
