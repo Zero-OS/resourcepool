@@ -12,7 +12,7 @@ class TestBridgesAPI(TestcasesBase):
         for container_name in self.created['container']:
             self.containers_api.delete_containers_containerid(self.nodeid, container_name)
         for bridge_name in self.created['bridge']:
-            self.containers_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
+            self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
 
     def test001_create_bridges_with_same_name(self):
         """ GAT-101

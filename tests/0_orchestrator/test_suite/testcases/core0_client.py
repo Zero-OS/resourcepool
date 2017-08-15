@@ -232,7 +232,6 @@ class Client:
             if addresses:
                 address = addresses[0]
                 return address[:address.find('/')]
-        self.lg.info('can\'t find netowrk interface')
         return False
 
     def check_container_vlan_vxlan_ip(self, client, cidr_ip):
@@ -241,10 +240,10 @@ class Client:
             address = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] == cidr_ip]
             if address:
                 return True
-        self.lg('can\'t find netowrk interface')
         return False
 
     def create_ovs_container(self):
+        import ipdb ; ipdb.set_trace()
         containers = self.client.container.find('ovs')
         ovs_exist = [key for key, value in containers.items()]
         if not ovs_exist:
@@ -256,9 +255,9 @@ class Client:
             ovs_client.json('ovs.vlan-ensure', {'master': 'backplane', 'vlan': 2000, 'name': 'vxbackend'})
 
     def get_ip_range(self, ip_range):
-        base = re.findall("^\d{1,3}\.\d{1,3}\.\d{1,3}\.", ip_range[0])
-        start = ip_range[0].split('.')[3]
-        end = ip_range[1].split('.')[3]
+        base = re.findall("^\d{1,3}\.\d{1,3}\.\d{1,3}\.", ip_range[0])[0]
+        start = int(ip_range[0].split('.')[3])
+        end = int(ip_range[1].split('.')[3])
         for i in range(start+1, end):
             ip_range.append(base+str(i))
         return ip_range

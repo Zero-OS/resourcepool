@@ -15,7 +15,7 @@ class TestcontaineridAPI(TestcasesBase):
         for container_name in self.created['container']:
             self.containers_api.delete_containers_containerid(self.nodeid, container_name)
         for bridge_name in self.created['bridge']:
-            self.containers_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
+            self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
 
     def test001_check_coonection_with_False_hostNetworking(self):
         """ GAT-082
@@ -172,7 +172,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
         self.created['bridge'].append(data_bridge['name'])
-        ip_range = [data_bridge['setting']['start'], data_bridge['setting']['start']['end']]
+        ip_range = [data_bridge['setting']['start'], data_bridge['setting']['end']]
 
 
         self.lg.info(' [*] Create 2 containers C1, C2 with created bridge, should succeed.')
@@ -232,14 +232,14 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
         self.created['bridge'].append(data_bridge_1['name'])
-        ip_range1 = [data_bridge_1['setting']['start'], data_bridge_1['setting']['start']['end']]
+        ip_range1 = [data_bridge_1['setting']['start'], data_bridge_1['setting']['end']]
 
         response, data_bridge_2 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq',
                                                                       nat=False)
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
         self.created['bridge'].append(data_bridge_2['name'])
-        ip_range2 = [data_bridge_1['setting']['start'], data_bridge_2['setting']['start']['end']]
+        ip_range2 = [data_bridge_1['setting']['start'], data_bridge_2['setting']['end']]
 
         self.lg.info(' [*] Create container(C1) with (B1), should succeed.')
         nics1 = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"dhcp": True}, "status": "up"}]
@@ -575,8 +575,7 @@ class TestcontaineridAPI(TestcasesBase):
         quota = random.randint(1, 100)
         body = {"name": name, "quota": quota}
         storagepool_name = "%s_fscache" % self.nodeid
-        response = self.storagepools_api.post_storagepools_storagepoolname_filesystems(self.nodeid, storagepool_name,
-                                                                                       body)
+        response = self.storagepools_api.post_storagepools_storagepoolname_filesystems(self.nodeid, storagepool_name, **body)
         self.assertEqual(response.status_code, 201)
         time.sleep(5)
 
@@ -650,7 +649,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response_c1.status_code, 201)
 
 
-        c1_client = self.core0_client.get_container_client(data_c1['data'])
+        c1_client = self.core0_client.get_container_client(data_c1['name'])
         self.core0_client.timeout = 300
         time.sleep(2)
         self.lg.info(" [*] Open server in container port ,should succeed")
