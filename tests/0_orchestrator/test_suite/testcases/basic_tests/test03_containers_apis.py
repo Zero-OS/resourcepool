@@ -5,11 +5,10 @@ from testcases.testcases_base import TestcasesBase
 class TestcontaineridAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
-        if 'test001_list_containers' != self.id().split('.')[2]:
-            self.job_body = {'name': 'yes'}
-            self.lg.info(' [*] Create new container. ')
-            self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid)
-            self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        self.job_body = {'name': 'yes'}
+        self.lg.info(' [*] Create new container. ')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
 
     def tearDown(self):
         self.lg.info(' [*] TearDown: Delete all created container ')
@@ -23,23 +22,18 @@ class TestcontaineridAPI(TestcasesBase):
 
         #. Choose one random node of list of running nodes.
         #. Send get nodes/{nodeid}/containers api request.
-        #. Compare results with golden value.
+        #. Compare results with core0 containers list.
         """
-        running_containers_list = []
         self.lg.info('Send get nodes/{nodeid}/containers api request.')
         response = self.containers_api.get_containers(self.nodeid)
         self.assertEqual(response.status_code, 200)
-        self.lg.info('Compare results with golden value.')
-        containers_list = response.json()
-        for container in containers_list:
-            if container['status'] == "running":
-                running_containers_list.append(container)
-        golden_value_list = self.core0_client.client.container.list()
-        self.assertEqual(len(running_containers_list), len(golden_value_list))
-        for container in running_containers_list:
-            if container['name']:
-                self.assertTrue(self.core0_client.client.container.find(container['name']),
-                                'container %s not in golden value ' % container['name'])
+        data = {
+            "flist": self.data['flist'],
+            "hostname": self.data['hostname'],
+            "name": self.data['name'],
+            "status": "running"
+        }
+        self.assertIn(data, response.json())
 
     def test002_create_containers(self):
         """ GAT-023
