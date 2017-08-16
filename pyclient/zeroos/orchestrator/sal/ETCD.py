@@ -32,7 +32,7 @@ class EtcdCluster:
 class ETCD:
     """etced server"""
 
-    def __init__(self, name, container, serverBind, clientBind, peers, data_dir='/mnt/data'):
+    def __init__(self, name, container, serverBind, clientBind, peers, data_dir='/mnt/data', password=None):
         self.name = name
         self.container = container
         self.serverBind = serverBind
@@ -40,6 +40,7 @@ class ETCD:
         self.data_dir = data_dir
         self.peers = ",".join(peers)
         self._ays = None
+        self._password = None
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -54,6 +55,7 @@ class ETCD:
             clientBind=service.model.data.clientBind,
             data_dir=service.model.data.homeDir,
             peers=service.model.data.peers,
+            password=password
         )
 
     def start(self):
@@ -87,3 +89,33 @@ class ETCD:
           --endpoints {etcd} \
           put {key} "{value}"'.format(etcd=self.clientBind, key=key, value=value)
         return self.container.client.system(cmd, env={"ETCDCTL_API": "3"}).get()
+
+
+    def recover(self, backup_dir, old_container, new_container):
+        from .Node import Node
+        from Container import Container
+        
+        # client for new node and for new conainer and root path of that container
+        new_container_node = Node.from_ays(new_container.parent, password=self._password)
+        new_container_client = Container.from_ays(new_container, password=self._password)
+        new_container_path = new_container_node.container.list()[new_container_client.container]['container']['arguments']['root']
+
+        # client for old node and root path to old container
+        old_container_node = Node.from_ays(old_container.parent, password=self._password)        
+        old_container_path = old_container_node.container.list()[self.container.container]['container']['arguments']['root']
+        
+        self.container.client.system("/bin/etcdctl backup --data-dir %s --backup-dir %s " % (self.data_dir, 
+                                                                                             backupdir)).get()
+
+        def walk(root):
+            for path in self.container.client.filesystem.list(root):
+                full_path = "%s/%s" % (root, path)
+                if not path['is_dir']:
+                    new_container_node.client.filesystem.move("%s/%s" % (old_container_path, full_path),
+                                                              "%s/%s" % (new_container_path, self.data_dir))
+                    continue
+                new_container_node.client.filesystem.mkdir(full_path)
+                walk(full_path)
+
+        walk(self.data_dir)
+        return
