@@ -48,22 +48,25 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check that ovs exists for vlans and vxlans
+	container := client.Container(cl)
+	tags := []string{"ovs"}
+	containers, err := container.Find(tags)
+	ovs := len(containers) == 0
+
 	for _, nic := range reqBody.Nics {
 		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
 			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
-		if nic.Type == EnumContainerNICTypevlan {
-			container := client.Container(cl)
-			tags := []string{"ovs"}
-			containers, err := container.Find(tags)
+		if nic.Type == EnumContainerNICTypevlan || nic.Type == EnumContainerNICTypevxlan {
 			if err != nil {
 				err = fmt.Errorf("Error searching container Tags", containerName)
 				tools.WriteError(w, http.StatusInternalServerError, err, "")
 				return
-			} else if len(containers) == 0 {
+			} else if ovs {
 				err = fmt.Errorf("OVS container needed to run this blueprint", containerName)
-				tools.WriteError(w, http.StatusBadRequest, err, "") // should have beem forbidden but for consistency bad request
+				tools.WriteError(w, http.StatusForbidden, err, "") // should have beem forbidden but for consistency bad request
 				return
 			}
 		}
@@ -73,7 +76,7 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	obj[fmt.Sprintf("container__%s", containerName)] = reqBody
 
 	if _, err := aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj); err != nil {
-		errmsg := fmt.Sprintf("error executing blueprint for container %s creation", containerName)
+		errmsg := fmt.Sprintf("error executing blueprint for container %s update", containerName)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}

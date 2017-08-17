@@ -173,7 +173,10 @@ def update(service, logger, token, updated_nics):
         if get_nic_id(nic_dict) not in ids_current_nics:
             nic_dict.pop('token', None)
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
-            cl.nic_add(container.id, nic_dict)
+            try:
+                cl.nic_add(container.id, nic_dict)
+            except Exception as e:
+                raise j.exceptions.Input(e.__str__())
             if nic.type == 'zerotier':
                 # do extra zerotier configuration
                 zerotier_nic_config(service, logger, container, nic)

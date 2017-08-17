@@ -114,6 +114,17 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 			return job, err
 		}
 	}
+
+	if job.State == "error" {
+		msg := ""
+		for _, log := range job.Logs {
+			if log.Category == "errormsg" {
+				msg = log.Log
+			}
+		}
+		err := fmt.Errorf(msg)
+		return job, err
+	}
 	return job, nil
 }
 
