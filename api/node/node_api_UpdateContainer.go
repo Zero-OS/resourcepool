@@ -6,15 +6,20 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
+	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateContainer is the handler for PUT /nodes/{nodeid}/containers/{containername}
 // Update a new Container
 func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ContainerUpdate
+	aysClient := tools.GetAysConnection(r, api)
+	cl, err := tools.GetConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		return
+	}
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -47,6 +52,20 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
 			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
+		}
+		if nic.Type == EnumContainerNICTypevlan {
+			container := client.Container(cl)
+			tags := []string{"ovs"}
+			containers, err := container.Find(tags)
+			if err != nil {
+				err = fmt.Errorf("Error searching container Tags", containerName)
+				tools.WriteError(w, http.StatusInternalServerError, err, "")
+				return
+			} else if len(containers) == 0 {
+				err = fmt.Errorf("OVS container needed to run this blueprint", containerName)
+				tools.WriteError(w, http.StatusBadRequest, err, "") // should have beem forbidden but for consistency bad request
+				return
+			}
 		}
 	}
 
