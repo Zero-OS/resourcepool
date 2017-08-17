@@ -3,9 +3,10 @@
 struct Schema {
     node @0 :Text; # Pointer to the parent service
     port @1 :UInt32 = 8086; # port to connect to influxdb
-    databases @2: List(Text); # database to dump statistics to
-    container @3 :Text; # Container spawned by this service
-    status @4 :Status;
+    rpcport @2 :UInt32 = 8088; # RPC port for backup and restore
+    databases @3: List(Text); # database to dump statistics to
+    container @4 :Text; # Container spawned by this service
+    status @5 :Status;
 
     enum Status{
         halted @0;

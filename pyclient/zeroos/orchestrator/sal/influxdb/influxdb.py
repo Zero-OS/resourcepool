@@ -6,13 +6,16 @@ from js9 import j
 
 
 class InfluxDB:
-    def __init__(self, container, ip, port):
+    def __init__(self, container, ip, port, rpcport):
         self.container = container
         self.ip = ip
         self.port = port
+        # Only client-server port is forwarded
+        self.rpcport = rpcport
 
     def apply_config(self):
-        influx_conf = templates.render('influxdb.conf', ip=self.ip, port=self.port)
+        influx_conf = templates.render('influxdb.conf', ip=self.ip, port=self.port,
+                                       rpcport=self.rpcport)
         self.container.upload_content('/etc/influxdb/influxdb.conf', influx_conf)
 
     def is_running(self):
