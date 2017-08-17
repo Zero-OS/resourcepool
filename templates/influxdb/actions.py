@@ -38,7 +38,8 @@ def start(job):
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'])
     influx = InfluxDB(
-        container_ays, service.parent.model.data.redisAddr, service.model.data.port)
+        container_ays, service.parent.model.data.redisAddr, service.model.data.port,
+        service.model.data.rpcport)
     influx.start()
     service.model.data.status = 'running'
     influx.create_databases(service.model.data.databases)
@@ -55,7 +56,8 @@ def stop(job):
 
     if container_ays.is_running():
         influx = InfluxDB(
-            container_ays, service.parent.model.data.redisAddr, service.model.data.port)
+            container_ays, service.parent.model.data.redisAddr, service.model.data.port,
+            service.model.data.rpcport)
         influx.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
     service.model.data.status = 'halted'
@@ -86,7 +88,8 @@ def processChange(job):
 
     container = Container.from_ays(container_service, get_jwt_token_from_job(job))
     influx = InfluxDB(
-        container, service.parent.model.data.redisAddr, service.model.data.port)
+        container, service.parent.model.data.redisAddr, service.model.data.port,
+        service.model.data.rpcport)
 
     if args.get('port'):
         if container.is_running() and influx.is_running()[0]:
