@@ -30,6 +30,10 @@ func (api HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if respBody.HealthChecks == nil {
+		respBody.HealthChecks = make([]HealthCheck, 0)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&respBody)
