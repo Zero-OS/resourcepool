@@ -320,7 +320,18 @@ def monitor(job):
     total_disks = list_vdisks(job)
     vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer="%s!%s" % (service.model.role, service.name))
     nonorphans = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
-    old_orphans = {disk.name for disk in vdisk_services if disk.model.data.status == "orphan"}
+
+    old_orphans_services = {disk for disk in vdisk_services if disk.model.data.status == "orphan"}
+
+    old_orphans = set()
+    for orphan_service in old_orphans_services:
+        # Delete orphan vdisk if operator didn't act for 7 days
+        oprhan_time = (int(time.time()) - orphan_service.model.data.timestamp) / (7 * 3600 * 24)
+        if oprhan_time >= 7:
+            j.tools.async.wrappers.sync(orphan_service.executeAction('delete', context=job.context))
+            j.tools.async.wrappers.sync(orphan_service.delete())
+            continue
+        old_orphans.add(orphan_service.name)
 
     new_orphans = total_disks - nonorphans
     total_orphans = new_orphans | old_orphans
