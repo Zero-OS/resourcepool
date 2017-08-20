@@ -14,23 +14,32 @@ class QemuVMLogs(HealthCheckRun):
         self.node = node
 
     def run(self):
+        search_phrases = ['error', 'failed']
         try:
             vmlogpath = "/var/log/libvirt/qemu/{vm_name}.log"
             domains_list = []
             # go for multiprocessing.
             results = []
-
+            
             def report_domain(domain):
                 logpath = vmlogpath.format(vm_name=domain)
                 if self.node.client.filesystem.exists(logpath):
                     out = self.node.client.system('tail %s' % logpath).get()
                     last10 = out.stdout.splitlines()
                     for line in last10:
-                        if 'error' in line.lower():
-                            message_id = hashlib.md5(str.encode(line)).hexdigest()
-                            self.add_message(id=message_id, status='ERROR', text=line)
+                        for phrase in search_phrases:
+                            if phrase in line.lower():
+                                message_id = hashlib.md5(str.encode(line)).hexdigest()
+                                results.append(message_id)
+                                self.add_message(id=message_id, status='ERROR', text=line)
+                                return
 
-            map(report_domain, domains_list)
+            for machine in self.node.client.kvm.list():
+                name = machine.get('name')
+                if name:
+                    domains_list.append(name)
+                
+            list(map(report_domain, domains_list))
 
             if len(results) == 0:
                 message = 'QEMU Logs are OK.'
