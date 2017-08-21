@@ -33,44 +33,51 @@ def get_cluster(job):
 def get_disks(job, nodes):
     service = job.service
     availabledisks = get_availabledisks(job, nodes)
-    available_metadisks = None
-    if service.model.data.diskType != service.model.data.metadiskType:
-        available_metadisks = get_availabledisks(job, nodes, metadata=True)
 
-    serverpernode = int(service.model.data.nrServer / len(nodes))
-    diskpernode = serverpernode * 3 if not available_metadisks else serverpernode * 2
+    diskType = service.model.data.diskType
+    stordiskType = service.model.data.stordiskType
+    stormetadiskType = service.model.data.stormetadiskType
+
+    disktypes = [diskType, stordiskType, stormetadiskType]
+
+    diskmap = {}
+    for disktype in disktypes:
+        if disktype not in diskmap:
+            diskmap[disktype] = get_availabledisks(job, nodes, disktype=disktype)
+
+        if diskmap[disktype].get("disknumber"):
+            diskmap[disktype]["disknumber"] += service.model.data.nrServer
+            continue
+        diskmap[disktype]["disknumber"] = service.model.data.nrServer
 
     # validate amount of disks and removdiskpernodee unneeded disks
+    serverpernode = service.model.data.nrServer // len(nodes)
     if service.model.data.nrServer % len(nodes) != 0:
         raise j.exceptions.Input("Amount of servers is not equally devidable by amount of nodes")
 
-    for node, disks in availabledisks.items():
-        if len(disks) < diskpernode:
-            raise j.exceptions.Input("Not enough available disks on node {}".format(node))
-        availabledisks[node] = disks[:diskpernode]
+    storagedisks = {}
+    zerostordisks = {}
+    zerometadisks = {}
+    for key, value in diskmap.items():
+        disklen = value.pop("disknumber")
+        diskpernode = (disktypes.count(key) * service.model.data.nrServer) // len(nodes)
 
-    if available_metadisks:
-        for node, disks in available_metadisks.items():
-            if len(disks) < serverpernode:
+        for node, disks in value.items():
+            if disklen < diskpernode:
                 raise j.exceptions.Input("Not enough available disks on node {}".format(node))
-            available_metadisks[node] = disks[:serverpernode]
 
-    for node in nodes:
-        if node.name not in availabledisks:
-            raise j.exceptions.Input("Not enough available disks on node {}".format(node.name))
-        if available_metadisks and node.name not in available_metadisks:
-            raise j.exceptions.Input("Not enough available disks on node {}".format(node.name))
+            if key == diskType:
+                storagedisks[node] = disks[:serverpernode]
+            disks = disks[serverpernode:]
 
-    disksize = len(availabledisks[node.name]) // 3 if not available_metadisks else len(availabledisks) // 2
-    storgedisks = {node: disks[:disksize] for node, disks in availabledisks.items()}
-    if available_metadisks:
-        zerostordisks = {node: disks[disksize:] for node, disks in availabledisks.items()}
-        return storgedisks, zerostordisks, available_metadisks
+            if key == stordiskType:
+                zerostordisks[node] = disks[:serverpernode]
+            disks = disks[serverpernode:]
 
-    disksize = len(availabledisks) // 3
-    zerostordisks = {node: disks[disksize:disksize*2] for node, disks in availabledisks.items()}
-    available_metadisks = {node: disks[-disksize:] for node, disks in availabledisks.items()}
-    return storgedisks, zerostordisks, available_metadisks
+            if key == stormetadiskType:
+                zerometadisks[node] = disks[:serverpernode]
+
+    return storagedisks, zerostordisks, zerometadisks
 
 
 def init(job):
@@ -91,10 +98,12 @@ def init(job):
     fsactor = service.aysrepo.actorGet("filesystem")
     containeractor = service.aysrepo.actorGet("container")
     storageEngineActor = service.aysrepo.actorGet("storage_engine")
+    zerostorActor = service.aysrepo.actorGet("zerostor")
+
     filesystems = []
     storageEngines = []
 
-    def create_server(node, disk, baseport, tcp, variant='data'):
+    def create_server(node, disk, baseport, tcp, variant='data', metadisk=None):
         diskmap = [{'device': disk.devicename}]
         args = {
             'node': node.name,
@@ -105,6 +114,7 @@ def init(job):
         storagepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, disk.name)
         spservice = spactor.serviceCreate(instance=storagepoolname, args=args)
         service.consume(spservice)
+
         containername = '{}_{}_{}'.format(storagepoolname, variant, baseport)
         # adding filesystem
         args = {
@@ -113,6 +123,46 @@ def init(job):
         }
         filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
         config = get_configuration(job.service.aysrepo)
+
+        if metadisk:
+            diskmap = [{'device': metadisk.devicename}]
+            args = {
+                'node': node.name,
+                'metadataProfile': 'single',
+                'dataProfile': 'single',
+                'devices': diskmap
+            }
+            metastoragepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, metadisk.name)
+            metaspservice = spactor.serviceCreate(instance=metastoragepoolname, args=args)
+            service.consume(metaspservice)
+
+            metacontainername = '{}_{}_{}_meta'.format(metastoragepoolname, variant, baseport)
+            # adding filesystem
+            args = {
+                'storagePool': metastoragepoolname,
+                'name': metacontainername,
+            }
+            filesystems.append(fsactor.serviceCreate(instance=metacontainername, args=args))
+
+            # create containers
+            args = {
+                'node': node.name,
+                'hostname': metacontainername,
+                'flist': config.get('0-stor-flist', 'https://hub.gig.tech/gig-official-apps/0-stor-master.flist'),
+                'mounts': [{'filesystem': containername, 'target': '/mnt/data'}, {'filesystem': metacontainername, 'target': '/mnt/metadata'}],
+                'hostNetworking': True
+            }
+            containeractor.serviceCreate(instance=containername, args=args)
+
+            # create zerostor
+            args = {
+                'homeDir': '/mnt/data',
+                'bind': '{}:{}'.format(node.storageAddr, baseport),
+                'container': containername
+            }
+            zerostorService = zerostorActor.serviceCreate(instance=containername, args=args)
+            zerostorService.consume(tcp)
+            return
 
         # create containers
         args = {
@@ -138,6 +188,14 @@ def init(job):
         baseports, tcpservices = get_baseports(job, node, baseport=2000, nrports=len(disks) + 1)
         for idx, disk in enumerate(disks):
             create_server(node, disk, baseports[idx], tcpservices[idx])
+
+    for nodename, disks in zerostordisks.items():
+        node = nodemap[nodename]
+        # making the storagepool
+        baseports, tcpservices = get_baseports(job, node, baseport=2200, nrports=len(disks))
+        for idx, disk in enumerate(disks):
+            metadisk = zerostormetadisks[nodename][idx]
+            create_server(node, disk, baseports[idx], tcpservices[idx], variant="stor", metadisk=metadisk)
 
     if str(service.model.data.clusterType) != 'tlog':
         create_server(node, disk, baseports[-1], tcpservices[-1], variant='metadata')
@@ -190,11 +248,12 @@ def save_config(job):
         raise RuntimeError("Failed to save storage cluster config")
 
 
-def get_availabledisks(job, nodes, metadata=False):
+def get_availabledisks(job, nodes, disktype=None):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
 
     service = job.service
-    disk_type = service.model.data.metadiskType if metadata else service.model.data.diskType
+
+    disk_type = service.model.data.diskType if disktype is None else disktype
 
     used_disks = {}
     for node in nodes:
