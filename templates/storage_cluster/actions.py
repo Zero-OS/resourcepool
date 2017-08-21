@@ -30,6 +30,49 @@ def get_cluster(job):
     return StorageCluster.from_ays(job.service, job.context['token'])
 
 
+def get_disks(job, nodes):
+    service = job.service
+    availabledisks = get_availabledisks(job, nodes)
+    available_metadisks = None
+    if service.model.data.diskType != service.model.data.metadiskType:
+        available_metadisks = get_availabledisks(job, nodes, metadata=True)
+
+    serverpernode = int(service.model.data.nrServer / len(nodes))
+    diskpernode = serverpernode * 3 if not available_metadisks else serverpernode * 2
+
+    # validate amount of disks and removdiskpernodee unneeded disks
+    if service.model.data.nrServer % len(nodes) != 0:
+        raise j.exceptions.Input("Amount of servers is not equally devidable by amount of nodes")
+
+    for node, disks in availabledisks.items():
+        if len(disks) < diskpernode:
+            raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+        availabledisks[node] = disks[:diskpernode]
+
+    if available_metadisks:
+        for node, disks in available_metadisks.items():
+            if len(disks) < serverpernode:
+                raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+            available_metadisks[node] = disks[:serverpernode]
+
+    for node in nodes:
+        if node.name not in availabledisks:
+            raise j.exceptions.Input("Not enough available disks on node {}".format(node.name))
+        if available_metadisks and node.name not in available_metadisks:
+            raise j.exceptions.Input("Not enough available disks on node {}".format(node.name))
+
+    disksize = len(availabledisks[node.name]) // 3 if not available_metadisks else len(availabledisks) // 2
+    storgedisks = {node: disks[:disksize] for node, disks in availabledisks.items()}
+    if available_metadisks:
+        zerostordisks = {node: disks[disksize:] for node, disks in availabledisks.items()}
+        return storgedisks, zerostordisks, available_metadisks
+
+    disksize = len(availabledisks) // 3
+    zerostordisks = {node: disks[disksize:disksize*2] for node, disks in availabledisks.items()}
+    available_metadisks = {node: disks[-disksize:] for node, disks in availabledisks.items()}
+    return storgedisks, zerostordisks, available_metadisks
+
+
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Node import Node
@@ -41,18 +84,7 @@ def init(job):
     nodes = list(nodes)
     nodemap = {node.name: node for node in nodes}
 
-    availabledisks = get_availabledisks(job, nodes)
-    diskpernode = int(service.model.data.nrServer / len(nodes))
-    # validate amount of disks and remove unneeded disks
-    if service.model.data.nrServer % len(nodes) != 0:
-        raise j.exceptions.Input("Amount of servers is not equally devidable by amount of nodes")
-    for node, disks in availabledisks.items():
-        if len(disks) < diskpernode:
-            raise j.exceptions.Input("Not enough available disks on node {}".format(node))
-        availabledisks[node] = disks[:diskpernode]
-    for node in nodes:
-        if node.name not in availabledisks:
-            raise j.exceptions.Input("Not enough available disks on node {}".format(node.name))
+    storagedisks, zerostordisks, zerostormetadisks = get_disks(job, nodes)
 
     # lets create some services
     spactor = service.aysrepo.actorGet("storagepool")
@@ -100,8 +132,7 @@ def init(job):
         storageEngine = storageEngineActor.serviceCreate(instance=containername, args=args)
         storageEngine.consume(tcp)
         storageEngines.append(storageEngine)
-
-    for nodename, disks in availabledisks.items():
+    for nodename, disks in storagedisks.items():
         node = nodemap[nodename]
         # making the storagepool
         baseports, tcpservices = get_baseports(job, node, baseport=2000, nrports=len(disks) + 1)
@@ -159,10 +190,12 @@ def save_config(job):
         raise RuntimeError("Failed to save storage cluster config")
 
 
-def get_availabledisks(job, nodes):
+def get_availabledisks(job, nodes, metadata=False):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
 
     service = job.service
+    disk_type = service.model.data.metadiskType if metadata else service.model.data.diskType
+
     used_disks = {}
     for node in nodes:
         disks = set()
@@ -172,7 +205,7 @@ def get_availabledisks(job, nodes):
             disks.update(devices)
         used_disks[node.name] = disks
 
-    cluster = StorageCluster(service.name, nodes, service.model.data.diskType)
+    cluster = StorageCluster(service.name, nodes, disk_type)
     availabledisks = cluster.find_disks()
     freedisks = {}
     for node, disks in availabledisks.items():
