@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -15,11 +14,6 @@ import (
 func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	var reqBody ContainerUpdate
 	aysClient := tools.GetAysConnection(r, api)
-	cl, err := tools.GetConnection(r, api)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
-		return
-	}
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -48,36 +42,18 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check that ovs exists for vlans and vxlans
-	container := client.Container(cl)
-	tags := []string{"ovs"}
-	containers, err := container.Find(tags)
-	ovs := len(containers) == 0
-
 	for _, nic := range reqBody.Nics {
 		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
 			tools.WriteError(w, http.StatusBadRequest, err, "")
 			return
-		}
-		if nic.Type == EnumContainerNICTypevlan || nic.Type == EnumContainerNICTypevxlan {
-			if err != nil {
-				err = fmt.Errorf("Error searching container Tags", containerName)
-				tools.WriteError(w, http.StatusInternalServerError, err, "")
-				return
-			} else if ovs {
-				err = fmt.Errorf("OVS container needed to run this blueprint", containerName)
-				tools.WriteError(w, http.StatusForbidden, err, "") // should have beem forbidden but for consistency bad request
-				return
-			}
 		}
 	}
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("container__%s", containerName)] = reqBody
 
-	if _, err := aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj); err != nil {
-		errmsg := fmt.Sprintf("error executing blueprint for container %s update", containerName)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	_, err = aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj)
+	if !tools.HandleExecuteBlueprintResponse(err, w, "") {
 		return
 	}
 

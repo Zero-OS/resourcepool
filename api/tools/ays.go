@@ -20,6 +20,12 @@ type AYStool struct {
 	Ays *ays.AysService
 }
 
+type AYSError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	err     error
+}
+
 type ActionBlock struct {
 	Action  string `json:"action"`
 	Actor   string `json:"actor"`
@@ -101,7 +107,6 @@ func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) 
 
 func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 	job, resp, err := aystool.Ays.GetJob(jobid, repoName, nil, nil)
-
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return job, err
 	}
@@ -116,14 +121,18 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 	}
 
 	if job.State == "error" {
-		msg := ""
-		for _, log := range job.Logs {
-			if log.Category == "errormsg" {
-				msg = log.Log
-			}
+		err := AYSError{}
+		json.Unmarshal([]byte(job.Result), &err)
+
+		err.err = fmt.Errorf(err.Message)
+		errResp := http.Response{
+			StatusCode: err.Code,
 		}
-		err := fmt.Errorf(msg)
-		return job, err
+		httperror := HTTPError{
+			Resp: &errResp,
+			err:  err.err,
+		}
+		return job, httperror
 	}
 	return job, nil
 }

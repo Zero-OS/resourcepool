@@ -126,12 +126,16 @@ def processChange(job):
     nicchanges = 'nics' in args and containerdata.get('nics') != args['nics']
 
     if nicchanges:
-        update(service, job.logger, job.context['token'], args['nics'])
+        update(job, args['nics'])
 
 
-def update(service, logger, token, updated_nics):
+def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
+    import json
 
+    service = job.service
+    token = job.context['token']
+    logger = job.logger
     container = Container.from_ays(service, token)
     cl = container.node.client.container
 
@@ -175,8 +179,13 @@ def update(service, logger, token, updated_nics):
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
             try:
                 cl.nic_add(container.id, nic_dict)
-            except Exception as e:
-                raise j.exceptions.Input(e.__str__())
+            except RuntimeError as e:
+                if len(e.args) >= 2:
+                    core_job = e.args[1]
+                if 499 >= core_job.code >= 400:
+                    job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+                service.saveAll()
+                raise j.exceptions.Input(str(e))
             if nic.type == 'zerotier':
                 # do extra zerotier configuration
                 zerotier_nic_config(service, logger, container, nic)
