@@ -40,14 +40,16 @@ def get_disks(job, nodes):
     disktypes = [diskType, stordiskType, stormetadiskType]
 
     diskmap = {}
-    for disktype in disktypes:
+    for disktype in set(disktypes):
         if disktype not in diskmap:
             diskmap[disktype] = get_availabledisks(job, nodes, disktype=disktype)
 
-        if diskmap[disktype].get("disknumber"):
-            diskmap[disktype]["disknumber"] += service.model.data.nrServer
-            continue
-        diskmap[disktype]["disknumber"] = service.model.data.nrServer
+        disknumber = 0
+        for node, disks in diskmap[disktype].items():
+            if node == "":
+                continue
+            disknumber += len(disks)
+        diskmap[disktype]["disknumber"] = disknumber
 
     # validate amount of disks and removdiskpernodee unneeded disks
     serverpernode = service.model.data.nrServer // len(nodes)
@@ -60,9 +62,11 @@ def get_disks(job, nodes):
     for key, value in diskmap.items():
         disklen = value.pop("disknumber")
         diskpernode = (disktypes.count(key) * service.model.data.nrServer) // len(nodes)
+        if disklen < diskpernode:
+            raise j.exceptions.Input("No available disks of type {} found".format(key))
 
         for node, disks in value.items():
-            if disklen < diskpernode:
+            if len(disks) < diskpernode:
                 raise j.exceptions.Input("Not enough available disks on node {}".format(node))
 
             if key == diskType:

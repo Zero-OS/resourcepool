@@ -935,6 +935,12 @@ ClusterCreate:
     driveType:
       type: string
       enum: [nvme, ssd, hdd, archive]
+    storDriveType:
+      type: string
+      enum: [nvme, ssd, hdd, archive]
+    storMetaDriveType:
+      type: string
+      enum: [nvme, ssd, hdd, archive]
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server

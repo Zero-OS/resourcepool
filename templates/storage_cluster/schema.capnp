@@ -6,7 +6,7 @@ struct Schema {
     nrServer @2 :UInt32 = 256;
     diskType @3:DiskClass = ssd;
     stordiskType @4:DiskClass = hdd;
-    stormetadiskType @5:DiskClass = hdd;
+    stormetadiskType @5:DiskClass = ssd;
     filesystems @6:List(Text);
     storageEngines @7 :List(Text);
 

@@ -6,13 +6,15 @@ import (
 )
 
 type ClusterCreate struct {
-	DriveType   EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
-	Label       string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
-	Nodes       []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
-	Servers     int                        `yaml:"servers" json:"servers" validate:"nonzero"`
-	ClusterType EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
-	K           int                        `yaml:"k" json:"k"`
-	M           int                        `yaml:"m" json:"m"`
+	DriveType         EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
+	StorDriveType     EnumClusterCreateDriveType `yaml:"storDriveType" json:"storDriveType" validate:"nonzero"`
+	StorMetaDriveType EnumClusterCreateDriveType `yaml:"storMetaDriveType" json:"storMetaDriveType" validate:"nonzero"`
+	Label             string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
+	Nodes             []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
+	Servers           int                        `yaml:"servers" json:"servers" validate:"nonzero"`
+	ClusterType       EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
+	K                 int                        `yaml:"k" json:"k"`
+	M                 int                        `yaml:"m" json:"m"`
 }
 
 func (s ClusterCreate) Validate() error {
