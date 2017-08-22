@@ -317,6 +317,9 @@ def watchdog(job):
         'stats_collector': {
             'eof': True,
         },
+        'zerostor': {
+            'eof': True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
@@ -325,8 +328,8 @@ def watchdog(job):
 
         role, sub_id = jobid.split('.', 1)
         if (role not in watched_roles or
-            watched_roles[role].get('level', level) != level or
-            watched_roles[role].get('sub_id', sub_id) != sub_id):
+                watched_roles[role].get('level', level) != level
+                or watched_roles[role].get('sub_id', sub_id) != sub_id):
             return
 
         service_role = watched_roles[role].get('service', role)
@@ -433,20 +436,18 @@ def ork_handler(job):
         nic_shutdown(job, message)
 
 
-def start_vm(context, vm):
+def start_vm(job, vm):
     import asyncio
-
+    service = job.service
     if vm.model.data.status == 'running':
-        loop = j.atyourservice.server.loop
-        asyncio.ensure_future(vm.executeAction('start', context=context), loop=loop)
+        asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=service._loop)
 
 
-def shutdown_vm(context, vm):
+def shutdown_vm(job, vm):
     import asyncio
-
+    service = job.service
     if vm.model.data.status == 'running':
-        loop = j.atyourservice.server.loop
-        asyncio.ensure_future(vm.executeAction('shutdown', context=context), loop=loop)
+        asyncio.ensure_future(vm.executeAction('shutdown', context=job.context), loop=service._loop)
 
 
 def vm_handler(job):
@@ -462,7 +463,7 @@ def vm_handler(job):
         return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job.context, vm)
+        start_vm(job, vm)
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
-        shutdown_vm(job.context, vm)
+        shutdown_vm(job, vm)

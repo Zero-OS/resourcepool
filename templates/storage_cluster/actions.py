@@ -32,7 +32,6 @@ def get_cluster(job):
 
 def get_disks(job, nodes):
     service = job.service
-    availabledisks = get_availabledisks(job, nodes)
 
     diskType = service.model.data.diskType
     stordiskType = service.model.data.stordiskType
@@ -156,12 +155,14 @@ def init(job):
 
             # create zerostor
             args = {
-                'homeDir': '/mnt/data',
+                'dataDir': '/mnt/data',
+                'metaDir': '/mnt/metadata',
                 'bind': '{}:{}'.format(node.storageAddr, baseport),
                 'container': containername
             }
             zerostorService = zerostorActor.serviceCreate(instance=containername, args=args)
             zerostorService.consume(tcp)
+            service.consume(zerostorService)
             return
 
         # create containers
@@ -189,6 +190,9 @@ def init(job):
         for idx, disk in enumerate(disks):
             create_server(node, disk, baseports[idx], tcpservices[idx])
 
+    if str(service.model.data.clusterType) != 'tlog':
+        create_server(node, disk, baseports[-1], tcpservices[-1], variant='metadata')
+
     for nodename, disks in zerostordisks.items():
         node = nodemap[nodename]
         # making the storagepool
@@ -196,9 +200,6 @@ def init(job):
         for idx, disk in enumerate(disks):
             metadisk = zerostormetadisks[nodename][idx]
             create_server(node, disk, baseports[idx], tcpservices[idx], variant="stor", metadisk=metadisk)
-
-    if str(service.model.data.clusterType) != 'tlog':
-        create_server(node, disk, baseports[-1], tcpservices[-1], variant='metadata')
 
     service.model.data.init('filesystems', len(filesystems))
     service.model.data.init('storageEngines', len(storageEngines))
@@ -398,6 +399,9 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
     job.context['token'] = get_jwt_token_from_job(job)
     service = job.service
+
+    if service.model.actionsState['install'] != 'ok':
+        return
 
     if service.model.data.clusterType == "tlog":
         return
