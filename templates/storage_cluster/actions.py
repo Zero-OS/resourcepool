@@ -62,7 +62,7 @@ def get_disks(job, nodes):
     for key, value in diskmap.items():
         disklen = value.pop("disknumber")
         diskpernode = (disktypes.count(key) * service.model.data.nrServer) // len(nodes)
-        if disklen < diskpernode:
+        if disklen == 0:
             raise j.exceptions.Input("No available disks of type {} found".format(key))
 
         for node, disks in value.items():
