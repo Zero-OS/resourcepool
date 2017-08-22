@@ -29,10 +29,10 @@ class Containers:
         return Container.from_containerinfo(containers[0], self.node)
 
     def create(self, name, flist, hostname=None, mounts=None, nics=None,
-               host_network=False, ports=None, storage=None, init_processes=None, privileged=False):
+               host_network=False, ports=None, storage=None, init_processes=None, privileged=False, env=None):
         logger.debug("create container %s", name)
         container = Container(name, self.node, flist, hostname, mounts, nics,
-                              host_network, ports, storage, init_processes, privileged)
+                              host_network, ports, storage, init_processes, privileged, env=env)
         container.start()
         return container
 
@@ -42,7 +42,7 @@ class Container:
 
     def __init__(self, name, node, flist, hostname=None, mounts=None, nics=None,
                  host_network=False, ports=None, storage=None, init_processes=None,
-                 privileged=False, identity=None):
+                 privileged=False, identity=None, env=None):
         """
         TODO: write doc string
         filesystems: dict {filesystemObj: target}
@@ -60,6 +60,7 @@ class Container:
         self._client = None
         self.privileged = privileged
         self.identity = identity
+        self.env = env or {}
 
         self._ays = None
         for nic in self.nics:
@@ -84,7 +85,8 @@ class Container:
                    arguments['port'],
                    arguments['storage'],
                    arguments['privileged'],
-                   arguments['identity'])
+                   arguments['identity'],
+                   arguments['env'])
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -155,7 +157,7 @@ class Container:
         buff = BytesIO()
         self.client.filesystem.download(remote, buff)
         return buff.getvalue().decode()
-    
+
     def _create_container(self, timeout=60):
         logger.debug("send create container command to g8os")
         tags = [self.name]
@@ -172,6 +174,7 @@ class Container:
             storage=self.storage,
             privileged=self.privileged,
             identity=self.identity,
+            env=self.env
         )
 
         containerid = job.get(timeout)
