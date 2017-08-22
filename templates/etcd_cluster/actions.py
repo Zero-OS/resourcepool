@@ -11,9 +11,6 @@ def input(job):
 
 
 def init(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction("configure", context=job.context))
 
@@ -25,6 +22,7 @@ def configure(job):
     from zeroos.orchestrator.configuration import get_configuration
 
     service = job.service
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     config = get_configuration(service.aysrepo)
 
     nodes = set()
@@ -120,6 +118,9 @@ def watchdog_handler(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
+    if service.model.data.status == 'recovering':
+        return  
+    service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
     token = get_jwt_token(job.service.aysrepo)
@@ -146,26 +147,39 @@ def watchdog_handler(job):
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
         return
-    if not working_etcds:
-        raise j.exceptions.RunTimeError("No Etcds left to recover from, etcd_cluster %s is down" % service.name)
+    
 
-    respawned_container_nodes = []
+    # clean all remaining etcds from the old cluster
+    for etcd in etcds:
+        container = etcd.parent
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
 
-    for dead_etcd in dead_etcds:
-        container = dead_etcd.parent
-        node = container.parent
-        if node_client.client.ping():
-            working_etcd = working_etcds[0]    
-            etcd = ETCD.from_ays(working_etcd, password=token)
-            containername = '{}_{}_{}_*'.format(service.name, 'etcd', node.name)
-            dead_container = service.aysrepo.servicesFind(name=containername, role='container')
-            j.tools.async.wrappers.sync(dead_container.executeAction('start', context=job.context))
-            etcd.recover("/mnt/data/", working_etcd.parent, dead_container)
-            respawned_container_nodes.append(node.name)
-                    
-    all_nodes = service.model.data.nodes
-    service.model.data.nodes = respawned_container_nodes
+    service.model.data.etcds = []
     service.saveAll()
     j.tools.async.wrappers.sync(service.executeAction('configure', context=job.context))
-    service.model.data.nodes = all_nodes
+
+    # install all services created by the configure of the etcd_cluster 
+    for etcd in service.producers.get('etcd', []):
+        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))        
+        for mount in etcd.parent.model.data.mounts:
+            fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
+            j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
+        j.tools.async.wrappers.sync(etcd.executeAction('install', context=job.context))
+
+    # save all vdisks to new etcd cluster
+    vdisks = service.aysrepo.servicesFind(role='vdisk')
+    for vdisk in vdisks:
+        j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
+    
+    # save all storage cluster to new etcd cluster 
+    storage_clusters = service.aysrepo.servicesFind(role='storage_cluster')
+    for storage_cluster in storage_clusters:
+        j.tools.async.wrappers.sync(storage_cluster.executeAction('save_config', context=job.context))
+
+    # restart all runnning vms 
+    vmachines = service.aysrepo.servicesFind(role='vm')
+    for vmachine in vmachines:
+        if vmachine.model.data.status == 'running':
+            j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))        
     service.saveAll()
