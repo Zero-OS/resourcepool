@@ -31,6 +31,10 @@ def get_cluster(job):
 
 
 def get_disks(job, nodes):
+    """
+    Get disks to be used by StorageEngine, 0-stor
+    It takes into account that StorageEngine, 0-stor data, 0-stor meta disks can be of different types
+    """
     service = job.service
 
     diskType = service.model.data.diskType
@@ -40,6 +44,8 @@ def get_disks(job, nodes):
     disktypes = [diskType, stordiskType, stormetadiskType]
 
     diskmap = {}
+    # Get disks of different types and add it to diskmap
+    # diskmap example: {hdd: {node: [vda, vdb, vdc]}}
     for disktype in set(disktypes):
         if disktype not in diskmap:
             diskmap[disktype] = get_availabledisks(job, nodes, disktype=disktype)
@@ -69,6 +75,7 @@ def get_disks(job, nodes):
             if len(disks) < diskpernode:
                 raise j.exceptions.Input("Not enough available disks on node {}".format(node))
 
+            # populate storagedisks, zerostordisks, stormetadiskType based on their disk type
             if key == diskType:
                 storagedisks[node] = disks[:serverpernode]
             disks = disks[serverpernode:]
