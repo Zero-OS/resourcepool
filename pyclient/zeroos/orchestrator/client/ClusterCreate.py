@@ -3,6 +3,8 @@ Auto-generated class for ClusterCreate
 """
 from .EnumClusterCreateClusterType import EnumClusterCreateClusterType
 from .EnumClusterCreateDriveType import EnumClusterCreateDriveType
+from .EnumClusterCreateStorDriveType import EnumClusterCreateStorDriveType
+from .EnumClusterCreateStorMetaDriveType import EnumClusterCreateStorMetaDriveType
 
 from . import client_support
 
@@ -13,7 +15,7 @@ class ClusterCreate(object):
     """
 
     @staticmethod
-    def create(clusterType, driveType, label, nodes, servers, k=None, m=None):
+    def create(clusterType, driveType, label, nodes, servers, storDriveType, storMetaDriveType, k=None, m=None):
         """
         :type clusterType: EnumClusterCreateClusterType
         :type driveType: EnumClusterCreateDriveType
@@ -22,6 +24,8 @@ class ClusterCreate(object):
         :type m: int
         :type nodes: list[str]
         :type servers: int
+        :type storDriveType: EnumClusterCreateStorDriveType
+        :type storMetaDriveType: EnumClusterCreateStorMetaDriveType
         :rtype: ClusterCreate
         """
 
@@ -33,6 +37,8 @@ class ClusterCreate(object):
             m=m,
             nodes=nodes,
             servers=servers,
+            storDriveType=storDriveType,
+            storMetaDriveType=storMetaDriveType,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -113,6 +119,28 @@ class ClusterCreate(object):
             datatypes = [int]
             try:
                 self.servers = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'storDriveType'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [EnumClusterCreateStorDriveType]
+            try:
+                self.storDriveType = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'storMetaDriveType'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [EnumClusterCreateStorMetaDriveType]
+            try:
+                self.storMetaDriveType = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
