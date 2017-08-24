@@ -80,10 +80,10 @@ def install(job):
 
     backup = False
     for vdiskservice in vdisks:
-        tlogcluster = vdiskservice.model.data.tlogStoragecluster
-        if tlogcluster and tlogcluster not in config['storageClusters']:
-            _, k, m = get_storagecluster_config(job, tlogcluster)
-            config['storageClusters'].add(tlogcluster)
+        objectcluster = vdiskservice.model.data.objectStoragecluster
+        if objectcluster and objectcluster not in config['storageClusters']:
+            _, k, m = get_storagecluster_config(job, objectcluster)
+            config['storageClusters'].add(objectcluster)
             config['k'] += k
             config['m'] += m
             if vdiskservice.model.data.backupStoragecluster:

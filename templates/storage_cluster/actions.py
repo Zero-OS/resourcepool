@@ -15,10 +15,10 @@ def input(job):
 
     cluster_type = job.model.args.get("clusterType")
 
-    if cluster_type == "tlog":
+    if cluster_type == "object":
         k = job.model.args.get("k", 0)
         m = job.model.args.get("m", 0)
-        if not k and not m:
+        if not k or not m:
             raise j.exceptions.Input("K and M should be larger than 0")
         if (k + m) > nrserver:
             raise j.exceptions.Input("K and M should be greater than or equal to number of servers")
@@ -37,11 +37,13 @@ def get_disks(job, nodes):
     """
     service = job.service
 
+    disktypes = []
     diskType = service.model.data.diskType
-    stordiskType = service.model.data.stordiskType
-    stormetadiskType = service.model.data.stormetadiskType
+    disktypes.append(diskType)
 
-    disktypes = [diskType, stordiskType, stormetadiskType]
+    if service.model.data.clusterType == "object":
+        metadiskType = service.model.data.metadiskType
+        disktypes.append(metadiskType)
 
     diskmap = {}
     # Get disks of different types and add it to diskmap
@@ -62,9 +64,8 @@ def get_disks(job, nodes):
     if service.model.data.nrServer % len(nodes) != 0:
         raise j.exceptions.Input("Amount of servers is not equally devidable by amount of nodes")
 
-    storagedisks = {}
-    zerostordisks = {}
-    zerometadisks = {}
+    datadisks = {}
+    metadisks = {}
     for key, value in diskmap.items():
         disklen = value.pop("disknumber")
         diskpernode = (disktypes.count(key) * service.model.data.nrServer) // len(nodes)
@@ -75,19 +76,16 @@ def get_disks(job, nodes):
             if len(disks) < diskpernode:
                 raise j.exceptions.Input("Not enough available disks on node {}".format(node))
 
-            # populate storagedisks, zerostordisks, stormetadiskType based on their disk type
+            # populate datadisks, metadisks based on their disk type
             if key == diskType:
-                storagedisks[node] = disks[:serverpernode]
-            disks = disks[serverpernode:]
+                datadisks[node] = disks[:serverpernode]
 
-            if key == stordiskType:
-                zerostordisks[node] = disks[:serverpernode]
-            disks = disks[serverpernode:]
+            if service.model.data.clusterType == "object":
+                disks = disks[serverpernode:]
+                if key == metadiskType:
+                    metadisks[node] = disks[:serverpernode]
 
-            if key == stormetadiskType:
-                zerometadisks[node] = disks[:serverpernode]
-
-    return storagedisks, zerostordisks, zerometadisks
+    return datadisks, metadisks
 
 
 def init(job):
@@ -101,7 +99,7 @@ def init(job):
     nodes = list(nodes)
     nodemap = {node.name: node for node in nodes}
 
-    storagedisks, zerostordisks, zerostormetadisks = get_disks(job, nodes)
+    datadisks, metadisks = get_disks(job, nodes)
 
     # lets create some services
     spactor = service.aysrepo.actorGet("storagepool")
@@ -134,7 +132,7 @@ def init(job):
         filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
         config = get_configuration(job.service.aysrepo)
 
-        if metadisk:
+        if service.model.data.clusterType == "object":
             diskmap = [{'device': metadisk.devicename}]
             args = {
                 'node': node.name,
@@ -194,23 +192,20 @@ def init(job):
         storageEngine = storageEngineActor.serviceCreate(instance=containername, args=args)
         storageEngine.consume(tcp)
         storageEngines.append(storageEngine)
-    for nodename, disks in storagedisks.items():
+    for nodename, disks in datadisks.items():
         node = nodemap[nodename]
         # making the storagepool
-        baseports, tcpservices = get_baseports(job, node, baseport=2000, nrports=len(disks) + 1)
+        nrports = len(disks) + 1 if service.model.data.clusterType == "block" else len(disks)
+        baseports, tcpservices = get_baseports(job, node, baseport=2000, nrports=nrports)
         for idx, disk in enumerate(disks):
+            if service.model.data.clusterType == "object":
+                metadisk = metadisks[nodename][idx]
+                create_server(node, disk, baseports[idx], tcpservices[idx], variant="stor", metadisk=metadisk)
+                continue
             create_server(node, disk, baseports[idx], tcpservices[idx])
 
-    if str(service.model.data.clusterType) != 'tlog':
+    if service.model.data.clusterType == "block":
         create_server(node, disk, baseports[-1], tcpservices[-1], variant='metadata')
-
-    for nodename, disks in zerostordisks.items():
-        node = nodemap[nodename]
-        # making the storagepool
-        baseports, tcpservices = get_baseports(job, node, baseport=2200, nrports=len(disks))
-        for idx, disk in enumerate(disks):
-            metadisk = zerostormetadisks[nodename][idx]
-            create_server(node, disk, baseports[idx], tcpservices[idx], variant="stor", metadisk=metadisk)
 
     service.model.data.init('filesystems', len(filesystems))
     service.model.data.init('storageEngines', len(storageEngines))
@@ -243,21 +238,45 @@ def save_config(job):
     import random
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_configuration
+    aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
-    cluster = StorageCluster.from_ays(service, job.context['token'])
-    config = cluster.get_config()
-    if service.model.data.clusterType == "tlog":
-        config.pop("metadataStorage")
-    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-
     etcd_cluster = service.producers['etcd_cluster'][0]
     etcd = random.choice(etcd_cluster.producers['etcd'])
-
     etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
+
+    if service.model.data.clusterType == "block":
+        cluster = StorageCluster.from_ays(service, job.context['token'])
+        config = cluster.get_config()
+
+        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+        result = etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
+        if result.state != "SUCCESS":
+            raise RuntimeError("Failed to save storage cluster config")
+        return
+
+    # Push zerostorconfig to etcd
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
+    zerostor_services = service.producers["zerostor"]
+    zerostor_config = {
+        "iyo": {
+            "org": aysconfig["iyo_org"],
+            "namespace": aysconfig["iyo_namespace"],
+            "clientID": aysconfig["iyo_clientID"],
+            "secret": aysconfig["iyo_secret"],
+        },
+        "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
+        "metadataServers": [{"address": dialstring} for dialstring in etcd_cluster.dialstrings.split(",")],
+    }
+    yamlconfig = yaml.safe_dump(zerostor_config, default_flow_style=False)
+    result = etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
     if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save storage cluster config")
+        raise RuntimeError("Failed to save zerostor config")
 
 
 def get_availabledisks(job, nodes, disktype=None):
@@ -414,7 +433,7 @@ def monitor(job):
     if service.model.actionsState['install'] != 'ok':
         return
 
-    if service.model.data.clusterType == "tlog":
+    if service.model.data.clusterType == "object":
         return
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)

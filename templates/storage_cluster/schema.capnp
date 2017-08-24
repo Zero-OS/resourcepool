@@ -5,20 +5,19 @@ struct Schema {
     status @1 :Status = empty;
     nrServer @2 :UInt32 = 256;
     diskType @3:DiskClass = ssd;
-    stordiskType @4:DiskClass = hdd;
-    stormetadiskType @5:DiskClass = ssd;
-    filesystems @6:List(Text);
-    storageEngines @7 :List(Text);
+    metadiskType @4:DiskClass = ssd;
+    filesystems @5:List(Text);
+    storageEngines @6 :List(Text);
 
-    nodes @8 :List(Text); # list of node where we can deploy storage server
+    nodes @7 :List(Text); # list of node where we can deploy storage server
 
-    clusterType @9 :Type = storage;
-    k @10: UInt32;
-    m @11: UInt32;
+    clusterType @8 :Type = block;
+    k @9: UInt32;
+    m @10: UInt32;
 
     enum Type {
-        storage @0;
-        tlog @1;
+        block @0;
+        object @1;
     }
 
     enum Status{
