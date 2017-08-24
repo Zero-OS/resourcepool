@@ -11,17 +11,22 @@ def input(job):
 
 
 def init(job):
+    service = job.service
+    j.tools.async.wrappers.sync(service.executeAction("configure", context=job.context))
+
+
+def configure(job):
     import random
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.configuration import get_configuration
 
     service = job.service
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     config = get_configuration(service.aysrepo)
 
     nodes = set()
     for node_service in service.producers['node']:
-        job.context['token'] = get_jwt_token(job.service.aysrepo)
         nodes.add(Node.from_ays(node_service, job.context['token']))
     nodes = list(nodes)
 
@@ -105,3 +110,76 @@ def get_baseports(job, node, baseport, nrports):
             if len(freeports) >= nrports:
                 return freeports, tcpservices
         baseport += 1
+
+def watchdog_handler(job):
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    if service.model.data.status == 'recovering':
+        return  
+    service.model.data.status = 'recovering'
+    etcds = set(service.producers.get('etcd', []))
+    working_etcds = set()
+    token = get_jwt_token(job.service.aysrepo)
+    
+    # check on etcd container since the watch dog will handle the actual service 
+    for etcd in etcds:
+        container = etcd.parent
+        node = container.parent
+        container_client = Container.from_ays(container, password=token)
+        if container_client.id:
+            working_etcds.add(etcd)
+
+    dead_etcds = etcds-working_etcds
+
+    if len(working_etcds) >= (len(etcds)-1)/2:
+        for etcd in etcds-working_etcds:
+            container = etcd.parent
+            node = container.parent
+            container_client = Container.from_ays(container, password=token)
+            node_client = Node.from_ays(node, password=token)
+            if not node_client.client.ping():
+                raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
+
+            j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+            j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+        return
+    
+
+    # clean all remaining etcds from the old cluster
+    for etcd in etcds:
+        container = etcd.parent
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
+
+    service.model.data.etcds = []
+    service.saveAll()
+    j.tools.async.wrappers.sync(service.executeAction('configure', context=job.context))
+
+    # install all services created by the configure of the etcd_cluster 
+    for etcd in service.producers.get('etcd', []):
+        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))        
+        for mount in etcd.parent.model.data.mounts:
+            fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
+            j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
+        j.tools.async.wrappers.sync(etcd.executeAction('install', context=job.context))
+
+    # save all vdisks to new etcd cluster
+    vdisks = service.aysrepo.servicesFind(role='vdisk')
+    for vdisk in vdisks:
+        j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
+    
+    # save all storage cluster to new etcd cluster 
+    storage_clusters = service.aysrepo.servicesFind(role='storage_cluster')
+    for storage_cluster in storage_clusters:
+        j.tools.async.wrappers.sync(storage_cluster.executeAction('save_config', context=job.context))
+
+    # restart all runnning vms 
+    vmachines = service.aysrepo.servicesFind(role='vm')
+    for vmachine in vmachines:
+        if vmachine.model.data.status == 'running':
+            j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))        
+    service.saveAll()
