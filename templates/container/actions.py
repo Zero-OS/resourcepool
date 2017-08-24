@@ -225,3 +225,16 @@ def monitor(job):
             except:
                 job.logger.error("can't stop container {} is running".format(service.name))
                 service.model.dbobj.state = 'error'
+
+
+def watchdog_handler(job):
+    import asyncio
+    service = job.service
+    loop = j.atyourservice.server.loop
+    etcd = service.consumers.get('etcd')
+    if not etcd:
+        return 
+
+    etcd_cluster = etcd[0].consumers.get('etcd_cluster')
+    if etcd_cluster:
+        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)

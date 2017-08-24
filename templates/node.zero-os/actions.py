@@ -317,6 +317,9 @@ def watchdog(job):
         'stats_collector': {
             'eof': True,
         },
+        'container': {
+            "eof": True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
