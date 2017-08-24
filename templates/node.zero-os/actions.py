@@ -320,6 +320,9 @@ def watchdog(job):
         'zerostor': {
             'eof': True,
         },
+        'container': {
+            "eof": True,
+        },
     }
 
     async def callback(jobid, level, message, flag):
