@@ -221,9 +221,9 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 }
 
 func ValidateCluster(ctype string, k int, m int, nrServers int) error {
-	if ctype == "tlog" {
+	if ctype == "object" {
 		if k == 0 || m == 0 {
-			return fmt.Errorf("K and M values required for tlog clusters")
+			return fmt.Errorf("K and M values required for object clusters")
 		}
 	}
 	if (k + m) > nrServers {
