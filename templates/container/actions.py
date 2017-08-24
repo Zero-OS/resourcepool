@@ -180,8 +180,9 @@ def update(job, updated_nics):
             try:
                 cl.nic_add(container.id, nic_dict)
             except RuntimeError as e:
-                if len(e.args) >= 2:
-                    core_job = e.args[1]
+                if len(e.args) < 2:
+                    raise e
+                core_job = e.args[1]
                 if 499 >= core_job.code >= 400:
                     job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
                 service.saveAll()

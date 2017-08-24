@@ -122,7 +122,9 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 
 	if job.State == "error" {
 		err := AYSError{}
-		json.Unmarshal([]byte(job.Result), &err)
+		if err := json.Unmarshal([]byte(job.Result), &err); err != nil {
+			return job, err
+		}
 
 		err.err = fmt.Errorf(err.Message)
 		errResp := http.Response{
