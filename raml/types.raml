@@ -938,6 +938,8 @@ ClusterCreate:
     metaDriveType:
       type: string
       enum: [nvme, ssd, hdd, archive]
+      description: Required only for storage clusters of type object
+      required: false
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server

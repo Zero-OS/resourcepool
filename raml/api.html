@@ -48039,101 +48039,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>m</strong>:
-
-  
-    <em>(integer)
-    </em>
-  
-
-<p>M variable of the erasure encoding, required for tlog clusters</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>k</strong>:
-
-  
-    <em>(integer)
-    </em>
-  
-
-<p>K variable of the erasure encoding, required for tlog clusters</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>storMetaDriveType</strong>:
-
-  
-    <em>required (one of nvme, ssd, hdd, archive)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>nodes</strong>:
-
-  
-    <em>required (array of )
-    </em>
-  
-
-<p>List of node ID on which we can deploy storage server</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>label</strong>:
 
   
@@ -48204,13 +48109,38 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>storDriveType</strong>:
+  <strong>metaDriveType</strong>:
 
   
-    <em>required (one of nvme, ssd, hdd, archive)
+    <em>(one of nvme, ssd, hdd, archive)
     </em>
   
 
+<p>Required only for storage clusters of type object</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>nodes</strong>:
+
+  
+    <em>required (array of )
+    </em>
+  
+
+<p>List of node ID on which we can deploy storage server</p>
 
 
   
@@ -48230,11 +48160,59 @@ details in a user&#39;s account without getting their password.</p>
   <strong>clusterType</strong>:
 
   
-    <em>required (one of storage, tlog)
+    <em>required (one of block, object)
     </em>
   
 
 <p>cluster type</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>k</strong>:
+
+  
+    <em>(integer)
+    </em>
+  
+
+<p>K variable of the erasure encoding, required for tlog clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>m</strong>:
+
+  
+    <em>(integer)
+    </em>
+  
+
+<p>M variable of the erasure encoding, required for tlog clusters</p>
 
 
   
@@ -48268,7 +48246,7 @@ details in a user&#39;s account without getting their password.</p>
     "node1",
     "node2"
   ],
-  "clusterType": "storage"
+  "clusterType": "block"
 }</code></pre>
         
     </div>
