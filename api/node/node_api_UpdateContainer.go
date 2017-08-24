@@ -6,15 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateContainer is the handler for PUT /nodes/{nodeid}/containers/{containername}
 // Update a new Container
 func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ContainerUpdate
+	aysClient := tools.GetAysConnection(r, api)
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -53,9 +52,8 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("container__%s", containerName)] = reqBody
 
-	if _, err := aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj); err != nil {
-		errmsg := fmt.Sprintf("error executing blueprint for container %s creation", containerName)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	_, err = aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj)
+	if !tools.HandleExecuteBlueprintResponse(err, w, "") {
 		return
 	}
 
