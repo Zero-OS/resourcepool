@@ -3,8 +3,7 @@ Auto-generated class for ClusterCreate
 """
 from .EnumClusterCreateClusterType import EnumClusterCreateClusterType
 from .EnumClusterCreateDriveType import EnumClusterCreateDriveType
-from .EnumClusterCreateStorDriveType import EnumClusterCreateStorDriveType
-from .EnumClusterCreateStorMetaDriveType import EnumClusterCreateStorMetaDriveType
+from .EnumClusterCreateMetaDriveType import EnumClusterCreateMetaDriveType
 
 from . import client_support
 
@@ -15,30 +14,28 @@ class ClusterCreate(object):
     """
 
     @staticmethod
-    def create(clusterType, driveType, label, nodes, servers, storDriveType, storMetaDriveType, k=None, m=None):
+    def create(clusterType, driveType, label, nodes, servers, dataShards=None, metaDriveType=None, parityShards=None):
         """
         :type clusterType: EnumClusterCreateClusterType
+        :type dataShards: int
         :type driveType: EnumClusterCreateDriveType
-        :type k: int
         :type label: str
-        :type m: int
+        :type metaDriveType: EnumClusterCreateMetaDriveType
         :type nodes: list[str]
+        :type parityShards: int
         :type servers: int
-        :type storDriveType: EnumClusterCreateStorDriveType
-        :type storMetaDriveType: EnumClusterCreateStorMetaDriveType
         :rtype: ClusterCreate
         """
 
         return ClusterCreate(
             clusterType=clusterType,
+            dataShards=dataShards,
             driveType=driveType,
-            k=k,
             label=label,
-            m=m,
+            metaDriveType=metaDriveType,
             nodes=nodes,
+            parityShards=parityShards,
             servers=servers,
-            storDriveType=storDriveType,
-            storMetaDriveType=storMetaDriveType,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -62,6 +59,15 @@ class ClusterCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
+        property_name = 'dataShards'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.dataShards = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
         property_name = 'driveType'
         val = data.get(property_name)
         if val is not None:
@@ -72,15 +78,6 @@ class ClusterCreate(object):
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'k'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [int]
-            try:
-                self.k = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'label'
         val = data.get(property_name)
@@ -93,12 +90,12 @@ class ClusterCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'm'
+        property_name = 'metaDriveType'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [int]
+            datatypes = [EnumClusterCreateMetaDriveType]
             try:
-                self.m = client_support.val_factory(val, datatypes)
+                self.metaDriveType = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
@@ -113,34 +110,21 @@ class ClusterCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
+        property_name = 'parityShards'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.parityShards = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
         property_name = 'servers'
         val = data.get(property_name)
         if val is not None:
             datatypes = [int]
             try:
                 self.servers = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'storDriveType'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [EnumClusterCreateStorDriveType]
-            try:
-                self.storDriveType = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'storMetaDriveType'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [EnumClusterCreateStorMetaDriveType]
-            try:
-                self.storMetaDriveType = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
