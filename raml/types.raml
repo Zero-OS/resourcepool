@@ -947,13 +947,13 @@ ClusterCreate:
       type: string
       enum: [block, object]
       description: cluster type
-    k:
+    dataShards:
       type: integer
-      description: K variable of the erasure encoding, required for tlog clusters
+      description: dataShards variable of the erasure encoding, required for object clusters
       required: false
-    m:
+    parityShards:
       type: integer
-      description: M variable of the erasure encoding, required for tlog clusters
+      description: parityShards variable of the erasure encoding, required for object clusters
       required: false
   example:
     label: cluster1

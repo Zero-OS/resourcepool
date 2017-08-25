@@ -12,8 +12,8 @@ type ClusterCreate struct {
 	Nodes         []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
 	Servers       int                        `yaml:"servers" json:"servers" validate:"nonzero"`
 	ClusterType   EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
-	K             int                        `yaml:"k" json:"k"`
-	M             int                        `yaml:"m" json:"m"`
+	DataShards    int                        `yaml:"dataShards" json:"dataShards"`
+	ParityShards  int                        `yaml:"parityShards" json:"parityShards"`
 }
 
 func (s ClusterCreate) Validate() error {
@@ -43,7 +43,7 @@ func (s ClusterCreate) Validate() error {
 		return err
 	}
 
-	if err := validators.ValidateCluster(string(s.ClusterType), s.K, s.M, s.Servers, string(s.MetaDriveType)); err != nil {
+	if err := validators.ValidateCluster(string(s.ClusterType), s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType)); err != nil {
 		return err
 	}
 

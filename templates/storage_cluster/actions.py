@@ -16,12 +16,12 @@ def input(job):
     cluster_type = job.model.args.get("clusterType")
 
     if cluster_type == "object":
-        k = job.model.args.get("k", 0)
-        m = job.model.args.get("m", 0)
-        if not k or not m:
-            raise j.exceptions.Input("K and M should be larger than 0")
-        if (k + m) > nrserver:
-            raise j.exceptions.Input("K and M should be greater than or equal to number of servers")
+        data_shards = job.model.args.get("dataShards", 0)
+        parity_shards = job.model.args.get("parityShards", 0)
+        if not data_shards or not parity_shards:
+            raise j.exceptions.Input("dataShards and parityShards should be larger than 0")
+        if (data_shards + parity_shards) > nrserver:
+            raise j.exceptions.Input("dataShards and parityShards should be greater than or equal to number of servers")
     return job.model.args
 
 

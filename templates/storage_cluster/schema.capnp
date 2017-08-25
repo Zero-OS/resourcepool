@@ -12,8 +12,8 @@ struct Schema {
     nodes @7 :List(Text); # list of node where we can deploy storage server
 
     clusterType @8 :Type = block;
-    k @9: UInt32;
-    m @10: UInt32;
+    dataShards @9: UInt32;
+    parityShards @10: UInt32;
 
     enum Type {
         block @0;

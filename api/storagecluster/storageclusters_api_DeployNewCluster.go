@@ -50,8 +50,8 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		MetaDiskType string          `yaml:"metadiskType" json:"metadiskType"`
 		Nodes        []string        `yaml:"nodes" json:"nodes"`
 		ClusterType  EnumClusterType `yaml:"clusterType" json:"clusterType"`
-		K            int             `yaml:"k" json:"k"`
-		M            int             `yaml:"m" json:"m"`
+		DataShards   int             `yaml:"dataShards" json:"dataShards"`
+		ParityShards int             `yaml:"parityShards" json:"parityShards"`
 	}{
 		Label:        reqBody.Label,
 		NrServer:     reqBody.Servers,
@@ -59,8 +59,8 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 		MetaDiskType: string(reqBody.MetaDriveType),
 		Nodes:        reqBody.Nodes,
 		ClusterType:  reqBody.ClusterType,
-		K:            reqBody.K,
-		M:            reqBody.M,
+		DataShards:   reqBody.DataShards,
+		ParityShards: reqBody.ParityShards,
 	}
 
 	if string(blueprint.MetaDiskType) == "" {
