@@ -157,7 +157,7 @@ def get_cluster_config(job, type="storage"):
                                                            instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     nodes = list(set(storageclusterservice.producers["node"]))
-    return {"config": cluster.get_config(), "nodes": nodes, 'k': cluster.data_shards, 'm': cluster.parity_shards}
+    return {"config": cluster.get_config(), "nodes": nodes, 'dataShards': cluster.data_shards, 'parityShards': cluster.parity_shards}
 
 
 def create_from_template_container(job, parent):
@@ -233,11 +233,18 @@ def rollback(job):
     try:
         etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
-        k = clusterconfig.pop('k')
-        m = clusterconfig.pop('m')
-        cmd = '/bin/zeroctl restore vdisk -f {vdisk} --config {dialstrings} --end-timestamp {ts} --k {k} --m {m}'.format(vdisk=service.name,
-                                                                                                                         dialstrings=etcd_cluster.dialstrings,
-                                                                                                                         ts=ts, k=k, m=m)
+        data_shards = clusterconfig.pop('dataShards')
+        parity_shards = clusterconfig.pop('parityShards')
+        cmd = '/bin/zeroctl restore vdisk \
+               -f {vdisk} \
+               --config {dialstrings} \
+               --end-timestamp {ts} \
+               --data-shards {data_shards} \
+               --parity-shards {parity_shards}'.format(vdisk=service.name,
+                                                       dialstrings=etcd_cluster.dialstrings,
+                                                       ts=ts,
+                                                       data_shards=data_shards,
+                                                       parity_shards=parity_shards)
         job.logger.info(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':

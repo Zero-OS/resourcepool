@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class ZeroStor:
     """zerostor server"""
 
-    def __init__(self, name, container, bind='0.0.0.0:16379', data_dir='/mnt/data', meta_dir='/mnt/metadata'):
+    def __init__(self, name, container, bind='0.0.0.0:8080', data_dir='/mnt/data', meta_dir='/mnt/metadata'):
         self.name = name
         self.container = container
         self.bind = bind

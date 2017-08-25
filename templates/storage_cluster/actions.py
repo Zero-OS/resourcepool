@@ -237,8 +237,7 @@ def save_config(job):
     import yaml
     import random
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.orchestrator.sal.ETCD import ETCD
-    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.sal.ETCD import ETCD, EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
     aysconfig = get_configuration(job.service.aysrepo)
 

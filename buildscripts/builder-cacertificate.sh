@@ -3,15 +3,8 @@ set -e
 
 source $(dirname $0)/tools.sh
 
-# aptupdate
-# aptinstall ca-certificates
-
-mkdir -p /tmp/target
-mkdir -p /tmp/archives
-mkdir -p /tmp/target/etc
-mkdir -p /tmp/target/usr/sbin
-mkdir -p /tmp/target/usr/share
-mkdir -p /tmp/target/lib
+aptupdate
+aptinstall ca-certificates
 
 TARGET=/tmp/catarget
 rm -rf $TARGET
