@@ -32,7 +32,7 @@ class EtcdCluster:
 class ETCD:
     """etced server"""
 
-    def __init__(self, name, container, serverBind, clientBind, peers, data_dir='/mnt/data'):
+    def __init__(self, name, container, serverBind, clientBind, peers, data_dir='/mnt/data', password=None):
         self.name = name
         self.container = container
         self.serverBind = serverBind
@@ -40,6 +40,7 @@ class ETCD:
         self.data_dir = data_dir
         self.peers = ",".join(peers)
         self._ays = None
+        self._password = None
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -54,6 +55,7 @@ class ETCD:
             clientBind=service.model.data.clientBind,
             data_dir=service.model.data.homeDir,
             peers=service.model.data.peers,
+            password=password
         )
 
     def start(self):

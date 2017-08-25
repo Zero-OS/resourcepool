@@ -126,12 +126,16 @@ def processChange(job):
     nicchanges = 'nics' in args and containerdata.get('nics') != args['nics']
 
     if nicchanges:
-        update(service, job.logger, job.context['token'], args['nics'])
+        update(job, args['nics'])
 
 
-def update(service, logger, token, updated_nics):
+def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
+    import json
 
+    service = job.service
+    token = job.context['token']
+    logger = job.logger
     container = Container.from_ays(service, token)
     cl = container.node.client.container
 
@@ -173,7 +177,16 @@ def update(service, logger, token, updated_nics):
         if get_nic_id(nic_dict) not in ids_current_nics:
             nic_dict.pop('token', None)
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
-            cl.nic_add(container.id, nic_dict)
+            try:
+                cl.nic_add(container.id, nic_dict)
+            except RuntimeError as e:
+                if len(e.args) < 2:
+                    raise e
+                core_job = e.args[1]
+                if 499 >= core_job.code >= 400:
+                    job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+                service.saveAll()
+                raise j.exceptions.Input(str(e))
             if nic.type == 'zerotier':
                 # do extra zerotier configuration
                 zerotier_nic_config(service, logger, container, nic)
@@ -212,3 +225,16 @@ def monitor(job):
             except:
                 job.logger.error("can't stop container {} is running".format(service.name))
                 service.model.dbobj.state = 'error'
+
+
+def watchdog_handler(job):
+    import asyncio
+    service = job.service
+    loop = j.atyourservice.server.loop
+    etcd = service.consumers.get('etcd')
+    if not etcd:
+        return 
+
+    etcd_cluster = etcd[0].consumers.get('etcd_cluster')
+    if etcd_cluster:
+        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
