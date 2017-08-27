@@ -13,6 +13,7 @@ from .Container import Container
 from .ContainerListItem import ContainerListItem
 from .ContainerNIC import ContainerNIC
 from .ContainerNICconfig import ContainerNICconfig
+from .ContainerUpdate import ContainerUpdate
 from .CoreStateResult import CoreStateResult
 from .CoreSystem import CoreSystem
 from .CreateContainer import CreateContainer
@@ -75,6 +76,7 @@ from .JobListItem import JobListItem
 from .JobResult import JobResult
 from .ListGW import ListGW
 from .MemInfo import MemInfo
+from .Message import Message
 from .NicInfo import NicInfo
 from .NicLink import NicLink
 from .Node import Node
@@ -85,6 +87,7 @@ from .PortForward import PortForward
 from .Process import Process
 from .ProcessSignal import ProcessSignal
 from .Snapshot import Snapshot
+from .StorageClusterHealthCheck import StorageClusterHealthCheck
 from .StoragePool import StoragePool
 from .StoragePoolCreate import StoragePoolCreate
 from .StoragePoolDevice import StoragePoolDevice
