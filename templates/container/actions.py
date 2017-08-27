@@ -143,6 +143,8 @@ def update(job, updated_nics):
 
     def get_nic_id(nic):
         # use combination of type and id as identifier, cannot use name as it is optional and not unique while id is.
+        if not nic.get('id') and nic['type'] == 'default':
+            nic['id'] = 'default'
         return "{}:{}".format(nic['type'], nic['id'])
 
     # find the index of the nic in the list returned by client.container.list()
