@@ -1,6 +1,7 @@
 """
 Auto-generated class for HealthCheck
 """
+from .Message import Message
 
 from . import client_support
 
@@ -11,22 +12,28 @@ class HealthCheck(object):
     """
 
     @staticmethod
-    def create(id, message, name, resource, status):
+    def create(category, id, interval, lasttime, messages, name, resource, stacktrace):
         """
+        :type category: str
         :type id: str
-        :type message: str
+        :type interval: float
+        :type lasttime: float
+        :type messages: list[Message]
         :type name: str
         :type resource: str
-        :type status: str
+        :type stacktrace: str
         :rtype: HealthCheck
         """
 
         return HealthCheck(
+            category=category,
             id=id,
-            message=message,
+            interval=interval,
+            lasttime=lasttime,
+            messages=messages,
             name=name,
             resource=resource,
-            status=status,
+            stacktrace=stacktrace,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -39,6 +46,17 @@ class HealthCheck(object):
 
         data = json or kwargs
 
+        property_name = 'category'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.category = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
         property_name = 'id'
         val = data.get(property_name)
         if val is not None:
@@ -50,12 +68,34 @@ class HealthCheck(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'message'
+        property_name = 'interval'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [str]
+            datatypes = [float]
             try:
-                self.message = client_support.val_factory(val, datatypes)
+                self.interval = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'lasttime'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [float]
+            try:
+                self.lasttime = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'messages'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [Message]
+            try:
+                self.messages = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
@@ -83,12 +123,12 @@ class HealthCheck(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'status'
+        property_name = 'stacktrace'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.status = client_support.val_factory(val, datatypes)
+                self.stacktrace = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

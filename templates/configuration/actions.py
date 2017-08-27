@@ -20,7 +20,11 @@ def validate_configs(configs):
     jwt_token = configurations.get('jwt-token')
     jwt_key = configurations.get('jwt-key')
 
-    installed_version = j.core.state.versions.get('JumpScale9')
+    rc, out, err = j.sal.process.execute('git symbolic-ref -q --short HEAD || git describe --tags --exact-match', cwd='/opt/code/github/jumpscale/core9')
+    if rc != 0:
+        raise j.exceptions.RuntimeError("Can't read version of jumpscale: %s" % err)
+    installed_version = out.strip()
+
     if js_version and not js_version.startswith('v') and installed_version.startswith('v'):
         installed_version = installed_version[1:]
     if js_version and not installed_version.startswith(js_version):
