@@ -33,20 +33,16 @@ def is_job_running(container, cmd='/bin/tlogserver'):
 
 def save_config(job, vdisks=None):
     import yaml
-    import random
-    from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     config = {"servers": [service.model.data.bind]}
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save tlog %s config" % service.name)
+    etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
 
     for vdisk in vdisks:
         config = {
@@ -56,9 +52,7 @@ def save_config(job, vdisks=None):
             "slaveStorageClusterID": vdisk.model.data.backupStoragecluster or "",
         }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save nbd conf storage: %s", vdisk.name)
+        etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
 
 
 def install(job):

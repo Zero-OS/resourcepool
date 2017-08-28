@@ -405,8 +405,8 @@ def start_migartion_channel(job, old_service, new_service):
     try:
         # Get free ports on node to use for ssh
         freeports_node, _ = get_baseports(job, node, 4000, 1, 'migrationtcp')
-    
-        # testing should br changed to not 
+
+        # testing should br changed to not
         if not freeports_node:
             raise j.exceptions.RuntimeError('No free port availble on taget node for migration')
 
@@ -484,7 +484,7 @@ def start_migartion_channel(job, old_service, new_service):
         if tcp_services:
             tcp_service = tcp_services[0]
             j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
-            j.tools.async.wrappers.sync(tcp_service.delete())    
+            j.tools.async.wrappers.sync(tcp_service.delete())
 
         raise e
 
@@ -523,20 +523,16 @@ def get_baseports(job, node, baseport, nrports, name=None):
 
 def save_config(job, vdisks=None):
     import yaml
-    import random
-    from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     config = {"vdisks": list(service.model.data.vdisks)}
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:nbdserver:conf:vdisks" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save vm %s vdisks config" % service.name)
+    etcd.put(key="%s:nbdserver:conf:vdisks" % service.name, value=yamlconfig)
 
 
 def migrate(job):
