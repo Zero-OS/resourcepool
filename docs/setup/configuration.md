@@ -1,4 +1,4 @@
-# Versioning
+# Configuration
 
 Versioning in the Orchestrator is done through the `configuration` AYS service.
 
@@ -46,3 +46,13 @@ The following are the available keys:
   - If not configured, the services will connect to 0core with supplying a password.
 * `jwt-key`:
   - Key used to validate the jwt-token.
+* `iyo_org`:
+  - is itsyouonline organization name
+* `iyo_namespace`:
+  - is itsyouonline nampspace for the organization, namespace can be created by [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
+* `iyo_clientID`:
+  - is itsyouonline client ID
+* `iyo_secret`:
+  - is itsyouonline client secret
+
+**Note**: `itsyouonline` configuration keys are required only to deploy storage clusters of type object

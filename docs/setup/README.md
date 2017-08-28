@@ -144,14 +144,7 @@ configuration__main:
 
 ```
 
-See [Versioning](versioning.md) for more details about the AYS configuration service.
-
-**itsyouonline** configuration keys are required for storage cluster of type object
-* `iyo_org`: is itsyouonline organization name
-* `iyo_namespace`: is itsyouonline nampspace for the organization, namespace can be created by [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
-* `iyo_clientID`: is itsyouonline client ID
-* `iyo_secret`: is itsyouonline client secret
-
+See [Configuration](configuration.md) for more details about the AYS configuration service.
 
 After creating this blueprint, issue the following AYS command to install the configuration service:
 ```bash
