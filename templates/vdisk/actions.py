@@ -241,6 +241,9 @@ def rollback(job):
 
 
 def resize(job):
+    import yaml
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
     service = job.service
     job.logger.info("resize vdisk {}".format(service.name))
 
@@ -252,6 +255,18 @@ def resize(job):
         raise j.exceptions.Input("Maximun disk size is 2TB")
     if size < service.model.data.size:
         raise j.exceptions.Input("size is smaller then current size, disks can  only be grown")
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
+    base_config = {
+        "blockSize": service.model.data.blocksize,
+        "readOnly": service.model.data.readOnly,
+        "size": service.model.data.size,
+        "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
+    }
+    yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
+    etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     service.model.data.size = size
 
@@ -266,7 +281,6 @@ def processChange(job):
         if args.get('size', None):
             job.context['token'] = get_jwt_token_from_job(job)
             j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
-            j.tools.async.wrappers.sync(service.executeAction('save_config', context=job.context))
         if args.get('timestamp', None):
             if str(service.model.data.status) != "halted":
                 raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
