@@ -1,4 +1,4 @@
-from ..abstracts import AYSable
+from .abstracts import AYSable
 from js9 import j
 
 
