@@ -12,29 +12,29 @@ class VdiskCreate(object):
     """
 
     @staticmethod
-    def create(blocksize, id, size, storagecluster, type, backupStoragecluster=None, readOnly=None, templatevdisk=None, tlogStoragecluster=None):
+    def create(blockStoragecluster, blocksize, id, size, type, backupStoragecluster=None, objectStoragecluster=None, readOnly=None, templatevdisk=None):
         """
         :type backupStoragecluster: str
+        :type blockStoragecluster: str
         :type blocksize: int
         :type id: str
+        :type objectStoragecluster: str
         :type readOnly: bool
         :type size: int
-        :type storagecluster: str
         :type templatevdisk: str
-        :type tlogStoragecluster: str
         :type type: EnumVdiskCreateType
         :rtype: VdiskCreate
         """
 
         return VdiskCreate(
             backupStoragecluster=backupStoragecluster,
+            blockStoragecluster=blockStoragecluster,
             blocksize=blocksize,
             id=id,
+            objectStoragecluster=objectStoragecluster,
             readOnly=readOnly,
             size=size,
-            storagecluster=storagecluster,
             templatevdisk=templatevdisk,
-            tlogStoragecluster=tlogStoragecluster,
             type=type,
         )
 
@@ -56,6 +56,17 @@ class VdiskCreate(object):
                 self.backupStoragecluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+        property_name = 'blockStoragecluster'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.blockStoragecluster = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'blocksize'
         val = data.get(property_name)
@@ -79,6 +90,15 @@ class VdiskCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
+        property_name = 'objectStoragecluster'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.objectStoragecluster = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
         property_name = 'readOnly'
         val = data.get(property_name)
         if val is not None:
@@ -99,32 +119,12 @@ class VdiskCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'storagecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.storagecluster = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
         property_name = 'templatevdisk'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
                 self.templatevdisk = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'tlogStoragecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.tlogStoragecluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 

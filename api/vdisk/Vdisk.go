@@ -10,8 +10,8 @@ type Vdisk struct {
 	ReadOnly             bool               `yaml:"readOnly" json:"readOnly,omitempty"`
 	Size                 int                `yaml:"size" json:"size" validate:"nonzero"`
 	Status               EnumVdiskStatus    `yaml:"status" json:"status" validate:"nonzero"`
-	Storagecluster       string             `yaml:"storagecluster" json:"storagecluster" validate:"nonzero"`
-	TlogStoragecluster   string             `yaml:"tlogStoragecluster" json:"tlogStoragecluster" validate:"nonzero"`
+	BlockStoragecluster  string             `yaml:"blockStoragecluster" json:"blockStoragecluster" validate:"nonzero"`
+	ObjectStoragecluster string             `yaml:"objectStoragecluster" json:"objectStoragecluster" validate:"nonzero"`
 	BackupStoragecluster string             `yaml:"backupStoragecluster" json:"backupStoragecluster"`
 	Vdisktype            EnumVdiskVdisktype `yaml:"type" json:"type" validate:"nonzero"`
 }
