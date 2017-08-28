@@ -935,20 +935,25 @@ ClusterCreate:
     driveType:
       type: string
       enum: [nvme, ssd, hdd, archive]
+    metaDriveType:
+      type: string
+      enum: [nvme, ssd, hdd, archive]
+      description: Required only for storage clusters of type object
+      required: false
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
     clusterType:
       type: string
-      enum: [storage, tlog]
+      enum: [block, object]
       description: cluster type
-    k:
+    dataShards:
       type: integer
-      description: K variable of the erasure encoding, required for tlog clusters
+      description: dataShards variable of the erasure encoding, required for object clusters
       required: false
-    m:
+    parityShards:
       type: integer
-      description: M variable of the erasure encoding, required for tlog clusters
+      description: parityShards variable of the erasure encoding, required for object clusters
       required: false
   example:
     label: cluster1
@@ -957,7 +962,7 @@ ClusterCreate:
     nodes:
        - node1
        - node2
-    clusterType: storage
+    clusterType: block
 
 Cluster:
   properties:

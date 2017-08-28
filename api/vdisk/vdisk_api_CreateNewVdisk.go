@@ -57,7 +57,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
 		Type                 string `yaml:"type" json:"type"`
 		StorageCluster       string `yaml:"storageCluster" json:"storageCluster"`
-		TlogStoragecluster   string `yaml:"tlogStoragecluster" json:"tlogStoragecluster"`
+		ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
 		BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
 	}{
 		Size:                 reqBody.Size,
@@ -66,7 +66,7 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		ReadOnly:             reqBody.ReadOnly,
 		Type:                 string(reqBody.Vdisktype),
 		StorageCluster:       reqBody.Storagecluster,
-		TlogStoragecluster:   reqBody.TlogStoragecluster,
+		ObjectStoragecluster: reqBody.ObjectStoragecluster,
 		BackupStoragecluster: reqBody.BackupStoragecluster,
 	}
 

@@ -33,20 +33,16 @@ def is_job_running(container, cmd='/bin/tlogserver'):
 
 def save_config(job, vdisks=None):
     import yaml
-    import random
-    from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
     config = {"servers": [service.model.data.bind]}
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    etcd = ETCD.from_ays(etcd, job.context['token'])
-    result = etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save tlog %s config" % service.name)
+    etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
 
     for vdisk in vdisks:
         config = {
@@ -56,9 +52,7 @@ def save_config(job, vdisks=None):
             "slaveStorageClusterID": vdisk.model.data.backupStoragecluster or "",
         }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save nbd conf storage: %s", vdisk.name)
+        etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
 
 
 def install(job):
@@ -74,18 +68,18 @@ def install(job):
     container = get_container(service, job.context['token'])
     config = {
         'storageClusters': set(),
-        'k': 0,
-        'm': 0,
+        'data-shards': 0,
+        'parity-shards': 0,
     }
 
     backup = False
     for vdiskservice in vdisks:
-        tlogcluster = vdiskservice.model.data.tlogStoragecluster
-        if tlogcluster and tlogcluster not in config['storageClusters']:
-            _, k, m = get_storagecluster_config(job, tlogcluster)
-            config['storageClusters'].add(tlogcluster)
-            config['k'] += k
-            config['m'] += m
+        objectcluster = vdiskservice.model.data.objectStoragecluster
+        if objectcluster and objectcluster not in config['storageClusters']:
+            _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
+            config['storageClusters'].add(objectcluster)
+            config['data-shards'] += data_shards
+            config['parity-shards'] += parity_shards
             if vdiskservice.model.data.backupStoragecluster:
                 backup = True
 
@@ -93,18 +87,22 @@ def install(job):
         return
 
     save_config(job, vdisks)
-    k = config.pop('k')
-    m = config.pop('m')
+    data_shards = config.pop('data-shards')
+    parity_shards = config.pop('parity-shards')
 
     bind = service.model.data.bind
     if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
         cmd = '/bin/tlogserver \
                 -id {id} \
                 -address {bind} \
-                -k {k} \
-                -m {m} \
+                -data-shards {data_shards} \
+                -parity-shards {parity_shards} \
                 -config "{dialstrings}" \
-                '.format(id=vm.name, bind=bind, k=k, m=m, dialstrings=etcd_cluster.dialstrings)
+                '.format(id=vm.name,
+                         bind=bind,
+                         data_shards=data_shards,
+                         parity_shards=parity_shards,
+                         dialstrings=etcd_cluster.dialstrings)
         if backup:
             cmd += '-with-slave-sync'
         job.logger.info("Starting tlog server: %s" % cmd)
@@ -129,7 +127,7 @@ def get_storagecluster_config(job, storagecluster):
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                            instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.k, cluster.m
+    return cluster.get_config(), cluster.data_shards, cluster.parity_shards
 
 
 def stop(job):

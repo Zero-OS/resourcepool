@@ -1,22 +1,23 @@
-@0xd0eb3013bee1f5d8;
+@0xaf827ecce8244a14;
 
 struct Schema {
     label @0 :Text;
     status @1 :Status = empty;
     nrServer @2 :UInt32 = 256;
     diskType @3:DiskClass = ssd;
-    filesystems @4:List(Text);
-    storageEngines @5 :List(Text);
+    metadiskType @4:DiskClass = ssd;
+    filesystems @5:List(Text);
+    storageEngines @6 :List(Text);
 
-    nodes @6 :List(Text); # list of node where we can deploy storage server
+    nodes @7 :List(Text); # list of node where we can deploy storage server
 
-    clusterType @7 :Type = storage;
-    k @8: UInt32;
-    m @9: UInt32;
+    clusterType @8 :Type = block;
+    dataShards @9: UInt32;
+    parityShards @10: UInt32;
 
     enum Type {
-        storage @0;
-        tlog @1;
+        block @0;
+        object @1;
     }
 
     enum Status{
