@@ -46,7 +46,7 @@ def save_config(job, vdisks=None):
 
     for vdisk in vdisks:
         config = {
-            "storageClusterID": vdisk.model.data.storageCluster,
+            "storageClusterID": vdisk.model.data.blockStoragecluster,
             "templateStorageClusterID": vdisk.model.data.templateStorageCluster or "",
             "tlogServerClusterID": service.name,
             "slaveStorageClusterID": vdisk.model.data.backupStoragecluster or "",

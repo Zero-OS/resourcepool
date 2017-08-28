@@ -16,7 +16,7 @@ def install(job):
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
-        storagecluster = service.model.data.storageCluster
+        blockStoragecluster = service.model.data.blockStoragecluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
@@ -27,7 +27,7 @@ def install(job):
             cmd = CMD.format(etcd=etcd_cluster.dialstrings,
                              dst_name=service.name,
                              src_name=template.path.lstrip('/'),
-                             tgtcluster=storagecluster)
+                             tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
             result = volume_container.client.system(cmd).get()
@@ -128,7 +128,7 @@ def save_config(job):
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": service.model.data.storageCluster,
+        "storageClusterID": service.model.data.blockStoragecluster,
         "templateStorageClusterID": templateStorageclusterId,
     }
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
@@ -137,7 +137,7 @@ def save_config(job):
 
 def get_cluster_config(job, type="storage"):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    cluster = job.service.model.data.storageCluster
+    cluster = job.service.model.data.blockStoragecluster
 
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                            instance=cluster)

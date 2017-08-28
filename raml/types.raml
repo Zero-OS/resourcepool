@@ -1024,14 +1024,14 @@ VdiskCreate:
       type: boolean
       required: false
       default: false
-    storagecluster:
+    blockStoragecluster:
       type: string
-      description: the storagecluster used for this vdisk's main storage.
+      description: the blockStoragecluster used for this vdisk's main storage.
       required: true
-    tlogStoragecluster:
+    objectStoragecluster:
       type: string
       description: |
-        the storagecluster used for this vdisk's transaction logs
+        the objectStoragecluster used for this vdisk's transaction logs
 
         This property can only be used when the disk is of type boot or db.
       required: false
