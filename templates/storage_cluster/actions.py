@@ -235,16 +235,14 @@ def init(job):
 
 def save_config(job):
     import yaml
-    import random
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.orchestrator.sal.ETCD import ETCD, EtcdCluster
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
     aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
     etcd_cluster = service.producers['etcd_cluster'][0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
-    etcd = ETCD.from_ays(etcd, job.context['token'])
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
         cluster = StorageCluster.from_ays(service, job.context['token'])
@@ -252,15 +250,10 @@ def save_config(job):
 
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
-        result = etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save storage cluster config")
+        etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
         return
 
     # Push zerostorconfig to etcd
-    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
-
     zerostor_services = service.producers["zerostor"]
     zerostor_config = {
         "iyo": {
@@ -270,12 +263,10 @@ def save_config(job):
             "secret": aysconfig["iyo_secret"],
         },
         "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
-        "metadataServers": [{"address": dialstring} for dialstring in etcd_cluster.dialstrings.split(",")],
+        "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
     }
     yamlconfig = yaml.safe_dump(zerostor_config, default_flow_style=False)
-    result = etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save zerostor config")
+    etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
 
 
 def get_availabledisks(job, nodes, disktype=None):

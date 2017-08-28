@@ -60,17 +60,15 @@ def delete(job):
 def save_config(job):
     import hashlib
     from urllib.parse import urlparse
-    import random
     import yaml
-    from zeroos.orchestrator.sal.ETCD import ETCD
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
 
     templateStorageclusterId = ""
 
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-    etcd = random.choice(etcd_cluster.producers['etcd'])
-    etcd = ETCD.from_ays(etcd, job.context['token'])
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.templateVdisk:
         template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
@@ -82,9 +80,7 @@ def save_config(job):
         }
         yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
 
-        result = etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save vdisk %s config" % service.name)
+        etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
 
         # Save root cluster
         templatestorageEngine = get_templatecluster(job)
@@ -99,18 +95,14 @@ def save_config(job):
         service.model.data.templateStorageCluster = templateStorageclusterId
         service.saveAll()
 
-        result = etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save template storage")
+        etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
 
         #  Save nbd template config
         config = {
             "storageClusterID": templateStorageclusterId,
         }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        result = etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save template storage")
+        etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
 
     # Save base config
     template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
@@ -121,9 +113,7 @@ def save_config(job):
         "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
     }
     yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
-    result = etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save template storage")
+    etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
     if service.model.data.objectStoragecluster:
@@ -134,9 +124,7 @@ def save_config(job):
                 config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
 
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        result = etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
-        if result.state != "SUCCESS":
-            raise RuntimeError("Failed to save tlog conf storage: %s" % service.name)
+        etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
 
     # push nbd config to etcd
     config = {
@@ -144,9 +132,7 @@ def save_config(job):
         "templateStorageClusterID": templateStorageclusterId,
     }
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-    result = etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
-    if result.state != "SUCCESS":
-        raise RuntimeError("Failed to save nbd conf storage: %s", service.name)
+    etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 
 
 def get_cluster_config(job, type="storage"):
