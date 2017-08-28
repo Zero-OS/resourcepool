@@ -50026,55 +50026,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>storagecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>tlogStoragecluster</strong>:
-
-  
-    <em>(string)
-    </em>
-  
-
-<p>the storagecluster used for this vdisk&#39;s transaction logs</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>backupStoragecluster</strong>:
 
   
@@ -50217,6 +50168,31 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
+  <strong>objectStoragecluster</strong>:
+
+  
+    <em>(string)
+    </em>
+  
+
+<p>the objectStoragecluster used for this vdisk&#39;s transaction logs</p>
+<p>This property can only be used when the disk is of type boot or db.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>readOnly</strong>:
 
   
@@ -50274,6 +50250,30 @@ details in a user&#39;s account without getting their password.</p>
 <p>Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
 You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename</p>
 <p>This property can only be used when the disk is of type boot.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blockStoragecluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
 
 
   
