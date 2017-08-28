@@ -6,13 +6,14 @@ import (
 )
 
 type ClusterCreate struct {
-	DriveType   EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
-	Label       string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
-	Nodes       []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
-	Servers     int                        `yaml:"servers" json:"servers" validate:"nonzero"`
-	ClusterType EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
-	K           int                        `yaml:"k" json:"k"`
-	M           int                        `yaml:"m" json:"m"`
+	DriveType     EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
+	MetaDriveType EnumClusterCreateDriveType `yaml:"metaDriveType" json:"metaDriveType"`
+	Label         string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
+	Nodes         []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
+	Servers       int                        `yaml:"servers" json:"servers" validate:"nonzero"`
+	ClusterType   EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
+	DataShards    int                        `yaml:"dataShards" json:"dataShards"`
+	ParityShards  int                        `yaml:"parityShards" json:"parityShards"`
 }
 
 func (s ClusterCreate) Validate() error {
@@ -27,16 +28,22 @@ func (s ClusterCreate) Validate() error {
 		return err
 	}
 
+	if string(s.MetaDriveType) != "" {
+		if err := validators.ValidateEnum("MetaDriveType", s.MetaDriveType, typeEnums); err != nil {
+			return err
+		}
+	}
+
 	clusterTypeEnums := map[interface{}]struct{}{
-		EnumClusterTypestorage: struct{}{},
-		EnumClusterTypetlog:    struct{}{},
+		EnumClusterTypeBlock:  struct{}{},
+		EnumClusterTypeObject: struct{}{},
 	}
 
 	if err := validators.ValidateEnum("ClusterType", s.ClusterType, clusterTypeEnums); err != nil {
 		return err
 	}
 
-	if err := validators.ValidateCluster(string(s.ClusterType), s.K, s.M, s.Servers); err != nil {
+	if err := validators.ValidateCluster(string(s.ClusterType), s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType)); err != nil {
 		return err
 	}
 

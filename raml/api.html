@@ -48109,6 +48109,30 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
+  <strong>metaDriveType</strong>:
+
+  
+    <em>(one of nvme, ssd, hdd, archive)
+    </em>
+  
+
+<p>Required only for storage clusters of type object</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>nodes</strong>:
 
   
@@ -48136,7 +48160,7 @@ details in a user&#39;s account without getting their password.</p>
   <strong>clusterType</strong>:
 
   
-    <em>required (one of storage, tlog)
+    <em>required (one of block, object)
     </em>
   
 
@@ -48157,14 +48181,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>k</strong>:
+  <strong>dataShards</strong>:
 
   
     <em>(integer)
     </em>
   
 
-<p>K variable of the erasure encoding, required for tlog clusters</p>
+<p>dataShards variable of the erasure encoding, required for object clusters</p>
 
 
   
@@ -48181,14 +48205,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>m</strong>:
+  <strong>parityShards</strong>:
 
   
     <em>(integer)
     </em>
   
 
-<p>M variable of the erasure encoding, required for tlog clusters</p>
+<p>parityShards variable of the erasure encoding, required for object clusters</p>
 
 
   
@@ -48222,7 +48246,7 @@ details in a user&#39;s account without getting their password.</p>
     "node1",
     "node2"
   ],
-  "clusterType": "storage"
+  "clusterType": "block"
 }</code></pre>
         
     </div>

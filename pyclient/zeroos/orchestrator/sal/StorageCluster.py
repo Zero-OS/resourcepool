@@ -21,8 +21,8 @@ class StorageCluster:
         self.filesystems = []
         self.storage_servers = []
         self.disk_type = disk_type
-        self.k = 0
-        self.m = 0
+        self.data_shards = 0
+        self.parity_shards = 0
         self._ays = None
 
     @classmethod
@@ -40,8 +40,8 @@ class StorageCluster:
 
         cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type)
         cluster.storage_servers = storage_servers
-        cluster.k = service.model.data.k
-        cluster.m = service.model.data.m
+        cluster.data_shards = service.model.data.dataShards
+        cluster.parity_shards = service.model.data.parityShards
         return cluster
 
     @property
