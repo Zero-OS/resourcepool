@@ -256,6 +256,15 @@ class NodesService:
         return self.client.get(uri, None, headers, query_params, content_type)
 
 
+    def UpdateContainer(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Updates the container Nic
+        It is method for PUT /nodes/{nodeid}/containers/{containername}
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername
+        return self.client.put(uri, data, headers, query_params, content_type)
+
+
     def ListContainers(self, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         List running containers

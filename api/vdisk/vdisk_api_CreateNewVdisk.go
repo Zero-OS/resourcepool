@@ -38,14 +38,14 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.Storagecluster, api.AysRepo)
+	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.BlockStoragecluster, api.AysRepo)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.Storagecluster)
+		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.Storagecluster), "")
+		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.BlockStoragecluster), "")
 		return
 	}
 
@@ -56,8 +56,8 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		TemplateVdisk        string `yaml:"templateVdisk" json:"templateVdisk"`
 		ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
 		Type                 string `yaml:"type" json:"type"`
-		StorageCluster       string `yaml:"storageCluster" json:"storageCluster"`
-		TlogStoragecluster   string `yaml:"tlogStoragecluster" json:"tlogStoragecluster"`
+		BlockStoragecluster  string `yaml:"blockStoragecluster" json:"blockStoragecluster"`
+		ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
 		BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
 	}{
 		Size:                 reqBody.Size,
@@ -65,8 +65,8 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		TemplateVdisk:        reqBody.Templatevdisk,
 		ReadOnly:             reqBody.ReadOnly,
 		Type:                 string(reqBody.Vdisktype),
-		StorageCluster:       reqBody.Storagecluster,
-		TlogStoragecluster:   reqBody.TlogStoragecluster,
+		BlockStoragecluster:  reqBody.BlockStoragecluster,
+		ObjectStoragecluster: reqBody.ObjectStoragecluster,
 		BackupStoragecluster: reqBody.BackupStoragecluster,
 	}
 

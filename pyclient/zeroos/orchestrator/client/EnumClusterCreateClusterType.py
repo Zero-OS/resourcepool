@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class EnumClusterCreateClusterType(Enum):
-    storage = "storage"
-    tlog = "tlog"
+    block = "block"
+    object = "object"

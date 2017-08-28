@@ -10,9 +10,9 @@ type VdiskCreate struct {
 	Blocksize            int                      `yaml:"blocksize" json:"blocksize" validate:"nonzero"`
 	ReadOnly             bool                     `yaml:"readOnly" json:"readOnly,omitempty"`
 	Size                 int                      `yaml:"size" json:"size" validate:"nonzero,max=2048"`
-	Storagecluster       string                   `yaml:"storagecluster" json:"storagecluster" validate:"nonzero"`
+	BlockStoragecluster  string                   `yaml:"blockStoragecluster" json:"blockStoragecluster" validate:"nonzero"`
 	Templatevdisk        string                   `yaml:"templatevdisk" json:"templatevdisk,omitempty"`
-	TlogStoragecluster   string                   `yaml:"tlogStoragecluster" json:"tlogStoragecluster,omitempty"`
+	ObjectStoragecluster string                   `yaml:"objectStoragecluster" json:"objectStoragecluster,omitempty"`
 	BackupStoragecluster string                   `yaml:"backupStoragecluster" json:"backupStoragecluster,omitempty"`
 	Vdisktype            EnumVdiskCreateVdisktype `yaml:"type" json:"type" validate:"nonzero"`
 }
@@ -29,7 +29,7 @@ func (s VdiskCreate) Validate() error {
 		return err
 	}
 
-	if err := validators.ValidateVdisk(string(s.Vdisktype), s.TlogStoragecluster, s.Templatevdisk, s.Blocksize, s.BackupStoragecluster); err != nil {
+	if err := validators.ValidateVdisk(string(s.Vdisktype), s.ObjectStoragecluster, s.Templatevdisk, s.Blocksize, s.BackupStoragecluster); err != nil {
 		return err
 	}
 

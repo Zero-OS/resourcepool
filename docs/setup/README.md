@@ -133,9 +133,25 @@ configuration__main:
     value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
+  - key: 'iyo_org'
+    value: 'zero-test'
+  - key: 'iyo_namespace'
+    value: 'namespace'
+  - key: 'iyo_clientID'
+    value: '<clientID>'
+  - key: 'iyo_secret'
+    value: '<secret>'
+
 ```
 
 See [Versioning](versioning.md) for more details about the AYS configuration service.
+
+**itsyouonline** configuration keys are required for storage cluster of type object
+* `iyo_org`: is itsyouonline organization name
+* `iyo_namespace`: is itsyouonline nampspace for the organization, namespace can be created by [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
+* `iyo_clientID`: is itsyouonline client ID
+* `iyo_secret`: is itsyouonline client secret
+
 
 After creating this blueprint, issue the following AYS command to install the configuration service:
 ```bash

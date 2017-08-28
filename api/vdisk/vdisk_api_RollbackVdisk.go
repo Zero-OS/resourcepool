@@ -43,8 +43,8 @@ func (api VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Make sure the disk is attached to a tlogStoragecluster
-	if disk.TlogStoragecluster == "" {
-		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a TLog Cluster", vdiskID)
+	if disk.ObjectStoragecluster == "" {
+		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a Object Cluster", vdiskID)
 		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}

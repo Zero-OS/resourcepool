@@ -143,6 +143,8 @@ def update(job, updated_nics):
 
     def get_nic_id(nic):
         # use combination of type and id as identifier, cannot use name as it is optional and not unique while id is.
+        if not nic.get('id') and nic['type'] == 'default':
+            nic['id'] = 'default'
         return "{}:{}".format(nic['type'], nic['id'])
 
     # find the index of the nic in the list returned by client.container.list()
@@ -169,6 +171,7 @@ def update(job, updated_nics):
             cl.nic_remove(container.id, get_nic_index(nic))
 
     # update nics model
+    old_nics = [i for i in service.model.data.nics]
     service.model.data.nics = updated_nics
 
     # check for nics to be added
@@ -185,6 +188,7 @@ def update(job, updated_nics):
                 core_job = e.args[1]
                 if 499 >= core_job.code >= 400:
                     job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+                service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))
             if nic.type == 'zerotier':

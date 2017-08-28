@@ -18,6 +18,8 @@ def stop(job):
     from zeroos.orchestrator.sal.StorageEngine import StorageEngine
 
     service = job.service
+    service.model.data.status = 'halting'
+    service.saveAll()
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
     service.model.data.status = 'halted'

@@ -1,6 +1,7 @@
 from io import BytesIO
 import logging
 import yaml
+import etcd3
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -9,9 +10,10 @@ logger = logging.getLogger(__name__)
 class EtcdCluster:
     """etced server"""
 
-    def __init__(self, name, dialstrings):
+    def __init__(self, name, dialstrings, mgmtdialstrings):
         self.name = name
         self.dialstrings = dialstrings
+        self.mgmtdialstrings = mgmtdialstrings
         self._ays = None
 
     @classmethod
@@ -23,20 +25,40 @@ class EtcdCluster:
             etcd = ETCD.from_ays(etcd_service, password)
             dialstrings.add(etcd.clientBind)
 
+        mgmtdialstrings = set()
+        for etcd_service in service.producers.get('etcd', []):
+            etcd = ETCD.from_ays(etcd_service, password)
+            mgmtdialstrings.add(etcd.mgmtClientBind)
+
         return cls(
             name=service.name,
             dialstrings=",".join(dialstrings),
+            mgmtdialstrings=",".join(mgmtdialstrings)
         )
+
+    def put(self, key, value):
+        dialstrings = self.mgmtdialstrings.split(",")
+        for dialstring in dialstrings:
+            host, port = dialstring.split(":")
+            try:
+                etcd = etcd3.client(host=host, port=port)
+                etcd.put(key, value)
+                break
+            except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as e:
+                logger.error("Could not connect to etcd on %s:%s" % (host, port))
+        else:
+            raise RuntimeError("etcd cluster %s has now running etcd servers" % self.name)
 
 
 class ETCD:
     """etced server"""
 
-    def __init__(self, name, container, serverBind, clientBind, peers, data_dir='/mnt/data', password=None):
+    def __init__(self, name, container, serverBind, clientBind, peers, mgmtClientBind, data_dir='/mnt/data', password=None):
         self.name = name
         self.container = container
         self.serverBind = serverBind
         self.clientBind = clientBind
+        self.mgmtClientBind = mgmtClientBind
         self.data_dir = data_dir
         self.peers = ",".join(peers)
         self._ays = None
@@ -53,6 +75,7 @@ class ETCD:
             container=container,
             serverBind=service.model.data.serverBind,
             clientBind=service.model.data.clientBind,
+            mgmtClientBind=service.model.data.mgmtClientBind,
             data_dir=service.model.data.homeDir,
             peers=service.model.data.peers,
             password=password
@@ -61,12 +84,13 @@ class ETCD:
     def start(self):
         configpath = "/etc/etcd_{}.config".format(self.name)
 
+        client_urls = ",".join(list({"http://{}".format(self.clientBind), "http://{}".format(self.mgmtClientBind)}))
         config = {
             "name": self.name,
             "initial-advertise-peer-urls": "http://{}".format(self.serverBind),
             "listen-peer-urls": "http://{}".format(self.serverBind),
-            "listen-client-urls": "http://{}".format(self.clientBind),
-            "advertise-client-urls": "http://{}".format(self.clientBind),
+            "listen-client-urls": client_urls,
+            "advertise-client-urls": client_urls,
             "initial-cluster": self.peers,
             "data-dir": self.data_dir,
             "initial-cluster-state": "new"
