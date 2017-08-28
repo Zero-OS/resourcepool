@@ -1,6 +1,8 @@
 import random, time, unittest
 from testcases.testcases_base import TestcasesBase
 from urllib.request import urlopen
+import requests
+import json
 
 class TestcontaineridAPI(TestcasesBase):
     def setUp(self):
@@ -210,7 +212,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Check if third container (c3) can ping first container (c1), should fail.")
         response = C3_client.bash('ping -w5 %s' % C1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
-    
+
     def test007_create_containers_with_diff_bridges(self):
         """ GAT-088
         *Test case for create containers with different bridges and make sure they can't connect to  each other through bridge ip *
@@ -268,7 +270,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash('ping -w5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    
+
     def test008_Create_container_with_zerotier_network(self):
         """ GAT-089
         *Test case for create containers with same zerotier network *
@@ -660,7 +662,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         c1_client = self.core0_client.get_container_client(data_c1['name'])
         self.core0_client.timeout = 300
-  
+
         self.lg.info(" [*] Open server in container port ,should succeed")
         response = c1_client.bash("mkdir {0} && cd {0}&& echo 'test'>{0}.text ".format(file_name)).get()
         self.assertEqual(response.state, "SUCCESS")
@@ -722,7 +724,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.state, "SUCCESS", "job didn't get stdin correctly")
         response = c1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get Env varaible  correctly")
-    
+
     @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
     def test017_Create_containers_with_common_vlan(self):
         """ GAT-098
@@ -797,3 +799,61 @@ class TestcontaineridAPI(TestcasesBase):
 
         response = C3_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, "ERROR")
+
+    def test018_attach_different_nics_to_same_container(self):
+        """ GAT-141
+        *Check container behaviour with attaching different nics to it*
+
+        **Test Scenario:**
+
+        #. Create container without nic, should succeed
+        #. Attach a non existent bridge to the container ,should fail.
+        #. Create two bridges (B1 and B2), should succeed.
+        #. Attach B1 to the container, should succeed
+        #. Attach B2 only to the container, should succeed
+        #. Get Container, should find B2 only
+        #. Attach Both B1 and B2, should succeed
+
+        """
+        self.lg.info('Create container without nic, should succeed')
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, nics=[])
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
+        cont_name = self.data['name']
+        self.created['container'].append(cont_name)
+
+        self.lg.info('Attach a non existent bridge to the container, should fail')
+        nics = [{'type': 'bridge', 'id': self.random_string()}]
+        try:
+            self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nics)
+        except requests.HTTPError as e:
+            self.assertEqual(e.response.status_code, 400)
+
+        self.lg.info('create two bridges (B1 and B2), should succeed')
+        response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
+        B1 = data_bridge['name']
+        self.created['bridge'].append(B1)
+        response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
+        B2 = data_bridge['name']
+        self.created['bridge'].append(B2)
+
+        self.lg.info('Attach B1 to the container, should succeed')
+        nic1 = [{'type': 'bridge', 'id': B1}]
+        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic1)
+        self.assertEqual(self.response.status_code, 201)
+
+        self.lg.info('Attach B2 only to the container, should succeed')
+        nic2 = [{'type': 'bridge', 'id': B2}]
+        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic2)
+        self.assertEqual(self.response.status_code, 201)
+
+        self.lg.info('Get Container, should find B2 only ')
+        self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)
+        d = json.loads(self.response.text.split('\n')[0])
+        self.assertEqual(len(d['nics']), 1)
+        self.assertEqual(d['nics'][0]['id'], nic2[0]['id'])
+
+        self.lg.info('Attach Both B1 and B2, should succeed')
+        nic3 = [{'type': 'bridge', 'id': B1}, {'type': 'bridge', 'id': B2}]
+        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic3)
+        d = json.loads(self.response.text.split('\n')[0])
+        self.assertEqual(len(d['nics']), 2)
