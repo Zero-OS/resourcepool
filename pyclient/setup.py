@@ -24,5 +24,5 @@ setup(
         'zeroos.orchestrator.sal.templates': ['*.conf', 'dhcp', 'dashboards/*']
     },
     namespace_packages=['zeroos'],
-    install_requires=['python-dateutil', 'Jinja2', 'aioredis', 'etcd3'],
+    install_requires=['python-dateutil', 'Jinja2', 'aioredis', 'etcd3', 'netaddr'],
 )
