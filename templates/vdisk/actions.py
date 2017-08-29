@@ -135,12 +135,14 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 
 
-def get_cluster_config(job, type="storage"):
+def get_cluster_config(job, type="block"):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    cluster = job.service.model.data.blockStoragecluster
+    service = job.service
 
-    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
-                                                           instance=cluster)
+    cluster = service.model.data.blockStoragecluster if type == "block" else service.model.data.objectStoragecluster
+
+    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+                                                       instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     nodes = list(set(storageclusterservice.producers["node"]))
     return {"config": cluster.get_config(), "nodes": nodes, 'dataShards': cluster.data_shards, 'parityShards': cluster.parity_shards}
@@ -213,7 +215,7 @@ def rollback(job):
     service.model.data.status = 'rollingback'
     ts = job.model.args['timestamp']
 
-    clusterconfig = get_cluster_config(job)
+    clusterconfig = get_cluster_config(job, type="object")
     node = random.choice(clusterconfig['nodes'])
     container = create_from_template_container(job, node)
     try:
