@@ -20,13 +20,15 @@ class BridgesAPI(OrchestratorBase):
     @catch_exception_decoration_return
     def post_nodes_bridges(self, node_id, **kwargs):
         temp = random.randint(1, 254)
+        temp2 = random.randint(1, 254)
         if 'networkMode' not in kwargs.keys():
             kwargs['networkMode'] = self.random_choise(["none", "static", "dnsmasq"])
 
         settings_draft = {"none": {},
-                          "static": {"cidr": "192.168.%i.%i/16" % (random.randint(1, 254), random.randint(1, 254))},
-                          "dnsmasq": {"cidr": "192.168.%i.1/24" % temp, "start": "192.168.%i.2" % temp,
-                                      "end": "192.168.%i.254" % temp}}
+                          "static": {"cidr": "192.%i.%i.%i/24" % (random.randint(1, 254), random.randint(1, 254), random.randint(1, 254))},
+                          "dnsmasq": {"cidr": "192.%i.%i.1/24" % (temp, temp2), 
+                                      "start": "192.%i.%i.2" % (temp, temp2),
+                                      "end": "192.%i.%i.254" % (temp, temp2)}}
 
         data = {"name": self.random_string(),
                 "hwaddr": self.randomMAC(),

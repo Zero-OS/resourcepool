@@ -33,7 +33,7 @@ class TestStorageclustersAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         for key in ['label', 'driveType', 'nodes']:
             self.assertEqual(response.json()[key], self.data[key])
-        self.assertNotEqual(response.json()['status'], 'error')
+        self.assertEqual(response.json()['status'], 'ready')
 
         self.lg.info(' [*] Get nonexisting storage cluster (SC0), should fail with 404')
         response = self.storageclusters_api.get_storageclusters_label(self.rand_str())
@@ -61,6 +61,10 @@ class TestStorageclustersAPI(TestcasesBase):
         response = self.storageclusters_api.get_storageclusters()
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data['label'], response.json())
+
+        response = self.storageclusters_api.get_storageclusters_label(self.data['label'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'ready')
 
         self.lg.info(' [*] Kill storage cluster (SC1), should succeed with 204')
         response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])

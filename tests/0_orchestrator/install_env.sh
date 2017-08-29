@@ -18,12 +18,6 @@ ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
 
 #install requirments
 sudo apt-get update
-sudo apt-get install python3-pip -y
-sudo apt-get install python3-dev -y
-sudo apt-get install libffi-dev -y
-sudo apt-get install python3-pip -y
-sudo pip3 install paramiko
-sudo pip3 install configargparse
 sudo pip3 install -U git+https://github.com/zero-os/0-orchestrator.git${TRAVIS_BRANCH}#subdirectory=pyclient
 sudo pip3 install -U git+https://github.com/zero-os/0-core.git@${CORE_0_BRANCH}#subdirectory=client/py-client
 
