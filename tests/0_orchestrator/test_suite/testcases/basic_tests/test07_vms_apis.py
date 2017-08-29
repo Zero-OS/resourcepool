@@ -17,7 +17,7 @@ class TestVmsAPI(TestcasesBase):
 
         vdisks = self.vdisks_api.get_vdisks()
         vdisks = [x for x in vdisks.json() if
-                  (x['id'] == 'ubuntu-test-vdisk' and x['storageCluster'] == self.storagecluster)]
+                  (x['id'] == 'ubuntu-test-vdisk' and x['blockStoragecluster'] == self.storagecluster)]
         if vdisks == []:
             self.lg.info(' [*] Create new ssd vdisk.')
             response, self.vdisk = self.vdisks_api.post_vdisks(id='ubuntu-test-vdisk', size=15,
