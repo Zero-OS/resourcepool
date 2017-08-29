@@ -12,6 +12,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 7. [Setup the AYS Bootstrap service](#start-the-bootstrap-service)
 8. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
 9. [Setup Statistics Monitoring](#setup-statistics-monitoring)
+10. [Setup etcd cluster](#setup-etcd-cluster)
 
 
 ## Create a JumpScale9 Docker container
@@ -144,14 +145,7 @@ configuration__main:
 
 ```
 
-See [Versioning](versioning.md) for more details about the AYS configuration service.
-
-**itsyouonline** configuration keys are required for storage cluster of type object
-* `iyo_org`: is itsyouonline organization name
-* `iyo_namespace`: is itsyouonline nampspace for the organization, namespace can be created by [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
-* `iyo_clientID`: is itsyouonline client ID
-* `iyo_secret`: is itsyouonline client secret
-
+See [Configuration](configuration.md) for more details about the AYS configuration service.
 
 After creating this blueprint, issue the following AYS command to install the configuration service:
 ```bash
@@ -242,6 +236,7 @@ statsdb__statistics:
 
 actions:
   - action: install
+    actor: statsdb
 
 ```
 
@@ -262,4 +257,5 @@ etcd_cluster__myetcd:
 
 actions:
   - action: install
+    actor: etcd_cluster
   ```
