@@ -1,9 +1,8 @@
-from js9 import j
 import os
 from zeroos.core0.client.client import Timeout
 import json
 import hashlib
-
+import traceback
 
 class HealthCheckObject:
     def __init__(self, id, name, category, resource):
@@ -33,8 +32,8 @@ class HealthCheckRun(HealthCheckObject):
         try:
             self.run(*args, **kwargs)
         except Exception as e:
-            eco = j.errorhandler.parsePythonExceptionObject(e)
-            self.stacktrace = eco.traceback
+            self.stacktrace = traceback.format_exc()
+
         return self.to_dict()
 
 

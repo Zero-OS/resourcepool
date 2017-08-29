@@ -102,6 +102,89 @@ def install(job):
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
 
+def save_certificates(job, container, caddy_dir="/.caddy"):
+    from io import  BytesIO
+    if container.client.filesystem.exists(caddy_dir):
+        service = job.service
+        certificates = []
+        for cert_authority in container.client.filesystem.list("{}/acme/".format(caddy_dir)):
+            if cert_authority['is_dir']:
+                users = []
+                sites = []
+                if container.client.filesystem.exists("{}/acme/{}/users".format(caddy_dir, cert_authority['name'])):
+                    users = container.client.filesystem.list("{}/acme/{}/users".format(caddy_dir, cert_authority['name']))
+                if container.client.filesystem.exists("{}/acme/{}/sites".format(caddy_dir, cert_authority['name'])):
+                    sites = container.client.filesystem.list("{}/acme/{}/sites".format(caddy_dir, cert_authority['name']))
+                for user in users:
+                    if user['is_dir']:
+                        cert_path = "{}/acme/{}/users/{}".format(caddy_dir, cert_authority['name'], user['name'])
+
+                        metadata_buf = BytesIO()
+                        if container.client.filesystem.exists("{}/{}.json".format(cert_path, user['name'])):
+                            container.client.filesystem.download("{}/{}.json".format(cert_path, user['name']), metadata_buf)
+                        else:
+                            continue
+
+                        key_buf = BytesIO()
+                        if container.client.filesystem.exists("{}/{}.key".format(cert_path, user['name'])):
+                            container.client.filesystem.download("{}/{}.key".format(cert_path, user['name']), key_buf)
+                        else:
+                            continue
+
+                        certificates.append({"path": cert_path, "key": key_buf.getvalue().decode(), "metadata": metadata_buf.getvalue().decode()})
+
+                for site in sites:
+                    if site['is_dir']:
+                        cert_path = "{}/acme/{}/sites/{}".format(caddy_dir, cert_authority['name'], site['name'])
+
+                        metadata_buf = BytesIO()
+                        if container.client.filesystem.exists("{}/{}.json".format(cert_path, site['name'])):
+                            container.client.filesystem.download("{}/{}.json".format(cert_path, site['name']), metadata_buf)
+                        else:
+                            continue
+
+                        key_buf = BytesIO()
+                        if container.client.filesystem.exists("{}/{}.key".format(cert_path, site['name'])):
+                            container.client.filesystem.download("{}/{}.key".format(cert_path, site['name']), key_buf)
+                        else:
+                            continue
+
+                        cert_buf = BytesIO()
+                        if container.client.filesystem.exists("{}/{}.crt".format(cert_path, site['name'])):
+                            container.client.filesystem.download("{}/{}.crt".format(cert_path, site['name']), cert_buf)
+                        else:
+                            continue
+
+                        certificates.append({
+                                        "path": cert_path,
+                                        "key": key_buf.getvalue().decode(),
+                                        "metadata": metadata_buf.getvalue().decode(),
+                                        "cert": cert_buf.getvalue().decode()
+                                        })
+
+        service.model.data.certificates = certificates
+
+def restore_certificates(job, container):
+    from io import  BytesIO
+    service = job.service
+    certs = service.model.data.to_dict().get('certificates', [])
+
+    for cert in certs:
+        container.client.filesystem.mkdir(cert['path'])
+        metadata_buf = BytesIO(cert['metadata'].encode())
+
+        metadata_buf.seek(0)
+        container.client.filesystem.upload("{}/{}.json".format(cert['path'], cert['path'].split('/')[-1]), metadata_buf)
+
+        key_buf = BytesIO(cert['key'].encode())
+        key_buf.seek(0)
+        container.client.filesystem.upload("{}/{}.key".format(cert['path'], cert['path'].split("/")[-1]), key_buf)
+
+        if cert.get('cert'):
+            cert_buf = BytesIO(cert['cert'].encode())
+            cert_buf.seek(0)
+            container.client.filesystem.upload("{}/{}.crt".format(cert['path'], cert['path'].split("/")[-1]), cert_buf)
+
 
 def get_zerotier_nic(zerotierid, containerobj):
     for zt in containerobj.client.zerotier.list():
@@ -246,6 +329,7 @@ def start(job):
     if magicip not in loaddresses:
         ip.addr.add('lo', magicip)
 
+    restore_certificates(job, containerobj)
     # start services
     http = container.consumers.get('http')[0]
     dhcp = container.consumers.get('dhcp')[0]
@@ -257,6 +341,7 @@ def start(job):
     j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
     j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
     j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
+    save_certificates(job, containerobj)
     service.model.data.status = "running"
 
 
