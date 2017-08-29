@@ -262,17 +262,20 @@ def save_config(job):
     iyo_secret = aysconfig["iyo_secret"]
 
     # The conactenation here because ays parsing can't handle the string in one line
-    url = "https://itsyou.online/v1/oauth/access_token?client_id={client_id}&client_secret={client_secret}"
-    url += "&grant_type=client_credentials&response_type=id_token&scope=user%3Amemberof%3A{org}.0stor.{namespace}.read%2"
-    url += "Cuser%3Amemberof%3A{org}.0stor.{namespace}.write%2Cuser%3Amemberof%3A{org}.0stor.{namespace}.delete"
-
-    url = url.format(
-        client_id=iyo_client_id,
-        client_secret=iyo_secret,
+    url = "https://itsyou.online/v1/oauth/access_token"
+    scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
+    scope = scope.format(
         org=iyo_org,
         namespace=iyo_namespace
     )
-    res = requests.post(url)
+    params = {
+        "client_id": iyo_client_id,
+        "client_secret": iyo_secret,
+        "grant_type": "client_credentials",
+        "response_type": "id_token",
+        "scope": scope,
+    }
+    res = requests.post(url, params=params)
     if res.status_code != 200:
         raise RuntimeError("Invalid itsyouonline configuration")
 
