@@ -27,10 +27,7 @@ class VmsAPI(OrchestratorBase):
                 "memory": random.randint(1, 16) * 1024,
                 "cpu": random.randint(1, 16),
                 "nics": [],
-                "disks": [{
-                    "vdiskid": "ubuntu-test-vdisk",
-                    "maxIOps": 2000
-                }],
+                "disks": [],
                 "userCloudInit": {},
                 "systemCloudInit": {}}
         data = self.update_default_data(default_data=data, new_data=kwargs)
