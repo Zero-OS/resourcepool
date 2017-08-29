@@ -39,20 +39,20 @@ The following are the available keys:
   - Specifies the flist for the 0-disk containers
   - Defaults to 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'
 * `0-statscollector-flist`:
-  - Specifies the flist used for the stats-collector container.
+  - Specifies the flist used for the stats-collector container
   - Defaults to 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'
 * `jwt-token`:
   - Specifies a refreshable JWT token. To configure jwt-token, the jwt-key must be supplied too.
-  - If not configured, the services will connect to 0core with supplying a password.
+  - If not configured, the services will connect to 0core with supplying a password
 * `jwt-key`:
-  - Key used to validate the jwt-token.
+  - Key used to validate the JWT token
 * `iyo_org`:
-  - is itsyouonline organization name
+  - ItsYou.online organization name
 * `iyo_namespace`:
-  - is itsyouonline nampspace for the organization, namespace can be created by [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
+  - ItsYou.online sub-organization name, namespace can be created with [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
 * `iyo_clientID`:
-  - is itsyouonline client ID
+  - ItsYou.online client ID
 * `iyo_secret`:
-  - is itsyouonline client secret
+  - ItsYou.online client secret
 
-**Note**: `itsyouonline` configuration keys are required only to deploy storage clusters of type object
+**Note**: `ItsYou.online` configuration keys are required only to deploy storage clusters of type object
