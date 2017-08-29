@@ -235,6 +235,7 @@ def init(job):
 
 def save_config(job):
     import yaml
+    import requests
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
@@ -255,12 +256,32 @@ def save_config(job):
 
     # Push zerostorconfig to etcd
     zerostor_services = service.producers["zerostor"]
+    iyo_org = aysconfig["iyo_org"]
+    iyo_namespace = aysconfig["iyo_namespace"]
+    iyo_client_id = aysconfig["iyo_clientID"]
+    iyo_secret = aysconfig["iyo_secret"]
+
+    # The conactenation here because ays parsing can't handle the string in one line
+    url = "https://itsyou.online/v1/oauth/access_token?client_id={client_id}&client_secret={client_secret}"
+    url += "&grant_type=client_credentials&response_type=id_token&scope=user%3Amemberof%3A{org}.0stor.{namespace}.read%2"
+    url += "Cuser%3Amemberof%3A{org}.0stor.{namespace}.write%2Cuser%3Amemberof%3A{org}.0stor.{namespace}.delete"
+
+    url = url.format(
+        client_id=iyo_client_id,
+        client_secret=iyo_secret,
+        org=iyo_org,
+        namespace=iyo_namespace
+    )
+    res = requests.post(url)
+    if res.status_code != 200:
+        raise RuntimeError("Invalid itsyouonline configuration")
+
     zerostor_config = {
         "iyo": {
-            "org": aysconfig["iyo_org"],
-            "namespace": aysconfig["iyo_namespace"],
-            "clientID": aysconfig["iyo_clientID"],
-            "secret": aysconfig["iyo_secret"],
+            "org": iyo_org,
+            "namespace": iyo_namespace,
+            "clientID": iyo_client_id,
+            "secret": iyo_secret,
         },
         "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
         "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
