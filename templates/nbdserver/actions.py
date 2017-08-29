@@ -104,7 +104,6 @@ def stop(job):
     nbdjob = is_job_running(container, socket=service.model.data.socketPath)
     if nbdjob:
         job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
-        from pprint import pprint ; from IPython import embed ; import ipdb ; ipdb.set_trace()
         container.client.job.kill(nbdjob['cmd']['id'])
 
         job.logger.info("wait for nbdserver to stop")
