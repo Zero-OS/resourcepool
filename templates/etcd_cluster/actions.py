@@ -125,6 +125,8 @@ def watchdog_handler(job):
     service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
+    dead_nodes = set()
+    working_model_nodes = set()
     token = get_jwt_token(job.service.aysrepo)
 
     # check on etcd container since the watch dog will handle the actual service
@@ -137,18 +139,22 @@ def watchdog_handler(job):
 
     dead_etcds = etcds-working_etcds
 
-    if len(working_etcds) >= (len(etcds)-1)/2:
-        for etcd in etcds-working_etcds:
-            container = etcd.parent
-            node = container.parent
-            container_client = Container.from_ays(container, password=token)
-            node_client = Node.from_ays(node, password=token)
-            if not node_client.client.ping():
+    for etcd in dead_etcds:
+        container = etcd.parent
+        node = container.parent
+        container_client = Container.from_ays(container, password=token)
+        node_client = Node.from_ays(node, password=token)
+        ping = node_client.client.ping()
+        working_model_nodes.add(node)
+        if not ping:
+            working_model_nodes.discard(node)        
+            dead_nodes.add(node)
+        if len(working_etcds) >= (len(etcds)-1)/2:
+            if not ping:
                 raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
-
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
-        return
+            return
 
 
     # clean all remaining etcds from the old cluster
@@ -156,6 +162,13 @@ def watchdog_handler(job):
         container = etcd.parent
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
+
+    # check if nodes are more min number for cluster
+    all_nodes = set([service.name for service in service.aysrepo.servicesFind(role='node')])
+    if len(working_model_nodes) > 3:
+        service.model.data.nodes = [node.name for node in working_model_nodes]
+    else:
+        service.model.data.nodes = list(all_nodes - dead_nodes)
 
     service.model.data.etcds = []
     service.saveAll()
