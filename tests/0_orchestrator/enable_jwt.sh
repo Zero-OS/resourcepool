@@ -6,7 +6,7 @@ core_0_branch=$5
 client_id=$6
 client_secret=$7
 organization=$8
-
+name_space=$9
 
 export_jwt(){
     jwt=$(ays generatetoken --clientid ${client_id} --clientsecret ${client_secret} --organization ${organization} --validity 3600)
@@ -55,6 +55,14 @@ configuration__main:
     value: '${JWT}'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
+  - key: 'iyo_org'
+    value: '${organization}'
+  - key: 'iyo_namespace'
+    value: '${name_space}'
+  - key: 'iyo_clientID'
+    value: '${client_id}'
+  - key: 'iyo_secret'
+    value: '${client_secret}'
 EOL
 }
 
@@ -67,7 +75,7 @@ EOL
 for node in ${1//,/ }
 do
     echo "  - ${node}" >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp
-done 
+done
 
 cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 actions:

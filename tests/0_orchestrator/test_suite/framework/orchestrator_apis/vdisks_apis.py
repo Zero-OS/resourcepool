@@ -20,7 +20,7 @@ class VDisksAPIs(OrchestratorBase):
                 "size": size,
                 "blocksize": block_size,
                 "type": random.choice(['boot', 'db', 'cache', 'tmp']),
-                "storagecluster": storagecluster,
+                "blockStoragecluster": storagecluster,
                 "readOnly": random.choice([False, True])}
 
         if data['type'] == 'boot':
