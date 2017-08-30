@@ -6,9 +6,9 @@ matrix:
       python: 3.5
       install:
         - pip3 install -r tests/0_orchestrator/test_suite/requirements.txt
-        - travis_wait 30 pip3 install git+https://github.com/gigforks/packet-python.git
+        - pip3 install git+https://github.com/gigforks/packet-python.git
       before_script:
-        - bash tests/0_orchestrator/run_tests.sh before
+        - travis_wait 30 bash tests/0_orchestrator/run_tests.sh before
       script:
         - bash tests/0_orchestrator/run_tests.sh run
       after_script:
