@@ -130,16 +130,15 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("check that container created on node, should succeed")
         self.assertTrue(self.core0_client.client.container.find(self.data['name']))
 
-    @unittest.skip('https://github.com/zero-os/0-core/issues/228')
     def test005_Check_container_access_to_host_dev(self):
         """ GAT-086
-        *Make sure that container doesn't have access to host dev files *
+        *Make sure that container dev is not shared with the core0 dev *
 
         **Test Scenario:**
 
         #. Create container, Should succeed.
         #. Make sure that created container is running,should succeed.
-        #. Check that container doesn't has access to host dev files .
+        #. Check that container dev is not shared with the core0 dev.
 
         """
         self.lg.info(' [*] Create new container. ')
@@ -147,12 +146,11 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
         self.created['container'].append(self.data['name'])
 
-        self.lg.info("Check that container doesn't has access to host dev files .")
+        self.lg.info("Check that container dev is not shared with the core0 dev")
         container = self.core0_client.get_container_client(self.data['name'])
-        response = container.bash("ls -alh").get().stdout
-        for line in response.splitlines():
-            if "dev" in line:
-                self.assertNotIn('w', line)
+        cont_res = container.bash("ls -alh | grep dev").get().stdout
+        core0_res = self.core0_client.client.bash('ls -alh | grep dev').get().stdout
+        self.assertNotEqual(core0_res.split()[7], cont_res.split()[7])
 
     def test006_create_container_with_bridge(self):
         """ GAT-087
