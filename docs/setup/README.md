@@ -12,6 +12,7 @@ In order to have a full Zero-OS cluster you'll need to perform the following ste
 7. [Setup the AYS Bootstrap service](#start-the-bootstrap-service)
 8. [Boot your Zero-OS nodes](#boot-your-zero-os-nodes)
 9. [Setup Statistics Monitoring](#setup-statistics-monitoring)
+10. [Setup etcd cluster](#setup-etcd-cluster)
 
 
 ## Create a JumpScale9 Docker container
@@ -133,9 +134,18 @@ configuration__main:
     value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
+  - key: 'iyo_org'
+    value: 'zero-test'
+  - key: 'iyo_namespace'
+    value: 'namespace'
+  - key: 'iyo_clientID'
+    value: '<clientID>'
+  - key: 'iyo_secret'
+    value: '<secret>'
+
 ```
 
-See [Versioning](versioning.md) for more details about the AYS configuration service.
+See [Configuration](configuration.md) for more details about the AYS configuration service.
 
 After creating this blueprint, issue the following AYS command to install the configuration service:
 ```bash
@@ -226,6 +236,7 @@ statsdb__statistics:
 
 actions:
   - action: install
+    actor: statsdb
 
 ```
 
@@ -246,4 +257,5 @@ etcd_cluster__myetcd:
 
 actions:
   - action: install
+    actor: etcd_cluster
   ```

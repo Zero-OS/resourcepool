@@ -2,7 +2,7 @@ import random, time
 from testcases.testcases_base import TestcasesBase
 import unittest
 
-
+@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestGatewayAPICreation(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -631,7 +631,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.state, 'SUCCESS')
         self.assertNotIn("unreachable", response.stdout)
 
-
+@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestGatewayAPIUpdate(TestcasesBase):
     def setUp(self):
         super().setUp()

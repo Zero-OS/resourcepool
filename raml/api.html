@@ -48109,6 +48109,30 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
+  <strong>metaDriveType</strong>:
+
+  
+    <em>(one of nvme, ssd, hdd, archive)
+    </em>
+  
+
+<p>Required only for storage clusters of type object</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>nodes</strong>:
 
   
@@ -48136,7 +48160,7 @@ details in a user&#39;s account without getting their password.</p>
   <strong>clusterType</strong>:
 
   
-    <em>required (one of storage, tlog)
+    <em>required (one of block, object)
     </em>
   
 
@@ -48157,14 +48181,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>k</strong>:
+  <strong>dataShards</strong>:
 
   
     <em>(integer)
     </em>
   
 
-<p>K variable of the erasure encoding, required for tlog clusters</p>
+<p>dataShards variable of the erasure encoding, required for object clusters</p>
 
 
   
@@ -48181,14 +48205,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>m</strong>:
+  <strong>parityShards</strong>:
 
   
     <em>(integer)
     </em>
   
 
-<p>M variable of the erasure encoding, required for tlog clusters</p>
+<p>parityShards variable of the erasure encoding, required for object clusters</p>
 
 
   
@@ -48222,7 +48246,7 @@ details in a user&#39;s account without getting their password.</p>
     "node1",
     "node2"
   ],
-  "clusterType": "storage"
+  "clusterType": "block"
 }</code></pre>
         
     </div>
@@ -49747,14 +49771,62 @@ details in a user&#39;s account without getting their password.</p>
 
                                       
                                         <li>
-  <strong>storagecluster</strong>:
+  <strong>blockStoragecluster</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
+<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>objectStoragecluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>the ObjectStoragecluster used for this vdisk&#39;s object storage.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>backupStoragecluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>the blockStoragecluster used for this vdisk&#39;s backup storage.</p>
 
 
   
@@ -50002,55 +50074,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>storagecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>tlogStoragecluster</strong>:
-
-  
-    <em>(string)
-    </em>
-  
-
-<p>the storagecluster used for this vdisk&#39;s transaction logs</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>backupStoragecluster</strong>:
 
   
@@ -50193,6 +50216,31 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
+  <strong>objectStoragecluster</strong>:
+
+  
+    <em>(string)
+    </em>
+  
+
+<p>the objectStoragecluster used for this vdisk&#39;s transaction logs</p>
+<p>This property can only be used when the disk is of type boot or db.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>readOnly</strong>:
 
   
@@ -50250,6 +50298,30 @@ details in a user&#39;s account without getting their password.</p>
 <p>Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
 You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename</p>
 <p>This property can only be used when the disk is of type boot.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blockStoragecluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
 
 
   
@@ -50664,13 +50736,14 @@ details in a user&#39;s account without getting their password.</p>
                             <ul>
                               
                                 <li>
-  <strong>id</strong>:
+  <strong>backupStoragecluster</strong>:
 
   
     <em>required (string)
     </em>
   
 
+<p>the backupStoragecluster used for this vdisk&#39;s backup storage</p>
 
 
   
@@ -50687,14 +50760,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>status</strong>:
+  <strong>type</strong>:
 
   
-    <em>required (one of running, halted, rollingback)
+    <em>required (one of boot, db, cache, tmp)
     </em>
   
 
-<p>Status of the vdisk</p>
+<p>The type of vdisk.</p>
 
 
   
@@ -50759,14 +50832,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>type</strong>:
+  <strong>objectStoragecluster</strong>:
 
   
-    <em>required (one of boot, db, cache, tmp)
+    <em>required (string)
     </em>
   
 
-<p>The type of vdisk.</p>
+<p>the ObjectStoragecluster used for this vdisk&#39;s object storage</p>
 
 
   
@@ -50806,14 +50879,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>storagecluster</strong>:
+  <strong>status</strong>:
 
   
-    <em>required (string)
+    <em>required (one of running, halted, rollingback)
     </em>
   
 
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
+<p>Status of the vdisk</p>
 
 
   
@@ -50830,14 +50903,37 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>tlogStoragecluster</strong>:
+  <strong>id</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>the storagecluster used for this vdisk&#39;s transaction logs</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blockStoragecluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
 
 
   

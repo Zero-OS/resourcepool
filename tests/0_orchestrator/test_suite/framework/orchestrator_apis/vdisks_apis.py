@@ -15,13 +15,17 @@ class VDisksAPIs(OrchestratorBase):
     @catch_exception_decoration_return
     def post_vdisks(self, storagecluster, **kwargs):
         size = random.randint(1, 50)
-        block_size = random.randint(1, size) * 512
+        block_size = 2**random.randint(9, 15)
         data = {"id": self.random_string(),
                 "size": size,
                 "blocksize": block_size,
                 "type": random.choice(['boot', 'db', 'cache', 'tmp']),
                 "blockStoragecluster": storagecluster,
                 "readOnly": random.choice([False, True])}
+
+        if data['type'] == 'boot':
+            data['templatevdisk'] = 'ardb://hub.gig.tech:16379/template:ubuntu-1604'
+        
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.vdisks.CreateNewVdisk(data=data)
         return response, data

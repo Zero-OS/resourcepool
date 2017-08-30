@@ -1,6 +1,7 @@
 import random, time
 from testcases.testcases_base import TestcasesBase
 import unittest
+from testcases.core0_client import Client
 
 
 class TestVmsAPI(TestcasesBase):
@@ -15,26 +16,22 @@ class TestVmsAPI(TestcasesBase):
         else:
             self.storagecluster = storageclusters.json()[0]
 
-        vdisks = self.vdisks_api.get_vdisks()
-        vdisks = [x for x in vdisks.json() if
-                  (x['id'] == 'ubuntu-test-vdisk' and x['blockStoragecluster'] == self.storagecluster)]
-        if vdisks == []:
-            self.lg.info(' [*] Create new ssd vdisk.')
-            response, self.vdisk = self.vdisks_api.post_vdisks(id='ubuntu-test-vdisk', size=15,
-                                                               blocksize=4096, type='boot',
-                                                               storagecluster=self.storagecluster,
-                                                               templatevdisk="ardb://hub.gig.tech:16379/template:ubuntu-1604")
-            self.assertEqual(response, 201, " [*] Can't create vdisk.")
-        else:
-            self.vdisk = vdisks[0]
+        self.lg.info(' [*] Create new vdisk.')
+        response, self.vdisk = self.vdisks_api.post_vdisks(size=15,
+                                                            blocksize=4096, type='boot',
+                                                            storagecluster=self.storagecluster,
+                                                            readOnly=False)
+        self.assertEqual(response.status_code, 201, " [*] Can't create vdisk.")
 
         self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
-        self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1)
+        self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
+        self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(self.response.status_code, 201)
 
     def tearDown(self):
         self.lg.info(' [*] Delete virtual machine (VM0)')
         self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.vdisks_api.delete_vdisks_vdiskid(self.vdisk['id'])
         super(TestVmsAPI, self).tearDown()
 
     def test001_get_nodes_vms_vmid(self):
@@ -69,8 +66,7 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200.
         """
-        self.lg.info(
-            ' [*] List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200')
+        self.lg.info(' [*] List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200')
         response = self.vms_api.get_nodes_vms(self.nodeid)
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data['id'], [x['id'] for x in response.json()])
@@ -88,11 +84,8 @@ class TestVmsAPI(TestcasesBase):
         """
         self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
         response_vm, data_vm = self.vms_api.post_nodes_vms(node_id=self.nodeid)
-        self.assertEqual(response_vm.status_code, 201, " [*] Can't create new vm.")
 
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, data_vm['id'])
-        self.assertEqual(response.status_code, 200, " [*] Can't create new vm.")
-
         if response.json()['status'] == 'error':
             response_vm, data_vm = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1)
             self.assertEqual(response_vm.status_code, 201)
@@ -130,14 +123,10 @@ class TestVmsAPI(TestcasesBase):
         vm_mem = 2 * 1024
         vm_cpu = 2
         vm_nics = []
-        vm_disks = [{
-            "vdiskid": "ubuntu-test-vdisk",
-            "maxIOps": 2000
-        }]
         body = {"memory": vm_mem,
                 "cpu": vm_cpu,
                 "nics": vm_nics,
-                "disks": vm_disks}
+                "disks": self.disks}
 
         self.lg.info(' [*] Stop virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
@@ -162,6 +151,7 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] Start virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
+
         for _ in range(20):
             response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
             self.assertEqual(response.status_code, 200)
@@ -188,6 +178,7 @@ class TestVmsAPI(TestcasesBase):
         response = self.vms_api.put_nodes_vms_vmid(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 400)
 
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/878')
     def test005_get_nodes_vms_vmid_info(self):
         """ GAT-071
         **Test Scenario:**
@@ -224,8 +215,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertNotIn(self.data['id'], [x['name'] for x in vms])
 
         self.lg.info(' [*] Delete non existing virtual machine, should fail with 404')
-        response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.rand_str(),
-                                                      " [*] Delete non existing virtual machine should return 404 ")
+        response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, 'fake_vm')
         self.assertEqual(response.status_code, 404)
 
     def test007_post_nodes_vms_vmid_start(self):
@@ -356,7 +346,7 @@ class TestVmsAPI(TestcasesBase):
         vm0 = [x for x in vms if x['name'] == self.data['id']]
         self.assertEqual(vm0, [])
 
-    @unittest.skip('https://github.com/g8os/resourcepool/issues/215')
+
     def test011_post_nodes_vms_vmid_migrate(self):
         """ GAT-077
         **Test Scenario:**
@@ -369,23 +359,34 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] List nodes.')
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
-        nodes_list = [x['id'] for x in response.json() if x['status'] == 'running']
 
-        if len(nodes_list) < 2:
+        if len(self.nodes_info) < 2:
             self.skipTest('need at least 2 nodes')
 
         self.lg.info(' [*] Migrate virtual machine (VM0) to another node, should succeed with 204')
-        node_2 = self.get_random_node(except_node=self.nodeid)
-        body = {"nodeid": node_2}
+        new_node = self.get_random_node(except_node=self.nodeid)
+
+        body = {"nodeid": new_node}
         response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
         time.sleep(30)
 
-        response = self.vms_api.get_nodes_vms_vmid(node_2, self.data['id'])
+        response = self.vms_api.get_nodes_vms(new_node)
         self.assertEqual(response.status_code, 200)
+        self.assertIn(self.data['id'], [x['id'] for x in response.json()])
 
-        core0_client_ip = [x['ip'] for x in nodes_list if x['id'] == node_2]
-        self.assertNotEqual(core0_client_ip, [])
-        vms = self.core0_client.client.kvm.list()
+        response = self.vms_api.get_nodes_vms_vmid(new_node, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'running')
+
+        response = self.vms_api.get_nodes_vms(self.nodeid)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
+
+        new_node_ip = [x['ip'] for x in self.nodes_info if x['id'] == new_node]
+        self.assertNotEqual(new_node_ip, [])
+
+        new_core0_client = Client(new_node_ip[0], password=self.jwt)
+        vms = new_core0_client.client.kvm.list()
         self.assertIn(self.data['id'], [x['name'] for x in vms])

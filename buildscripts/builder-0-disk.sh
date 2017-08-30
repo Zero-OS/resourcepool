@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 source $(dirname $0)/tools.sh
+source $(dirname $0)/builder-cacertificate.sh
+CATARGET=$TARGET
 ensure_go
 
 branch="master"
@@ -24,4 +26,4 @@ make
 popd
 
 mkdir -p /tmp/archives/
-tar -czf "/tmp/archives/0-disk-${branch}.tar.gz" -C $DISK0/ bin
+tar -czf "/tmp/archives/0-disk-${branch}.tar.gz" -C $DISK0/ bin -C $CATARGET .

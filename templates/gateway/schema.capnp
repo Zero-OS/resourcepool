@@ -12,6 +12,7 @@ struct Schema {
     domain @7: Text;
     advanced @8: Bool; # flag to check if http config has been set manually
     zerotiernodeid @9:Text;
+    certificates @10 :List(Certificate);
 
     struct Nic {
         type @0: NicType;
@@ -84,5 +85,11 @@ struct Schema {
         vlan @2;
         vxlan @3;
         bridge @4;
+    }
+    struct Certificate{
+      path @0: Text;
+      key @1: Text;
+      metadata @2: Text;
+      cert @3: Text;
     }
 }

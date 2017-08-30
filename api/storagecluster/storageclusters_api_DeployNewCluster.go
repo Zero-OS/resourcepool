@@ -44,21 +44,27 @@ func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Re
 	}
 
 	blueprint := struct {
-		Label       string          `yaml:"label" json:"label"`
-		NrServer    int             `yaml:"nrServer" json:"nrServer"`
-		DiskType    string          `yaml:"diskType" json:"diskType"`
-		Nodes       []string        `yaml:"nodes" json:"nodes"`
-		ClusterType EnumClusterType `yaml:"clusterType" json:"clusterType"`
-		K           int             `yaml:"k" json:"k"`
-		M           int             `yaml:"m" json:"m"`
+		Label        string          `yaml:"label" json:"label"`
+		NrServer     int             `yaml:"nrServer" json:"nrServer"`
+		DiskType     string          `yaml:"diskType" json:"diskType"`
+		MetaDiskType string          `yaml:"metadiskType" json:"metadiskType"`
+		Nodes        []string        `yaml:"nodes" json:"nodes"`
+		ClusterType  EnumClusterType `yaml:"clusterType" json:"clusterType"`
+		DataShards   int             `yaml:"dataShards" json:"dataShards"`
+		ParityShards int             `yaml:"parityShards" json:"parityShards"`
 	}{
-		Label:       reqBody.Label,
-		NrServer:    reqBody.Servers,
-		DiskType:    string(reqBody.DriveType),
-		Nodes:       reqBody.Nodes,
-		ClusterType: reqBody.ClusterType,
-		K:           reqBody.K,
-		M:           reqBody.M,
+		Label:        reqBody.Label,
+		NrServer:     reqBody.Servers,
+		DiskType:     string(reqBody.DriveType),
+		MetaDiskType: string(reqBody.MetaDriveType),
+		Nodes:        reqBody.Nodes,
+		ClusterType:  reqBody.ClusterType,
+		DataShards:   reqBody.DataShards,
+		ParityShards: reqBody.ParityShards,
+	}
+
+	if string(blueprint.MetaDiskType) == "" {
+		blueprint.MetaDiskType = string(EnumClusterCreateDriveTypessd)
 	}
 
 	obj := make(map[string]interface{})

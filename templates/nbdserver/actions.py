@@ -6,12 +6,13 @@ def get_container(service, password):
     return Container.from_ays(service.parent, password)
 
 
-def is_job_running(container, cmd='/bin/nbdserver'):
+def is_job_running(container, cmd='/bin/nbdserver', socket=None):
     try:
         for job in container.client.job.list():
             arguments = job['cmd']['arguments']
             if 'name' in arguments and arguments['name'] == cmd:
-                return job
+                if not socket or socket in arguments['args']:
+                    return job
         return False
     except Exception as err:
         if str(err).find("invalid container id"):
@@ -38,7 +39,7 @@ def install(job):
 
     socketpath = '/server.socket.{id}'.format(id=vm.name)
 
-    if not is_job_running(container):
+    if not is_job_running(container, socket=socketpath):
         etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         cmd = '/bin/nbdserver \
@@ -59,7 +60,7 @@ def install(job):
         else:
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
         # make sure nbd is still running
-        running = is_job_running(container)
+        running = is_job_running(container, socket=socketpath)
         for vdisk in vdisks:
             if running:
                 vdisk.model.data.status = 'running'
@@ -100,7 +101,7 @@ def stop(job):
         if vdiskservice.model.data.type == "tmp":
             j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
 
-    nbdjob = is_job_running(container)
+    nbdjob = is_job_running(container, socket=service.model.data.socketPath)
     if nbdjob:
         job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
         container.client.job.kill(nbdjob['cmd']['id'])
@@ -108,7 +109,7 @@ def stop(job):
         job.logger.info("wait for nbdserver to stop")
         for i in range(60):
             time.sleep(1)
-            if is_job_running(container):
+            if is_job_running(container, socket=service.model.data.socketPath):
                 continue
             return
         raise j.exceptions.RuntimeError("nbdserver didn't stopped")
@@ -128,7 +129,7 @@ def monitor(job):
     vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
     container = get_container(service, get_jwt_token(job.service.aysrepo))
-    running = is_job_running(container)
+    running = is_job_running(container, socket=service.model.data.socketPath)
     for vdisk in vdisks:
         if running:
             j.tools.async.wrappers.sync(vdisk.executeAction('start'))

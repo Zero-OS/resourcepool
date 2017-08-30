@@ -61,10 +61,12 @@ def configure(job):
 
         server_bind = '{}:{}'.format(node.storageAddr, baseports[1])
         client_bind = '{}:{}'.format(node.storageAddr, baseports[0])
+        mgmt_client_bind = '{}:{}'.format(node.addr, baseports[0])
         etcd_args[node.name] = {
             "serverBind": server_bind,
             "clientBind": client_bind,
             "container": containername,
+            "mgmtClientBind": mgmt_client_bind,
             "tcps": tcpservices,
             "homeDir": data_dir,
         }
@@ -119,13 +121,13 @@ def watchdog_handler(job):
 
     service = job.service
     if service.model.data.status == 'recovering':
-        return  
+        return
     service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
     token = get_jwt_token(job.service.aysrepo)
-    
-    # check on etcd container since the watch dog will handle the actual service 
+
+    # check on etcd container since the watch dog will handle the actual service
     for etcd in etcds:
         container = etcd.parent
         node = container.parent
@@ -147,7 +149,7 @@ def watchdog_handler(job):
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
         return
-    
+
 
     # clean all remaining etcds from the old cluster
     for etcd in etcds:
@@ -159,9 +161,9 @@ def watchdog_handler(job):
     service.saveAll()
     j.tools.async.wrappers.sync(service.executeAction('configure', context=job.context))
 
-    # install all services created by the configure of the etcd_cluster 
+    # install all services created by the configure of the etcd_cluster
     for etcd in service.producers.get('etcd', []):
-        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))        
+        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))
         for mount in etcd.parent.model.data.mounts:
             fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
             j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
@@ -171,15 +173,15 @@ def watchdog_handler(job):
     vdisks = service.aysrepo.servicesFind(role='vdisk')
     for vdisk in vdisks:
         j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
-    
-    # save all storage cluster to new etcd cluster 
+
+    # save all storage cluster to new etcd cluster
     storage_clusters = service.aysrepo.servicesFind(role='storage_cluster')
     for storage_cluster in storage_clusters:
         j.tools.async.wrappers.sync(storage_cluster.executeAction('save_config', context=job.context))
 
-    # restart all runnning vms 
+    # restart all runnning vms
     vmachines = service.aysrepo.servicesFind(role='vm')
     for vmachine in vmachines:
         if vmachine.model.data.status == 'running':
-            j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))        
+            j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))
     service.saveAll()

@@ -96,7 +96,6 @@ class StoragePool(Mountable):
         Destroy storage pool
         param zero: write zeros (nulls) to the first 500MB of each disk in this storagepool
         """
-
         if self.mountpoint:
             self.umount()
         partitionmap = {}
@@ -111,8 +110,7 @@ class StoragePool(Mountable):
                 self._client.disk.rmpart(disk.name, 1)
                 if zero:
                     self._client.bash('test -b /dev/{0} && dd if=/dev/zero bs=1M count=500 of=/dev/{0}'.format(diskpath)).get()
-                return True
-        return False
+        return
 
     @property
     def mountpoint(self):
