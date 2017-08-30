@@ -22,7 +22,7 @@ class TestVmsAPI(TestcasesBase):
                                                             storagecluster=self.storagecluster,
                                                             readOnly=False)
         self.assertEqual(response.status_code, 201, " [*] Can't create vdisk.")
-        
+
         self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
         self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)

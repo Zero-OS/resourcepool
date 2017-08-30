@@ -13,7 +13,7 @@ class Storageclusters(OrchestratorBase):
             "label": self.random_string(),
             "servers": 1,
             "driveType": 'ssd',
-            "clusterType": "storage",
+            "clusterType": "block",
             "nodes": [node_id]
         }
         data = self.update_default_data(default_data=data, new_data=kwargs)
