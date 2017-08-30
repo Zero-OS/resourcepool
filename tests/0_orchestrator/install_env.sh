@@ -12,10 +12,6 @@ export GIGBRANCH=$JS9_BRANCH
 export GIGSAFE=1
 export TERM=xterm-256color
 
-echo "[#] ######################################################################################
-###################################################################################"
-echo "[#]${ITSYOUONLINE_ORG} ,${NAME_SPACE}"
-
 ## generate ssh key
 echo "[#] Generate SSH key ..."
 ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
