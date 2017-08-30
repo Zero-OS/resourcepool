@@ -30,7 +30,7 @@ def install(job):
                              tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
-            result = volume_container.client.system(cmd).get()
+            result = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name).get()
             if result.state != 'SUCCESS':
                 raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
         finally:
@@ -50,7 +50,7 @@ def delete(job):
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
         job.logger.info(cmd)
-        result = container.client.system(cmd).get()
+        result = container.client.system(cmd, id="vdisk.delete.%s" % service.name).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
     finally:
@@ -234,7 +234,7 @@ def rollback(job):
                                                        data_shards=data_shards,
                                                        parity_shards=parity_shards)
         job.logger.info(cmd)
-        result = container.client.system(cmd).get()
+        result = container.client.system(cmd, id="vdisk.rollback.%s" % service.name).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl restore {} {}".format(result.stdout, result.stderr))
         service.model.data.status = 'running'
