@@ -201,6 +201,9 @@ class Node:
         jobs = []
         for disk in self.client.disk.list()['blockdevices']:
             devicename = '/dev/{}'.format(disk['kname'])
+            if disk['tran'] == 'usb':
+                print('   * Not wiping usb {kname} {model}'.format(**disk))
+                continue
             mount = getmountpoint(devicename)
             if not mount:
                 print('   * Wiping disk {kname}'.format(**disk))
