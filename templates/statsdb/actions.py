@@ -184,7 +184,6 @@ def processChange(job):
         job.context['token'] = get_jwt_token_from_job(job)
         influxdb.executeAction('processChange', context=job.context, args={'port': args['port']})
 
-
 def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
