@@ -81,7 +81,7 @@ def start(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_storagecluster_config(job, storagecluster):
@@ -109,9 +109,9 @@ def stop(job):
     service.saveAll()
     # Delete tmp vdisks
     for vdiskservice in vdisks:
-        j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
+        vdiskservice.executeAction('pause')
         if vdiskservice.model.data.type == "tmp":
-            j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
+            vdiskservice.executeAction('delete', context=job.context)
 
     nbdjob = is_job_running(container, socket=service.model.data.socketPath)
     if nbdjob:
@@ -144,9 +144,9 @@ def monitor(job):
     running = is_job_running(container, socket=service.model.data.socketPath)
     for vdisk in vdisks:
         if running:
-            j.tools.async.wrappers.sync(vdisk.executeAction('start'))
+            vdisk.executeAction('start')
         else:
-            j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
+            vdisk.executeAction('pause')
 
 
 def watchdog_handler(job):
@@ -159,5 +159,5 @@ def watchdog_handler(job):
     service = job.service
     if eof:
         vm_service = service.consumers['vm'][0]
-        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
-        asyncio.ensure_future(vm_service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(vm_service.asyncExecuteAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
+        asyncio.ensure_future(vm_service.asyncExecuteAction('start', context=job.context), loop=loop)

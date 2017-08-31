@@ -55,7 +55,7 @@ def create_zerodisk_container(job, parent):
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
     containerservice.model.changeParent(parent)
-    j.tools.async.wrappers.sync(containerservice.executeAction('start', context=job.context))
+    containerservice.executeAction('start', context=job.context)
 
     return containerservice
 
@@ -172,10 +172,10 @@ def _start_nbd(job, nbdname=None):
     container = Container.from_ays(nbdserver.parent, job.context['token'], logger=job.service.logger)
     if not container.is_running():
         # start container
-        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start', context=job.context))
+        nbdserver.parent.executeAction('start', context=job.context)
 
     # make sure the nbdserver is started
-    j.tools.async.wrappers.sync(nbdserver.executeAction('start', context=job.context))
+    nbdserver.executeAction('start', context=job.context)
     for vdisk in job.service.model.data.vdisks:
         url = _nbd_url(job, container, nbdserver, vdisk)
         medias.append({'url': url})
@@ -196,10 +196,10 @@ def start_tlog(job):
     container = Container.from_ays(tlogserver.parent, password=job.context['token'], logger=job.service.logger)
     # make sure container is up
     if not container.is_running():
-        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
+        tlogserver.parent.executeAction('start', context=job.context)
 
     # make sure the tlogserver is started
-    j.tools.async.wrappers.sync(tlogserver.executeAction('start', context=job.context))
+    tlogserver.executeAction('start', context=job.context)
 
 
 def get_media_for_disk(medias, disk):
@@ -285,7 +285,7 @@ def start(job):
     service = job.service
     service.model.data.status = 'starting'
     service.saveAll()
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_domain(job):
@@ -319,7 +319,7 @@ def destroy(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('stop', context=job.context))
+    job.service.executeAction('stop', context=job.context)
     service = job.service
     tlogservers = service.producers.get('tlogserver', [])
     nbdservers = service.producers.get('nbdserver', [])
@@ -330,16 +330,16 @@ def destroy(job):
         parent = tlogserver.parent
         if parent.model.key not in parentservices:
             parentservices[parent.model.key] = parent
-        j.tools.async.wrappers.sync(tlogserver.delete())
+        tlogserver.delete()
 
     for nbdserver in nbdservers:
         parent = nbdserver.parent
         if parent.model.key not in parentservices:
             parentservices[parent.model.key] = parent
-        j.tools.async.wrappers.sync(nbdserver.delete())
+        nbdserver.delete()
 
     for parent in parentservices.values():
-        j.tools.async.wrappers.sync(parent.delete())
+        parent.delete()
 
 
 def cleanupzerodisk(job):
@@ -352,18 +352,18 @@ def cleanupzerodisk(job):
     for nbdserver in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
-        j.tools.async.wrappers.sync(nbdserver.executeAction('stop', context=job.context))
+        nbdserver.executeAction('stop', context=job.context)
 
     for tlogserver in service.producers.get('tlogserver', []):
         job.logger.info("stop tlogserver for vm {}".format(service.name))
         # make sure the tlogserver is stopped
-        j.tools.async.wrappers.sync(tlogserver.executeAction('stop', context=job.context))
+        tlogserver.executeAction('stop', context=job.context)
 
     job.logger.info("stop vdisks container for vm {}".format(service.name))
     try:
         container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
         container = service.aysrepo.serviceGet(role='container', instance=container_name)
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        container.executeAction('stop', context=job.context)
     except j.exceptions.NotFound:
         job.logger.info("container doesn't exists.")
 
@@ -461,7 +461,7 @@ def start_migartion_channel(job, old_service, new_service):
 
         port = freeports_node[0]
         tcp_service = service.aysrepo.serviceGet(instance='migrationtcp_%s_%s' % (node.name, freeports_node[0]), role='tcp')
-        j.tools.async.wrappers.sync(tcp_service.executeAction('install', context=job.context))
+        tcp_service.executeAction('install', context=job.context)
         service.consume(tcp_service)
         service.saveAll()
         ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
@@ -541,8 +541,8 @@ def start_migartion_channel(job, old_service, new_service):
         tcp_services = service.aysrepo.servicesFind(role='tcp', name=tcp_name)
         if tcp_services:
             tcp_service = tcp_services[0]
-            j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
-            j.tools.async.wrappers.sync(tcp_service.delete())
+            tcp_service.executeAction("drop", context=job.context)
+            tcp_service.delete()
 
         raise e
 
@@ -688,8 +688,8 @@ def migrate(job):
     node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
     tcp_name = "migrationtcp_%s_%s" % (node.name, ssh_port)
     tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
-    j.tools.async.wrappers.sync(tcp_service.executeAction("drop", context=job.context))
-    j.tools.async.wrappers.sync(tcp_service.delete())
+    tcp_service.executeAction("drop", context=job.context)
+    tcp_service.delete()
     service.saveAll()
 
 
@@ -739,7 +739,7 @@ def updateDisks(job, client, args):
             url = _nbd_url(job, container, nbdserver, old_disk['vdiskid'])
             if uuid:
                 client.client.kvm.detach_disk(uuid, {'url': url})
-            j.tools.async.wrappers.sync(nbdserver.executeAction('install', context=job.context))
+            nbdserver.executeAction('install', context=job.context)
 
     # Attaching new disks
     if new_disks != []:
@@ -821,21 +821,21 @@ def update_data(job, args):
             node = service.aysrepo.serviceGet('node', args['node'])
             service.model.changeParent(node)
             service.saveAll()
-            j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
-            j.tools.async.wrappers.sync(old_nbd.delete())
+            old_nbd.executeAction('stop', context=job.context)
+            old_nbd.delete()
             start_dependent_services(job)
         elif service.model.data.status == 'running':
             # do live migration
             migrate(job)
-            j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
-            j.tools.async.wrappers.sync(old_nbd.delete())
+            old_nbd.executeAction('stop', context=job.context)
+            old_nbd.delete()
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')
 
         # delete current nbd services and vdisk container(this has to be before the start_nbd method)
         job.logger.info("delete current nbd services and vdisk container")
-        j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(old_vdisk_container.delete())
+        old_vdisk_container.executeAction('stop', context=job.context)
+        old_vdisk_container.delete()
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()

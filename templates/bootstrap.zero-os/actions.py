@@ -84,10 +84,10 @@ def try_authorize(job, logger, netid, member, zerotier):
 
     # do hardwarechecks
     for prod in service.producers.get('hardwarecheck', []):
-        hwcheck_job=prod.getJob('check', args={'ipaddr': zerotier_ip,
-                                               'node_id': member['nodeId'],
-                                               'jwt': get_jwt_token(service.aysrepo)})
-        j.tools.async.wrappers.sync(hwcheck_job.execute())
+        prod.executeAction('check', args={'ipaddr': zerotier_ip,
+                                          'node_id': member['nodeId'],
+                                          'jwt': get_jwt_token(service.aysrepo)})
+
 
     # test if we can connect to the new member
     node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
@@ -118,7 +118,7 @@ def try_authorize(job, logger, netid, member, zerotier):
         nodeservice.model.data.redisAddr = zerotier_ip
         nodeservice.model.data.status = 'running'
         # after reboot we also wonna call install
-        j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
+        nodeservice.executeAction('install', context=job.context)
     except j.exceptions.NotFound:
         # create and install the node.zero-os service
         if service.model.data.wipedisks:
@@ -143,15 +143,14 @@ def try_authorize(job, logger, netid, member, zerotier):
         try:
 
             logger.info("install node.zero-os service {}".format(name))
-            j.tools.async.wrappers.sync(nodeservice.executeAction('install', context=job.context))
+            nodeservice.executeAction('install', context=job.context)
         except:
-            j.tools.async.wrappers.sync(nodeservice.delete())
+            nodeservice.delete()
             raise
 
     # do ERP registrations
     for prod in service.producers.get('erp_registration', []):
-        erp_job=prod.getJob('register', args={'node_id': name, 'zerotier_address': member['nodeId']})
-        j.tools.async.wrappers.sync(erp_job.execute())
+        prod.executeAction('register', args={'node_id': name, 'zerotier_address': member['nodeId']})
 
 
 def processChange(job):

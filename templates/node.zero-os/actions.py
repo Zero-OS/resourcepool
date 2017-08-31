@@ -63,8 +63,7 @@ def getAddresses(job):
     networks = service.producers.get('network', [])
     networkmap = {}
     for network in networks:
-        job = network.getJob('getAddresses', args={'node_name': service.name})
-        networkmap[network.name] = j.tools.async.wrappers.sync(job.execute())
+        networkmap[network.name] = network.executeAction('getAddresses', args={'node_name': service.name})
     return networkmap
 
 
@@ -87,14 +86,12 @@ def install(job):
 
     job.logger.info('configure networks')
     for network in service.producers.get('network', []):
-        job = network.getJob('configure', args={'node_name': service.name})
-        j.tools.async.wrappers.sync(job.execute())
+        network.executeAction('configure', args={'node_name': service.name})
 
     stats_collector_service = get_stats_collector(service)
     statsdb_service = get_statsdb(service)
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'install', context=job.context))
+        stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
 
 
@@ -142,8 +139,7 @@ def monitor(job):
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
-            job = service.getJob('install', args={})
-            j.tools.async.wrappers.sync(job.execute())
+            service.executeAction('install',context=job.context)
             for consumer in service.getConsumersRecursive():
                 consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
@@ -152,14 +148,12 @@ def monitor(job):
         # Check if statsdb is installed on this node and start it if needed
         if (statsdb_service and str(statsdb_service.parent) == str(job.service)
                 and statsdb_service.model.data.status != 'running'):
-            j.tools.async.wrappers.sync(statsdb_service.executeAction(
-                'start', context=job.context))
+            statsdb_service.executeAction('start', context=job.context)
 
         # Check if there is a running statsdb and if so make sure stats_collector for this node is started
         if (stats_collector_service and stats_collector_service.model.data.status != 'running'
                 and statsdb_service.model.data.status == 'running'):
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-                'start', context=job.context))
+            stats_collector_service.executeAction('start', context=job.context)
 
         # healthchecks
         nodestatus.add_message('node', 'OK', 'Node is running')
@@ -253,8 +247,7 @@ def reboot(job):
                     raise j.exceptions.RuntimeError(
                         'Failed to reboot node. Force reboot is not enabled and some vms are not halted')
                 else:
-                    j.tools.async.wrappers.sync(vm.executeAction(
-                        'shutdown', context=job.context))
+                    vm.executeAction('shutdown', context=job.context)
         service.model.data.status = 'rebooting'
         job.logger.info('reboot node {}'.format(service))
         node = Node.from_ays(service, job.context['token'])
@@ -282,17 +275,15 @@ def uninstall(job):
     service = job.service
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'uninstall', context=job.context))
+        stats_collector_service.executeAction('uninstall', context=job.context))
 
     statsdb_service = get_statsdb(service)
     if statsdb_service and str(statsdb_service.parent) == str(service):
-        j.tools.async.wrappers.sync(statsdb_service.executeAction(
-            'uninstall', context=job.context))
+        statsdb_service.executeAction'uninstall', context=job.context))
 
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
-        j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
+        bootstraps[0].executeAction('delete_node', args={'node_name': service.name})
 
 
 def watchdog(job):
@@ -384,7 +375,7 @@ def watchdog(job):
             args = {'message': message, 'eof': eof, 'level': level}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
             handler = watched_roles[role].get('handler', 'watchdog_handler')
-            await srv.executeAction(handler, context=job.context, args=args)
+            await srv.asyncExecuteAction(handler, context=job.context, args=args)
 
     async def check_node(job):
         job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -492,7 +483,7 @@ def start_vm(job, vm):
 
     service = job.service
     if vm.model.data.status == 'running':
-        asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=service._loop)
+        vm.executeAction('start', context=job.context)
 
 
 def shutdown_vm(job, vm):
@@ -503,7 +494,7 @@ def shutdown_vm(job, vm):
 
     service = job.service
     if vm.model.data.status == 'running':
-        asyncio.ensure_future(vm.executeAction('shutdown', context=job.context), loop=service._loop)
+        vm.executeAction('shutdown', context=job.context)
 
 
 def vm_handler(job):

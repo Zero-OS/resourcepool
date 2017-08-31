@@ -121,7 +121,7 @@ def install(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "dropped":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('install', context=job.context))
+        tcpsrv.executeAction('install', context=job.context)
 
 
 def start(job):
@@ -129,7 +129,7 @@ def start(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_storagecluster_config(job, storagecluster):
@@ -174,7 +174,7 @@ def stop(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "opened":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('drop', context=job.context))
+        tcpsrv.executeAction('drop', context=job.context)
 
 
 def monitor(job):
@@ -193,7 +193,7 @@ def monitor(job):
     if is_port_listening(container, port):
         return
 
-    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))
+    service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)})
 
 
 def watchdog_handler(job):
@@ -204,4 +204,4 @@ def watchdog_handler(job):
         return
     eof = job.model.args['eof']
     if eof:
-        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(service.asyncExecuteAction('start', context=job.context), loop=loop)
