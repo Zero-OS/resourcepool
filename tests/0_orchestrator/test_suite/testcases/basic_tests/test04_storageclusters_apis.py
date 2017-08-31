@@ -14,7 +14,7 @@ class TestStorageclustersAPI(TestcasesBase):
         else:
             self.response, self.data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid,
                                                                                      servers=randint(1, len(free_disks)))
-        self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster.")
+        self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s."%self.response.content)
 
     def tearDown(self):
         self.lg.info(' [*] Kill storage cluster (SC0)')

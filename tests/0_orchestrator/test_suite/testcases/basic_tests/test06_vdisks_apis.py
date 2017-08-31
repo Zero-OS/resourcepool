@@ -22,6 +22,7 @@ class TestVdisks(TestcasesBase):
 
         self.lg.info(' [*] Create vdisk (VD0)')
         self.response, self.data = self.vdisks_api.post_vdisks(storagecluster=self.storagecluster)
+
         self.assertEqual(self.response.status_code, 201)
 
     def tearDown(self):
@@ -67,7 +68,9 @@ class TestVdisks(TestcasesBase):
         response = self.vdisks_api.get_vdisks()
         self.assertEqual(response.status_code, 200)
         vd0_data = {"id": self.data['id'],
-                    "storageCluster": self.data['storagecluster'],
+                    "blockStoragecluster": self.data['blockStoragecluster'],
+                    "backupStoragecluster": '',
+                    "objectStoragecluster": '',
                     "type": self.data['type']}
         self.assertIn(vd0_data, response.json())
 
