@@ -56,11 +56,17 @@ def delete_devices(manager, hostname):
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
     global hostname_qu
     hostname = 'orch{}-travis'.format(randint(100, 300))
-    try:
-        device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
-    except:
-        print(' [*] device hasn\'t been created')
-        raise
+    for i in range(10):
+        try:
+            device = create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch=branch)
+            break
+        except:
+            print(' [*] failed to create the device .. trying again ')
+            time.sleep(3)
+            if i == 9:
+                print(' [*] device hasn\'t been created')
+                raise
+            continue
 
     print(' [*] provisioning the new machine ..')
     while True:
@@ -124,6 +130,7 @@ if __name__ == '__main__':
             thread = threading.Thread(target=create_pkt_machine, args=(manager, zt_net_id, itsyouonline_org),
                                       kwargs={'branch': '{}'.format(CORE_0_BRANCH)})
             thread.start()
+            time.sleep(5)
             threads.append(thread)
 
         for thread in threads:
