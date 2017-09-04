@@ -80,6 +80,7 @@ done
 cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 actions:
   - action: install
+  - actor: etcd_cluster
 EOL
 }
 
