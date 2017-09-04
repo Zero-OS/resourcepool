@@ -283,6 +283,8 @@ class TestcontaineridAPI(TestcasesBase):
 
         Z_Id = self.create_zerotier_network()
 
+        time.sleep(5)
+
         self.lg.info(' [*] Create 2 containers C1, C2 with same zerotier network Id , should succeed')
         nic = [{'type': 'default'}, {'type': 'zerotier', 'id': Z_Id}]
         response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
@@ -297,7 +299,7 @@ class TestcontaineridAPI(TestcasesBase):
         c1_client = self.core0_client.get_container_client(data_c1['name'])
         c2_client = self.core0_client.get_container_client(data_c2['name'])
 
-        time.sleep(10)
+        time.sleep(15)
 
         self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
@@ -306,11 +308,11 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertTrue(c2_zt_ip)
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
-        response = c1_client.bash('ping -w5 %s' % c2_zt_ip).get()
+        response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
-        response = c2_client.bash('ping -w5 %s' % c1_zt_ip).get()
+        response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
 
         self.lg.info(" [*] Create C3 without zerotier ")
@@ -320,7 +322,7 @@ class TestcontaineridAPI(TestcasesBase):
         C3_client = self.core0_client.get_container_client(data_c3['name'])
 
         self.lg.info(" [*] Check if third container (c3) can ping first container (c1), should fail.")
-        response = C3_client.bash('ping -c 10 %s' % c1_zt_ip).get()
+        response = C3_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
         self.lg.info(" [*] Delete zerotier network ")
