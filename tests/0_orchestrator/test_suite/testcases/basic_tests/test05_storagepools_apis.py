@@ -14,10 +14,10 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                            free_devices=self.freeDisks)
         self.assertEqual(self.response.status_code, 201)
 
-        if self.id().split('.')[2] in ['test009_get_storagepool_filessystem', 'test010_list_storagepool_filesystems',
+        if self.id().split('.')[-1] in ['test009_get_storagepool_filessystem', 'test010_list_storagepool_filesystems',
                                        'test011_post_storagepool_filesystem', 'test012_delete_storagepool_filesystem']:
             self.setUp_plus_fileSystem()
-        elif self.id().split('.')[2] in ['test013_get_storagepool_filessystem_snapshot',
+        elif self.id().split('.')[-1] in ['test013_get_storagepool_filessystem_snapshot',
                                          'test014_list_storagepool_filesystems_snapshots',
                                          'test015_post_storagepool_filesystem_snapshot',
                                          'test016_delete_storagepool_filesystem_snapshot']:
@@ -41,7 +41,7 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                                       self.data['name'],
                                                                                                       self.data_filesystem[
                                                                                                           'name'])
-        self.assertEqual(self.response_snapshot.staus_code, 201, " [*] can't create new snapshot.")
+        self.assertEqual(self.response_snapshot.status_code, 201, " [*] can't create new snapshot.")
 
     def test001_get_storagepool(self):
         """ GAT-045
@@ -350,10 +350,10 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Create filesystem with invalid body, should fail with 400')
-        response = self.storagepools_api.post_storagepools_storagepoolname_filesystems(node_id=self.nodeid,
+        response, data = self.storagepools_api.post_storagepools_storagepoolname_filesystems(node_id=self.nodeid,
                                                                                        storagepoolname=self.data[
                                                                                            'name'],
-                                                                                       bad_param=self.rand_str())
+                                                                                       name=123456)
         self.assertEqual(response.status_code, 400)
 
     # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/658')
