@@ -28,7 +28,6 @@ def configure(job):
     nodes = set()
     for node_service in service.producers['node']:            
         nodes.add(Node.from_ays(node_service, job.context['token']))
-        service.consume(node_service)
     nodes = list(nodes)
 
     if len(nodes) % 2 == 0:
@@ -119,10 +118,8 @@ def get_baseports(job, node, baseport, nrports):
 def watchdog_handler(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.core0.client import Client
     from zeroos.orchestrator.sal.ETCD import ETCD
     from zeroos.orchestrator.configuration import get_jwt_token
-    import redis
 
     service = job.service
     if service.model.data.status == 'recovering':
@@ -140,7 +137,7 @@ def watchdog_handler(job):
         node = container.parent
         try:
             container_client = Container.from_ays(container, password=token)
-        except Client.ConnectionError as e:
+        except ConnectionError as e:
             container_client = None
         if container_client and container_client.id:
             working_etcds.add(etcd)
@@ -154,7 +151,7 @@ def watchdog_handler(job):
             node_client = Node.from_ays(node, password=token)
             ping = node_client.client.ping()
             working_model_nodes.add(node)
-        except (redis.TimeoutError, redis.ConnectionError, Client.ConnectionError) as e:
+        except (redis.TimeoutError, ConnectionError) as e:
             ping = None
             dead_nodes.add(node.name)
 
@@ -174,14 +171,6 @@ def watchdog_handler(job):
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
-    # check if nodes are more than the min number for cluster deployment which is 3.
-    all_nodes = set([service.name for service in service.aysrepo.servicesFind(role='node')])
-    if len(working_model_nodes) > 3:
-        service.model.data.nodes = [node.name for node in working_model_nodes]
-    else:
-        service.model.data.nodes = list(all_nodes - dead_nodes)
-
-
     # remove old nodes and etcds from producers
     for etcd_service in service.producers['etcd']:
         service.model.producerRemove(etcd_service)
@@ -191,6 +180,18 @@ def watchdog_handler(job):
         if node_service.name not in service.model.data.nodes:
             service.model.producerRemove(node_service)
             service.saveAll()
+
+    # check if nodes are more than the min number for cluster deployment which is 3.
+    tmp = list()
+    for node in [service for service in service.aysrepo.servicesFind(role='node')]:
+        if service.model.data.status == 'running':
+            tmp.append(service.name)
+
+    all_nodes = set(tmp)
+    if len(working_model_nodes) > 1:
+        service.model.data.nodes = [node.name for node in working_model_nodes]
+    else:
+        service.model.data.nodes = list(all_nodes - dead_nodes)
 
     # consume new nodes. 
     node_services = [service.aysrepo.serviceGet(instance=node, role='node')for node in service.model.data.nodes]

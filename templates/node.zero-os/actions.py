@@ -106,7 +106,6 @@ def install(job):
 
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.core0.client import Client
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import math
@@ -128,7 +127,7 @@ def monitor(job):
         node = Node.from_ays(service, token, timeout=15)
         node.client.testConnectionAttempts = 0
         state = node.client.ping()
-    except (RuntimeError, Client.ConnectionError, redis.TimeoutError):
+    except (RuntimeError, ConnectionError, redis.TimeoutError):
         state = False
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
 
@@ -186,7 +185,7 @@ def monitor(job):
                     if n.model.data.status == 'running':
                         try:
                             node_sal = Node.from_ays(n, token, timeout=15)
-                        except (RuntimeError, Client.ConnectionError, redis.TimeoutError):
+                        except (RuntimeError, ConnectionError, redis.TimeoutError):
                             n.model.data.status = 'halted'
                             n.saveAll()
                             continue
@@ -399,7 +398,7 @@ def watchdog(job):
                 monitor(job)
                 cl = None
                 subscribed = None
-            except Client.ConnectionError as e:
+            except RuntimeError as e:
                 job.logger.error(e)
                 monitor(job)
                 cl = None

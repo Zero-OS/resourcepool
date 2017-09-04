@@ -105,7 +105,13 @@ class ETCD:
             raise RuntimeError('Failed to start etcd server: {}'.format(self.name))
 
     def stop(self):
-        self.container.job.kill("etcd.{}".format(self.name))
+        jobID = "etcd.{}".format(self.name)
+        self.container.job.kill(jobID)
+        try:
+            self.container.job.list(jobID)
+        except RuntimeError:
+            return
+        raise RuntimeError('failed to stop etcd.')
 
     def put(self, key, value):
         if value.startswith("-"):

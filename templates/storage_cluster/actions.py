@@ -249,7 +249,7 @@ def save_config(job):
     if service.model.data.clusterType == "block":
         try:
             cluster = StorageCluster.from_ays(service, job.context['token'])
-        except Client.ConnectionError as e:
+        except ConnectionError as e:
             if e.args:
                 job.logger.error(e.args[0])
             else:
