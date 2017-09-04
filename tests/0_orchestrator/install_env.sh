@@ -9,6 +9,7 @@ CORE_0_BRANCH=$5
 
 export SSHKEYNAME=id_rsa
 export GIGBRANCH=$JS9_BRANCH
+export GIGDEVELOPERBRANCH=$JS9_BRANCH
 export GIGSAFE=1
 export TERM=xterm-256color
 
