@@ -10,6 +10,11 @@ class TestVmsAPI(TestcasesBase):
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
             self.lg.info(' [*] Create new storagecluster.')
+            
+            free_disks = self.core0_client.getFreeDisks()
+            if free_disks == []:
+                self.skipTest(' [*] No free disks to create storagecluster')
+
             response, body = self.storageclusters_api.post_storageclusters(node_id=self.nodeid)
             self.assertEqual(response.status_code, 201)
             self.storagecluster = body['label']
