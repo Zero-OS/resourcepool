@@ -194,6 +194,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
+        time.sleep(5)
         response = c1_client.bash('ping -w5 %s' % C2_br_ip).get()
         self.assertEqual(response.state, 'SUCCESS')
 
