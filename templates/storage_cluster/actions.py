@@ -237,6 +237,7 @@ def save_config(job):
     import yaml
     import requests
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.core0.client import Client
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
     aysconfig = get_configuration(job.service.aysrepo)
@@ -246,7 +247,14 @@ def save_config(job):
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
-        cluster = StorageCluster.from_ays(service, job.context['token'])
+        try:
+            cluster = StorageCluster.from_ays(service, job.context['token'])
+        except Client.ConnectionError as e:
+            if e.args:
+                job.logger.error(e.args[0])
+            else:
+                job.logger.error('could connect to storage cluster %s' % service.name)
+            return
         config = cluster.get_config()
 
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)

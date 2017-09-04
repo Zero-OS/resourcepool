@@ -16,6 +16,12 @@ def start(job):
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
+def stop(job):
+    from zeroos.orchestrator.sal.ETCD import ETCD
+    service = job.service
+    etcd = ETCD.from_ays(service, job.context['token'])
+    etcd.stop()
+
 
 def watchdog_handler(job):
     import asyncio
