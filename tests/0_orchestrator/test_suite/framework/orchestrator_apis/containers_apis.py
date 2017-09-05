@@ -27,7 +27,7 @@ class ContainersAPI(OrchestratorBase):
         response = self.orchestrator_client.nodes.CreateContainer(nodeid=nodeid, data=data)
         return response, data
 
-    @catch_exception_decoration
+    @catch_exception_decoration_return
     def update_container(self, nodeid, containername, **kwargs):
         data = {"nics": []}
         data = self.update_default_data(default_data=data, new_data=kwargs)
