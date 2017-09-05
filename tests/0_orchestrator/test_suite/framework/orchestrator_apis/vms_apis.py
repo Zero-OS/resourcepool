@@ -27,9 +27,7 @@ class VmsAPI(OrchestratorBase):
                 "memory": random.randint(1, 16) * 1024,
                 "cpu": random.randint(1, 16),
                 "nics": [],
-                "disks": [],
-                "userCloudInit": {},
-                "systemCloudInit": {}}
+                "disks": []}
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateVM(nodeid=node_id, data=data)
         return response, data
