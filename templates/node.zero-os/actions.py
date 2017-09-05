@@ -379,6 +379,7 @@ def watchdog(job):
             try:
                 if not subscribed:
                     queue = await cl.subscribe('ays.monitor')
+                    subscribed = True
                 await cl.global_stream(queue)
             except asyncio.TimeoutError as e:
                 job.logger.error(e)
