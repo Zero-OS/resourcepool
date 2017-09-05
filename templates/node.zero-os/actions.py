@@ -446,6 +446,12 @@ def ork_handler(job):
     message = json.loads(message)
     if message['action'] == 'NIC_SHUTDOWN':
         nic_shutdown(job, message)
+    elif message['action'] == 'VM_QUARANTINE' and message['state'] == 'WARNING':
+        job.logger.info('VM %s exceeded cpu threshold and will be quarantined soon' % message['name'])
+    elif message['action'] == 'VM_QUARANTINE' and message['state'] == 'SUCCESS':
+        job.logger.info('Vm %s has been quarantined' % message['name'])
+    elif message['action'] == 'VM_UNQUARANTINE' and message['state'] == 'SUCCESS':
+        job.logger.info('Vm %s has been released from quarantine' % message['name'])
 
 
 def start_vm(job, vm):
