@@ -1,16 +1,21 @@
 # autosetup
 
 ## orchestrator-flist
-This script build a flist with all the needed orchestrator base files
+This script build a flist with all the needed orchestrator base files.
 
-This flist needs to be merged with:
-- ubuntu flist, made for jumpscale based merge
+- This script is made to be executed on a `ubuntu:16.04` fresh docker.
+- The result image will be located at `/tmp/archives/0-orchestrator.tar.gz`
+
+When you have the archive, this flist needs to be merged (via the hub) with:
+- ubuntu flist, made for jumpscale based merge (eg: `gig-official-apps/ubuntu1604-for-js.flist`)
 - jumpscale with the right version needed by the orchestrator
 
-At the end, you'll have theses layout:
-- Default Ubuntu base system
-  - Jumpscale and ays flist
-    - Orchestrator apiserver, repositories and templates
+At the end, you'll have this layout:
+```
++ Default Ubuntu base system
++- Jumpscale and ays flist
+ +- Orchestrator apiserver, repositories and templates
+```
 
 ## autobootstrap
 This scipt automate an orchestrator deployment on a Zero-OS system.
