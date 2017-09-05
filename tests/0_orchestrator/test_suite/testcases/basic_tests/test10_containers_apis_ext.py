@@ -19,7 +19,7 @@ class TestcontaineridAPI(TestcasesBase):
         for bridge_name in self.created['bridge']:
             self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
 
-    def test001_check_coonection_with_False_hostNetworking(self):
+    def test001_check_connection_with_False_hostNetworking(self):
         """ GAT-082
         *Check container internet connection with false hostNetworking options *
 
@@ -41,7 +41,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = container.bash('ping -c 5 google.com').get()
         self.assertEqual(response.state, 'ERROR')
 
-    def test002_check_coonection_with_True_hostNetworking(self):
+    def test002_check_connection_with_True_hostNetworking(self):
         """ GAT-083
         *Check container internet connection with true hostNetworking options *
 
@@ -342,8 +342,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test009_create_containers_with_vlan_network(self):
+  
         """ GAT-090
 
         *Test case for test creation of containers with vlan network*
@@ -408,8 +407,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 2 %s' % C1_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test010_create_containers_with_vxlan_network(self):
+
         """ GAT-091
 
         *Test case for test creation of containers with vxlan network*
@@ -477,8 +475,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test011_create_containers_with_gateway_network_in_config(self):
+ 
         """ GAT-092
 
         *Test case for test creation of containers with gateway in configeration  *
@@ -530,8 +527,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Delete created bridge ")
         self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, data_bridge_1['name'])
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test012_create_container_with_dns_in_config(self):
+  
         """ GAT-093
 
         *Test case for test creation of containers with different network and with dns *
@@ -578,7 +574,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash('ping -c 2 %s' % dns).get()
         self.assertEqual(response.state, "SUCCESS")
 
-    def test013_create_container_with_filesystem(self):
+    def test009_create_container_with_filesystem(self):
         """ GAT-094
 
         *Test case for test creation of containers with filesystem. *
@@ -609,7 +605,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C_client.filesystem.list('/fs/%s' % storagepool_name)
         self.assertEqual(response[0]['name'], name)
 
-    def test014_Writing_in_containers_files(self):
+    def test010_Writing_in_containers_files(self):
         """ GAT-095
 
         *Test case for test writing in containner files *
@@ -645,7 +641,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'ERROR')
 
-    def test015_create_containers_with_open_ports(self):
+    def test011_create_containers_with_open_ports(self):
         """ GAT-096
 
         *Test case for test create containers with open ports*
@@ -696,8 +692,7 @@ class TestcontaineridAPI(TestcasesBase):
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-    @unittest.skip("https://github.com/g8os/resourcepool/issues/297")
-    def test016_post_new_job_to_container_with_specs(self):
+  
         """ GAT-097
 
         *Test case for test create containers with open ports*
@@ -743,8 +738,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get Env varaible  correctly")
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test017_Create_containers_with_common_vlan(self):
+
         """ GAT-098
 
         *Test case for test creation of containers with cmmon vlan  network*
@@ -818,7 +812,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, "ERROR")
 
-    def test018_attach_different_nics_to_same_container(self):
+    def test012_attach_different_nics_to_same_container(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
 
