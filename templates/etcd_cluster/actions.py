@@ -26,7 +26,7 @@ def configure(job):
     config = get_configuration(service.aysrepo)
 
     nodes = set()
-    for node_service in service.producers['node']:
+    for node_service in service.producers['node']:            
         nodes.add(Node.from_ays(node_service, job.context['token']))
     nodes = list(nodes)
 
@@ -38,6 +38,7 @@ def configure(job):
     fsactor = service.aysrepo.actorGet("filesystem")
     etcd_args = {}
     peers = []
+    etcds = []
     flist = config.get('etcd-flist', 'https://hub.gig.tech/gig-official-apps/etcd-release-3.2.flist')
     for node in nodes:
         baseports, tcpservices = get_baseports(job, node, baseport=2379, nrports=2)
@@ -79,8 +80,9 @@ def configure(job):
         etcd_service = etcd_actor.serviceCreate(instance=etcdname, args=v)
         etcd_service.consume(tcps[0])
         etcd_service.consume(tcps[1])
+        etcds.append(etcd_service.name)
         service.consume(etcd_service)
-
+    service.model.data.etcds = etcds
 
 def install(job):
     service = job.service
@@ -118,6 +120,7 @@ def watchdog_handler(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.ETCD import ETCD
     from zeroos.orchestrator.configuration import get_jwt_token
+    import redis
 
     service = job.service
     if service.model.data.status == 'recovering':
@@ -125,48 +128,88 @@ def watchdog_handler(job):
     service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
+    dead_nodes = set()
+    working_model_nodes = set()
     token = get_jwt_token(job.service.aysrepo)
-
+    
     # check on etcd container since the watch dog will handle the actual service
     for etcd in etcds:
         container = etcd.parent
         node = container.parent
-        container_client = Container.from_ays(container, password=token)
-        if container_client.id:
+        try:
+            container_client = Container.from_ays(container, password=token)
+        except ConnectionError as e:
+            container_client = None
+        if container_client and container_client.id:
             working_etcds.add(etcd)
 
     dead_etcds = etcds-working_etcds
 
-    if len(working_etcds) >= (len(etcds)-1)/2:
-        for etcd in etcds-working_etcds:
-            container = etcd.parent
-            node = container.parent
-            container_client = Container.from_ays(container, password=token)
+    for etcd in dead_etcds:
+        container = etcd.parent
+        node = container.parent
+        try:
             node_client = Node.from_ays(node, password=token)
-            if not node_client.client.ping():
-                raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
+            ping = node_client.client.ping()
+            working_model_nodes.add(node)
+        except (redis.TimeoutError, ConnectionError) as e:
+            ping = None
+            dead_nodes.add(node.name)
 
+        if len(working_etcds) >= (len(etcds)-1)/2:
+            if not ping:
+                raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
-        return
+            return
 
 
     # clean all remaining etcds from the old cluster
-    for etcd in etcds:
+    for etcd in working_etcds:
         container = etcd.parent
+        j.tools.async.wrappers.sync(etcd.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(etcd.delete())
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
+
+    # remove old nodes and etcds from producers
+    for etcd_service in service.producers['etcd']:
+        service.model.producerRemove(etcd_service)
+        service.saveAll()
+    
+    for node_service in service.producers['node']:
+        if node_service.name not in service.model.data.nodes:
+            service.model.producerRemove(node_service)
+            service.saveAll()
+
+    # check if nodes are more than the min number for cluster deployment which is 3.
+    tmp = list()
+    for node in [service for service in service.aysrepo.servicesFind(role='node')]:
+        if service.model.data.status == 'running':
+            tmp.append(service.name)
+
+    all_nodes = set(tmp)
+    if len(working_model_nodes) > 1:
+        service.model.data.nodes = [node.name for node in working_model_nodes]
+    else:
+        service.model.data.nodes = list(all_nodes - dead_nodes)
+
+    # consume new nodes. 
+    node_services = [service.aysrepo.serviceGet(instance=node, role='node')for node in service.model.data.nodes]
+    for node_service in node_services:
+        service.consume(node_service)
 
     service.model.data.etcds = []
     service.saveAll()
     j.tools.async.wrappers.sync(service.executeAction('configure', context=job.context))
 
     # install all services created by the configure of the etcd_cluster
-    for etcd in service.producers.get('etcd', []):
-        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))
+    etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
+    for etcd in etcd_services:
         for mount in etcd.parent.model.data.mounts:
             fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
             j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
+        j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))
         j.tools.async.wrappers.sync(etcd.executeAction('install', context=job.context))
 
     # save all vdisks to new etcd cluster
