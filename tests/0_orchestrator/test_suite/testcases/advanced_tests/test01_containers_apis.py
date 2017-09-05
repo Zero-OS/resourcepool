@@ -4,7 +4,7 @@ from urllib.request import urlopen
 import requests
 import json
 
-
+@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestcontaineridAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
