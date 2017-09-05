@@ -342,10 +342,6 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
 
-
-
-
-
     def test009_create_container_with_filesystem(self):
         """ GAT-094
 
