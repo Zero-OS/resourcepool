@@ -200,8 +200,12 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
-        time.sleep(5)
-        response = c1_client.bash('ping -w5 %s' % C2_br_ip).get()
+        time.sleep(10)
+        for i in range(5):
+            response = c1_client.bash('ping -w5 %s' % C2_br_ip).get()
+            if response.state == 'SUCCESS':
+                break
+            time.sleep(5)
         self.assertEqual(response.state, 'SUCCESS')
 
         self.lg.info("Check if second container (c2) can ping first container (c1), should succeed.")
@@ -681,7 +685,11 @@ class TestcontaineridAPI(TestcasesBase):
         time.sleep(5)
 
         self.lg.info("Check that portforward work,should succeed")
-        response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get()
+        for i in range(5):
+            response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get()
+            if response.state == 'SUCCESS':
+                break
+            time.sleep(5)
         self.assertEqual(response.state, 'SUCCESS')
         url = 'http://{0}:{1}/{2}.text'.format(self.nodeip, hostport, file_name)
         response = urlopen(url)
