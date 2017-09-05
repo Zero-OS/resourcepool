@@ -127,11 +127,8 @@ def monitor(job):
         node = Node.from_ays(service, token, timeout=15)
         node.client.testConnectionAttempts = 0
         state = node.client.ping()
-    except RuntimeError:
+    except (RuntimeError, ConnectionError, redis.TimeoutError):
         state = False
-    except redis.ConnectionError:
-        state = False
-
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
 
     if state:
@@ -177,12 +174,22 @@ def monitor(job):
             update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
             update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
+        # check each node with the rest of the nodes
+        relatives = list()
         nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
         nodes.sort(key=lambda n: hash(n.model.data.redisAddr))
         count = min(len(nodes) - 1, int(math.log(len(nodes)) + 1))
         for i, n in enumerate(nodes + nodes):
-            if n.model.key == service.model.key:
-                relatives = [Node.from_ays(n, token, timeout=15) for n in (nodes + nodes)[i+1:i+1+count]]
+            if n.model.key == service.model.key and n.model.data.status == 'running':
+                for n in (nodes + nodes)[i+1:i+1+count]:
+                    if n.model.data.status == 'running':
+                        try:
+                            node_sal = Node.from_ays(n, token, timeout=15)
+                        except (RuntimeError, ConnectionError, redis.TimeoutError):
+                            n.model.data.status = 'halted'
+                            n.saveAll()
+                            continue
+                        relatives.append(node_sal)
                 break
         else:
             raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
@@ -357,6 +364,7 @@ def watchdog(job):
             await srv.executeAction(handler, context=job.context, args=args)
 
     async def streaming(job):
+        from zeroos.core0.client import Client
         # Check if the node is runing
         while service.model.actionsState['install'] != 'ok':
             await sleep(1)
