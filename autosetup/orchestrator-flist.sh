@@ -116,8 +116,8 @@ echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 chmod +x ${orchinit}
 
 # cloning orchestrator code
-mkdir -p /opt/code/github/zero-os
-pushd /opt/code/github/zero-os
+mkdir -p ${TARGET}/opt/code/github/zero-os
+pushd ${TARGET}/opt/code/github/zero-os
 git clone -b "${ORCH_BRANCH}" https://github.com/zero-os/0-orchestrator.git
 popd
 
