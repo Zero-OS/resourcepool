@@ -218,23 +218,33 @@ class OrchestratorInstaller:
 
         return True
 
-    def blueprint(self, clientid, clientsecret, organization):
+    """
+    clientid: iyo-client-id to generate a jwt
+    clientsecret: iyo-client-secret to generate a jwt
+    network: network type (g8, switchless, packet)
+    vlan and cidr: argument for g8 and switchless setup
+
+    Note: network value is not verified, please ensure the network passed
+          is a valid value, if value is not correct, the behavior is unexpected (crash)
+    """
+    def blueprint(self, clientid, clientsecret, organization, network, vlan, cidr, znetid, ztoken):
         print("[+] building blueprint")
         cn = self.node.containers.get(self.ctname)
 
-        orchestratorhome = "/opt/code/github/zero-os/0-orchestrator"
+        templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
 
+        #
+        # configuration.bp
+        #
         print("[+] building configuration blueprint")
-        configfile = cn.client.bash("cat %s/autosetup/config-template.yaml" % orchestratorhome).get()
+
+        configfile = cn.client.bash("cat %s/configuration.yaml" % templates).get()
         config = yaml.load(configfile.stdout)
 
         # configuring blueprint
         for item in config['configuration__main']['configurations']:
             if item['key'] == '0-core-version':
                 item['value'] = self.core_version
-
-            if item['key'] == 'js-version':
-                item['value'] = self.js_version
 
             if item['key'] == 'jwt-token':
                 print("[+] requesting jwt token for ays")
@@ -244,6 +254,44 @@ class OrchestratorInstaller:
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
         cn.client.filesystem.write(fd, yaml.dump(config).encode('utf-8'))
+        cn.client.filesystem.close(fd)
+
+        #
+        # network.bp
+        #
+        print("[+] building network blueprint")
+
+        configfile = cn.client.bash("cat %/network-%s.yaml" % (templates, network)).get()
+        netconfig = yaml.load(configfile.stdout)
+
+        if network in ['g8', 'switchless']:
+            netconfig['network.%s__storage' % network]['vlanTag'] = vlan
+            netconfig['network.%s__storage' % network]['cidr'] = cidr
+
+        if network in ['packet']:
+            # there is nothing to do, but we keep the code
+            # to know we _explicitly_ does nothing
+            pass
+
+        blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp"
+        fd = cn.client.filesystem.open(blueprint, "w")
+        cn.client.filesystem.write(fd, netconfig.dump(config).encode('utf-8'))
+        cn.client.filesystem.close(fd)
+
+        #
+        # bootstrap.bp
+        #
+        print("[+] building bootstrap blueprint")
+
+        bstrapfile = cn.client.bash("cat %/bootstrap.yaml" % templates).get()
+        bstrapconfig = yaml.load(bstrapfile.stdout)
+
+        bstrapconfig['bootstrap.zero-os__grid1']['zerotierNetID'] = znetid
+        bstrapconfig['bootstrap.zero-os__grid1']['zerotierToken'] = ztoken
+
+        blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp"
+        fd = cn.client.filesystem.open(blueprint, "w")
+        cn.client.filesystem.write(fd, bstrapconfig.dump(config).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
         # this need to be done after ays starts
@@ -373,18 +421,31 @@ if __name__ == "__main__":
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
     parser.add_argument('--clientid', type=str, help='itsyou.online client-id for jwt-token', required=True)
     parser.add_argument('--clientsecret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
+    parser.add_argument('--network', type=str, help='network type: g8, switchless, packet', required=True)
+    parser.add_argument('--vlan', type=str, help='g8/switchless only: vlan id')
+    parser.add_argument('--cidr', type=str, help='g8/switchless only: cidr address')
     args = parser.parse_args()
 
     if args.email != None:
         email = args.email
 
+    if args.network not in ['g8', 'switchless', 'packet']:
+        print("[-] network: invalid network type '%s'" % args.network)
+        sys.exit(1)
+
+    if args.network in ['g8', 'switchless']:
+        if not args.vlan or not args.cidr:
+            print("[-] network %s: vlan and cird required" % args.network)
+            sys.exit(1)
+
     print("[+] ---------------------------------------------")
-    print("[+] remote server: %s" % args.server)
+    print("[+] remote server   : %s" % args.server)
     print("[+] zerotier network: %s" % args.ztnet)
-    print("[+] domain name: %s" % args.domain)
-    print("[+] upstream git: %s" % args.upstream)
-    print("[+] certificates email: %s" % email)
+    print("[+] domain name     : %s" % args.domain)
+    print("[+] upstream git    : %s" % args.upstream)
+    print("[+] global email    : %s" % email)
     print("[+] ays organization: %s" % args.organization)
+    print("[+] network layout  : %s (%s, %s)" % (args.network, args.vlan, args.cidr))
     print("[+] ---------------------------------------------")
 
     installer = OrchestratorInstaller()
@@ -411,7 +472,12 @@ if __name__ == "__main__":
 
     print("[+] hook: configure")
     installer.configure(args.upstream, email, args.organization)
-    installer.blueprint(args.clientid, args.clientsecret, args.organization)
+    installer.blueprint(
+        args.clientid, args.clientsecret,
+        args.organization,
+        args.network, args.vlan, args.cidr,
+        "znetid-field", "ztoken-field"
+    )
 
     print("[+] hook: post-configure")
     installer.post_configure()

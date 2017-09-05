@@ -48,7 +48,7 @@ export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 echo "[+] downloading ays orchestrator server source code"
 go get -d -v -u github.com/zero-os/0-orchestrator/api
 
-if [ "${ORCH_BRANCH}" != "master"]; then
+if [ "${ORCH_BRANCH}" != "master" ]; then
     pushd $GOPATH/src/github.com/zero-os/0-orchestrator
     git fetch origin ${ORCH_BRANCH}:${ORCH_BRANCH}
     git checkout ${ORCH_BRANCH}

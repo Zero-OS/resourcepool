@@ -2,8 +2,6 @@ configuration__main:
   configurations:
   - key: '0-core-version'
     value: ''
-  - key: 'js-version'
-    value: ''
   - key: 'gw-flist'
     value: 'https://hub.gig.tech/gig-official-apps/zero-os-gw-master.flist'
   - key: 'ovs-flist'
