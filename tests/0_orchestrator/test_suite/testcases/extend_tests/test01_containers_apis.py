@@ -855,6 +855,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info('Attach Both B1 and B2, should succeed')
         nic3 = [{'type': 'bridge', 'id': B1}, {'type': 'bridge', 'id': B2}]
-        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic3)
+        self.containers_api.update_container(self.nodeid, cont_name, nics=nic3)
+        self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)
         d = json.loads(self.response.text.split('\n')[0])
         self.assertEqual(len(d['nics']), 2)
