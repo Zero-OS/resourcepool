@@ -3,11 +3,8 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
-	"github.com/gorilla/mux"
-
 	"github.com/zero-os/0-orchestrator/api/tools"
+	"net/http"
 )
 
 // CreateContainer is the handler for POST /backup
@@ -28,23 +25,20 @@ func (api BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	containerName := vars["containername"]
-
 	// validate container name
-	exists, err := aysClient.ServiceExists("container", containerName, api.AysRepo)
+	exists, err := aysClient.ServiceExists("container", reqBody.Container, api.AysRepo)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
 		return
 	} else if !exists {
-		err = fmt.Errorf("Container with name %s does not exists", containerName)
+		err = fmt.Errorf("Container with name %s does not exists", reqBody.Container)
 		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
 	bp := map[string]interface{}{
 		fmt.Sprintf("container_backup__%s", reqBody.Name): map[string]interface{}{
-			"container": containerName,
+			"container": reqBody.Container,
 			"url":       reqBody.URL,
 		},
 		"actions": []tools.ActionBlock{

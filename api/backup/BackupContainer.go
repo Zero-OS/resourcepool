@@ -6,8 +6,9 @@ import (
 )
 
 type BackupContainer struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name      string `json:"name"`
+	Container string `json:"container"`
+	URL       string `json:"url"`
 }
 
 func (s BackupContainer) Validate() error {
