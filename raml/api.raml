@@ -1259,6 +1259,21 @@ types:
             responses:
               204:
                 description: Virtual machine migration request passed successfully
+/backup:
+  post:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    displayName: BackupContainer
+    description: Backup a container
+    body:
+      application/json:
+        type: BackupContainer
+    responses:
+      202:
+        description: Container backup created successfully
+        headers:
+          Location:
+            description: URL to the backup container resource
 /storageclusters:
   description: Create and get information about a storage clusters
   post:

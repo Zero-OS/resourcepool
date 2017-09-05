@@ -34233,6 +34233,390 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__containers__containername__backup">
+          <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/backup
+        </a>
+
+        <span class="methods">
+          
+            <a href="#nodes__nodeid__containers__containername__backup_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_nodes__nodeid__containers__containername__backup" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#nodes__nodeid__containers__containername__backup_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Backup a container</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="nodes__nodeid__containers__containername__backup_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/backup
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Backup a container</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#nodes__nodeid__containers__containername__backup_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__containers__containername__backup_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__containers__containername__backup_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="nodes__nodeid__containers__containername__backup_post_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>nodeid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>containername</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>url</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>URL to restic repo</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__containers__containername__backup_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/202" target="_blank">202</a></h2>
+<p>Container backup created successfully</p>
+
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Location</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>URL to the backup container resource</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__containers__containername__backup_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
         <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__containers__containername__filesystem">
           <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/filesystem
         </a>

@@ -100,6 +100,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// CreateContainer is the handler for POST /nodes/{nodeid}/containers
 	// Create a new container
 	CreateContainer(http.ResponseWriter, *http.Request)
+	// BackupContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/backup
+	// Backup a new container
+	BackupContainer(http.ResponseWriter, *http.Request)
 	// Update container is the handler for the PUT /nodes/{nodeid}/containers/{containername}
 	// Update existing container
 	UpdateContainer(http.ResponseWriter, *http.Request)
@@ -355,6 +358,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes/{processid}", i.SendSignalProcess).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/processes", i.ListContainerProcesses).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/start", i.StartContainer).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/backup", i.BackupContainer).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/state", i.GetContainerState).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/stop", i.StopContainer).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}", i.DeleteContainer).Methods("DELETE")

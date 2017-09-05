@@ -15,6 +15,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/vdisk"
+	"github.com/zero-os/0-orchestrator/api/backup"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -56,6 +57,6 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
 	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL), org)
-
+	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL), org)
 	return r
 }
