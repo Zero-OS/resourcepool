@@ -1,11 +1,18 @@
 #!/bin/bash
 set -e
 
+echo "[+] initializing orchestrator flist builder"
+
+ORCH_BRANCH=${1:-master}
+CORE_BRANCH=${2:-$ORCH_BRANCH}
+
+echo "[+] 0-orchestrator branch: ${ORCH_BRANCH}"
+echo "[+] 0-core branch: ${CORE_BRANCH}"
+
 echo "[+] creating base target layout: ${TARGET}"
 TARGET=/mnt/target
 ARCHIVE=/tmp/archives
 LOCLANG="en_US.UTF-8"
-BRANCH="1.1.0-alpha-7"
 
 mkdir -p ${TARGET}
 mkdir -p ${TARGET}/usr/local/bin
@@ -37,8 +44,8 @@ echo "[ $ZEROTIERNWID != \"\" ] && zerotier-cli join $ZEROTIERNWID" >> ${ztinit}
 chmod +x ${ztinit}
 
 echo "[+] installing orchestrator dependencies"
-pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-core.git@${BRANCH}#subdirectory=client/py-client"
-pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-orchestrator.git@${BRANCH}#subdirectory=pyclient"
+pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-core.git@${CORE_BRANCH}#subdirectory=client/py-client"
+pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-orchestrator.git@${ORCH_BRANCH}#subdirectory=pyclient"
 pip3 install --root ${TARGET} --upgrade zerotier
 
 curl https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz > /tmp/go1.8.3.linux-amd64.tar.gz
@@ -52,10 +59,10 @@ export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 echo "[+] downloading ays orchestrator server source code"
 go get -d -v -u github.com/zero-os/0-orchestrator/api
 
-if [ "${BRANCH}" != "master"]; then
+if [ "${ORCH_BRANCH}" != "master"]; then
     pushd $GOPATH/src/github.com/zero-os/0-orchestrator
-    git fetch origin ${BRANCH}:${BRANCH}
-    git checkout ${BRANCH}
+    git fetch origin ${ORCH_BRANCH}:${ORCH_BRANCH}
+    git checkout ${ORCH_BRANCH}
     popd
 fi
 
@@ -111,7 +118,7 @@ chmod +x ${orchinit}
 # cloning orchestrator code
 mkdir -p /opt/code/github/zero-os
 pushd /opt/code/github/zero-os
-git clone -b "${BRANCH}" https://github.com/zero-os/0-orchestrator.git
+git clone -b "${ORCH_BRANCH}" https://github.com/zero-os/0-orchestrator.git
 popd
 
 # installing caddy
