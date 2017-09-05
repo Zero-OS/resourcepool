@@ -68,15 +68,15 @@ git clone --depth=1 https://github.com/zerotier/ZeroTierOne
 pushd ZeroTierOne
 make one -j $(grep ^processor /proc/cpuinfo | wc -l)
 cp -arv zerotier-{one,cli,idtool} ${TARGET}/usr/local/bin/
-popd
+popd # ZeroTierOne
 
-popd
+popd # /tmp
 
 echo "[+] installing orchestrator repository files"
 # cloning orchestrator code
 mkdir -p ${TARGET}/opt/code/github/zero-os
 pushd ${TARGET}/opt/code/github/zero-os
-git clone -b "${ORCH_BRANCH}" https://github.com/zero-os/0-orchestrator.git
+git clone --depth=1 -b "${ORCH_BRANCH}" https://github.com/zero-os/0-orchestrator.git
 popd
 
 echo "[+] installing caddy"
