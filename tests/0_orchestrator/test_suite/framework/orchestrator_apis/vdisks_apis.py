@@ -23,10 +23,11 @@ class VDisksAPIs(OrchestratorBase):
                 "blockStoragecluster": storagecluster,
                 "readOnly": random.choice([False, True])}
 
+        data = self.update_default_data(default_data=data, new_data=kwargs)
+
         if data['type'] == 'boot':
             data['templatevdisk'] = 'ardb://hub.gig.tech:16379/template:ubuntu-1604'
         
-        data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.vdisks.CreateNewVdisk(data=data)
         return response, data
 
