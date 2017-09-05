@@ -3,13 +3,13 @@ import argparse
 import subprocess
 import sys
 import time
-import pytoml as toml
+import yaml
 from zeroos.orchestrator.sal.Node import Node
 
 class OrchestratorInstaller:
     def __init__(self):
         self.node = None
-        self.flist = "https://hub.gig.tech/maxux/orchestrator-full-1.1.0-alpha-7.flist"
+        self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-autosetup.flist"
         self.ctname = None
 
     """
@@ -143,22 +143,23 @@ class OrchestratorInstaller:
         cn.client.bash("git config --global user.email '%s'" % email).get()
 
         print("[+] configuring upstream repository")
-        cn.filesystem.mkdir("/optvar/cockpit_repos")
+        cn.client.filesystem.mkdir("/optvar/cockpit_repos")
         cn.client.bash("git clone %s /tmp/upstream" % upstream).get()
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
         # upstream is empty, let create a new repository
         if resp.code != 0:
-            cn.filesystem.mkdir("/tmp/upstream/services")
-            cn.filesystem.mkdir("/tmp/upstream/actorTemplates")
-            cn.filesystem.mkdir("/tmp/upstream/actors")
-            cn.filesystem.mkdir("/tmp/upstream/blueprints")
+            cn.client.filesystem.mkdir("/tmp/upstream/services")
+            cn.client.filesystem.mkdir("/tmp/upstream/actorTemplates")
+            cn.client.filesystem.mkdir("/tmp/upstream/actors")
+            cn.client.filesystem.mkdir("/tmp/upstream/blueprints")
 
             cn.client.bash("touch /tmp/upstream/.ays").get()
             cn.client.bash("cd /tmp/upstream/ && git init").get()
             cn.client.bash("cd /tmp/upstream/ && git remote add origin %s" % upstream).get()
             cn.client.bash("cd /tmp/upstream/ && git add .").get()
             cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial commit'").get()
+            # cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
 
             # this may need ssh agent.
             cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
@@ -175,15 +176,16 @@ class OrchestratorInstaller:
         orchestratorhome = "/opt/code/github/zero-os/0-orchestrator"
 
         print("[+] building configuration blueprint")
-        configfile = cn.client.bash("cat %s/autoinstall/configuration.bp" % orchestratorhome).get()
-        config = toml.loads(configfile.stdout)
+        configfile = cn.client.bash("cat %s/autosetup/config-template.yaml" % orchestratorhome).get()
+        print(configfile.stdout)
+        config = yaml.load(configfile.stdout)
 
         print(config)
         # edit config
 
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
-        cn.client.filesystem.write(fd, config.dumps())
+        cn.client.filesystem.write(fd, yaml.dumps(config))
         cn.client.filesystem.close(fd)
 
         # this need to be done after ays starts
