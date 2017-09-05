@@ -11,11 +11,14 @@ import (
 
 // StorageclustersInterface is interface for /storageclusters root endpoint
 type BackupInterface interface { // KillCluster is the handler for DELETE /storageclusters/{label}
-	// Kill cluster
+	// Create a backup
 	Create(http.ResponseWriter, *http.Request)
+	// List backups
+	List(http.ResponseWriter, *http.Request)
 }
 
 // StorageclustersInterfaceRoutes is routing for /storageclusters root endpoint
 func BackupInterfaceRoutes(r *mux.Router, i BackupInterface, org string) {
 	r.HandleFunc("/backup", i.Create).Methods("POST")
+	r.HandleFunc("/backup", i.List).Methods("GET")
 }
