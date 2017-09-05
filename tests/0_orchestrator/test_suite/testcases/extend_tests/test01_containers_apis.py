@@ -88,8 +88,13 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Check that container created with init process.")
         container = self.core0_client.get_container_client(self.data['name'])
-        response = container.bash("ls |grep  out.text").get()
-        self.assertEqual(response.state, "SUCCESS")
+        self.assertTrue(container)
+        for i in range(5):
+            time.sleep(1)
+            response = container.bash("ls |grep  out.text").get()
+            if response.state != "SUCCESS":
+                self.lg.info("iteration %s"%i)
+        self.assertEqual(response.state, "SUCCESS", "iterartion %i"%i)
         response = container.bash("cat out.text | grep %s" % self.data['initProcesses'][0]['stdin']).get()
         self.assertEqual(response.state, "SUCCESS", "init processes didn't get stdin correctly")
         response = container.bash("cat out.text | grep %s" % self.data['initProcesses'][0]['environment']).get()
@@ -309,9 +314,12 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertTrue(c2_zt_ip)
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
-        response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
-        self.assertEqual(response.state, "SUCCESS")
-
+        for i in range(5):
+            time.sleep(1)
+            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
+            if response.state != "SUCCESS":
+                self.lg.info("iteration %s"%i)
+        self.assertEqual(response.state, "SUCCESS","iteration %s"%i)
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
         response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
