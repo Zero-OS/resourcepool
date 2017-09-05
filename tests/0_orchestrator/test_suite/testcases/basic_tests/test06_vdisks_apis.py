@@ -45,9 +45,8 @@ class TestVdisks(TestcasesBase):
         response = self.vdisks_api.get_vdisks_vdiskid(self.data['id'])
         self.assertEqual(response.status_code, 200)
         for key in self.data.keys():
-            if not self.data['readOnly']:
-                continue
-            self.assertEqual(self.data[key], response.json()[key])
+            if key in list(response.json().keys()):
+                self.assertEqual(self.data[key], response.json()[key])
         self.assertEqual(response.json()['status'], 'halted')
 
         self.lg.info(' [*] Get nonexisting vdisk, should fail with 404')

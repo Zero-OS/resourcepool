@@ -650,7 +650,7 @@ class TestcontaineridAPI(TestcasesBase):
         ports = "%i:%i" % (hostport, containerport)
         nics = [{"type": "default"}]
 
-        # create rule on port 7070
+        self.lg.info("[*] Create rule on port 7070")
         try:
             self.core0_client.client.nft.open_port(hostport)
         except:
@@ -669,7 +669,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.state, "SUCCESS")
         c1_client.bash("cd %s && python3 -m http.server %i" % (file_name, containerport))
 
-        time.sleep(3)
+        time.sleep(5)
 
         self.lg.info("Check that portforward work,should succeed")
         response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get()
