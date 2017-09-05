@@ -28,15 +28,17 @@ class TestVmsAPI(TestcasesBase):
                                                             readOnly=False)
 
         self.assertEqual(response.status_code, 201, " [*] Can't create vdisk.")
-
-        self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
-        self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
-        self.assertEqual(self.response.status_code, 201)
+
+        if self.id().split('.')[-1] != 'test003_post_node_vms':
+            self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
+            self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
+            self.assertEqual(self.response.status_code, 201)
 
     def tearDown(self):
         self.lg.info(' [*] Delete virtual machine (VM0)')
-        self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
+        if self.id().split('.')[-1] != 'test003_post_node_vms':
+            self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.vdisks_api.delete_vdisks_vdiskid(self.vdisk['id'])
         super(TestVmsAPI, self).tearDown()
 
@@ -88,8 +90,9 @@ class TestVmsAPI(TestcasesBase):
         #. Delete virtual machine (VM1), should succeed with 204.
         #. Create virtual machine with missing parameters, should fail with 400.
         """
+
         self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
-        response_vm, data_vm = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1)
+        response_vm, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response_vm.status_code, 201)
 
         # response = self.vms_api.get_nodes_vms_vmid(self.nodeid, data_vm['id'])
@@ -98,19 +101,19 @@ class TestVmsAPI(TestcasesBase):
         #     self.assertEqual(response_vm.status_code, 201)
 
         self.lg.info(' [*] Get virtual machine (VM1), should succeed with 200')
-        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, data_vm['id'])
+        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
         keys_to_check = ['id', 'memory', 'cpu', 'nics', 'disks']
         for key in keys_to_check:
-            self.assertEqual(data_vm[key], response.json()[key])
+            self.assertEqual(self.data[key], response.json()[key])
         self.assertEqual(response.json()['status'], 'running')
 
         self.lg.info(' [*] List kvms in python client, (VM1) should be listed')
         vms = self.core0_client.client.kvm.list()
-        self.assertIn(data_vm['id'], [x['name'] for x in vms])
+        self.assertIn(self.data['id'], [x['name'] for x in vms])
 
         self.lg.info(' [*] Delete virtual machine (VM1), should succeed with 204')
-        response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, data_vm['id'])
+        response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Create virtual machine with missing parameters, should fail with 400')
