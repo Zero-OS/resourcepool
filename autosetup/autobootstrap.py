@@ -1,16 +1,65 @@
 #!/usr/bin/python3
 import argparse
 import subprocess
+import requests
 import sys
 import time
 import yaml
 from zeroos.orchestrator.sal.Node import Node
 
+class OrchestratorInstallerTools:
+    def __init__(self):
+        pass
+
+    def generatetoken(self, clientid, clientsecret, organization=None, validity=None):
+        params = {
+            'grant_type': 'client_credentials',
+            'client_id': clientid,
+            'client_secret': clientsecret,
+            'response_type': 'id_token',
+            'scope': 'offline_access'
+        }
+
+        if validity:
+            params['validity'] = validity
+
+        if organization:
+            params['scope'] = 'user:memberof:%s,offline_access' % organization
+
+        url = 'https://itsyou.online/v1/oauth/access_token'
+        resp = requests.post(url, params=params)
+        resp.raise_for_status()
+
+        return resp.content.decode('utf8')
+
+    def containerzt(self, cn):
+        notified = False
+
+        while True:
+            ztinfo = cn.client.zerotier.list()
+            ztdata = ztinfo[0]
+
+            if not notified:
+                print("[+] waiting zerotier access with mac address %s" % ztdata['mac'])
+                print("[+] ")
+
+            if len(ztdata['assignedAddresses']) == 0:
+                sys.stdout.write(".")
+                time.sleep(1)
+                continue
+
+            return ztdata['assignedAddresses'][0].split('/')[0]
+
+
 class OrchestratorInstaller:
     def __init__(self):
+        self.tools = OrchestratorInstallerTools()
+
         self.node = None
         self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-autosetup.flist"
         self.ctname = None
+        self.core_version = "master"
+        self.js_version = "9.1.0"
 
     """
     remote: remote address of the node
@@ -104,13 +153,13 @@ class OrchestratorInstaller:
         cn.client.filesystem.close(fd)
 
         print("[+] waiting for zerotier")
-        containeraddr = self.containerZt(cn)
+        containeraddr = self.tools.containerzt(cn)
 
         print("[+] generating ssh keys")
         cn.client.bash("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
         publickey = cn.client.bash("cat /root/.ssh/id_rsa.pub").get()
 
-        return {'address': containeraddr, 'publickey': publickey.stdout}
+        return {'address': containeraddr, 'publickey': publickey.stdout.strip()}
 
     """
     upstream: git upstream address of orchestrator repository
@@ -169,7 +218,7 @@ class OrchestratorInstaller:
 
         return True
 
-    def blueprint(self):
+    def blueprint(self, clientid, clientsecret, organization):
         print("[+] building blueprint")
         cn = self.node.containers.get(self.ctname)
 
@@ -177,33 +226,28 @@ class OrchestratorInstaller:
 
         print("[+] building configuration blueprint")
         configfile = cn.client.bash("cat %s/autosetup/config-template.yaml" % orchestratorhome).get()
-        print(configfile.stdout)
         config = yaml.load(configfile.stdout)
 
-        print(config)
-        # edit config
+        # configuring blueprint
+        for item in config['configuration__main']['configurations']:
+            if item['key'] == '0-core-version':
+                item['value'] = self.core_version
+
+            if item['key'] == 'js-version':
+                item['value'] = self.js_version
+
+            if item['key'] == 'jwt-token':
+                print("[+] requesting jwt token for ays")
+                token = self.tools.generatetoken(clientid, clientsecret, organization)
+                item['value'] = token
 
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
-        cn.client.filesystem.write(fd, yaml.dumps(config))
+        cn.client.filesystem.write(fd, yaml.dump(config).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
         # this need to be done after ays starts
         # print("[+] executing blueprint")
-
-    def containerZt(self, cn):
-        while True:
-            ztinfo = cn.client.zerotier.list()
-            ztdata = ztinfo[0]
-
-            if len(ztdata['assignedAddresses']) == 0:
-                print("[+] please authorize the zerotier member with the mac address %s" % ztdata['mac'])
-                time.sleep(1)
-                continue
-
-            return ztdata['assignedAddresses'][0].split('/')[0]
-
-
 
     def starter(self, email, domain=None, organization=None):
         jobs = {}
@@ -327,7 +371,8 @@ if __name__ == "__main__":
     parser.add_argument('--upstream', type=str, help='remote upstream git address', required=True)
     parser.add_argument('--email', type=str, help='email used by caddy for certificates')
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
-    # parser.add_argument('--volume', type=str, help='extra volume to mount')
+    parser.add_argument('--clientid', type=str, help='itsyou.online client-id for jwt-token', required=True)
+    parser.add_argument('--clientsecret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
     args = parser.parse_args()
 
     if args.email != None:
@@ -352,7 +397,11 @@ if __name__ == "__main__":
 
     print("[+] hook: prepare")
     prepared = installer.prepare(args.container, args.ztnet)
-    print(prepared)
+
+    print("[+] ==================================================")
+    print("[+] container address: %s" % prepared['address'])
+    print("[+] container key: %s" % prepared['publickey'])
+    print("[+] ==================================================")
 
     print("[+] hook: post-prepare")
     installer.post_prepare()
@@ -362,7 +411,7 @@ if __name__ == "__main__":
 
     print("[+] hook: configure")
     installer.configure(args.upstream, email, args.organization)
-    installer.blueprint()
+    installer.blueprint(args.clientid, args.clientsecret, args.organization)
 
     print("[+] hook: post-configure")
     installer.post_configure()
