@@ -120,6 +120,7 @@ def watchdog_handler(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.ETCD import ETCD
     from zeroos.orchestrator.configuration import get_jwt_token
+    import redis
 
     service = job.service
     if service.model.data.status == 'recovering':
