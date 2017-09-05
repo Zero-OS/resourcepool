@@ -101,7 +101,6 @@ class TestcontaineridAPI(TestcasesBase):
         response = container.bash("cat out.text | grep %s" % self.data['initProcesses'][0]['environment']).get()
         self.assertEqual(response.state, "SUCCESS", "init processes didn't get Env varaible  correctly")
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test004_create_containers_with_different_flists(self):
         """ GAT-085
         *create contaner with different flists *
@@ -115,8 +114,7 @@ class TestcontaineridAPI(TestcasesBase):
         #. Make sure that created container is running,should succeed.
         #. Check that container created on node, should succeed
         """
-        flistslist = ["ovs.flist", "ubuntu1604.flist", "grid-api-flistbuild.flist",
-                      "cloud-init-server-master.flist"]
+        flistslist = ["ovs.flist", "ubuntu1604.flist", "cloud-init-server-master.flist", "grafana.flist"]
 
         flist = "https://hub.gig.tech/gig-official-apps/%s" % random.choice(flistslist)
         self.lg.info(' [*] Create new container. ')
@@ -344,10 +342,6 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
 
-    
-    
-    
-    
     def test009_create_container_with_filesystem(self):
         """ GAT-094
 
