@@ -196,6 +196,10 @@ class OrchestratorInstaller:
         cn.client.bash("git clone %s /tmp/upstream" % upstream).get()
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
+        #
+        # message: please allow public key
+        #
+
         # upstream is empty, let create a new repository
         if resp.code != 0:
             cn.client.filesystem.mkdir("/tmp/upstream/services")
@@ -238,8 +242,8 @@ class OrchestratorInstaller:
         #
         print("[+] building configuration blueprint")
 
-        configfile = cn.client.bash("cat %s/configuration.yaml" % templates).get()
-        config = yaml.load(configfile.stdout)
+        source = cn.client.bash("cat %s/configuration.yaml" % templates).get()
+        config = yaml.load(source.stdout)
 
         # configuring blueprint
         for item in config['configuration__main']['configurations']:
@@ -261,8 +265,8 @@ class OrchestratorInstaller:
         #
         print("[+] building network blueprint")
 
-        configfile = cn.client.bash("cat %/network-%s.yaml" % (templates, network)).get()
-        netconfig = yaml.load(configfile.stdout)
+        source = cn.client.bash("cat %s/network-%s.yaml" % (templates, network)).get()
+        netconfig = yaml.load(source.stdout)
 
         if network in ['g8', 'switchless']:
             netconfig['network.%s__storage' % network]['vlanTag'] = vlan
@@ -275,7 +279,7 @@ class OrchestratorInstaller:
 
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
-        cn.client.filesystem.write(fd, netconfig.dump(config).encode('utf-8'))
+        cn.client.filesystem.write(fd, yaml.dump(netconfig).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
         #
@@ -283,15 +287,15 @@ class OrchestratorInstaller:
         #
         print("[+] building bootstrap blueprint")
 
-        bstrapfile = cn.client.bash("cat %/bootstrap.yaml" % templates).get()
-        bstrapconfig = yaml.load(bstrapfile.stdout)
+        source = cn.client.bash("cat %s/bootstrap.yaml" % templates).get()
+        bstrapconfig = yaml.load(source.stdout)
 
         bstrapconfig['bootstrap.zero-os__grid1']['zerotierNetID'] = znetid
         bstrapconfig['bootstrap.zero-os__grid1']['zerotierToken'] = ztoken
 
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
-        cn.client.filesystem.write(fd, bstrapconfig.dump(config).encode('utf-8'))
+        cn.client.filesystem.write(fd, yaml.dump(bstrapconfig).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
         # this need to be done after ays starts
