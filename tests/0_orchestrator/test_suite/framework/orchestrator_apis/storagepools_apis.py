@@ -19,7 +19,7 @@ class StoragepoolsAPI(OrchestratorBase):
                 "dataProfile": 'single',
                 "devices": [random.choice(free_devices)]}
 
-        if len(free_devices) > 4:
+        if len(free_devices) > 6:
             data['metadataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
             data['dataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
             data['devices'] = free_devices[:4]
@@ -59,7 +59,7 @@ class StoragepoolsAPI(OrchestratorBase):
     def get_storagepools_storagepoolname_filesystems(self, nodeid, storagepoolname):
         return self.orchestrator_client.nodes.ListFilesystems(nodeid=nodeid, storagepoolname=storagepoolname)
 
-    @catch_exception_decoration
+    @catch_exception_decoration_return
     def post_storagepools_storagepoolname_filesystems(self, node_id, storagepoolname, **kwargs):
         data = {"name": self.random_string(),
                 "quota": random.randint(0, 10)}
@@ -83,7 +83,7 @@ class StoragepoolsAPI(OrchestratorBase):
         return self.orchestrator_client.nodes.ListFilesystemSnapshots(nodeid=nodeid, storagepoolname=storagepoolname,
                                                                       filesystemname=filesystemname)
 
-    @catch_exception_decoration
+    @catch_exception_decoration_return
     def post_filesystems_snapshots(self, nodeid, storagepoolname, filesystemname, **kwargs):
         data = {'name': self.random_string()}
         data = self.update_default_data(default_data=data, new_data=kwargs)
@@ -104,7 +104,7 @@ class StoragepoolsAPI(OrchestratorBase):
                                                                        filesystemname=filesystemname,
                                                                        snapshotname=snapshotname)
 
-    @catch_exception_decoration
+    @catch_exception_decoration_return
     def post_filesystem_snapshots_snapshotname_rollback(self, nodeid, storagepoolname, filesystemname, snapshotname,
                                                         data):
         return self.orchestrator_client.nodes.RollbackFilesystemSnapshot(nodeid=nodeid, storagepoolname=storagepoolname,
