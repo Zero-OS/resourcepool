@@ -84,6 +84,14 @@ actions:
 EOL
 }
 
+# Adding tester keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDh9OvsqboBV1AHblyiLEWKeH6bfC+/MPmsKDAk+9XkFrAC9b2VGmQrIlTg1Su+R9IOWrueywxbtd5GdWHJkC1+2SUlxm2ALWThyNg88MWogHgmR9CDlxr9cCMFyhOkFpIGLfiD/ZKYLqP43a8edxnEEx/PB4O4Utn9zkw6Dp7AFXki6tCJWJkT12AVS1mk8Ii/uRUbKQyxnuy5rSzNMcDyV/i/r7qdg7K5eys4B3VmsdN7y9l9H6p4VHAHALkuyYHrVJNMp/wPVZyd99h7iCB9LnXkFhPw/t6o4R7/2czXTBTxuUbvkxvEFqdNHuDQ0bhF+YuWHzarixKwVA68b4EZ john@john-Inspiron-5423" >> /root/.ssh/authorized_keys
+
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCr7qYad105onUnDQnfShLozEsGtVemWKKKM7Vco9O6DBXFbSaDhIJAk81Oh49dUuUZsxI1SnHsvTalqF0915pWnlD2c0lGvNI+H1XylzxT9nFIz8OaIJYSe7T9VIAfA5VqEhYWkLNXn7CuWneJSEKVyjeGkS5shIPwy5Fl9FL0203FbOP3V3RF5fsY+WBsb+VbOLT1UiFLiqKLA00v25qRl/i1xiRxES1ozkAHTZR+1iYTZHfpnMEar1iekI8WQ8p2/dCLRgxyFTpFO6WT8lYl+2qDgUR8lYNIIDqSRTBZsS5IemPKiovJ52+LRiJTWsoFMkyzC3xI8XWUiiInL/Tx elsayed@elsayed" >> /root/.ssh/authorized_keys
+
+cat /root/.ssh/authorized_keys
+
+
 VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $core_0_branch | wc -l)
 if [ $VL == 0 ]
 then
