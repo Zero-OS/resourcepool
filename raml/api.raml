@@ -1260,6 +1260,17 @@ types:
               204:
                 description: Virtual machine migration request passed successfully
 /backup:
+  get:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    displayName: ListBackup
+    description: List backups
+    responses:
+      200:
+        description: List of backups
+        body:
+          application/json:
+            type: Backup[]
   post:
     (AYSBased):
     securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]

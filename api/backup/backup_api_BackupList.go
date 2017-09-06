@@ -12,8 +12,8 @@ type Backup struct {
 	URL      string `json:"url"`
 }
 
-// CreateContainer is the handler for POST /backup
-// Create a new Container
+// List is the handler for GET /backup
+// List backups
 func (api BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	services, res, err := aysClient.Ays.ListServicesByRole("container_backup", api.AysRepo, nil, nil)

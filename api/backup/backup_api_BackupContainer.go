@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-// CreateContainer is the handler for POST /backup
-// Create a new Container
+// Create is the handler for POST /backup
+// Create a backup
 func (api BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody BackupContainer
@@ -26,12 +26,21 @@ func (api BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate container name
-	exists, err := aysClient.ServiceExists("container", reqBody.Container, api.AysRepo)
-	if err != nil {
+	if exists, err := aysClient.ServiceExists("container", reqBody.Container, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
 		return
 	} else if !exists {
-		err = fmt.Errorf("Container with name %s does not exists", reqBody.Container)
+		err = fmt.Errorf("container with name %s does not exists", reqBody.Container)
+		tools.WriteError(w, http.StatusNotFound, err, "")
+		return
+	}
+
+	// validate container name
+	if exists, err := aysClient.ServiceExists("container_backup", reqBody.Name, api.AysRepo); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking container backup service exists")
+		return
+	} else if exists {
+		err = fmt.Errorf("container backup with name %s already exists", reqBody.Name)
 		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
