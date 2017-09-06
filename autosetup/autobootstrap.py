@@ -5,6 +5,8 @@ import requests
 import sys
 import time
 import yaml
+import pytoml as toml
+from urllib.parse import urlparse
 from zeroos.orchestrator.sal.Node import Node
 
 class OrchestratorInstallerTools:
@@ -40,15 +42,30 @@ class OrchestratorInstallerTools:
             ztdata = ztinfo[0]
 
             if not notified:
+                notified = True
                 print("[+] waiting zerotier access with mac address %s" % ztdata['mac'])
-                print("[+] ")
+                self.progress()
 
             if len(ztdata['assignedAddresses']) == 0:
-                sys.stdout.write(".")
+                self.progressing()
                 time.sleep(1)
                 continue
 
+            self.tools.progressing(True)
+
             return ztdata['assignedAddresses'][0].split('/')[0]
+
+    def progress(self):
+        sys.stdout.write("[+] ")
+        sys.stdout.flush()
+
+    def progressing(self, final=False):
+        progression = "."
+        if final:
+            progression = " done\n"
+
+        sys.stdout.write(progression)
+        sys.stdout.flush()
 
 
 class OrchestratorInstaller:
@@ -172,33 +189,34 @@ class OrchestratorInstaller:
 
         if organization:
             print("[+] setting organization")
-
-            config = "\n\n[ays]\n"
-            config += "production = true\n"
-            config += "\n"
-            config += "[ays.oauth]\n"
-            config += "jwt_key = \"MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv\"\n"
-            config += "organization = \"%s\"\n" % organization
-
             if not cn.client.filesystem.exists("/optvar/cfg"):
                 cn.client.filesystem.mkdir("/optvar/cfg")
 
-            fd = cn.client.filesystem.open("/optvar/cfg/jumpscale9.toml", "a")
-            cn.client.filesystem.write(fd, config.encode('utf-8'))
+            source = cn.client.bash("cat /optvar/cfg/jumpscale9.toml").get()
+            config = toml.loads(source.stdout)
+
+            config['ays'] = {
+                'production': True,
+                'oauth': {
+                    'jwt_key': "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv",
+                    'organization': organization,
+                }
+            }
+
+            fd = cn.client.filesystem.open("/optvar/cfg/jumpscale9.toml", "w")
+            cn.client.filesystem.write(fd, toml.dumps(config).encode('utf-8'))
             cn.client.filesystem.close(fd)
 
         print("[+] configuring git client")
         cn.client.bash("git config --global user.name 'AYS System'").get()
         cn.client.bash("git config --global user.email '%s'" % email).get()
 
-        print("[+] configuring upstream repository")
+        print("[+] downloading upstream repository")
         cn.client.filesystem.mkdir("/optvar/cockpit_repos")
         cn.client.bash("git clone %s /tmp/upstream" % upstream).get()
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
-        #
-        # message: please allow public key
-        #
+        print("[+] configuring upstream repository")
 
         # upstream is empty, let create a new repository
         if resp.code != 0:
@@ -220,6 +238,26 @@ class OrchestratorInstaller:
         # moving upstream to target cockpit repository
         cn.client.bash("mv /tmp/upstream /optvar/cockpit_repos/orchestrator-server").get()
 
+        # authorizing host
+        hostname = urlparse(upstream).hostname
+        cn.client.bash("ssh-keyscan %s >> ~/.ssh/known_hosts" % hostname).get()
+
+        repository = "/optvar/cockpit_repos/orchestrator-server"
+        pushed = False
+
+        print("[+] pushing git files to upstream")
+        print("[+] please ensure the public key is allowed on remote")
+        self.tools.progress()
+
+        while not pushed:
+            self.tools.progressing()
+            x = cn.client.bash("cd %s && git push origin master" % repository).get()
+
+            if x.state == 'SUCCESS':
+                pushed = True
+
+        self.tools.progressing(True)
+
         return True
 
     """
@@ -227,6 +265,8 @@ class OrchestratorInstaller:
     clientsecret: iyo-client-secret to generate a jwt
     network: network type (g8, switchless, packet)
     vlan and cidr: argument for g8 and switchless setup
+
+    this return the jwt token for ays
 
     Note: network value is not verified, please ensure the network passed
           is a valid value, if value is not correct, the behavior is unexpected (crash)
@@ -236,6 +276,9 @@ class OrchestratorInstaller:
         cn = self.node.containers.get(self.ctname)
 
         templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
+
+        print("[+] requesting jwt token for ays")
+        token = self.tools.generatetoken(clientid, clientsecret, organization)
 
         #
         # configuration.bp
@@ -251,8 +294,6 @@ class OrchestratorInstaller:
                 item['value'] = self.core_version
 
             if item['key'] == 'jwt-token':
-                print("[+] requesting jwt token for ays")
-                token = self.tools.generatetoken(clientid, clientsecret, organization)
                 item['value'] = token
 
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp"
@@ -269,7 +310,7 @@ class OrchestratorInstaller:
         netconfig = yaml.load(source.stdout)
 
         if network in ['g8', 'switchless']:
-            netconfig['network.%s__storage' % network]['vlanTag'] = vlan
+            netconfig['network.%s__storage' % network]['vlanTag'] = int(vlan)
             netconfig['network.%s__storage' % network]['cidr'] = cidr
 
         if network in ['packet']:
@@ -298,8 +339,7 @@ class OrchestratorInstaller:
         cn.client.filesystem.write(fd, yaml.dump(bstrapconfig).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
-        # this need to be done after ays starts
-        # print("[+] executing blueprint")
+        return token
 
     def starter(self, email, domain=None, organization=None):
         jobs = {}
@@ -350,6 +390,29 @@ class OrchestratorInstaller:
             jobs['caddy'] = cn.client.system('/usr/local/bin/caddy -agree -email %s -conf /etc/caddy/Caddyfile -quic' % email)
 
         print("[+] all processes started")
+
+    def deploy(self, jwt):
+        print("[+] deploying blueprints")
+        cn = self.node.containers.get(self.ctname)
+
+        repository = "/optvar/cockpit_repos/orchestrator-server"
+        blueprints = ["configuration.bp", "network.bp", "bootstrap.bp"]
+        environ = {'JWT': jwt}
+
+        print("[+] waiting for ays to boot")
+
+        status = 'ERROR'
+        while status != 'SUCCESS':
+            reply = cn.client.system("ays repo list", env=environ).get()
+            status = reply.state
+
+        print("[+] ays ready, executing blueprints")
+
+        for blueprint in blueprints:
+            print("[+] executing: %s" % blueprint)
+            x = cn.client.system("ays blueprint %s" % blueprint, dir=repository, env=environ).get()
+
+        return True
 
     """
     def stop(ip):
@@ -442,6 +505,17 @@ if __name__ == "__main__":
             print("[-] network %s: vlan and cird required" % args.network)
             sys.exit(1)
 
+    if '@' not in args.upstream:
+        print("[-] warning: your upstream doesn't contains username")
+        print("[-] warning: you are probably using a wrong upstream url")
+        print("[-] warning: upstream should be like: ssh://git@github.com:user/repo.git")
+        print("[-] warning: you have been warned.")
+
+    if not args.upstream.startswith('ssh://'):
+        args.upstream = "ssh://%s" % args.upstream
+        print("[-] warning: upstream must be a ssh git url")
+        print("[-] warning: upstream autofixed to: %s" % args.upstream)
+
     print("[+] ---------------------------------------------")
     print("[+] remote server   : %s" % args.server)
     print("[+] zerotier network: %s" % args.ztnet)
@@ -476,7 +550,7 @@ if __name__ == "__main__":
 
     print("[+] hook: configure")
     installer.configure(args.upstream, email, args.organization)
-    installer.blueprint(
+    token = installer.blueprint(
         args.clientid, args.clientsecret,
         args.organization,
         args.network, args.vlan, args.cidr,
@@ -491,6 +565,7 @@ if __name__ == "__main__":
 
     print("[+] hook: starter")
     installer.starter(email, args.domain, args.organization)
+    installer.deploy(token)
 
     print("[+] hook: post-starter")
     installer.post_starter()
