@@ -8,7 +8,7 @@ client_secret=$7
 organization=$8
 name_space=$9
 
-# Adding tester keys
+# Adding developers keys
 cat /opt/code/github/zero-os/0-orchestrator/tests/0_orchestrator/ssh_keys.txt >> /root/.ssh/authorized_keys
 
 
