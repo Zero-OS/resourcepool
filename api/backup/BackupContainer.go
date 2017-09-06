@@ -1,19 +1,19 @@
 package backup
 
 import (
-	"fmt"
+	"gopkg.in/validator.v2"
 	"net/url"
 )
 
 type BackupContainer struct {
-	Name      string `json:"name"`
-	Container string `json:"container"`
-	URL       string `json:"url"`
+	Name      string `json:"name" validate:"nonzero"`
+	Container string `json:"container" validate:"nonzero"`
+	URL       string `json:"url" validate:"nonzero"`
 }
 
 func (s BackupContainer) Validate() error {
-	if len(s.URL) == 0 {
-		return fmt.Errorf("missing url")
+	if err := validator.Validate(s); err != nil {
+		return err
 	}
 
 	_, err := url.Parse(s.URL)
