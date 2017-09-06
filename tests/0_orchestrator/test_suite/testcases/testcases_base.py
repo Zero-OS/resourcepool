@@ -22,11 +22,8 @@ class TestcasesBase(TestCase):
         self.vdisks_api = self.orchasterator_driver.vdisks_api
         self.vms_api = self.orchasterator_driver.vms_api
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
-
         self.zerotier_token = self.orchasterator_driver.zerotier_token
-        self.jwt = self.orchasterator_driver.JWT
         self.nodes_info = self.orchasterator_driver.nodes_info
-
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
 
@@ -45,6 +42,7 @@ class TestcasesBase(TestCase):
         self.nodeipList = [x['ip'] for x in self.nodes_info if x['id'] == self.nodeid]
         self.assertNotEqual(self.nodeipList, [])
         self.nodeip = self.nodeipList[0]
+        self.jwt = self.orchasterator_driver.get_jwt()
         self.core0_client = Client(self.nodeip, password=self.jwt)
 
     def randomMAC(self):
