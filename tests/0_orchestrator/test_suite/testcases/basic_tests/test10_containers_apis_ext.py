@@ -279,7 +279,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash('ping -w5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test008_Create_container_with_zerotier_network(self):
         """ GAT-089
         *Test case for create containers with same zerotier network *
