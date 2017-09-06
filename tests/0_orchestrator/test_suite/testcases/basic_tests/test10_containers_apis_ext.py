@@ -492,9 +492,11 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info('create two bridges (B1 and B2), should succeed')
         response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
+        self.assertEqual(response.status_code, 201)
         B1 = data_bridge['name']
         self.created['bridge'].append(B1)
         response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
+        self.assertEqual(response.status_code, 201)
         B2 = data_bridge['name']
         self.created['bridge'].append(B2)
 
