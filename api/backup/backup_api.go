@@ -5,7 +5,7 @@ import (
 	_ "github.com/zero-os/0-orchestrator/api/validators"
 )
 
-// BackupAPI is API implementation of /node root endpoint
+// BackupAPI is API implementation of /backup root endpoint
 type BackupAPI struct {
 	AysRepo string
 	AysUrl  string
