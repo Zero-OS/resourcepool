@@ -7,11 +7,11 @@ class TestVdisks(TestcasesBase):
     def setUp(self):
         super().setUp()
         free_disks = self.core0_client.getFreeDisks()
-        if free_disks == []:
-            self.skipTest(' [*] No free disks to create storagecluster')
-
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
+            if free_disks == []:
+                self.skipTest(' [*] No free disks to create storagecluster')
+
             self.lg.info(' [*] Deploy new storage cluster (SC0)')
             response, data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid,
                                                                            servers=random.randint(1, len(free_disks)))

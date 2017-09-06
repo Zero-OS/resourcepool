@@ -51,7 +51,7 @@ shift
 ITSYOUONLINEORG=$1
 shift
 
-if [ "${1:0:1}" != "-" ]; then
+if [ "$1" != "" ] && [ "${1:0:1}" != "-" ]; then
     DOMAIN=$1
     shift
 
