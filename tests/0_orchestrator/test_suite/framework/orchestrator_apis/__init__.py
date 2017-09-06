@@ -8,7 +8,7 @@ def catch_exception_decoration(func):
         except HTTPError as e:
             if e.response.status_code == 440:
                 self.orchestrator_driver.refresh_jwt()
-                wrapper(self, *args, **kwargs)
+                return wrapper(self, *args, **kwargs)
             else:
                 return e.response
 
@@ -21,7 +21,7 @@ def catch_exception_decoration_return(func):
         except HTTPError as e:
             if e.response.status_code == 440:
                 self.orchestrator_driver.refresh_jwt()
-                wrapper(self, *args, **kwargs)
+                return wrapper(self, *args, **kwargs)
             else:
                 return e.response, None
 
