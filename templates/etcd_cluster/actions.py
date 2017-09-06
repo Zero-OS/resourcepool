@@ -149,7 +149,7 @@ def watchdog_handler(job):
         container = etcd.parent
         node = container.parent
         try:
-            node_client = Node.from_ays(node, password=token)
+            node_client = Node.from_ays(node, password=token, timeout=20)
             ping = node_client.client.ping()
             working_model_nodes.add(node)
         except (redis.TimeoutError, ConnectionError) as e:
@@ -172,7 +172,21 @@ def watchdog_handler(job):
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
-    # remove old nodes and etcds from producers
+
+
+    # check if nodes are more than the min number for cluster deployment which is 3.
+    tmp = list()
+    for node in [service for service in service.aysrepo.servicesFind(role='node')]:
+        if node.model.data.status == 'running':
+            tmp.append(node.name)
+
+    all_nodes = set(tmp)
+    if len(working_model_nodes) > 1:
+        service.model.data.nodes = [node.name for node in working_model_nodes]
+    else:
+        service.model.data.nodes = list(all_nodes - dead_nodes)
+
+    # remove old nodes and etcds from producers (has tobe here)
     for etcd_service in service.producers['etcd']:
         service.model.producerRemove(etcd_service)
         service.saveAll()
@@ -181,18 +195,6 @@ def watchdog_handler(job):
         if node_service.name not in service.model.data.nodes:
             service.model.producerRemove(node_service)
             service.saveAll()
-
-    # check if nodes are more than the min number for cluster deployment which is 3.
-    tmp = list()
-    for node in [service for service in service.aysrepo.servicesFind(role='node')]:
-        if service.model.data.status == 'running':
-            tmp.append(service.name)
-
-    all_nodes = set(tmp)
-    if len(working_model_nodes) > 1:
-        service.model.data.nodes = [node.name for node in working_model_nodes]
-    else:
-        service.model.data.nodes = list(all_nodes - dead_nodes)
 
     # consume new nodes. 
     node_services = [service.aysrepo.serviceGet(instance=node, role='node')for node in service.model.data.nodes]
