@@ -129,6 +129,7 @@ def watchdog_handler(job):
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
     dead_nodes = set()
+    dead_etcds = set()
     working_model_nodes = set()
     token = get_jwt_token(job.service.aysrepo)
     
@@ -138,14 +139,18 @@ def watchdog_handler(job):
         node = container.parent
         try:
             container_client = Container.from_ays(container, password=token)
+            if container_client.id:
+                container_client.client.job.list("etcd.{}".format(etcd.name))
         except ConnectionError as e:
             container_client = None
+        except RuntimeError as e:
+            dead_etcds.add(etcd)
         if container_client and container_client.id:
             working_etcds.add(etcd)
 
-    dead_etcds = etcds-working_etcds
+    dead_etcds_containers = etcds-working_etcds
 
-    for etcd in dead_etcds:
+    for etcd in dead_etcds_containers:
         container = etcd.parent
         node = container.parent
         try:
@@ -156,13 +161,18 @@ def watchdog_handler(job):
             ping = None
             dead_nodes.add(node.name)
 
-        if len(working_etcds) >= (len(etcds)-1)/2:
+        if len(working_etcds) > (len(etcds)-1)/2:
+            # dead etcds only 
+            for etcd in dead_etcds:
+                if len(working_etcds) > (len(etcds)-1)/2:
+                    j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+                    return
+            # dead containers 
             if not ping:
                 raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
             return
-
 
     # clean all remaining etcds from the old cluster
     for etcd in working_etcds:
@@ -172,7 +182,15 @@ def watchdog_handler(job):
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
-
+    # clean all reaminag tcps on old  running nodes
+    for etcd in service.producers['etcd']:
+        for tcp in etcd.producers['tcp']:
+            try:
+                Node.from_ays(etcd.parent.parent, password=token)
+                j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
+            except ConnectionError:
+                continue
+            j.tools.async.wrappers.sync(tcp.delete())
 
     # check if nodes are more than the min number for cluster deployment which is 3.
     tmp = list()
@@ -211,6 +229,8 @@ def watchdog_handler(job):
         for mount in etcd.parent.model.data.mounts:
             fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
             j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
+        for tcp in etcd.producers['tcp']:
+            j.tools.async.wrappers.sync(tcp.executeAction('install',  context=job.context))
         j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))
         j.tools.async.wrappers.sync(etcd.executeAction('install', context=job.context))
 
