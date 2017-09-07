@@ -188,7 +188,12 @@ def get_templatecluster(job):
     if template.scheme == 'ardb' and template.netloc:
         return template.netloc
 
-    node_srv = service.aysrepo.servicesFind(role='node')[0]
+    node_srv = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
+    if len(node_srv):
+        node_srv = node_srv[0]
+    else:
+        raise RuntimeError("No running nodes found")
+
     node = Node.from_ays(node_srv, password=job.context['token'])
     conf = node.client.config.get()
     return urlparse(conf['globals']['storage']).netloc
