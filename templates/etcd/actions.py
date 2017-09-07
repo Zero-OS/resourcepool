@@ -27,5 +27,6 @@ def watchdog_handler(job):
     import asyncio
     service = job.service
     loop = j.atyourservice.server.loop
-    if service.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+    etcd_cluster = service.consumers.get('etcd_cluster')
+    if etcd_cluster:
+        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)

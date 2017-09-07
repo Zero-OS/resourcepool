@@ -106,9 +106,9 @@ class ETCD:
 
     def stop(self):
         jobID = "etcd.{}".format(self.name)
-        self.container.job.kill(jobID)
+        self.container.client.job.kill(jobID)
         try:
-            self.container.job.list(jobID)
+            self.container.client.job.list(jobID)
         except RuntimeError:
             return
         raise RuntimeError('failed to stop etcd.')
