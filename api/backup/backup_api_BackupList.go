@@ -8,11 +8,12 @@ import (
 )
 
 type Backup struct {
-	Name     string      `json:"name"`
-	Snaphost string      `json:"snapshot"`
-	URL      string      `json:"url"`
-	Type     string      `json:"type"`
-	Meta     interface{} `json:"meta"`
+	Name      string      `json:"name"`
+	Snaphost  string      `json:"snapshot"`
+	URL       string      `json:"url"`
+	Type      string      `json:"type"`
+	Timestamp int64       `json:"timestamp"`
+	Meta      interface{} `json:"meta"`
 }
 
 // List is the handler for GET /backup
