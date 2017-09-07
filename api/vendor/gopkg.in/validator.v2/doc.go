@@ -162,13 +162,13 @@ Finally, package validator also provides a helper function that can be used
 to validate simple variables/values.
 
     	// errs: nil
-	errs = validator.Valid(42, "min=10, max=50")
+	errs = validator.Validate(42, "min=10, max=50")
 
 	// errs: [validate.ErrZeroValue]
-	errs = validator.Valid(nil, "nonzero")
+	errs = validator.Validate(nil, "nonzero")
 
 	// errs: [validate.ErrMin,validate.ErrMax]
-	errs = validator.Valid("hi", "nonzero,min=3,max=2")
+	errs = validator.Validate("hi", "nonzero,min=3,max=2")
 
 Custom tag name
 

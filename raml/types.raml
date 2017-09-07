@@ -1,6 +1,7 @@
 #%RAML 1.0 DataType
 
 # G8OS 0 Rest API types
+--
 Node:
   type: object
   description: Node in the Zero-OS  0 Rest API
@@ -527,6 +528,31 @@ Container:
       type: string
       description: A Url to the ardb storage to use to mount the root plist
 
+Backup:
+  type: object
+  properties:
+    name:
+      type: string
+      description: backup name
+    snapshot:
+      type: string
+      description: snapshot id
+    url:
+      type: string
+      description: restic url
+
+BackupContainer:
+  type: object
+  properties:
+    name:
+      type: string
+      description: unique name
+    container:
+      type: string
+      description: container name to backup
+    url:
+      type: string
+      description: URL to restic repo
 
 CreateContainer:
   type: object
