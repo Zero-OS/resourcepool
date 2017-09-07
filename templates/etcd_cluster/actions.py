@@ -126,6 +126,7 @@ def watchdog_handler(job):
     if service.model.data.status == 'recovering':
         return
     service.model.data.status = 'recovering'
+    service.saveAll()
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
     dead_nodes = set()
