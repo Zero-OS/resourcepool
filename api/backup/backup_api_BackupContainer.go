@@ -46,12 +46,12 @@ func (api BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bp := map[string]interface{}{
-		fmt.Sprintf("container_backup__%s", reqBody.Name): map[string]interface{}{
+		fmt.Sprintf("backup.container__%s", reqBody.Name): map[string]interface{}{
 			"container": reqBody.Container,
 			"url":       reqBody.URL,
 		},
 		"actions": []tools.ActionBlock{
-			{Action: "install", Service: reqBody.Name, Actor: "container_backup"},
+			{Action: "install", Service: reqBody.Name, Actor: "backup.container"},
 		},
 	}
 

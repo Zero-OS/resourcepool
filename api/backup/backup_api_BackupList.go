@@ -7,16 +7,18 @@ import (
 )
 
 type Backup struct {
-	Name     string `json:"name"`
-	Snaphost string `json:"snapshot"`
-	URL      string `json:"url"`
+	Name     string      `json:"name"`
+	Snaphost string      `json:"snapshot"`
+	URL      string      `json:"url"`
+	Type     string      `json:"type"`
+	Meta     interface{} `json:"meta"`
 }
 
 // List is the handler for GET /backup
 // List backups
 func (api BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
-	services, res, err := aysClient.Ays.ListServicesByRole("container_backup", api.AysRepo, nil, nil)
+	services, res, err := aysClient.Ays.ListServicesByRole("backup", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "listing container_backup") {
 		return
 	}
@@ -33,6 +35,13 @@ func (api BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data.Name = service.Name
+		switch meta := data.Meta.(type) {
+		case string:
+			var obj interface{}
+			if err := json.Unmarshal([]byte(meta), &obj); err == nil {
+				data.Meta = obj
+			}
+		}
 		respBody[i] = data
 	}
 
