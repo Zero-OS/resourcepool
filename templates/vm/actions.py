@@ -393,6 +393,12 @@ def shutdown(job):
     service.saveAll()
 
 
+def ssh_deamon_running(node, port):
+    for nodeport in node.client.info.port():
+        if nodeport['network'] == 'tcp' and nodeport['port'] == port:
+            return True
+    return False
+
 def start_migartion_channel(job, old_service, new_service):
     import time
     from zeroos.orchestrator.sal.Node import Node
@@ -432,9 +438,14 @@ def start_migartion_channel(job, old_service, new_service):
         # wait for max 5 seconds until the ssh deamon starts listening
         start = time.time()
         while time.time() < start + 5:
+<<<<<<< f3788640ecb1a28bf4ee595227153d5919ee8090
             for container_port in node.client.info.port():
                 if container_port['network'] == 'tcp' and container_port['port'] == port:
                     break
+=======
+            if ssh_deamon_running(node, port):
+                break
+>>>>>>> updated the name of the is_running method
         else:
             raise j.exceptions.RuntimeError("sshd instance failed to start listening within 5 seconds"
                                             + " to migrate vm from%s_%s" % (old_node.name, node.name))
