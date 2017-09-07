@@ -8,6 +8,12 @@ client_secret=$7
 organization=$8
 name_space=$9
 
+# Adding developers keys
+curl https://github.com/john-kheir.keys >> ~/.ssh/authorized_keys
+curl https://github.com/Dinaamagdy.keys >> ~/.ssh/authorized_keys
+curl https://github.com/ahmedelsayed-93.keys >> ~/.ssh/authorized_keys
+curl https://github.com/islamTaha12.keys >> ~/.ssh/authorized_keys
+
 export_jwt(){
     jwt=$(ays generatetoken --clientid ${client_id} --clientsecret ${client_secret} --organization ${organization} --validity 3600)
     eval $jwt
@@ -83,6 +89,8 @@ actions:
   - actor: etcd_cluster
 EOL
 }
+
+
 
 VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $core_0_branch | wc -l)
 if [ $VL == 0 ]
