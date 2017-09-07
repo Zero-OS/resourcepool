@@ -328,7 +328,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertNotEqual(vm0, [])
         self.assertEquals(vm0[0]['state'], 'running')
 
-    # @unittest.skip('https://github.com/g8os/resourcepool/issues/128')
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/994')
     def test010_post_nodes_vms_vmid_shutdown(self):
         """ GAT-076
         **Test Scenario:**
