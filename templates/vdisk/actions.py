@@ -44,7 +44,7 @@ def install(job):
                 except RuntimeError:
                     break
                 else:
-                    time.sleep(5)
+                    time.sleep(10)
             else:
                 raise j.exceptions.RuntimeError("Failed to copy vdisk {}".format(service.name))
         finally:
@@ -226,6 +226,7 @@ def get_srcstorageEngine(container, template):
 
 def rollback(job):
     import random
+    import time
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
@@ -253,10 +254,19 @@ def rollback(job):
                                                        data_shards=data_shards,
                                                        parity_shards=parity_shards)
         job.logger.info(cmd)
-        result = container.client.system(cmd, id="vdisk.rollback.%s" % service.name).get()
-        if result.state != 'SUCCESS':
-            raise j.exceptions.RuntimeError("Failed to run zeroctl restore {} {}".format(result.stdout, result.stderr))
-        service.model.data.status = 'running'
+
+        container.client.system(cmd, id="vdisk.rollback.%s" % service.name)
+        start = time.time()
+        while start + 900 > time.time():
+            try:
+                container.client.job.list("vdisk.rollback.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to restore vdisk {}".format(service.name))
+        service.model.data.status = 'halted'
     finally:
         container.stop()
 
