@@ -3,6 +3,7 @@ from js9 import j
 
 def install(job):
     import random
+    import time
     from urllib.parse import urlparse
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
@@ -20,7 +21,11 @@ def install(job):
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = './bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+
+            if service.model.data.objectStoragecluster:
+                object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=service.model.data.objectStoragecluster)
+                CMD += ' --data-shards %s --parity-shards %s' % (object_st.model.data.dataShards, object_st.model.data.parityShards)
 
             etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
             etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
@@ -30,9 +35,18 @@ def install(job):
                              tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
-            result = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name).get()
-            if result.state != 'SUCCESS':
-                raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
+            volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
+
+            start = time.time()
+            while start + 900 > time.time():
+                try:
+                    volume_container.client.job.list("vdisk.copy.%s" % service.name)
+                except RuntimeError:
+                    break
+                else:
+                    time.sleep(5)
+            else:
+                raise j.exceptions.RuntimeError("Failed to copy vdisk {}".format(service.name))
         finally:
             volume_container.stop()
 
