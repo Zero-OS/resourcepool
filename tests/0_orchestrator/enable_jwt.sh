@@ -29,7 +29,7 @@ export_runnig_nodes(){
 }
 
 create_bootstrap_blueprint(){
-cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
+cat >  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
 bootstrap.zero-os__grid1:
   zerotierNetID: '${zerotier_network}'
   zerotierToken: '${zerotier_token}'
@@ -86,7 +86,7 @@ done
 cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 actions:
   - action: install
-  - actor: etcd_cluster
+    actor: etcd_cluster
 EOL
 }
 

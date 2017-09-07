@@ -377,7 +377,11 @@ class TestVmsAPI(TestcasesBase):
         new_node = self.get_random_node(except_node=self.nodeid)
 
         body = {"nodeid": new_node}
-        response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
+        try:
+            response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
+        except Exception as e:
+            self.fail(e.args)
+
         self.assertEqual(response.status_code, 204)
 
         time.sleep(30)
