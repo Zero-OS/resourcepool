@@ -36,6 +36,6 @@ matrix:
       before_install:
         - sudo apt-get -qq update
       install:
-        - sudo apt-get install -y apnproto libcap-dev
+        - sudo apt-get install -y capnproto libcap-dev
       script:
         - bash validate_syntax.sh
