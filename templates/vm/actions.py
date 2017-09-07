@@ -379,12 +379,13 @@ def shutdown(job):
             if kvm:
                 time.sleep(3)
             else:
-                cleanupzerodisk(job)
                 service.model.data.status = 'halted'
                 break
         else:
             service.model.data.status = 'error'
             raise j.exceptions.RuntimeError("Failed to shutdown vm {}".format(service.name))
+        if service.model.data.status == 'halted':
+            cleanupzerodisk(job)
     else:
         service.model.data.status = 'halted'
         cleanupzerodisk(job)
