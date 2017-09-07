@@ -432,7 +432,7 @@ def start_migartion_channel(job, old_service, new_service):
         # wait for max 5 seconds until the ssh deamon starts listening
         start = time.time()
         while time.time() < start + 5:
-            for container_port in self.container.client.info.port():
+            for container_port in node.client.info.port():
                 if container_port['network'] == 'tcp' and container_port['port'] == port:
                     break
         else:
