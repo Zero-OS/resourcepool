@@ -593,7 +593,7 @@ def migrate(job):
                 break
             except Exception as e:
                 service.model.data.node = old_node.name
-                service.changeParent(old_node)
+                service.model.changeParent(old_node)
                 service.saveAll()
                 raise e
 
@@ -757,8 +757,7 @@ def update_data(job, args):
             start_dependent_services(job)
         elif service.model.data.status == 'running':
             # do live migration
-            job = service.getJob('migrate', args={'node': service.model.data.node}, context=job.context)
-            j.tools.async.wrappers.sync(job.execute())
+            migrate(job)
             j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(old_nbd.delete())
         else:
