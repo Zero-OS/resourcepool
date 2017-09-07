@@ -9,8 +9,10 @@ organization=$8
 name_space=$9
 
 # Adding developers keys
-cat /opt/code/github/zero-os/0-orchestrator/tests/0_orchestrator/ssh_keys.txt >> /root/.ssh/authorized_keys
-
+curl https://github.com/john-kheir.keys >> .ssh/authorized_keys
+curl https://github.com/Dinaamagdy.keys >> .ssh/authorized_keys
+curl https://github.com/ahmedelsayed-93.keys >> .ssh/authorized_keys
+curl https://github.com/islamTaha12.keys >> .ssh/authorized_keys
 
 export_jwt(){
     jwt=$(ays generatetoken --clientid ${client_id} --clientsecret ${client_secret} --organization ${organization} --validity 3600)
