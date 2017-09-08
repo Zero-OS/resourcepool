@@ -113,14 +113,6 @@ class OrchestratorInstaller:
     def prepare(self, ctname, ztnetwork):
         self.ctname = ctname
 
-        print("[+] open http and https ports")
-        opened = self.node.client.nft.list()
-        if 'tcp dport 80 accept' not in opened:
-            self.node.client.nft.open_port(80)
-
-        if 'tcp dport 443 accept' not in opened:
-            self.node.client.nft.open_port(443)
-
         print("[+] starting orchestrator container")
         network = [
             {'type': 'default'},
@@ -149,8 +141,8 @@ class OrchestratorInstaller:
         cn = self.node.containers.create(
             name=ctname,
             flist=self.flist,
+            nics=network,
             hostname='bootstrap',
-            nics=network,ports={80:80, 443:443},
             mounts={'/var/cache/containers/orchestrator': '/optvar'},
             env=env
         )
