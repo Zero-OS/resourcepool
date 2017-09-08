@@ -61,13 +61,13 @@ configuration__main:
     value: '${JWT}'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
-  - key: 'iyo_org'
+  - key: '0-stor-organization'
     value: '${organization}'
-  - key: 'iyo_namespace'
+  - key: '0-stor-namespace'
     value: '${name_space}'
-  - key: 'iyo_clientID'
+  - key: '0-stor-clientid'
     value: '${client_id}'
-  - key: 'iyo_secret'
+  - key: '0-stor-clientsecret'
     value: '${client_secret}'
 EOL
 }
