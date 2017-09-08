@@ -142,7 +142,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         response = self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/209')
+    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/209')
     def test005_get_storagepool_device(self):
         """ GAT-049
         **Test Scenario:**
@@ -387,7 +387,7 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                                         'fake_filesystem')
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
+    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test013_get_storagepool_filessystem_snapshot(self):
         """ GAT-057
         **Test Scenario:**
@@ -412,7 +412,7 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
+    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test014_list_storagepool_filesystems_snapshots(self):
         """ GAT-058
         **Test Scenario:**
@@ -428,7 +428,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data_snapshot['name'], response.json())
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
+    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test015_post_storagepool_filesystem_snapshot(self):
         """ GAT-059
         **Test Scenario:**
@@ -454,12 +454,12 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Create snapshot with missing required params, should fail with 400')
-        response = self.storagepools_api.post_filesystems_snapshots(self.nodeid, self.data['name'],
+        response, data = self.storagepools_api.post_filesystems_snapshots(self.nodeid, self.data['name'],
                                                                     self.data_filesystem['name'],
                                                                     name='')
         self.assertEqual(response.status_code, 400)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
+    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test016_delete_storagepool_filesystem_snapshot(self):
         """ GAT-060
         **Test Scenario:**

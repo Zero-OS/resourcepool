@@ -379,12 +379,13 @@ def shutdown(job):
             if kvm:
                 time.sleep(3)
             else:
-                cleanupzerodisk(job)
                 service.model.data.status = 'halted'
                 break
         else:
             service.model.data.status = 'error'
             raise j.exceptions.RuntimeError("Failed to shutdown vm {}".format(service.name))
+        if service.model.data.status == 'halted':
+            cleanupzerodisk(job)
     else:
         service.model.data.status = 'halted'
         cleanupzerodisk(job)
@@ -392,13 +393,20 @@ def shutdown(job):
     service.saveAll()
 
 
+def ssh_deamon_running(node, port):
+    for nodeport in node.client.info.port():
+        if nodeport['network'] == 'tcp' and nodeport['port'] == port:
+            return True
+    return False
+
 def start_migartion_channel(job, old_service, new_service):
+    import time
     from zeroos.orchestrator.sal.Node import Node
 
     old_node = Node.from_ays(old_service, job.context['token'])
     node = Node.from_ays(new_service, job.context['token'])
     service = job.service
-    command = "/usr/sbin/sshd -f {config}"
+    command = "/usr/sbin/sshd -D -f {config}"
     res = None
     port = None
 
@@ -420,12 +428,21 @@ def start_migartion_channel(job, old_service, new_service):
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
             node.client.filesystem.remove(ssh_config)
+            
         # start ssh server on new node for this migration
-        node.upload_content(ssh_config, "Port %s" % freeports_node[0])
+        node.upload_content(ssh_config, "Port %s" % port)
         res = node.client.system(command.format(config=ssh_config))
         if not res.running:
-            raise j.exceptions.RuntimeError("Failed to run ssh instance to migrate vm from%s_%s" % (old_node.name,
+            raise j.exceptions.RuntimeError("Failed to run sshd instance to migrate vm from%s_%s" % (old_node.name,
                                                                                                     node.name))
+        # wait for max 5 seconds until the ssh deamon starts listening
+        start = time.time()
+        while time.time() < start + 5:
+            if ssh_deamon_running(node, port):
+                break
+        else:
+            raise j.exceptions.RuntimeError("sshd instance failed to start listening within 5 seconds"
+                                            + " to migrate vm from%s_%s" % (old_node.name, node.name))
 
         # add host names addr to each node
         file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
@@ -593,7 +610,7 @@ def migrate(job):
                 break
             except Exception as e:
                 service.model.data.node = old_node.name
-                service.changeParent(old_node)
+                service.model.changeParent(old_node)
                 service.saveAll()
                 raise e
 
@@ -757,8 +774,7 @@ def update_data(job, args):
             start_dependent_services(job)
         elif service.model.data.status == 'running':
             # do live migration
-            job = service.getJob('migrate', args={'node': service.model.data.node}, context=job.context)
-            j.tools.async.wrappers.sync(job.execute())
+            migrate(job)
             j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(old_nbd.delete())
         else:

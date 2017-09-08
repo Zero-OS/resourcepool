@@ -1,5 +1,4 @@
 import os
-from zeroos.core0.client.client import Timeout
 import json
 import hashlib
 import traceback
@@ -79,7 +78,7 @@ class HealthCheck:
             try:
                 job = container.client.bash('python3 /tmp/{}.py'.format(name))
                 response = job.get(timeout)
-            except Timeout:
+            except TimeoutError:
                 container.client.job.kill(job.id, 9)
                 raise RuntimeError("Failed to execute {} on time".format(name))
             if response.state == 'ERROR':

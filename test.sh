@@ -17,12 +17,3 @@ popd
 echo "Generate client"
 go-raml server -l go --api-file-per-method --dir servertmp --ramlfile raml/api.raml
 go-raml client -l python --ramlfile raml/api.raml --dir clienttmp
-echo "Validate schemas"
-for schema in $(find -name 'schema.capnp'); do
-    echo "Validating $schema"
-    capnp compile -o c++ $schema
-done
-echo "Validate python3 syntax"
-for pyfile in $(find -name '*.py'); do
-    python3 -m py_compile $pyfile
-done

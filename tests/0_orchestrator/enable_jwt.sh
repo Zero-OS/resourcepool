@@ -8,6 +8,12 @@ client_secret=$7
 organization=$8
 name_space=$9
 
+# Adding developers keys
+curl https://github.com/john-kheir.keys >> ~/.ssh/authorized_keys
+curl https://github.com/Dinaamagdy.keys >> ~/.ssh/authorized_keys
+curl https://github.com/ahmedelsayed-93.keys >> ~/.ssh/authorized_keys
+curl https://github.com/islamTaha12.keys >> ~/.ssh/authorized_keys
+
 export_jwt(){
     jwt=$(ays generatetoken --clientid ${client_id} --clientsecret ${client_secret} --organization ${organization} --validity 3600)
     eval $jwt
@@ -23,7 +29,7 @@ export_runnig_nodes(){
 }
 
 create_bootstrap_blueprint(){
-cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
+cat >  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
 bootstrap.zero-os__grid1:
   zerotierNetID: '${zerotier_network}'
   zerotierToken: '${zerotier_token}'
@@ -80,9 +86,11 @@ done
 cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 actions:
   - action: install
-  - actor: etcd_cluster
+    actor: etcd_cluster
 EOL
 }
+
+
 
 VL=$(git ls-remote --heads https://github.com/zero-os/0-core.git $core_0_branch | wc -l)
 if [ $VL == 0 ]

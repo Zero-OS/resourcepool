@@ -32,7 +32,7 @@ def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='ma
                                    plan='baremetal_2',
                                    operating_system='custom_ipxe',
                                    ipxe_script_url=ipxe_script_url,
-                                   facility=choice(['ams1', 'nrt1', 'sjc1', 'ewr1']))
+                                   facility=available_facility)
     return device
 
 

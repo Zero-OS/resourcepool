@@ -104,6 +104,15 @@ class ETCD:
         if not self.container.is_port_listening(int(self.serverBind.split(":")[1])):
             raise RuntimeError('Failed to start etcd server: {}'.format(self.name))
 
+    def stop(self):
+        jobID = "etcd.{}".format(self.name)
+        self.container.client.job.kill(jobID)
+        try:
+            self.container.client.job.list(jobID)
+        except RuntimeError:
+            return
+        raise RuntimeError('failed to stop etcd.')
+
     def put(self, key, value):
         if value.startswith("-"):
             value = "-- %s" % value

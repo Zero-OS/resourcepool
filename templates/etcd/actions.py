@@ -16,10 +16,17 @@ def start(job):
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
+def stop(job):
+    from zeroos.orchestrator.sal.ETCD import ETCD
+    service = job.service
+    etcd = ETCD.from_ays(service, job.context['token'])
+    etcd.stop()
+
 
 def watchdog_handler(job):
     import asyncio
     service = job.service
     loop = j.atyourservice.server.loop
-    if service.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+    etcd_cluster = service.consumers.get('etcd_cluster')
+    if etcd_cluster:
+        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
