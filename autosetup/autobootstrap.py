@@ -67,6 +67,12 @@ class OrchestratorInstallerTools:
         sys.stdout.write(progression)
         sys.stdout.flush()
 
+    def hostof(self, upstream):
+        # git@github.com:repository
+        # -> ['git', 'github.com:repository']
+        #        -> ['github.com', 'repository']
+        return upstream.split("@")[1].split(":")[0]
+
 
 class OrchestratorInstaller:
     def __init__(self):
@@ -239,7 +245,7 @@ class OrchestratorInstaller:
         cn.client.bash("mv /tmp/upstream /optvar/cockpit_repos/orchestrator-server").get()
 
         # authorizing host
-        hostname = urlparse(upstream).hostname
+        hostname = self.tools.hostof(upstream)
         cn.client.bash("ssh-keyscan %s >> ~/.ssh/known_hosts" % hostname).get()
 
         repository = "/optvar/cockpit_repos/orchestrator-server"
