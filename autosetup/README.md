@@ -61,12 +61,18 @@ In order to configure this workflow, you have multiple arguments to pass to the 
   - `--password`: optional password (jwt token) needed to connect the
 - `--container`: 0-orchestrator container name
 - `--domain`: (optional) domain name used for caddy
-- `--ztnet`: zerotier network the container need to joins
+- `--zt-net`: zerotier network the container need to joins
 - `--upstream`: upstream git repository (need to be formatted: `ssh://user@host:repository`)
 - `--email`: e-mail address used by git commits and caddy registration (default: `info@gig.tech`)
 - `--organization`: (optional) organization to server by 0-orchestrator
-- `--clientid`: itsyou.online clientid used to generate a token
-- `--clientsecret`: itsyou.online clientsecret used to generate a token
+- `--client-id`: itsyou.online clientid used to generate a token
+- `--client-secret`: itsyou.online clientsecret used to generate a token
 - `--network`: network type to use (`g8`, `switchless` or `packet`)
-  - `--vlan`: (only for `g8` and `switchless`) vlan tag id to use
-  - `--cidr`: (only for `g8` and `switchless`) address CIDR to use
+  - `--network-vlan`: (only for `g8` and `switchless`) vlan tag id to use
+  - `--network-cidr`: (only for `g8` and `switchless`) address CIDR to use
+- `--nodes-zt-net`: zerotier network id of the nodes
+- `--nodes-zt-token`: zerotier token to manage the nodes
+- `--stor-organization`: 0-stor organization name as root (default: `--organization`)
+- `--stor-namespace`: 0-stor root namespace to use (default: `"namespace"`)
+- `--stor-client-id`: 0-stor itsyou.online client id (default: `--client-id`)
+- `--stor-client-secret`: 0-stor itsyou.online client secret (default: `--client-secret`)

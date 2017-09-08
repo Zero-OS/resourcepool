@@ -83,6 +83,7 @@ class OrchestratorInstaller:
         self.ctname = None
         self.core_version = "master"
         self.js_version = "9.1.0"
+        self.templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
 
     """
     remote: remote address of the node
@@ -244,7 +245,7 @@ class OrchestratorInstaller:
         pushed = False
 
         print("[+] pushing git files to upstream")
-        print("[+] please ensure the public key is allowed on remote")
+        print("[+] please ensure the public key is allowed on remote git repository")
         self.tools.progress()
 
         while not pushed:
@@ -259,31 +260,28 @@ class OrchestratorInstaller:
         return True
 
     """
-    clientid: iyo-client-id to generate a jwt
-    clientsecret: iyo-client-secret to generate a jwt
-    network: network type (g8, switchless, packet)
-    vlan and cidr: argument for g8 and switchless setup
+    cid: iyo-client-id to generate a jwt
+    csecret: iyo-client-secret to generate a jwt
+    organization: organization name
+    stor_org: 0-stor organization root name
+    stor_ns: 0-stor organization namespace
+    stor_cid: 0-stor itsyou.online client id
+    stor_secret: 0-stor itsyou.online client secret
 
     this return the jwt token for ays
-
-    Note: network value is not verified, please ensure the network passed
-          is a valid value, if value is not correct, the behavior is unexpected (crash)
     """
-    def blueprint(self, clientid, clientsecret, organization, network, vlan, cidr, znetid, ztoken):
-        print("[+] building blueprint")
+    def blueprint_configuration(self, cid, csecret, organization, stor_org, stor_ns, stor_cid, stor_secret):
         cn = self.node.containers.get(self.ctname)
 
-        templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
-
         print("[+] requesting jwt token for ays")
-        token = self.tools.generatetoken(clientid, clientsecret, organization)
+        token = self.tools.generatetoken(cid, csecret, organization)
 
         #
         # configuration.bp
         #
         print("[+] building configuration blueprint")
 
-        source = cn.client.bash("cat %s/configuration.yaml" % templates).get()
+        source = cn.client.bash("cat %s/configuration.yaml" % self.templates).get()
         config = yaml.load(source.stdout)
 
         # configuring blueprint
@@ -294,17 +292,41 @@ class OrchestratorInstaller:
             if item['key'] == 'jwt-token':
                 item['value'] = token
 
+            if item['key'] == '0-stor-organization':
+                item['value'] = stor_org
+
+            if item['key'] == '0-stor-namespace':
+                item['value'] = stor_ns
+
+            if item['key'] == '0-stor-clientid':
+                item['value'] = stor_cid
+
+            if item['key'] == '0-stor-clientsecret':
+                item['value'] = stor_secret
+
         blueprint = "/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp"
         fd = cn.client.filesystem.open(blueprint, "w")
         cn.client.filesystem.write(fd, yaml.dump(config).encode('utf-8'))
         cn.client.filesystem.close(fd)
+
+        return token
+
+    """
+    network: network type (g8, switchless, packet)
+    vlan and cidr: argument for g8 and switchless setup
+
+    Note: network value is not verified, please ensure the network passed
+          is a valid value, if value is not correct, the behavior is unexpected (crash)
+    """
+    def blueprint_network(self, network, vlan, cidr):
+        cn = self.node.containers.get(self.ctname)
 
         #
         # network.bp
         #
         print("[+] building network blueprint")
 
-        source = cn.client.bash("cat %s/network-%s.yaml" % (templates, network)).get()
+        source = cn.client.bash("cat %s/network-%s.yaml" % (self.templates, network)).get()
         netconfig = yaml.load(source.stdout)
 
         if network in ['g8', 'switchless']:
@@ -321,12 +343,21 @@ class OrchestratorInstaller:
         cn.client.filesystem.write(fd, yaml.dump(netconfig).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
+        return True
+
+    """
+    znetid: zerotier netword id of the nodes
+    ztoken: zerotier token to manage nodes network
+    """
+    def blueprint_bootstrap(self, znetid, ztoken):
+        cn = self.node.containers.get(self.ctname)
+
         #
         # bootstrap.bp
         #
         print("[+] building bootstrap blueprint")
 
-        source = cn.client.bash("cat %s/bootstrap.yaml" % templates).get()
+        source = cn.client.bash("cat %s/bootstrap.yaml" % self.templates).get()
         bstrapconfig = yaml.load(source.stdout)
 
         bstrapconfig['bootstrap.zero-os__grid1']['zerotierNetID'] = znetid
@@ -337,7 +368,7 @@ class OrchestratorInstaller:
         cn.client.filesystem.write(fd, yaml.dump(bstrapconfig).encode('utf-8'))
         cn.client.filesystem.close(fd)
 
-        return token
+        return True
 
     def starter(self, email, domain=None, organization=None):
         jobs = {}
@@ -453,56 +484,70 @@ class OrchestratorInstaller:
 if __name__ == "__main__":
     print("[+] initializing orchestrator bootstrapper")
 
-    email = "info@gig.tech"
-
     parser = argparse.ArgumentParser(description='Manage Threefold Orchestrator')
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
     parser.add_argument('--password', type=str, help='password (jwt) used to connect the host')
     parser.add_argument('--container', type=str, help='container deployment name', required=True)
     parser.add_argument('--domain', type=str, help='domain on which caddy should be listening, if not specified caddy will listen on port 80 and 443, but with self-signed certificate')
-    parser.add_argument('--ztnet', type=str, help='zerotier network id of the container', required=True)
+    parser.add_argument('--zt-net', type=str, help='zerotier network id of the container', required=True)
     parser.add_argument('--upstream', type=str, help='remote upstream git address', required=True)
     parser.add_argument('--email', type=str, help='email used by caddy for certificates')
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
-    parser.add_argument('--clientid', type=str, help='itsyou.online client-id for jwt-token', required=True)
-    parser.add_argument('--clientsecret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
+    parser.add_argument('--client-id', type=str, help='itsyou.online client-id for jwt-token', required=True)
+    parser.add_argument('--client-secret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
     parser.add_argument('--network', type=str, help='network type: g8, switchless, packet', required=True)
-    parser.add_argument('--vlan', type=str, help='g8/switchless only: vlan id')
-    parser.add_argument('--cidr', type=str, help='g8/switchless only: cidr address')
+    parser.add_argument('--network-vlan', type=str, help='g8/switchless only: vlan id')
+    parser.add_argument('--network-cidr', type=str, help='g8/switchless only: cidr address')
+    parser.add_argument('--nodes-zt-net', type=str, help='zerotier network id of the nodes', required=True)
+    parser.add_argument('--nodes-zt-token', type=str, help='zerotier token to manage the nodes', required=True)
+    parser.add_argument('--stor-organization', type=str, help='0-stor organization name as root (default: --organization)')
+    parser.add_argument('--stor-namespace', type=str, help='0-stor root namespace to use (default: namespace)')
+    parser.add_argument('--stor-client-id', type=str, help='0-stor itsyou.online client id (default: --client-id)')
+    parser.add_argument('--stor-client-secret', type=str, help='0-stor itsyou.online client secret (default: --client-secret)')
     args = parser.parse_args()
 
     if args.email != None:
-        email = args.email
+        args.email = "info@gig.tech"
 
     if args.network not in ['g8', 'switchless', 'packet']:
         print("[-] network: invalid network type '%s'" % args.network)
         sys.exit(1)
 
     if args.network in ['g8', 'switchless']:
-        if not args.vlan or not args.cidr:
+        if not args.network_vlan or not args.network_cidr:
             print("[-] network %s: vlan and cird required" % args.network)
             sys.exit(1)
 
-    if '@' not in args.upstream:
-        print("[-] warning: your upstream doesn't contains username")
-        print("[-] warning: you are probably using a wrong upstream url")
-        print("[-] warning: upstream should be like: ssh://git@github.com:user/repo.git")
-        print("[-] warning: you have been warned.")
+    if not args.stor_organization or not args.stor_namespace or not args.stor_client_id or not args.stor_client_secret:
+        print("[-] ===============================================================")
+        print("[-] stor values not fully explicitly specified")
+        print("[-] some of them are set implicitly")
+        stor_organization = args.stor_organization if args.stor_organization else args.organization
+        stor_namespace = args.stor_namespace if args.stor_namespace else "namespace"
+        stor_clientid = args.stor_client_id if args.stor_client_id else args.client_id
+        stor_clientsecret = args.stor_client_secret if args.stor_client_secret else args.client_secret
+        print("[-] ===============================================================")
 
-    if not args.upstream.startswith('ssh://'):
-        args.upstream = "ssh://%s" % args.upstream
-        print("[-] warning: upstream must be a ssh git url")
-        print("[-] warning: upstream autofixed to: %s" % args.upstream)
-
-    print("[+] ---------------------------------------------")
+    print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
-    print("[+] zerotier network: %s" % args.ztnet)
+    print("[+] zerotier network: %s" % args.zt_net)
+    print("[+] container name  : %s" % args.container)
     print("[+] domain name     : %s" % args.domain)
     print("[+] upstream git    : %s" % args.upstream)
-    print("[+] global email    : %s" % email)
+    print("[+] global email    : %s" % args.email)
     print("[+] ays organization: %s" % args.organization)
-    print("[+] network layout  : %s (%s, %s)" % (args.network, args.vlan, args.cidr))
-    print("[+] ---------------------------------------------")
+    print("[+]")
+    print("[+] -- 0-stor -----------------------------------------------------")
+    print("[+] organization    : %s" % stor_organization)
+    print("[+] namespace       : %s" % stor_namespace)
+    print("[+] client id       : %s" % stor_clientid)
+    print("[+]")
+    print("[+] -- network ----------------------------------------------------")
+    print("[+] network type    : %s" % args.network)
+    print("[+] optional vlan id: %s" % args.network_vlan)
+    print("[+] optional range  : %s" % args.network_cidr)
+    print("[+] ---------------------------------------------------------------")
+    print("[+]")
 
     installer = OrchestratorInstaller()
 
@@ -513,7 +558,7 @@ if __name__ == "__main__":
     installer.pre_prepare()
 
     print("[+] hook: prepare")
-    prepared = installer.prepare(args.container, args.ztnet)
+    prepared = installer.prepare(args.container, args.zt_net)
 
     print("[+] ==================================================")
     print("[+] container address: %s" % prepared['address'])
@@ -527,13 +572,15 @@ if __name__ == "__main__":
     installer.pre_configure()
 
     print("[+] hook: configure")
-    installer.configure(args.upstream, email, args.organization)
-    token = installer.blueprint(
-        args.clientid, args.clientsecret,
-        args.organization,
-        args.network, args.vlan, args.cidr,
-        "znetid-field", "ztoken-field"
+    installer.configure(args.upstream, args.email, args.organization)
+
+    token = installer.blueprint_configuration(
+        args.client_id, args.client_secret, args.organization,
+        stor_organization, stor_namespace, stor_clientid, stor_clientsecret
     )
+
+    installer.blueprint_network(args.network, args.network_vlan, args.network_cidr)
+    installer.blueprint_bootstrap(args.nodes_zt_net, args.nodes_zt_token)
 
     print("[+] hook: post-configure")
     installer.post_configure()
@@ -542,7 +589,7 @@ if __name__ == "__main__":
     installer.pre_starter()
 
     print("[+] hook: starter")
-    installer.starter(email, args.domain, args.organization)
+    installer.starter(args.email, args.domain, args.organization)
     installer.deploy(token)
 
     print("[+] hook: post-starter")
