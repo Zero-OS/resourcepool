@@ -51,7 +51,7 @@ class OrchestratorInstallerTools:
                 time.sleep(1)
                 continue
 
-            self.tools.progressing(True)
+            self.progressing(True)
 
             return ztdata['assignedAddresses'][0].split('/')[0]
 
@@ -411,26 +411,6 @@ class OrchestratorInstaller:
             x = cn.client.system("ays blueprint %s" % blueprint, dir=repository, env=environ).get()
 
         return True
-
-    """
-    def stop(ip):
-        node = Node(ip)
-        cn = self.node.containers.get('tftprod')
-
-        def kill(pid):
-            cn.client.process.kill(pid)
-
-        for ps in cn.client.process.list():
-            if ps['cmdline'].find("caddy") != -1:
-                print('[+] kill caddy')
-                kill(ps['pid'])
-            if ps['cmdline'].find("orchestratorapiserver") != -1:
-                print('[+] kill orchestrator')
-                kill(ps['pid'])
-            if ps['cmdline'].find("/opt/jumpscale9/bin/python3 main.py") != -1:
-                print('[+] kill ays')
-                kill(ps['pid'])
-    """
 
     def running_processes(self, cn):
         running = set()
