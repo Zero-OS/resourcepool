@@ -56,15 +56,17 @@ class OrchestratorInstallerTools:
             return ztdata['assignedAddresses'][0].split('/')[0]
 
     def progress(self):
-        sys.stdout.write("[+] ")
-        sys.stdout.flush()
+        self.xprint("[+] ")
 
     def progressing(self, final=False):
         progression = "."
         if final:
             progression = " done\n"
 
-        sys.stdout.write(progression)
+        self.xprint(progression)
+
+    def xprint(self, content):
+        sys.stdout.write(content)
         sys.stdout.flush()
 
     def hostof(self, upstream):
@@ -85,11 +87,11 @@ class OrchestratorInstaller:
         self.js_version = "9.1.0"
         self.templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
 
-    """
-    remote: remote address of the node
-    auth: password (jwt token usualy) nfor client
-    """
     def connector(self, remote, auth):
+        """
+        remote: remote address of the node
+        auth: password (jwt token usualy) nfor client
+        """
         print("[+] contacting zero-os server: %s" % remote)
         while True:
             try:
@@ -106,12 +108,12 @@ class OrchestratorInstaller:
 
         return node
 
-    """
-    node: connected node object
-    ctname: container name
-    ztnetwork: zerotier network the container should join
-    """
     def prepare(self, ctname, ztnetwork):
+        """
+        node: connected node object
+        ctname: container name
+        ztnetwork: zerotier network the container should join
+        """
         self.ctname = ctname
 
         print("[+] starting orchestrator container")
@@ -119,14 +121,6 @@ class OrchestratorInstaller:
             {'type': 'default'},
             {'type': 'zerotier', 'id': ztnetwork}
         ]
-
-        """
-        export PATH="/opt/jumpscale9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        export PYTHONPATH="/opt/jumpscale9/lib/:/opt/code/github/jumpscale/core9/:/opt/code/github/jumpscale/prefab9/:/opt/code/github/jumpscale/ays9:/opt/code/github/jumpscale/lib9:/opt/code/github/jumpscale/portal9"
-        export HOME="/root"
-        export LC_ALL="C.UTF-8"
-        export LC_LANG="UTF-8"
-        """
 
         env = {
             "PATH": "/opt/jumpscale9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
@@ -177,12 +171,12 @@ class OrchestratorInstaller:
 
         return {'address': containeraddr, 'publickey': publickey.stdout.strip()}
 
-    """
-    upstream: git upstream address of orchestrator repository
-    email: email address used for git and caddy certificates
-    organization: organization name ays should join
-    """
     def configure(self, upstream, email, organization=None):
+        """
+        upstream: git upstream address of orchestrator repository
+        email: email address used for git and caddy certificates
+        organization: organization name ays should join
+        """
         print("[+] configuring services")
         cn = self.node.containers.get(self.ctname)
 
@@ -259,18 +253,18 @@ class OrchestratorInstaller:
 
         return True
 
-    """
-    cid: iyo-client-id to generate a jwt
-    csecret: iyo-client-secret to generate a jwt
-    organization: organization name
-    stor_org: 0-stor organization root name
-    stor_ns: 0-stor organization namespace
-    stor_cid: 0-stor itsyou.online client id
-    stor_secret: 0-stor itsyou.online client secret
-
-    this return the jwt token for ays
-    """
     def blueprint_configuration(self, cid, csecret, organization, stor_org, stor_ns, stor_cid, stor_secret):
+        """
+        cid: iyo-client-id to generate a jwt
+        csecret: iyo-client-secret to generate a jwt
+        organization: organization name
+        stor_org: 0-stor organization root name
+        stor_ns: 0-stor organization namespace
+        stor_cid: 0-stor itsyou.online client id
+        stor_secret: 0-stor itsyou.online client secret
+
+        this return the jwt token for ays
+        """
         cn = self.node.containers.get(self.ctname)
 
         print("[+] requesting jwt token for ays")
@@ -311,14 +305,14 @@ class OrchestratorInstaller:
 
         return token
 
-    """
-    network: network type (g8, switchless, packet)
-    vlan and cidr: argument for g8 and switchless setup
-
-    Note: network value is not verified, please ensure the network passed
-          is a valid value, if value is not correct, the behavior is unexpected (crash)
-    """
     def blueprint_network(self, network, vlan, cidr):
+        """
+        network: network type (g8, switchless, packet)
+        vlan and cidr: argument for g8 and switchless setup
+
+        Note: network value is not verified, please ensure the network passed
+              is a valid value, if value is not correct, the behavior is unexpected (crash)
+        """
         cn = self.node.containers.get(self.ctname)
 
         #
@@ -345,11 +339,11 @@ class OrchestratorInstaller:
 
         return True
 
-    """
-    znetid: zerotier netword id of the nodes
-    ztoken: zerotier token to manage nodes network
-    """
     def blueprint_bootstrap(self, znetid, ztoken):
+        """
+        znetid: zerotier netword id of the nodes
+        ztoken: zerotier token to manage nodes network
+        """
         cn = self.node.containers.get(self.ctname)
 
         #

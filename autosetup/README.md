@@ -36,7 +36,6 @@ Here is the workflow of the deployment:
 - connector
   - connect and authentificate to a remote Zero-OS server
 - prepare
-  - open required port on firewall (80 and 443)
   - run a container using the 0-orchestrator flist
     - `/optvar` will be mounted from host `/var/cache/containers/orchestrator`
     - the container will join a zerotier network
