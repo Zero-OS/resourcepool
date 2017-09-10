@@ -163,6 +163,8 @@ def watchdog_handler(job):
             dead_nodes.add(node.name)
 
         if len(working_etcds) > (len(etcds)-1)/2:
+            service.model.data.status = 'running'
+            service.saveAll()
             # dead etcds only 
             for etcd in dead_etcds:
                 if len(working_etcds) > (len(etcds)-1)/2:
@@ -175,18 +177,17 @@ def watchdog_handler(job):
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
             return
 
-    # clean all remaining etcds from the old cluster
+    # stop all remaining containers from the old cluster
     for etcd in working_etcds:
-        container = etcd.parent
-        j.tools.async.wrappers.sync(etcd.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(etcd.delete())
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
+        j.tools.async.wrappers.sync(etcd.parent.executeAction('stop', context=job.context))
+
 
     # clean all reaminag tcps on old  running nodes
     for etcd in service.producers['etcd']:
         for tcp in etcd.producers['tcp']:
             try:
+                if not etcd.parent:
+                    raise ConnectionError
                 Node.from_ays(etcd.parent.parent, password=token)
                 j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
             except ConnectionError:
@@ -253,3 +254,7 @@ def watchdog_handler(job):
 
     service.model.data.status = 'running'
     service.saveAll()
+
+    for etcd in working_etcds:
+        j.tools.async.wrappers.sync(etcd.parent.delete())
+        j.tools.async.wrappers.sync(etcd.delete())

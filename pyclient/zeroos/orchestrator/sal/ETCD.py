@@ -105,12 +105,17 @@ class ETCD:
             raise RuntimeError('Failed to start etcd server: {}'.format(self.name))
 
     def stop(self):
+        import time
         jobID = "etcd.{}".format(self.name)
         self.container.client.job.kill(jobID)
-        try:
-            self.container.client.job.list(jobID)
-        except RuntimeError:
-            return
+        for i in range(15):
+            time.sleep(1)
+            try:
+                self.container.client.job.list(jobID)
+            except RuntimeError:
+                return
+            continue
+
         raise RuntimeError('failed to stop etcd.')
 
     def put(self, key, value):
