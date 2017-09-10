@@ -250,4 +250,6 @@ def watchdog_handler(job):
     for vmachine in vmachines:
         if vmachine.model.data.status == 'running':
             j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))
+
+    service.model.data.status = 'running'
     service.saveAll()
