@@ -157,7 +157,7 @@ class TestcontaineridAPI(TestcasesBase):
         core0_res = self.core0_client.client.bash('ls -alh | grep dev').get().stdout
         self.assertNotEqual(core0_res.split()[7], cont_res.split()[7])
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test006_create_container_with_bridge(self):
         """ GAT-087
         *Test case for create containers with same bridge and make sure they can connect to each other *
@@ -278,8 +278,9 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Check if second container (c2) can ping first container (c1), should fail.")
         response = c2_client.bash('ping -w5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
+        time.sleep(60)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test008_Create_container_with_zerotier_network(self):
         """ GAT-089
         *Test case for create containers with same zerotier network *
@@ -408,8 +409,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         response = c2_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'ERROR')
+        time.sleep(60)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test011_create_containers_with_open_ports(self):
         """ GAT-096
 
@@ -477,6 +479,7 @@ class TestcontaineridAPI(TestcasesBase):
         #. Attach Both B1 and B2, should succeed
 
         """
+        time.sleep(540)
         self.lg.info('Create container without nic, should succeed')
         self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, nics=[])
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
