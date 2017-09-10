@@ -1,6 +1,18 @@
 from js9 import j
 
 
+def input(job):
+    service = job.service
+    blockStoragecluster = job.model.args.get('blockStoragecluster', None)
+    objectStoragecluster = job.model.args.get('objectStoragecluster', None)
+
+    if objectStoragecluster:
+        block_st = service.aysrepo.serviceGet(role='storage_cluster', instance=blockStoragecluster)
+        object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
+        if block_st.model.data.nrServer < object_st.model.data.nrServer:
+            raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
+
+
 def install(job):
     import random
     import time
@@ -18,14 +30,17 @@ def install(job):
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         blockStoragecluster = service.model.data.blockStoragecluster
+        objectStoragecluster = service.model.data.objectStoragecluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
             CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
 
-            if service.model.data.objectStoragecluster:
-                object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=service.model.data.objectStoragecluster)
-                CMD += ' --data-shards %s --parity-shards %s' % (object_st.model.data.dataShards, object_st.model.data.parityShards)
+            if objectStoragecluster:
+                object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
+                dataShards = object_st.model.data.dataShards
+                parityShards = object_st.model.data.parityShards
+                CMD += ' --data-shards %s --parity-shards %s' % (dataShards, parityShards)
 
             etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
             etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
