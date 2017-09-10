@@ -201,12 +201,12 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
         time.sleep(10)
-        for i in range(5):
-            response = c1_client.bash('ping -w5 %s' % C2_br_ip).get()
+        for i in range(2):
+            response = c1_client.bash('ping -w5 %s' % C2_br_ip).get(40)
             if response.state == 'SUCCESS':
                 break
             time.sleep(5)
-        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.state, 'SUCCESS', response.payload)
 
         self.lg.info("Check if second container (c2) can ping first container (c1), should succeed.")
         response = c2_client.bash('ping -w5 %s' % C1_br_ip).get()
@@ -320,12 +320,12 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertTrue(c2_zt_ip)
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
-        for i in range(5):
+        for i in range(2):
             time.sleep(5)
-            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
+            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get(40)
             if response.state == "SUCCESS":
                 break
-        self.assertEqual(response.state, "SUCCESS")
+        self.assertEqual(response.state, "SUCCESS", response.payload)
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
         response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
@@ -452,12 +452,12 @@ class TestcontaineridAPI(TestcasesBase):
         time.sleep(5)
 
         self.lg.info("Check that portforward work,should succeed")
-        for i in range(5):
-            response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get()
+        for i in range(2):
+            response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get(40)
             if response.state == 'SUCCESS':
                 break
             time.sleep(5)
-        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.state, 'SUCCESS', response.payload)
         url = 'http://{0}:{1}/{2}.text'.format(self.nodeip, hostport, file_name)
         response = urlopen(url)
         html = response.read()
