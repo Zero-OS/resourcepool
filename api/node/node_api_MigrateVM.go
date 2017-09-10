@@ -56,6 +56,16 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 		Node: reqBody.Nodeid,
 	}
 
+	_, res, err = aysClient.Ays.GetServiceByName(reqBody.Nodeid, "node", api.AysRepo, nil, nil)
+	if res.StatusCode == http.StatusNotFound {
+		errmsg := fmt.Errorf("node %s does not exist", reqBody.Nodeid)
+		tools.WriteError(w, http.StatusBadRequest, errmsg, "")
+		return
+	}
+	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
+		return
+	}
+
 	decl := fmt.Sprintf("vm__%v", vmID)
 
 	obj := make(map[string]interface{})
