@@ -463,7 +463,7 @@ class TestcontaineridAPI(TestcasesBase):
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test012_attach_different_nics_to_same_container(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
