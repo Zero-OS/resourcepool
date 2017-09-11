@@ -264,21 +264,21 @@ def save_config(job):
 
     # Push zerostorconfig to etcd
     zerostor_services = service.producers["zerostor"]
-    0-stor-organization = aysconfig["0-stor-organization"]
-    0-stor-namespace = aysconfig["0-stor-namespace"]
-    iyo_client_id = aysconfig["0-stor-clientid"]
-    0-stor-clientsecret = aysconfig["0-stor-clientsecret"]
+    zstor_organization = aysconfig["0-stor-organization"]
+    zstor_namespace = aysconfig["0-stor-namespace"]
+    zstor_clientid = aysconfig["0-stor-clientid"]
+    zstor_clientsecret = aysconfig["0-stor-clientsecret"]
 
     # The conactenation here because ays parsing can't handle the string in one line
     url = "https://itsyou.online/v1/oauth/access_token"
     scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
     scope = scope.format(
-        org=0-stor-organization,
-        namespace=0-stor-namespace
+        org=zstor_organization,
+        namespace=zstor_namespace
     )
     params = {
-        "client_id": iyo_client_id,
-        "client_secret": 0-stor-clientsecret,
+        "client_id": zstor_clientid,
+        "client_secret": zstor_clientsecret,
         "grant_type": "client_credentials",
         "response_type": "id_token",
         "scope": scope,
@@ -289,10 +289,10 @@ def save_config(job):
 
     zerostor_config = {
         "iyo": {
-            "org": 0-stor-organization,
-            "namespace": 0-stor-namespace,
-            "clientID": iyo_client_id,
-            "secret": 0-stor-clientsecret,
+            "org": zstor_organization,
+            "namespace": zstor_namespace,
+            "clientID": zstor_clientid,
+            "secret": zstor_clientsecret,
         },
         "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
         "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
