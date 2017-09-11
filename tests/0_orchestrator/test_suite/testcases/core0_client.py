@@ -231,6 +231,7 @@ class Client(TestCase):
         nics = client.info.nic()
         full_ip_range = self.get_ip_range(ip_range)
         self.assertTrue(nics, print(nics))
+        print(nics)
         ip = ''
         for nic in nics:
             addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in full_ip_range]
