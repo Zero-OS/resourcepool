@@ -218,25 +218,25 @@ class Client(TestCase):
         nics = client.info.nic()
         nic = [nic for nic in nics if 'zt' in nic['name']]
         if not nic:
-            return False
+            self.assertTrue(nic, 'No NIC found')
         address = nic[0]['addrs'][0]['addr']
         if not address:
             self.lg.info('can\'t find zerotier netowrk interface')
-            return False
+            self.assertTrue(address, 'No address found')
         return address[:address.find('/')]
 
     def get_container_bridge_ip(self, client, ip_range):
         nics = client.info.nic()
         full_ip_range = self.get_ip_range(ip_range)
         self.assertTrue(nics, print(nics))
-        print('nics=')
-        print(nics)
+        ip = ''
         for nic in nics:
             addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in full_ip_range]
             if addresses:
                 address = addresses[0]
+                ip = address[:address.find('/')]
                 return address[:address.find('/')]
-        return False
+        self.assertTrue(ip, 'No ip found')
 
     def check_container_vlan_vxlan_ip(self, client, cidr_ip):
         nics = client.info.nic()

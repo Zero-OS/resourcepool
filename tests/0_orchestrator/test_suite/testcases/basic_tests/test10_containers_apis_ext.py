@@ -316,9 +316,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
-        self.assertTrue(c1_zt_ip)
         c2_zt_ip = self.core0_client.get_client_zt_ip(c2_client)
-        self.assertTrue(c2_zt_ip)
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
         for i in range(2):
@@ -327,6 +325,7 @@ class TestcontaineridAPI(TestcasesBase):
             if response.state == "SUCCESS":
                 break
         self.assertEqual(response.state, "SUCCESS", response.payload)
+
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
         response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
@@ -343,8 +342,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
-    
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+
     def test009_create_container_with_filesystem(self):
         """ GAT-094
 
@@ -376,7 +374,6 @@ class TestcontaineridAPI(TestcasesBase):
         response = C_client.filesystem.list('/fs/%s' % storagepool_name)
         self.assertEqual(response[0]['name'], name)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test010_Writing_in_containers_files(self):
         """ GAT-095
 
