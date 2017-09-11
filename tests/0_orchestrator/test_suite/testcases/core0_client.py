@@ -223,8 +223,7 @@ class Client(TestCase):
         if not address:
             self.lg.info('can\'t find zerotier netowrk interface')
             self.assertTrue(address, 'No address found')
-        ip = address[:address.find('/')
-        self.assertTrue(ip, "No IP Found")
+        ip = address[:address.find('/')]
         return ip
 
     def get_container_bridge_ip(self, client, ip_range):
@@ -238,8 +237,7 @@ class Client(TestCase):
             if addresses:
                 address = addresses[0]
                 ip = address[:address.find('/')]
-                return address[:address.find('/')]
-        self.assertTrue(ip, 'No ip found')
+        return ip
 
     def check_container_vlan_vxlan_ip(self, client, cidr_ip):
         nics = client.info.nic()

@@ -196,7 +196,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info("Check that two containers get ip and they are in bridge range, should succeed ")
         C1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range)
+        self.assertTrue(C1_br_ip, 'No ip found')
         C2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range)
+        self.assertTrue(C1_br_ip, 'No ip found')
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
@@ -270,7 +272,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Check that two containers get ip and they are in bridge range, should succeed ")
         c1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range1)
+        self.assertTrue(c1_br_ip, "No IP Found")
         c2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range2)
+        self.assertTrue(c2_br_ip, "No IP Found")
 
         self.lg.info(" [*] Check if first container (c1) can ping second container (c2), should fail.")
         response = c1_client.bash('ping -w5 %s' % c2_br_ip).get()
@@ -315,7 +319,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
+        self.assertTrue(c1_zt_ip, "No IP Found")
         c2_zt_ip = self.core0_client.get_client_zt_ip(c2_client)
+        self.assertTrue(c2_zt_ip, "No IP Found")
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
         for i in range(2):
