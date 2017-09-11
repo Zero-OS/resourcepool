@@ -224,19 +224,22 @@ class OrchestratorInstaller:
 
         # upstream is empty, let create a new repository
         if resp.code != 0:
-            print("[+] git repository is empty, creating default layout")
-            cn.client.filesystem.mkdir("/tmp/upstream/services")
-            cn.client.filesystem.mkdir("/tmp/upstream/actorTemplates")
-            cn.client.filesystem.mkdir("/tmp/upstream/actors")
-            cn.client.filesystem.mkdir("/tmp/upstream/blueprints")
-
-            cn.client.bash("touch /tmp/upstream/.ays").get()
+            print("[+] git repository is empty, creating empty repository")
             cn.client.bash("cd /tmp/upstream/ && git init").get()
             cn.client.bash("cd /tmp/upstream/ && git remote add origin %s" % upstream).get()
-            cn.client.bash("cd /tmp/upstream/ && git add .").get()
-            cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial commit'").get()
 
-        # moving upstream to target cockpit repository
+        print("[+] ensure ays repository default layout")
+        for directory in ["services", "actorTemplates", "actors", "blueprints"]:
+            target = "/tmp/upstream/%s" % directory
+
+            if not cn.client.filesystem.exists(target):
+                cn.client.bash("mkdir -p %s && touch %s/.keep" % (target, target)).get()
+
+        cn.client.bash("touch /tmp/upstream/.ays").get()
+        cn.client.bash("cd /tmp/upstream/ && git add .").get()
+        cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial ays commit'").get()
+
+        # moving upstream to target cockpit repository, removing any previous one
         cn.client.bash("rm -rf %s" % repository).get()
         cn.client.bash("mv /tmp/upstream %s" % repository).get()
 
