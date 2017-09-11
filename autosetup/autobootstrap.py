@@ -221,8 +221,11 @@ class OrchestratorInstaller:
 
         print("[+] configuring upstream repository")
 
+        repository = "/optvar/cockpit_repos/orchestrator-server"
+
         # upstream is empty, let create a new repository
         if resp.code != 0:
+            print("[+] git repository is empty, creating default layout")
             cn.client.filesystem.mkdir("/tmp/upstream/services")
             cn.client.filesystem.mkdir("/tmp/upstream/actorTemplates")
             cn.client.filesystem.mkdir("/tmp/upstream/actors")
@@ -233,24 +236,19 @@ class OrchestratorInstaller:
             cn.client.bash("cd /tmp/upstream/ && git remote add origin %s" % upstream).get()
             cn.client.bash("cd /tmp/upstream/ && git add .").get()
             cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial commit'").get()
-            # cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
-
-            # this may need ssh agent.
-            cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
 
         # moving upstream to target cockpit repository
-        cn.client.bash("mv /tmp/upstream /optvar/cockpit_repos/orchestrator-server").get()
+        cn.client.bash("mv /tmp/upstream %s" % repository).get()
 
         # authorizing host
         host = self.tools.hostof(upstream)
         cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
 
-        repository = "/optvar/cockpit_repos/orchestrator-server"
-        pushed = False
-
         print("[+] pushing git files to upstream")
         print("[+] please ensure the public key is allowed on remote git repository")
+
         self.tools.progress()
+        pushed = False
 
         while not pushed:
             self.tools.progressing()
