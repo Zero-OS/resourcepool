@@ -142,7 +142,7 @@ class Client:
         for disk in disks:
             if 'children' not in disk.keys():
                 freeDisks.append('/dev/{}'.format(disk['kname']))
-                
+
         return freeDisks
 
     def get_processes_list(self):
@@ -227,6 +227,8 @@ class Client:
     def get_container_bridge_ip(self, client, ip_range):
         nics = client.info.nic()
         full_ip_range = self.get_ip_range(ip_range)
+        print('nics=')
+        print(nics)
         for nic in nics:
             addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in full_ip_range]
             if addresses:
