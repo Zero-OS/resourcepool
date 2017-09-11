@@ -70,6 +70,13 @@ class OrchestratorInstallerTools:
         sys.stdout.flush()
 
     def hostof(self, upstream):
+        # attempt ssh/url style
+        hostname = urlparse(upstream).hostname
+        if hostname is not None:
+            return hostname
+
+        # fallback to git style
+
         # git@github.com:repository
         # -> ['git', 'github.com:repository']
         #        -> ['github.com', 'repository']
@@ -502,7 +509,7 @@ if __name__ == "__main__":
     parser.add_argument('--stor-client-secret', type=str, help='0-stor itsyou.online client secret (default: --client-secret)')
     args = parser.parse_args()
 
-    if args.email != None:
+    if args.email == None:
         args.email = "info@gig.tech"
 
     if args.network not in ['g8', 'switchless', 'packet']:
