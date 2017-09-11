@@ -222,6 +222,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w5 %s' % C1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
+
     def test007_create_containers_with_diff_bridges(self):
         """ GAT-088
         *Test case for create containers with different bridges and make sure they can't connect to  each other through bridge ip *
@@ -342,7 +343,8 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
-
+    
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test009_create_container_with_filesystem(self):
         """ GAT-094
 
@@ -374,6 +376,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C_client.filesystem.list('/fs/%s' % storagepool_name)
         self.assertEqual(response[0]['name'], name)
 
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test010_Writing_in_containers_files(self):
         """ GAT-095
 
