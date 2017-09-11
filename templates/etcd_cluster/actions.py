@@ -84,6 +84,7 @@ def configure(job):
         service.consume(etcd_service)
     service.model.data.etcds = etcds
 
+
 def install(job):
     service = job.service
     service.model.data.status = "running"
@@ -115,10 +116,10 @@ def get_baseports(job, node, baseport, nrports):
                 return freeports, tcpservices
         baseport += 1
 
+
 def watchdog_handler(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.sal.ETCD import ETCD
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
 
@@ -139,7 +140,7 @@ def watchdog_handler(job):
         container = etcd.parent
         node = container.parent
         try:
-            container_client = Container.from_ays(container, password=token)
+            container_client = Container.from_ays(container, password=token, logger=service.logger)
             if container_client.id:
                 container_client.client.job.list("etcd.{}".format(etcd.name))
         except ConnectionError as e:
@@ -162,19 +163,22 @@ def watchdog_handler(job):
             ping = None
             dead_nodes.add(node.name)
 
+        # check if less than disaster threshold do normal respawn of single etcd or container and etcd
         if len(working_etcds) > (len(etcds)-1)/2:
-            service.model.data.status = 'running'
-            service.saveAll()
-            # dead etcds only 
+            # respawn dead etcd only
             for etcd in dead_etcds:
                 if len(working_etcds) > (len(etcds)-1)/2:
                     j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+                    service.model.data.status = 'running'
+                    service.saveAll()
                     return
-            # dead containers 
+            # respawn dead containers
             if not ping:
                 raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
             j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
             j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+            service.model.data.status = 'running'
+            service.saveAll()
             return
 
     # stop all remaining containers from the old cluster
@@ -186,8 +190,6 @@ def watchdog_handler(job):
     for etcd in service.producers['etcd']:
         for tcp in etcd.producers['tcp']:
             try:
-                if not etcd.parent:
-                    raise ConnectionError
                 Node.from_ays(etcd.parent.parent, password=token)
                 j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
             except ConnectionError:

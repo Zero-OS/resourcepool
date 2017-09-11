@@ -51,7 +51,7 @@ def start(job):
     service = job.service
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
     grafana.start()
     service.model.data.status = 'running'
@@ -65,7 +65,7 @@ def stop(job):
 
     service = job.service
     container = get_container(service)
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     if container_ays.is_running():
         grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
         grafana.stop()
@@ -95,7 +95,7 @@ def processChange(job):
     if args.pop('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
     container = get_container(service)
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
 
     if args.get('port'):
@@ -132,7 +132,7 @@ def processChange(job):
         if container_ays.is_running() and grafana.is_running()[0]:
             grafana.influxdb = args['influxdb']
             container = get_container(service)
-            container_ays = Container.from_ays(container, job.context['token'])
+            container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
             add_datasources(grafana, added)
             delete_datasources(grafana, removed)
 

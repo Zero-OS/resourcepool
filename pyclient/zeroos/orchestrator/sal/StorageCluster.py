@@ -5,13 +5,13 @@ from .StorageEngine import StorageEngine
 
 import logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+default_logger = logging.getLogger(__name__)
 
 
 class StorageCluster:
     """StorageCluster is a cluster of StorageEngine servers"""
 
-    def __init__(self, label, nodes=None, disk_type=None):
+    def __init__(self, label, nodes=None, disk_type=None, logger=None):
         """
         @param label: string repsenting the name of the storage cluster
         """
@@ -24,9 +24,14 @@ class StorageCluster:
         self.data_shards = 0
         self.parity_shards = 0
         self._ays = None
+        self.logger = default_logger
+        if logger:
+            self.logger = logger
 
     @classmethod
-    def from_ays(cls, service, password):
+    def from_ays(cls, service, password, logger=None):
+        if not logger:
+            logger = default_logger
         logger.debug("load cluster storage cluster from service (%s)", service)
         disk_type = str(service.model.data.diskType)
 
@@ -38,7 +43,7 @@ class StorageCluster:
             if storages_server.node not in nodes:
                 nodes.append(storages_server.node)
 
-        cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type)
+        cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type, logger=logger)
         cluster.storage_servers = storage_servers
         cluster.data_shards = service.model.data.dataShards
         cluster.parity_shards = service.model.data.parityShards
@@ -74,7 +79,7 @@ class StorageCluster:
         return a list of disk that are not used by storage pool
         or has a different type as the one required for this cluster
         """
-        logger.debug("find available_disks")
+        self.logger.debug("find available_disks")
         cluster_name = 'sp_cluster_{}'.format(self.label)
         available_disks = {}
 
@@ -103,12 +108,12 @@ class StorageCluster:
         return available_disks
 
     def start(self):
-        logger.debug("start %s", self)
+        self.logger.debug("start %s", self)
         for server in self.storage_servers:
             server.start()
 
     def stop(self):
-        logger.debug("stop %s", self)
+        self.logger.debug("stop %s", self)
         for server in self.storage_servers:
             server.stop()
 
@@ -147,15 +152,18 @@ class StorageCluster:
 class StorageServer:
     """StorageEngine servers"""
 
-    def __init__(self, cluster):
+    def __init__(self, cluster, logger=None):
         self.cluster = cluster
         self.container = None
         self.storageEngine = None
+        self.logger = default_logger
+        if logger:
+            self.logger = logger
 
     @classmethod
-    def from_ays(cls, storageEngine_services, password=None):
+    def from_ays(cls, storageEngine_services, password=None, logger=None):
         storageEngine = StorageEngine.from_ays(storageEngine_services, password)
-        storage_server = cls(None)
+        storage_server = cls(None, logger)
         storage_server.container = storageEngine.container
         storage_server.storageEngine = storageEngine
         return storage_server
@@ -180,7 +188,7 @@ class StorageServer:
             return start_port
 
     def start(self, timeout=30):
-        logger.debug("start %s", self)
+        self.logger.debug("start %s", self)
         if not self.container.is_running():
             self.container.start()
 
@@ -189,7 +197,7 @@ class StorageServer:
         self.storageEngine.start(timeout=timeout)
 
     def stop(self, timeout=30):
-        logger.debug("stop %s", self)
+        self.logger.debug("stop %s", self)
         self.storageEngine.stop(timeout=timeout)
         self.container.stop()
 
@@ -206,9 +214,12 @@ class StorageServer:
 
 
 class StorageDashboard:
-    def __init__(self, cluster):
+    def __init__(self, cluster, logger=None):
         self.cluster = cluster
         self.store = 'statsdb'
+        self.logger = default_logger
+        if logger:
+            self.logger = logger
 
     def build_templating(self):
         templating = {

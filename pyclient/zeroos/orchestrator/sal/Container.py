@@ -1,14 +1,16 @@
-import json
 from io import BytesIO
 
 import logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+default_logger = logging.getLogger(__name__)
 
 
 class Containers:
-    def __init__(self, node):
+    def __init__(self, node, logger=None):
         self.node = node
+        self.logger = default_logger
+        if logger:
+            self.logger = logger
 
     def list(self):
         containers = []
@@ -30,7 +32,7 @@ class Containers:
 
     def create(self, name, flist, hostname=None, mounts=None, nics=None,
                host_network=False, ports=None, storage=None, init_processes=None, privileged=False, env=None):
-        logger.debug("create container %s", name)
+        self.logger.debug("create container %s", name)
         container = Container(name, self.node, flist, hostname, mounts, nics,
                               host_network, ports, storage, init_processes, privileged, env=env)
         container.start()
@@ -42,7 +44,7 @@ class Container:
 
     def __init__(self, name, node, flist, hostname=None, mounts=None, nics=None,
                  host_network=False, ports=None, storage=None, init_processes=None,
-                 privileged=False, identity=None, env=None):
+                 privileged=False, identity=None, env=None, logger=None):
         """
         TODO: write doc string
         filesystems: dict {filesystemObj: target}
@@ -61,6 +63,9 @@ class Container:
         self.privileged = privileged
         self.identity = identity
         self.env = env or {}
+        self.logger = default_logger
+        if logger:
+            self.logger = logger
 
         self._ays = None
         for nic in self.nics:
@@ -69,8 +74,11 @@ class Container:
                 nic['monitor'] = True
 
     @classmethod
-    def from_containerinfo(cls, containerinfo, node):
+    def from_containerinfo(cls, containerinfo, node, logger=None):
+        if not logger:
+            logger = default_logger
         logger.debug("create container from info")
+
         arguments = containerinfo['container']['arguments']
         if not arguments['tags']:
             # we don't deal with tagless containers
@@ -86,10 +94,13 @@ class Container:
                    arguments['storage'],
                    arguments['privileged'],
                    arguments['identity'],
-                   arguments['env'])
+                   arguments['env'],
+                   logger=logger)
 
     @classmethod
-    def from_ays(cls, service, password=None):
+    def from_ays(cls, service, password=None, logger=None):
+        if not logger:
+            logger = default_logger
         logger.debug("create container from service (%s)", service)
         from .Node import Node
         node = Node.from_ays(service.parent, password)
@@ -121,12 +132,13 @@ class Container:
             init_processes=[p.to_dict() for p in service.model.data.initProcesses],
             privileged=service.model.data.privileged,
             identity=service.model.data.identity,
+            logger=logger
         )
         return container
 
     @property
     def id(self):
-        logger.debug("get container id")
+        self.logger.debug("get container id")
         info = self.info
         if info:
             return info['container']['id']
@@ -134,7 +146,7 @@ class Container:
 
     @property
     def info(self):
-        logger.debug("get container info")
+        self.logger.debug("get container info")
         for containerid, container in self.node.client.container.list().items():
             if self.name in (container['container']['arguments']['tags'] or []):
                 container['container']['id'] = int(containerid)
@@ -159,7 +171,7 @@ class Container:
         return buff.getvalue().decode()
 
     def _create_container(self, timeout=60):
-        logger.debug("send create container command to g8os")
+        self.logger.debug("send create container command to g8os")
         tags = [self.name]
         if self.hostname and self.hostname != self.name:
             tags.append(self.hostname)
@@ -201,11 +213,9 @@ class Container:
             time.sleep(0.2)
         return False
 
-
-
     def start(self):
         if not self.is_running():
-            logger.debug("start %s", self)
+            self.logger.debug("start %s", self)
             self._create_container()
             for process in self.init_processes:
                 cmd = "{} {}".format(process['name'], ' '.join(process.get('args', [])))
@@ -221,7 +231,7 @@ class Container:
     def stop(self):
         if not self.is_running():
             return
-        logger.debug("stop %s", self)
+        self.logger.debug("stop %s", self)
 
         self.node.client.container.terminate(self.id)
         self._client = None
