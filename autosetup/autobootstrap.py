@@ -130,15 +130,17 @@ class OrchestratorInstaller:
             "LC_LANG": "UTF-8"
         }
 
-        if not self.node.client.filesystem.exists('/var/cache/containers/orchestrator'):
-            self.node.client.filesystem.mkdir('/var/cache/containers/orchestrator')
+        hostvolume = '/var/cache/containers/orchestrator-%s' % ctname
+
+        if not self.node.client.filesystem.exists(hostvolume):
+            self.node.client.filesystem.mkdir(hostvolume)
 
         cn = self.node.containers.create(
             name=ctname,
             flist=self.flist,
             nics=network,
             hostname='bootstrap',
-            mounts={'/var/cache/containers/orchestrator': '/optvar'},
+            mounts={hostvolume: '/optvar'},
             env=env
         )
 
