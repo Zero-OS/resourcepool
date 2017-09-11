@@ -516,13 +516,14 @@ if __name__ == "__main__":
 
     if not args.stor_organization or not args.stor_namespace or not args.stor_client_id or not args.stor_client_secret:
         print("[-] ===============================================================")
-        print("[-] stor values not fully explicitly specified")
-        print("[-] some of them are set implicitly")
-        stor_organization = args.stor_organization if args.stor_organization else args.organization
-        stor_namespace = args.stor_namespace if args.stor_namespace else "namespace"
-        stor_clientid = args.stor_client_id if args.stor_client_id else args.client_id
-        stor_clientsecret = args.stor_client_secret if args.stor_client_secret else args.client_secret
+        print("[-] stor 0-stor values not fully explicitly specified")
+        print("[-] some of them will be set implicitly")
         print("[-] ===============================================================")
+
+    stor_organization = args.stor_organization if args.stor_organization else args.organization
+    stor_namespace = args.stor_namespace if args.stor_namespace else "namespace"
+    stor_clientid = args.stor_client_id if args.stor_client_id else args.client_id
+    stor_clientsecret = args.stor_client_secret if args.stor_client_secret else args.client_secret
 
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
