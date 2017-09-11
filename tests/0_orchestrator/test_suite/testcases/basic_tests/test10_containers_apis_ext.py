@@ -185,10 +185,10 @@ class TestcontaineridAPI(TestcasesBase):
         response_cont_1, data_cont_1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_cont_1.status_code, 201, " [*] Can't create new container.")
         self.created['container'].append(data_cont_1['name'])
-
         response_cont_2, data_cont_2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_cont_2.status_code, 201, " [*] Can't create new container.")
         self.created['container'].append(data_cont_2['name'])
+        time.sleep(15)
 
         self.lg.info("Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_cont_1['name'])
@@ -200,13 +200,12 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
-        time.sleep(10)
         for i in range(2):
             response = c1_client.bash('ping -w5 %s' % C2_br_ip).get(40)
             if response.state == 'SUCCESS':
                 break
             time.sleep(5)
-        self.assertEqual(response.state, 'SUCCESS', print(response.payload, C2_br_ip, C1_br_ip, ip_range))
+        self.assertEqual(response.state, 'SUCCESS', response.payload)
 
         self.lg.info("Check if second container (c2) can ping first container (c1), should succeed.")
         response = c2_client.bash('ping -w5 %s' % C1_br_ip).get()
@@ -263,6 +262,7 @@ class TestcontaineridAPI(TestcasesBase):
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics2)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
+        time.sleep(15)
 
         self.lg.info(" [*] Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_c1['name'])
@@ -307,12 +307,11 @@ class TestcontaineridAPI(TestcasesBase):
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
+        time.sleep(20)
 
         self.lg.info(" [*] Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_c1['name'])
         c2_client = self.core0_client.get_container_client(data_c2['name'])
-
-        time.sleep(15)
 
         self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
@@ -449,7 +448,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.state, "SUCCESS")
         c1_client.bash("cd %s && python3 -m http.server %i" % (file_name, containerport))
 
-        time.sleep(5)
+        time.sleep(10)
 
         self.lg.info("Check that portforward work,should succeed")
         for i in range(2):
