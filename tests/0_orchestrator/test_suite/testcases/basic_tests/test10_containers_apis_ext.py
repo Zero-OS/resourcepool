@@ -427,18 +427,16 @@ class TestcontaineridAPI(TestcasesBase):
         containerport = 60
         nics = [{"type": "default"}]
 
-        self.lg.info("[*] Create rule on port 7070")
-        port_status = False
+        self.lg.info(" [*] Create rule on port 6060")
         for _ in range(3):
             try:
                 self.core0_client.client.nft.open_port(hostport)
-                port_status = True
                 break
             except:
-                self.lg.info("[*]can't open port %s"% hostport)
+                self.lg.info(" [*] can't open port %s"% hostport)
                 hostport = random.randint(6060, 7000)
-
-        self.assertTrue(port_status, "[*] can't find available port ")
+        else:
+            self.assertTrue(False, " [*] can't find available port ")
 
         ports = "%i:%i" % (hostport, containerport)
         self.lg.info(" [*] Create container C1 with open port")
