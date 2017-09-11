@@ -152,21 +152,18 @@ class Client(TestCase):
 
     def get_container_client(self, container_name):
         container = self.client.container.find(container_name)
-        if not container:
-            return False
+        self.assertTrue(container, "Can't get container for the given container name")
         container_id = list(container.keys())[0]
         container_client = self.client.container.client(int(container_id))
         return container_client
 
     def get_container_info(self, container_id):
         container = (self.client.container.find(container_id))
-        if not container:
-            return False
+        self.assertTrue(container, "Can't get container for the given container name")
         container_id = list(container.keys())[0]
         container_info = {}
         golden_data = self.client.container.list().get(str(container_id), None)
-        if not golden_data:
-            return False
+        self.assertTrue(golden_data, "No Golden data")
         golden_value = golden_data['container']
         container_info['nics'] = (
             [{i: nic[i] for i in nic if i != 'hwaddr'} for nic in golden_value['arguments']['nics']])

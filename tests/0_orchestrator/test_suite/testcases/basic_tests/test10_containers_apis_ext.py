@@ -251,7 +251,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
         self.created['bridge'].append(data_bridge_2['name'])
-        ip_range2 = [data_bridge_1['setting']['start'], data_bridge_2['setting']['end']]
+        ip_range2 = [data_bridge_2['setting']['start'], data_bridge_2['setting']['end']]
 
         self.lg.info(' [*] Create container(C1) with (B1), should succeed.')
         nics1 = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"dhcp": True}, "status": "up"}]
@@ -283,7 +283,6 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Check if second container (c2) can ping first container (c1), should fail.")
         response = c2_client.bash('ping -w5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
-        time.sleep(60)
 
     #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test008_Create_container_with_zerotier_network(self):
@@ -414,7 +413,6 @@ class TestcontaineridAPI(TestcasesBase):
 
         response = c2_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'ERROR')
-        time.sleep(60)
 
     #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test011_create_containers_with_open_ports(self):
@@ -468,7 +466,7 @@ class TestcontaineridAPI(TestcasesBase):
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test012_attach_different_nics_to_same_container(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
