@@ -330,13 +330,19 @@ class OrchestratorInstaller:
         # network.bp
         #
         print("[+] building network blueprint")
+        targets = {
+            'g8': 'zero-os',
+            'switchless': 'switchless'
+        }
 
         source = cn.client.bash("cat %s/network-%s.yaml" % (self.templates, network)).get()
         netconfig = yaml.load(source.stdout)
 
         if network in ['g8', 'switchless']:
-            netconfig['network.%s__storage' % network]['vlanTag'] = int(vlan)
-            netconfig['network.%s__storage' % network]['cidr'] = cidr
+            key = 'network.%s__storage' % targets[network]
+
+            netconfig[key]['vlanTag'] = int(vlan)
+            netconfig[key]['cidr'] = cidr
 
         if network in ['packet']:
             # there is nothing to do, but we keep the code
