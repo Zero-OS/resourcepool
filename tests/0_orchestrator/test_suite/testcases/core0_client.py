@@ -1,8 +1,9 @@
 from zeroos.core0.client import Client as core0_client
 import time, re
+from unittest import TestCase
 
 
-class Client:
+class Client(TestCase):
     def __init__(self, ip, password):
         self.client = core0_client(ip, password=password)
 
@@ -227,6 +228,7 @@ class Client:
     def get_container_bridge_ip(self, client, ip_range):
         nics = client.info.nic()
         full_ip_range = self.get_ip_range(ip_range)
+        self.assertTrue(nics, print(nics))
         print('nics=')
         print(nics)
         for nic in nics:
