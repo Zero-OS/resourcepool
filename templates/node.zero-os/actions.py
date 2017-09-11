@@ -67,15 +67,6 @@ def getAddresses(job):
         networkmap[network.name] = j.tools.async.wrappers.sync(job.execute())
     return networkmap
 
-
-def isConfigured(node, name):
-    poolname = '{}_fscache'.format(name)
-    fscache_sp = node.find_persistance(poolname)
-    if fscache_sp is None:
-        return False
-    return bool(fscache_sp.mountpoint)
-
-
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -110,6 +101,7 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import math
     import redis
+    print("*****************************")
 
     service = job.service
     config = get_configuration(service.aysrepo)
@@ -133,7 +125,7 @@ def monitor(job):
 
     if state:
         service.model.data.status = 'running'
-        configured = isConfigured(node, service.name)
+        configured = node.is_configured(service.name)
         if not configured:
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
@@ -238,6 +230,7 @@ def update_healthcheck(job, health_service, healthchecks):
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
     service = job.service
+    service.model.data.status = 'rebooting'
 
     # Check if statsdb is installed on this node and stop it
     statsdb_service = get_statsdb(service)

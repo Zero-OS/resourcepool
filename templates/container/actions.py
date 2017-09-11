@@ -204,10 +204,18 @@ def monitor(job):
 
     service = job.service
 
-    if service.model.actionsState['install'] == 'ok':
+    if service.model.actionsState['install'] == 'ok' and service.parent.model.data.status == 'running':
         container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo))
         running = container.is_running()
-        if not running and service.model.data.status == 'running':
+
+        if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
+            ovs_name = '{}_ovs'.format(container.node.name)
+            if ovs_name != service.name:
+                ovs_service = service.aysrepo.serviceGet(role='container', instance=ovs_name)
+                ovs_container = Container.from_ays(ovs_service, get_jwt_token(job.service.aysrepo))
+                if not ovs_container.is_running():
+                    job.logger.warning\
+                        ("Can't attempt to restart container {}, container {} is not running".format(service.name, ovs_name))
             try:
                 job.logger.warning("container {} not running, trying to restart".format(service.name))
                 service.model.dbobj.state = 'error'

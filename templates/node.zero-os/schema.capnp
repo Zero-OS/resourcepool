@@ -14,5 +14,6 @@ struct Schema {
     enum NodeStatus {
         running @0;
         halted @1;
+        rebooting @2;
     }
 }
