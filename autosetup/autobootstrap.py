@@ -89,10 +89,9 @@ class OrchestratorInstaller:
         self.tools = OrchestratorInstallerTools()
 
         self.node = None
-        self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-autosetup.flist"
+        self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-alpha-8.flist"
         self.ctname = None
         self.core_version = "master"
-        self.js_version = "9.1.0"
         self.templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
 
     def connector(self, remote, auth):
