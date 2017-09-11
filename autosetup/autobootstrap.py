@@ -220,7 +220,6 @@ class OrchestratorInstaller:
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
         print("[+] configuring upstream repository")
-
         repository = "/optvar/cockpit_repos/orchestrator-server"
 
         # upstream is empty, let create a new repository
@@ -238,6 +237,7 @@ class OrchestratorInstaller:
             cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial commit'").get()
 
         # moving upstream to target cockpit repository
+        cn.client.bash("rm -rf %s" % repository).get()
         cn.client.bash("mv /tmp/upstream %s" % repository).get()
 
         # authorizing host
