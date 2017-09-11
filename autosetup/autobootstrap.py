@@ -83,6 +83,19 @@ class OrchestratorInstallerTools:
         hostname = upstream.split("@")[1].split(":")[0]
         return {"host": hostname, "port": 22}
 
+    def waitsfor(self, cn, command):
+        self.progress()
+
+        while True:
+            self.progressing()
+            x = cn.client.bash(command).get()
+
+            if x.state == 'SUCCESS':
+                self.progressing(True)
+                return True
+
+        # waits until it's not done
+
 
 class OrchestratorInstaller:
     def __init__(self):
@@ -213,9 +226,17 @@ class OrchestratorInstaller:
         cn.client.bash("git config --global user.name 'AYS System'").get()
         cn.client.bash("git config --global user.email '%s'" % email).get()
 
-        print("[+] downloading upstream repository")
+        print("[+] preparing upstream repository")
         cn.client.filesystem.mkdir("/optvar/cockpit_repos")
-        cn.client.bash("git clone %s /tmp/upstream" % upstream).get()
+
+        host = self.tools.hostof(upstream)
+        print("[+] authorizing %s (port: %d)" % (host['host'], host['port']))
+        cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
+
+        print("[+] cloning upstream repository")
+        print("[+] (please ensure the host have access (allows public key ?) to upstream repository)")
+        self.tools.waitsfor(cn, "git clone %s /tmp/upstream" % upstream)
+
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
         print("[+] configuring upstream repository")
@@ -234,32 +255,19 @@ class OrchestratorInstaller:
             if not cn.client.filesystem.exists(target):
                 cn.client.bash("mkdir -p %s && touch %s/.keep" % (target, target)).get()
 
+        print("[+] commit initialization changes")
         cn.client.bash("touch /tmp/upstream/.ays").get()
         cn.client.bash("cd /tmp/upstream/ && git add .").get()
         cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial ays commit'").get()
 
+        print("[+] moving to orchestrator repository")
         # moving upstream to target cockpit repository, removing any previous one
         cn.client.bash("rm -rf %s" % repository).get()
         cn.client.bash("mv /tmp/upstream %s" % repository).get()
 
-        # authorizing host
-        host = self.tools.hostof(upstream)
-        cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
-
         print("[+] pushing git files to upstream")
-        print("[+] please ensure the public key is allowed on remote git repository")
-
-        self.tools.progress()
-        pushed = False
-
-        while not pushed:
-            self.tools.progressing()
-            x = cn.client.bash("cd %s && git push origin master" % repository).get()
-
-            if x.state == 'SUCCESS':
-                pushed = True
-
-        self.tools.progressing(True)
+        print("[+] (please ensure the public key is allowed on remote git repository)")
+        self.tools.waitsfor(cn, "cd %s && git push origin master" % repository)
 
         return True
 
@@ -493,10 +501,12 @@ class OrchestratorInstaller:
 
 if __name__ == "__main__":
     print("[+] initializing orchestrator bootstrapper")
+    installer = OrchestratorInstaller()
 
     parser = argparse.ArgumentParser(description='Manage Threefold Orchestrator')
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
     parser.add_argument('--password', type=str, help='password (jwt) used to connect the host')
+    parser.add_argument('--flist', type=str, help='flist container base image')
     parser.add_argument('--container', type=str, help='container deployment name', required=True)
     parser.add_argument('--domain', type=str, help='domain on which caddy should be listening, if not specified caddy will listen on port 80 and 443, but with self-signed certificate')
     parser.add_argument('--zt-net', type=str, help='zerotier network id of the container', required=True)
@@ -518,6 +528,9 @@ if __name__ == "__main__":
 
     if args.email == None:
         args.email = "info@gig.tech"
+
+    if args.flist:
+        installer.flist = args.flist
 
     if args.network not in ['g8', 'switchless', 'packet']:
         print("[-] network: invalid network type '%s'" % args.network)
@@ -542,6 +555,7 @@ if __name__ == "__main__":
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
     print("[+] zerotier network: %s" % args.zt_net)
+    print("[+] container flist : %s" % installer.flist)
     print("[+] container name  : %s" % args.container)
     print("[+] domain name     : %s" % args.domain)
     print("[+] upstream git    : %s" % args.upstream)
@@ -559,8 +573,6 @@ if __name__ == "__main__":
     print("[+] optional range  : %s" % args.network_cidr)
     print("[+] ---------------------------------------------------------------")
     print("[+]")
-
-    installer = OrchestratorInstaller()
 
     print("[+] initializing connection")
     node = installer.connector(args.server, args.password)
