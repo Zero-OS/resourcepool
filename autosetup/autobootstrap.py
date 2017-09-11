@@ -71,16 +71,17 @@ class OrchestratorInstallerTools:
 
     def hostof(self, upstream):
         # attempt ssh/url style
-        hostname = urlparse(upstream).hostname
-        if hostname is not None:
-            return hostname
+        url = urlparse(upstream)
+        if url.hostname is not None:
+            return {"host": url.hostname, "port": url.port}
 
         # fallback to git style
 
         # git@github.com:repository
         # -> ['git', 'github.com:repository']
         #        -> ['github.com', 'repository']
-        return upstream.split("@")[1].split(":")[0]
+        hostname = upstream.split("@")[1].split(":")[0]
+        return {"host": hostname, "port": 22}
 
 
 class OrchestratorInstaller:
@@ -241,8 +242,8 @@ class OrchestratorInstaller:
         cn.client.bash("mv /tmp/upstream /optvar/cockpit_repos/orchestrator-server").get()
 
         # authorizing host
-        hostname = self.tools.hostof(upstream)
-        cn.client.bash("ssh-keyscan %s >> ~/.ssh/known_hosts" % hostname).get()
+        host = self.tools.hostof(upstream)
+        cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
 
         repository = "/optvar/cockpit_repos/orchestrator-server"
         pushed = False
