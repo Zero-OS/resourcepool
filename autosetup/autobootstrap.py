@@ -9,9 +9,37 @@ import pytoml as toml
 from urllib.parse import urlparse
 from zeroos.orchestrator.sal.Node import Node
 
-class OrchestratorInstallerTools:
+class OrchestratorSSHTools:
     def __init__(self):
         pass
+
+    def localkeys(self):
+        """
+        returns local ssh public keys available and loaded
+        """
+        process = subprocess.run(["ssh-add", "-L"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # avoid empty agent
+        if process.returncode != 0:
+            return ""
+
+        return process.stdout
+
+    def loadkey(self, filename):
+        with open(filename, "r") as f:
+            sshkey = f.read()
+
+        return sshkey
+
+    def validkey(self, key):
+        return key.startswith("-----BEGIN RSA PRIVATE KEY-----")
+
+    def encryptedkey(self, key):
+        # this is not enough for new version but already a good point
+        return (",ENCRYPTED" in key)
+
+class OrchestratorInstallerTools:
+    def __init__(self):
+        self.ssh = OrchestratorSSHTools()
 
     def generatetoken(self, clientid, clientsecret, organization=None, validity=None):
         params = {
@@ -96,7 +124,6 @@ class OrchestratorInstallerTools:
 
         # waits until it's not done
 
-
 class OrchestratorInstaller:
     def __init__(self):
         self.tools = OrchestratorInstallerTools()
@@ -128,7 +155,7 @@ class OrchestratorInstaller:
 
         return node
 
-    def prepare(self, ctname, ztnetwork):
+    def prepare(self, ctname, ztnetwork, sshkey):
         """
         node: connected node object
         ctname: container name
@@ -169,12 +196,14 @@ class OrchestratorInstaller:
         cn.client.bash('/etc/init.d/ssh start').get()
 
         print("[+] allowing local ssh key")
-        keys = subprocess.run(["ssh-add", "-L"], stdout=subprocess.PIPE)
-        strkeys = keys.stdout.decode('utf-8')
+        localkeys = self.tools.ssh.localkeys()
+        if localkeys != "":
+            fd = cn.client.filesystem.open("/root/.ssh/authorized_keys", "w")
+            cn.client.filesystem.write(fd, localkeys)
+            cn.client.filesystem.close(fd)
 
-        fd = cn.client.filesystem.open("/root/.ssh/authorized_keys", "w")
-        cn.client.filesystem.write(fd, strkeys.encode('utf-8'))
-        cn.client.filesystem.close(fd)
+        else:
+            print("[-] warning: no local ssh public key found, nothing added")
 
         # make sure the enviroment is also set in bashrc for when ssh is used
         print("[+] setting environment variables")
@@ -187,8 +216,20 @@ class OrchestratorInstaller:
         print("[+] waiting for zerotier")
         containeraddr = self.tools.containerzt(cn)
 
-        print("[+] generating ssh keys")
-        cn.client.bash("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
+        if sshkey:
+            print("[+] writing ssh private key")
+            fd = cn.client.filesystem.open("/root/.ssh/id_rsa", "w")
+            cn.client.filesystem.write(fd, sshkey.encode('utf-8'))
+            cn.client.filesystem.close(fd)
+
+            # extracting public key from private key
+            cn.client.bash("chmod 0600 /root/.ssh/id_rsa").get()
+            cn.client.bash("ssh-keygen -y -f /root/.ssh/id_rsa > /root/.ssh/id_rsa.pub").get()
+
+        else:
+            print("[+] no private ssh key provided, generating new keys")
+            cn.client.bash("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
+
         publickey = cn.client.bash("cat /root/.ssh/id_rsa.pub").get()
 
         return {'address': containeraddr, 'publickey': publickey.stdout.strip()}
@@ -502,6 +543,7 @@ class OrchestratorInstaller:
 if __name__ == "__main__":
     print("[+] initializing orchestrator bootstrapper")
     installer = OrchestratorInstaller()
+    warning = False
 
     parser = argparse.ArgumentParser(description='Manage Threefold Orchestrator')
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
@@ -515,6 +557,7 @@ if __name__ == "__main__":
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
     parser.add_argument('--client-id', type=str, help='itsyou.online client-id for jwt-token', required=True)
     parser.add_argument('--client-secret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
+    parser.add_argument('--ssh-key', type=str, help='ssh private key filename (need to be passphrase less')
     parser.add_argument('--network', type=str, help='network type: g8, switchless, packet', required=True)
     parser.add_argument('--network-vlan', type=str, help='g8/switchless only: vlan id')
     parser.add_argument('--network-cidr', type=str, help='g8/switchless only: cidr address')
@@ -533,30 +576,49 @@ if __name__ == "__main__":
         installer.flist = args.flist
 
     if args.network not in ['g8', 'switchless', 'packet']:
-        print("[-] network: invalid network type '%s'" % args.network)
+        print("[-] error: network: invalid network type '%s'" % args.network)
         sys.exit(1)
 
     if args.network in ['g8', 'switchless']:
         if not args.network_vlan or not args.network_cidr:
-            print("[-] network %s: vlan and cird required" % args.network)
+            print("[-] error: network %s: vlan and cird required" % args.network)
             sys.exit(1)
 
     if not args.stor_organization or not args.stor_namespace or not args.stor_client_id or not args.stor_client_secret:
-        print("[-] ===============================================================")
-        print("[-] stor 0-stor values not fully explicitly specified")
-        print("[-] some of them will be set implicitly")
-        print("[-] ===============================================================")
+        print("[-] warning: 0-stor: values not fully explicitly specified")
+        print("[-] warning: 0-stor: some of them will be set implicitly")
+
+    if installer.tools.ssh.localkeys() == "" and not args.ssh_key:
+        print("[-] error: ssh-agent: no keys found on ssh-agent and")
+        print("[-] error: ssh-agent: no ssh private key specified")
+        print("[-] error: ssh-agent: you need at least one of them")
+        sys.exit(1)
+
+    sshkey = None
+    if args.ssh_key:
+        sshkey = installer.tools.ssh.loadkey(args.ssh_key)
+
+        if not installer.tools.ssh.validkey(sshkey):
+            print("[-] error: ssh-key: invalid ssh key file")
+            sys.exit(1)
+
+        if installer.tools.ssh.encryptedkey(sshkey):
+            print("[-] error: ssh-key: private key encrypted")
+            print("[-] error: ssh-key: you need to provided a passphrase-less key")
+            sys.exit(1)
 
     stor_organization = args.stor_organization if args.stor_organization else args.organization
     stor_namespace = args.stor_namespace if args.stor_namespace else "namespace"
     stor_clientid = args.stor_client_id if args.stor_client_id else args.client_id
     stor_clientsecret = args.stor_client_secret if args.stor_client_secret else args.client_secret
 
+    print("[+] ===============================================================")
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
     print("[+] zerotier network: %s" % args.zt_net)
     print("[+] container flist : %s" % installer.flist)
     print("[+] container name  : %s" % args.container)
+    print("[+] ssh private key : %s" % args.ssh_key)
     print("[+] domain name     : %s" % args.domain)
     print("[+] upstream git    : %s" % args.upstream)
     print("[+] global email    : %s" % args.email)
@@ -571,7 +633,7 @@ if __name__ == "__main__":
     print("[+] network type    : %s" % args.network)
     print("[+] optional vlan id: %s" % args.network_vlan)
     print("[+] optional range  : %s" % args.network_cidr)
-    print("[+] ---------------------------------------------------------------")
+    print("[+] ===============================================================")
     print("[+]")
 
     print("[+] initializing connection")
@@ -581,7 +643,7 @@ if __name__ == "__main__":
     installer.pre_prepare()
 
     print("[+] hook: prepare")
-    prepared = installer.prepare(args.container, args.zt_net)
+    prepared = installer.prepare(args.container, args.zt_net, sshkey)
 
     print("[+] ==================================================")
     print("[+] container address: %s" % prepared['address'])
