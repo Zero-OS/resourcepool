@@ -42,11 +42,8 @@ def get_jwt_token(ays_repo):
 
         if token['exp'] > time.time() + 3600:
             raise RuntimeError('Invalid jwt-token expiration time is too long should be less than 3600 sec')
-
     except jose.exceptions.ExpiredSignatureError:
         jwt_token = refresh_jwt_token(jwt_token)
-    except Exception:
-        raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
     for config in service.model.data.configurations:
         if config.key == 'jwt-token':
