@@ -14,6 +14,7 @@ def input(job):
 
 def validate_configs(configs):
     import jose
+    import jose.jwt
 
     configurations = {conf['key']: conf['value'] for conf in configs}
     js_version = configurations.get('js-version')
