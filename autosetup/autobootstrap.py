@@ -286,7 +286,7 @@ class OrchestratorInstaller:
         cn = self.node.containers.get(self.ctname)
 
         print("[+] requesting jwt token for ays")
-        token = self.tools.generatetoken(cid, csecret, organization)
+        token = self.tools.generatetoken(cid, csecret, organization, 3600)
 
         #
         # configuration.bp
