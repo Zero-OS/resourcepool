@@ -157,7 +157,7 @@ class TestcontaineridAPI(TestcasesBase):
         core0_res = self.core0_client.client.bash('ls -alh | grep dev').get().stdout
         self.assertNotEqual(core0_res.split()[7], cont_res.split()[7])
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test006_create_container_with_bridge(self):
         """ GAT-087
         *Test case for create containers with same bridge and make sure they can connect to each other *
@@ -185,10 +185,10 @@ class TestcontaineridAPI(TestcasesBase):
         response_cont_1, data_cont_1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_cont_1.status_code, 201, " [*] Can't create new container.")
         self.created['container'].append(data_cont_1['name'])
-
         response_cont_2, data_cont_2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_cont_2.status_code, 201, " [*] Can't create new container.")
         self.created['container'].append(data_cont_2['name'])
+        time.sleep(15)
 
         self.lg.info("Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_cont_1['name'])
@@ -196,17 +196,18 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info("Check that two containers get ip and they are in bridge range, should succeed ")
         C1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range)
+        self.assertTrue(C1_br_ip, 'No ip found')
         C2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range)
+        self.assertTrue(C1_br_ip, 'No ip found')
         self.assertNotEqual(C2_br_ip, C1_br_ip)
 
         self.lg.info("Check if first container (c1) can ping second container (c2), should succeed.")
-        time.sleep(10)
-        for i in range(5):
-            response = c1_client.bash('ping -w5 %s' % C2_br_ip).get()
+        for i in range(2):
+            response = c1_client.bash('ping -w5 %s' % C2_br_ip).get(40)
             if response.state == 'SUCCESS':
                 break
             time.sleep(5)
-        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.state, 'SUCCESS', response.payload)
 
         self.lg.info("Check if second container (c2) can ping first container (c1), should succeed.")
         response = c2_client.bash('ping -w5 %s' % C1_br_ip).get()
@@ -221,6 +222,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Check if third container (c3) can ping first container (c1), should fail.")
         response = C3_client.bash('ping -w5 %s' % C1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
+
 
     def test007_create_containers_with_diff_bridges(self):
         """ GAT-088
@@ -249,7 +251,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201, response.content)
         time.sleep(3)
         self.created['bridge'].append(data_bridge_2['name'])
-        ip_range2 = [data_bridge_1['setting']['start'], data_bridge_2['setting']['end']]
+        ip_range2 = [data_bridge_2['setting']['start'], data_bridge_2['setting']['end']]
 
         self.lg.info(' [*] Create container(C1) with (B1), should succeed.')
         nics1 = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"dhcp": True}, "status": "up"}]
@@ -262,6 +264,7 @@ class TestcontaineridAPI(TestcasesBase):
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics2)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
+        time.sleep(15)
 
         self.lg.info(" [*] Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_c1['name'])
@@ -269,7 +272,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] Check that two containers get ip and they are in bridge range, should succeed ")
         c1_br_ip = self.core0_client.get_container_bridge_ip(c1_client, ip_range1)
+        self.assertTrue(c1_br_ip, "No IP Found")
         c2_br_ip = self.core0_client.get_container_bridge_ip(c2_client, ip_range2)
+        self.assertTrue(c2_br_ip, "No IP Found")
 
         self.lg.info(" [*] Check if first container (c1) can ping second container (c2), should fail.")
         response = c1_client.bash('ping -w5 %s' % c2_br_ip).get()
@@ -279,7 +284,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash('ping -w5 %s' % c1_br_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test008_Create_container_with_zerotier_network(self):
         """ GAT-089
         *Test case for create containers with same zerotier network *
@@ -305,26 +310,26 @@ class TestcontaineridAPI(TestcasesBase):
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
+        time.sleep(20)
 
         self.lg.info(" [*] Get two containers client c1_client and c2_client .")
         c1_client = self.core0_client.get_container_client(data_c1['name'])
         c2_client = self.core0_client.get_container_client(data_c2['name'])
 
-        time.sleep(15)
-
         self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
         c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
-        self.assertTrue(c1_zt_ip)
+        self.assertTrue(c1_zt_ip, "No IP Found")
         c2_zt_ip = self.core0_client.get_client_zt_ip(c2_client)
-        self.assertTrue(c2_zt_ip)
+        self.assertTrue(c2_zt_ip, "No IP Found")
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
-        for i in range(5):
+        for i in range(2):
             time.sleep(5)
-            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
+            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get(40)
             if response.state == "SUCCESS":
                 break
-        self.assertEqual(response.state, "SUCCESS")
+        self.assertEqual(response.state, "SUCCESS", response.payload)
+
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
         response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
         self.assertEqual(response.state, "SUCCESS")
@@ -409,7 +414,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash("ls | grep %s" % file_name).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test011_create_containers_with_open_ports(self):
         """ GAT-096
 
@@ -452,21 +457,21 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.state, "SUCCESS")
         c1_client.bash("cd %s && python3 -m http.server %i" % (file_name, containerport))
 
-        time.sleep(5)
+        time.sleep(10)
 
         self.lg.info("Check that portforward work,should succeed")
-        for i in range(5):
-            response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get()
+        for i in range(2):
+            response = c1_client.bash("netstat -nlapt | grep %i" % containerport).get(40)
             if response.state == 'SUCCESS':
                 break
             time.sleep(5)
-        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.state, 'SUCCESS', response.payload)
         url = 'http://{0}:{1}/{2}.text'.format(self.nodeip, hostport, file_name)
         response = urlopen(url)
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-
+    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
     def test012_attach_different_nics_to_same_container(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
@@ -482,6 +487,7 @@ class TestcontaineridAPI(TestcasesBase):
         #. Attach Both B1 and B2, should succeed
 
         """
+        time.sleep(540)
         self.lg.info('Create container without nic, should succeed')
         self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, nics=[])
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
