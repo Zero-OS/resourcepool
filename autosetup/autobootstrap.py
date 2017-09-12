@@ -83,16 +83,28 @@ class OrchestratorInstallerTools:
         hostname = upstream.split("@")[1].split(":")[0]
         return {"host": hostname, "port": 22}
 
+    def waitsfor(self, cn, command):
+        self.progress()
+
+        while True:
+            self.progressing()
+            x = cn.client.bash(command).get()
+
+            if x.state == 'SUCCESS':
+                self.progressing(True)
+                return True
+
+        # waits until it's not done
+
 
 class OrchestratorInstaller:
     def __init__(self):
         self.tools = OrchestratorInstallerTools()
 
         self.node = None
-        self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-autosetup.flist"
+        self.flist = "https://hub.gig.tech/maxux/0-orchestrator-full-alpha-8.flist"
         self.ctname = None
         self.core_version = "master"
-        self.js_version = "9.1.0"
         self.templates = "/opt/code/github/zero-os/0-orchestrator/autosetup/templates"
 
     def connector(self, remote, auth):
@@ -214,52 +226,48 @@ class OrchestratorInstaller:
         cn.client.bash("git config --global user.name 'AYS System'").get()
         cn.client.bash("git config --global user.email '%s'" % email).get()
 
-        print("[+] downloading upstream repository")
+        print("[+] preparing upstream repository")
         cn.client.filesystem.mkdir("/optvar/cockpit_repos")
-        cn.client.bash("git clone %s /tmp/upstream" % upstream).get()
+
+        host = self.tools.hostof(upstream)
+        print("[+] authorizing %s (port: %d)" % (host['host'], host['port']))
+        cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
+
+        print("[+] cloning upstream repository")
+        print("[+] (please ensure the host have access (allows public key ?) to upstream repository)")
+        self.tools.waitsfor(cn, "git clone %s /tmp/upstream" % upstream)
+
         resp = cn.client.bash("cd /tmp/upstream && git rev-parse HEAD").get()
 
         print("[+] configuring upstream repository")
+        repository = "/optvar/cockpit_repos/orchestrator-server"
 
         # upstream is empty, let create a new repository
         if resp.code != 0:
-            cn.client.filesystem.mkdir("/tmp/upstream/services")
-            cn.client.filesystem.mkdir("/tmp/upstream/actorTemplates")
-            cn.client.filesystem.mkdir("/tmp/upstream/actors")
-            cn.client.filesystem.mkdir("/tmp/upstream/blueprints")
-
-            cn.client.bash("touch /tmp/upstream/.ays").get()
+            print("[+] git repository is empty, creating empty repository")
             cn.client.bash("cd /tmp/upstream/ && git init").get()
             cn.client.bash("cd /tmp/upstream/ && git remote add origin %s" % upstream).get()
-            cn.client.bash("cd /tmp/upstream/ && git add .").get()
-            cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial commit'").get()
-            # cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
 
-            # this may need ssh agent.
-            cn.client.bash("cd /tmp/upstream/ && git push origin master").get()
+        print("[+] ensure ays repository default layout")
+        for directory in ["services", "actorTemplates", "actors", "blueprints"]:
+            target = "/tmp/upstream/%s" % directory
 
-        # moving upstream to target cockpit repository
-        cn.client.bash("mv /tmp/upstream /optvar/cockpit_repos/orchestrator-server").get()
+            if not cn.client.filesystem.exists(target):
+                cn.client.bash("mkdir -p %s && touch %s/.keep" % (target, target)).get()
 
-        # authorizing host
-        host = self.tools.hostof(upstream)
-        cn.client.bash("ssh-keyscan -p %d %s >> ~/.ssh/known_hosts" % (host['port'], host['host'])).get()
+        print("[+] commit initialization changes")
+        cn.client.bash("touch /tmp/upstream/.ays").get()
+        cn.client.bash("cd /tmp/upstream/ && git add .").get()
+        cn.client.bash("cd /tmp/upstream/ && git commit -m 'Initial ays commit'").get()
 
-        repository = "/optvar/cockpit_repos/orchestrator-server"
-        pushed = False
+        print("[+] moving to orchestrator repository")
+        # moving upstream to target cockpit repository, removing any previous one
+        cn.client.bash("rm -rf %s" % repository).get()
+        cn.client.bash("mv /tmp/upstream %s" % repository).get()
 
         print("[+] pushing git files to upstream")
-        print("[+] please ensure the public key is allowed on remote git repository")
-        self.tools.progress()
-
-        while not pushed:
-            self.tools.progressing()
-            x = cn.client.bash("cd %s && git push origin master" % repository).get()
-
-            if x.state == 'SUCCESS':
-                pushed = True
-
-        self.tools.progressing(True)
+        print("[+] (please ensure the public key is allowed on remote git repository)")
+        self.tools.waitsfor(cn, "cd %s && git push origin master" % repository)
 
         return True
 
@@ -329,13 +337,19 @@ class OrchestratorInstaller:
         # network.bp
         #
         print("[+] building network blueprint")
+        targets = {
+            'g8': 'zero-os',
+            'switchless': 'switchless'
+        }
 
         source = cn.client.bash("cat %s/network-%s.yaml" % (self.templates, network)).get()
         netconfig = yaml.load(source.stdout)
 
         if network in ['g8', 'switchless']:
-            netconfig['network.%s__storage' % network]['vlanTag'] = int(vlan)
-            netconfig['network.%s__storage' % network]['cidr'] = cidr
+            key = 'network.%s__storage' % targets[network]
+
+            netconfig[key]['vlanTag'] = int(vlan)
+            netconfig[key]['cidr'] = cidr
 
         if network in ['packet']:
             # there is nothing to do, but we keep the code
@@ -487,10 +501,12 @@ class OrchestratorInstaller:
 
 if __name__ == "__main__":
     print("[+] initializing orchestrator bootstrapper")
+    installer = OrchestratorInstaller()
 
     parser = argparse.ArgumentParser(description='Manage Threefold Orchestrator')
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
     parser.add_argument('--password', type=str, help='password (jwt) used to connect the host')
+    parser.add_argument('--flist', type=str, help='flist container base image')
     parser.add_argument('--container', type=str, help='container deployment name', required=True)
     parser.add_argument('--domain', type=str, help='domain on which caddy should be listening, if not specified caddy will listen on port 80 and 443, but with self-signed certificate')
     parser.add_argument('--zt-net', type=str, help='zerotier network id of the container', required=True)
@@ -512,6 +528,9 @@ if __name__ == "__main__":
 
     if args.email == None:
         args.email = "info@gig.tech"
+
+    if args.flist:
+        installer.flist = args.flist
 
     if args.network not in ['g8', 'switchless', 'packet']:
         print("[-] network: invalid network type '%s'" % args.network)
@@ -536,6 +555,7 @@ if __name__ == "__main__":
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
     print("[+] zerotier network: %s" % args.zt_net)
+    print("[+] container flist : %s" % installer.flist)
     print("[+] container name  : %s" % args.container)
     print("[+] domain name     : %s" % args.domain)
     print("[+] upstream git    : %s" % args.upstream)
@@ -553,8 +573,6 @@ if __name__ == "__main__":
     print("[+] optional range  : %s" % args.network_cidr)
     print("[+] ---------------------------------------------------------------")
     print("[+]")
-
-    installer = OrchestratorInstaller()
 
     print("[+] initializing connection")
     node = installer.connector(args.server, args.password)
