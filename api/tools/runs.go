@@ -3,6 +3,8 @@ package tools
 import (
 	"fmt"
 	"net/http"
+
+	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 )
 
 type Run struct {
@@ -32,17 +34,38 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		WriteError(w, resp.StatusCode, err, "Error getting run")
 		return Run{}, err
 	}
+
 	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
 	if err != nil {
-		httpErr, ok := err.(HTTPError)
-		errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
-		if ok {
-			WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
-		} else {
+		_, ok := err.(HTTPError)
+		if !ok {
+			errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
 			WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
-		return Run{}, err
 	}
+
+	var jobErr error
+	var job ays.Job
+	for _, step := range runstatus.Steps {
+		if len(step.Jobs) > 0 {
+			job, jobErr = aysClient.WaitJobDone(step.Jobs[0].Key, api.AysRepoName())
+			if jobErr != nil {
+				break
+			}
+		}
+	}
+	if jobErr != nil {
+		httpErr, ok := jobErr.(HTTPError)
+		if ok {
+			fmt.Println(httpErr.Resp.StatusCode)
+			WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+		} else {
+			errmsg := fmt.Sprintf("error waiting on job %s", job.Key)
+			WriteError(w, http.StatusInternalServerError, err, errmsg)
+		}
+		return Run{}, jobErr
+	}
+
 	if EnumRunState(runstatus.State) != EnumRunStateok {
 		err = fmt.Errorf("Internal Server Error")
 		WriteError(w, http.StatusInternalServerError, err, "")

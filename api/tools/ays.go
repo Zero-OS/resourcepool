@@ -122,8 +122,8 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 
 	if job.State == "error" {
 		err := AYSError{}
-		if err := json.Unmarshal([]byte(job.Result), &err); err != nil {
-			return job, err
+		if jsonErr := json.Unmarshal([]byte(job.Result), &err); jsonErr != nil {
+			return job, jsonErr
 		}
 
 		err.err = fmt.Errorf(err.Message)
@@ -134,6 +134,7 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 			Resp: &errResp,
 			err:  err.err,
 		}
+		fmt.Println(httperror)
 		return job, httperror
 	}
 	return job, nil
@@ -227,16 +228,16 @@ func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) e
 func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	run, resp, err := aystool.Ays.GetRun(runid, repoName, nil, nil)
 	if err != nil {
-		return nil, NewHTTPError(resp, err.Error())
+		return &run, NewHTTPError(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewHTTPError(resp, resp.Status)
+		return &run, NewHTTPError(resp, resp.Status)
 	}
 
 	if err = aystool.checkRun(run); err != nil {
 		resp.StatusCode = http.StatusInternalServerError
-		return nil, NewHTTPError(resp, err.Error())
+		return &run, NewHTTPError(resp, err.Error())
 	}
 	return &run, nil
 }

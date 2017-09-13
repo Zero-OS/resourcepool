@@ -209,6 +209,8 @@ def format_media_nics(job, medias):
 
 def install(job):
     import time
+    from zeroos.core0.client.client import ResultError
+    from zeroos.orchestrator.utils import Write_Status_code_Error
     service = job.service
     node = get_node(job)
 
@@ -222,13 +224,20 @@ def install(job):
 
     kvm = get_domain(job)
     if not kvm:
-        node.client.kvm.create(
-            service.name,
-            media=media,
-            cpu=service.model.data.cpu,
-            memory=service.model.data.memory,
-            nics=nics,
-        )
+        try:
+            node.client.kvm.create(
+                service.name,
+                media=media,
+                cpu=service.model.data.cpu,
+                memory=service.model.data.memory,
+                nics=nics,
+            )
+        except ResultError as e:
+            Write_Status_code_Error(job, e)
+            cleanupzerodisk(job)
+            service.saveAll()
+            raise j.exceptions.Input(str(e))
+        
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
@@ -244,6 +253,7 @@ def install(job):
                 time.sleep(3)
         else:
             service.model.data.status = 'error'
+            cleanupzerodisk(job)
             raise j.exceptions.RuntimeError("Failed to start vm {}".format(service.name))
     service.model.data.status = 'running'
     service.saveAll()
