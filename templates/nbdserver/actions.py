@@ -3,7 +3,7 @@ from js9 import j
 
 def get_container(service, password):
     from zeroos.orchestrator.sal.Container import Container
-    return Container.from_ays(service.parent, password)
+    return Container.from_ays(service.parent, password, logger=service.logger)
 
 
 def is_job_running(container, cmd='/bin/nbdserver', socket=None):

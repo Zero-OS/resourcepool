@@ -36,7 +36,7 @@ def start(job):
     service = job.service
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     influx = InfluxDB(
         container_ays, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
@@ -52,7 +52,7 @@ def stop(job):
 
     service = job.service
     container = get_container(service)
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
 
     if container_ays.is_running():
         influx = InfluxDB(
@@ -86,7 +86,7 @@ def processChange(job):
 
     container_service = get_container(service)
 
-    container = Container.from_ays(container_service, get_jwt_token_from_job(job))
+    container = Container.from_ays(container_service, get_jwt_token_from_job(job), logger=service.logger)
     influx = InfluxDB(
         container, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
