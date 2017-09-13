@@ -24,14 +24,11 @@ class StorageCluster:
         self.data_shards = 0
         self.parity_shards = 0
         self._ays = None
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     @classmethod
     def from_ays(cls, service, password, logger=None):
-        if not logger:
-            logger = default_logger
+        logger = logger or default_logger
         logger.debug("load cluster storage cluster from service (%s)", service)
         disk_type = str(service.model.data.diskType)
 
@@ -156,9 +153,7 @@ class StorageServer:
         self.cluster = cluster
         self.container = None
         self.storageEngine = None
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     @classmethod
     def from_ays(cls, storageEngine_services, password=None, logger=None):
@@ -217,9 +212,7 @@ class StorageDashboard:
     def __init__(self, cluster, logger=None):
         self.cluster = cluster
         self.store = 'statsdb'
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     def build_templating(self):
         templating = {

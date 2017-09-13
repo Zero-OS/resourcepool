@@ -15,14 +15,11 @@ class EtcdCluster:
         self.dialstrings = dialstrings
         self.mgmtdialstrings = mgmtdialstrings
         self._ays = None
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     @classmethod
     def from_ays(cls, service, password=None, logger=None):
-        if not logger:
-            logger = default_logger
+        logger = logger or default_logger
         logger.debug("create storageEngine from service (%s)", service)
 
         dialstrings = set()
@@ -70,14 +67,11 @@ class ETCD:
         self.peers = ",".join(peers)
         self._ays = None
         self._password = None
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     @classmethod
     def from_ays(cls, service, password=None, logger=None):
-        if not logger:
-            logger = default_logger
+        logger = logger or default_logger
         logger.debug("create storageEngine from service (%s)", service)
         from .Container import Container
         container = Container.from_ays(service.parent, password, logger=service.logger)

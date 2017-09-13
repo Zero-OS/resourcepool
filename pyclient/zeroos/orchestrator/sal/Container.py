@@ -8,9 +8,7 @@ default_logger = logging.getLogger(__name__)
 class Containers:
     def __init__(self, node, logger=None):
         self.node = node
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
     def list(self):
         containers = []
@@ -63,9 +61,7 @@ class Container:
         self.privileged = privileged
         self.identity = identity
         self.env = env or {}
-        self.logger = default_logger
-        if logger:
-            self.logger = logger
+        self.logger = logger if logger else default_logger
 
         self._ays = None
         for nic in self.nics:
@@ -75,8 +71,7 @@ class Container:
 
     @classmethod
     def from_containerinfo(cls, containerinfo, node, logger=None):
-        if not logger:
-            logger = default_logger
+        logger = logger or default_logger
         logger.debug("create container from info")
 
         arguments = containerinfo['container']['arguments']
@@ -99,8 +94,7 @@ class Container:
 
     @classmethod
     def from_ays(cls, service, password=None, logger=None):
-        if not logger:
-            logger = default_logger
+        logger = logger or default_logger
         logger.debug("create container from service (%s)", service)
         from .Node import Node
         node = Node.from_ays(service.parent, password)
