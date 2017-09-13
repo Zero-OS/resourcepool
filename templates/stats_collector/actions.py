@@ -40,7 +40,7 @@ def start(job):
     service = job.service
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     stats_collector = StatsCollector(
         container_ays, service.model.data.ip,
         service.model.data.port, service.model.data.db,
@@ -56,7 +56,7 @@ def stop(job):
 
     service = job.service
     container = get_container(service)
-    container_ays = Container.from_ays(container, job.context['token'])
+    container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
 
     if container_ays.is_running():
         stats_collector = StatsCollector(
@@ -89,7 +89,7 @@ def processChange(job):
         return
 
     token = get_jwt_token_from_job(job)
-    container = Container.from_ays(get_container(job.service), token)
+    container = Container.from_ays(get_container(job.service), token, logger=service.logger)
 
     if args.get('ip'):
         service.model.data.ip = args['ip']
