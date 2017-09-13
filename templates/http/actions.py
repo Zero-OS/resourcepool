@@ -9,7 +9,7 @@ def apply_rules(job, httpproxies=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.http import HTTPServer
 
-    container = Container.from_ays(job.service.parent, job.context['token'])
+    container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
 
     httpproxies = [] if httpproxies is None else httpproxies
 
