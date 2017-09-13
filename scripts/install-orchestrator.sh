@@ -157,12 +157,10 @@ echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
 if [ -n "${ITSYOUONLINEORG}" ]; then
-    if [ ! -d /optvar/cfg/ ]; then
-        mkdir /optvar/cfg/
-    fi
-    if ! grep -q ays.oauth /optvar/cfg/jumpscale9.toml ; then
+    conf_path=$(js9 'print(j.core.state.configPath)')
+    if ! grep -q ays.oauth $conf_path ; then
 
-       cat >>  /optvar/cfg/jumpscale9.toml << EOL
+       cat >>  $conf_path << EOL
 [ays]
 production = true
 
@@ -177,10 +175,10 @@ echo '#!/bin/bash -x' > ${aysinit}
 echo 'ays start > /dev/null 2>&1' >> ${aysinit}
 
 chmod +x ${aysinit} >> ${logfile} 2>&1
-
-if [ ! -d /optvar/cockpit_repos/orchestrator-server ]; then
-    mkdir -p /optvar/cockpit_repos/orchestrator-server >> ${logfile} 2>&1
-    pushd /optvar/cockpit_repos/orchestrator-server
+ays_repos_dir=$(js9 "print(j.dirs.VARDIR + '/cockpit_repos')")
+if [ ! -d $ays_repos_dir/orchestrator-server ]; then
+    mkdir -p $ays_repos_dir/orchestrator-server >> ${logfile} 2>&1
+    pushd $ays_repos_dir/orchestrator-server
     mkdir services >> ${logfile} 2>&1
     mkdir actorTemplates >> ${logfile} 2>&1
     mkdir actors >> ${logfile} 2>&1
@@ -197,14 +195,14 @@ echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
 echo "[+] Building orchestrator api server"
-mkdir -p /opt/jumpscale9/go/proj/src/github.com >> ${logfile} 2>&1
-if [ ! -d /opt/jumpscale9/go/proj/src/github.com/zero-os ]; then
-    ln -sf ${CODEDIR}/github/zero-os /opt/jumpscale9/go/proj/src/github.com/zero-os >> ${logfile} 2>&1
-fi
-export GOPATH=/opt/jumpscale9/go/proj
-export GOROOT=/opt/jumpscale9/go/root
+export GOPATH=$(js9 "print(j.tools.prefab.local.development.golang.GOPATHDIR)")
+export GOROOT=$(js9 "print(j.tools.prefab.local.development.golang.GOROOTDIR)")
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-cd /opt/jumpscale9/go/proj/src/github.com/zero-os/0-orchestrator/api
+mkdir -p $GOPATH/src/github.com >> ${logfile} 2>&1
+if [ ! -d $GOPATH/src/github.com/zero-os ]; then
+    ln -sf ${CODEDIR}/github/zero-os $GOPATH/src/github.com/zero-os >> ${logfile} 2>&1
+fi
+cd $GOPATH/src/github.com/zero-os/0-orchestrator/api
 go get -u github.com/jteeuwen/go-bindata/... >> ${logfile} 2>&1
 go generate >> ${logfile} 2>&1
 go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
@@ -264,9 +262,9 @@ chmod +x ${orchinit} >> ${logfile} 2>&1
 bash $orchinit >> ${logfile} 2>&1
 
 echo "[+] Deploying bootstrap service"
-echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp
+echo -e "bootstrap.zero-os__grid1:\n  zerotierNetID: '"${ZEROTIERNWID}"'\n  zerotierToken: '"${ZEROTIERTOKEN}"'\n\nactions:\n  - action: install\n" > $ays_repos_dir/orchestrator-server/blueprints/bootstrap.bp
 
 echo "Your ays server is nearly ready to bootstrap nodes into your zerotier network."
-echo "Create a JWT token from the AYS CLI and execute the bootstrap blueprint in your AYS repository located at '/optvar/cockpit_repos/orchestrator-server'"
+echo "Create a JWT token from the AYS CLI and execute the bootstrap blueprint in your AYS repository located at $ays_repos_dir/orchestrator-server"
 echo "Please continue instructions at https://github.com/zero-os/0-orchestrator/tree/master/docs/setup#setup-the-ays-configuration-service"
 echo "Enjoy your orchestrator api server: $PUB"
