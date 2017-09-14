@@ -130,6 +130,8 @@ def processChange(job):
 
 def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.core0.client.client import ResultError
     import json
 
     service = job.service
@@ -181,12 +183,8 @@ def update(job, updated_nics):
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
             try:
                 cl.nic_add(container.id, nic_dict)
-            except RuntimeError as e:
-                if len(e.args) < 2:
-                    raise e
-                core_job = e.args[1]
-                if 499 >= core_job.code >= 400:
-                    job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+            except ResultError as e:
+                Write_Status_code_Error(job, e)
                 service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))
