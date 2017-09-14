@@ -101,7 +101,7 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import math
     import redis
-    print("*****************************")
+    import time
 
     service = job.service
     config = get_configuration(service.aysrepo)
@@ -115,12 +115,20 @@ def monitor(job):
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
         service.consume(healthcheck_service)
 
-    try:
-        node = Node.from_ays(service, token, timeout=15)
-        node.client.testConnectionAttempts = 0
-        state = node.client.ping()
-    except (RuntimeError, ConnectionError, redis.TimeoutError):
-        state = False
+    start = time.time()
+    while time.time() < start + 30:
+        try:
+            node = Node.from_ays(service, token, timeout=5)
+            node.client.testConnectionAttempts = 0
+            state = node.client.ping()
+        except (RuntimeError, ConnectionError, redis.TimeoutError) as error:
+            state = False
+        if state:
+            break
+        time.sleep(1)
+    else:
+        print("Could not ping %s within 30 seconds due to %s" % (service.name, error))
+
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
 
     if state:
@@ -166,26 +174,6 @@ def monitor(job):
             update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
             update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
-        # check each node with the rest of the nodes
-        relatives = list()
-        nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
-        nodes.sort(key=lambda n: hash(n.model.data.redisAddr))
-        count = min(len(nodes) - 1, int(math.log(len(nodes)) + 1))
-        for i, n in enumerate(nodes + nodes):
-            if n.model.key == service.model.key and n.model.data.status == 'running':
-                for n in (nodes + nodes)[i+1:i+1+count]:
-                    if n.model.data.status == 'running':
-                        try:
-                            node_sal = Node.from_ays(n, token, timeout=15)
-                        except (RuntimeError, ConnectionError, redis.TimeoutError):
-                            n.model.data.status = 'halted'
-                            n.saveAll()
-                            continue
-                        relatives.append(node_sal)
-                break
-        else:
-            raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
-        update_healthcheck(job, healthcheck_service, node.healthcheck.network_stability(relatives))
     else:
         service.model.data.status = 'halted'
         nodestatus.add_message('node', 'ERROR', 'Node is halted')
