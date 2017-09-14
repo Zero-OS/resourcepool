@@ -1,8 +1,9 @@
 from zeroos.core0.client import Client as core0_client
 import time, re
+from unittest import TestCase
 
 
-class Client:
+class Client(TestCase):
     def __init__(self, ip, password):
         self.client = core0_client(ip, password=password)
 
@@ -142,7 +143,7 @@ class Client:
         for disk in disks:
             if 'children' not in disk.keys():
                 freeDisks.append('/dev/{}'.format(disk['kname']))
-                
+
         return freeDisks
 
     def get_processes_list(self):
@@ -151,21 +152,18 @@ class Client:
 
     def get_container_client(self, container_name):
         container = self.client.container.find(container_name)
-        if not container:
-            return False
+        self.assertTrue(container, "Can't get container for the given container name")
         container_id = list(container.keys())[0]
         container_client = self.client.container.client(int(container_id))
         return container_client
 
     def get_container_info(self, container_id):
         container = (self.client.container.find(container_id))
-        if not container:
-            return False
+        self.assertTrue(container, "Can't get container for the given container name")
         container_id = list(container.keys())[0]
         container_info = {}
         golden_data = self.client.container.list().get(str(container_id), None)
-        if not golden_data:
-            return False
+        self.assertTrue(golden_data, "No Golden data")
         golden_value = golden_data['container']
         container_info['nics'] = (
             [{i: nic[i] for i in nic if i != 'hwaddr'} for nic in golden_value['arguments']['nics']])
@@ -217,22 +215,26 @@ class Client:
         nics = client.info.nic()
         nic = [nic for nic in nics if 'zt' in nic['name']]
         if not nic:
-            return False
+            self.assertTrue(nic, 'No NIC found')
         address = nic[0]['addrs'][0]['addr']
         if not address:
             self.lg.info('can\'t find zerotier netowrk interface')
-            return False
-        return address[:address.find('/')]
+            self.assertTrue(address, 'No address found')
+        ip = address[:address.find('/')]
+        return ip
 
     def get_container_bridge_ip(self, client, ip_range):
         nics = client.info.nic()
         full_ip_range = self.get_ip_range(ip_range)
+        self.assertTrue(nics, print(nics))
+        print(nics)
+        ip = ''
         for nic in nics:
             addresses = [x['addr'] for x in nic['addrs'] if x['addr'][:x['addr'].find('/')] in full_ip_range]
             if addresses:
                 address = addresses[0]
-                return address[:address.find('/')]
-        return False
+                ip = address[:address.find('/')]
+        return ip
 
     def check_container_vlan_vxlan_ip(self, client, cidr_ip):
         nics = client.info.nic()

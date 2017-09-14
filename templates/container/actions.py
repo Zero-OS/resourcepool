@@ -83,7 +83,7 @@ def start(job):
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
-    container = Container.from_ays(service, job.context['token'])
+    container = Container.from_ays(service, job.context['token'], logger=service.logger)
     container.start()
 
     if container.is_running():
@@ -106,7 +106,7 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service, job.context['token'])
+    container = Container.from_ays(job.service, job.context['token'], logger=job.service.logger)
     container.stop()
 
     if not container.is_running():
@@ -118,7 +118,6 @@ def stop(job):
 def processChange(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service, job.context['token'])
     service = job.service
     args = job.model.args
 
@@ -136,7 +135,7 @@ def update(job, updated_nics):
     service = job.service
     token = job.context['token']
     logger = job.logger
-    container = Container.from_ays(service, token)
+    container = Container.from_ays(service, token, logger=service.logger)
     cl = container.node.client.container
 
     current_nics = service.model.data.to_dict()['nics']
@@ -205,7 +204,7 @@ def monitor(job):
     service = job.service
 
     if service.model.actionsState['install'] == 'ok' and service.parent.model.data.status == 'running':
-        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo))
+        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo), logger=service.logger)
         running = container.is_running()
 
         if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
@@ -245,7 +244,7 @@ def watchdog_handler(job):
     loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
-        return 
+        return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
