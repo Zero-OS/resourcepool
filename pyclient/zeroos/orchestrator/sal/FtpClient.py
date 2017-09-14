@@ -18,11 +18,12 @@ class FtpClient:
             bytes = BytesIO(content)
             ftp.storbinary('STOR ' + filename, bytes)
 
-    def download(self, content, filename):
+    def download(self, filename=None):
+        filename = filename or self.parsed_url.path
         with FTP() as ftp:
             port = self.parsed_url.port or 21
             ftp.connect(self.parsed_url.hostname, port=port)
             ftp.login(user=self.parsed_url.username, passwd=self.parsed_url.password)
             buff = BytesIO()
-            ftp.retrbinary('RETR ' + self.parsed_url.path, buff.write)
+            ftp.retrbinary('RETR ' + filename, buff.write)
             return buff.getvalue().decode()
