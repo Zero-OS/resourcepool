@@ -21,7 +21,7 @@ This will prevent any creation or deletion of new vdisks.
 ### Step 2: notify all NBD servers that a specific storage engine is not functional
 Update all impacted vdisks that a certain shard is repairing.
 
-By means of updating the AYS model (storage_engine service) and the corresponding configuration in the etcd cluster, all NDB servers that are runnning will be notified that the storage engine is faulty (```status: offline```), and that it needs to fail over to the slave cluster for the specific shard that is offline. The vdisks which reported this issue (if it existed) will already have marked the relevant shards as `offline`, and thus no noger have to do anything.
+By means of updating the AYS model (storage_engine service) and the corresponding configuration in the etcd cluster, all NDB servers that are runnning will be notified that the storage engine is faulty (```status: offline```), and that it needs to fail over to the slave cluster for the specific shard that is offline. The vdisks which reported this issue (if it existed) will already have marked the relevant shards as `offline` (in their internal in-memory model of that cluster), and thus have no longer anything to do, when receiving this update.
 
 Updating the AYS model needs to be done atomically, to prevent double actions, because the same problem will potentially be notified by multiple vdisks. See https://github.com/Jumpscale/ays9/issues/38
 
@@ -33,13 +33,13 @@ The storage_engine service will now analyze wether the outage of the ARDB servic
 #### Temporary interruption of the storage_engine
 If its temporary, as soon as AYS is able get the storage_engine running again (eg, wait until the node has completed rebooting, or restarted the ARDB server after a crash) it will update the AYS model and corresponding etcd configuration and assign a status (```status: repair```). This will make the running NDB servers start repairing for the relevant vdisks.
 
-Vdisks aren't mounted, will have to be repaired using the zeroctl tool suite. For each vdisk that has to be repaired, the `zeroctl copy dataserver` command will have to be called (e.g. ```zeroctl copy dataserver src_ip dst_ip vdiskid```).
+Vdisks that aren't mounted, will have to be repaired using the zeroctl tool suite. For each vdisk that has to be repaired, the `zeroctl copy dataserver` command will have to be called (e.g. ```zeroctl copy dataserver src_ip dst_ip vdiskid```).
 
 Vdisks that were mounted and are being repaired automatically in the runtime of the relevant nbdserver, they will send a message (```2::{"subject":"ardb","status":210,"data":{"address":"1.2.3.4:16379","db":41,"type":"primary","vdiskID":"vd2"}}```, status `210` is undocumented for now, but will be used to indicate repair-complete of a vdisk's shard) to the std-err stream when the repair is complete. Note that this message is send per vdisk, not per nbdserver or shard.
 
 A vdisk shouldn't be allowed to mount until it has been repaired (in case it had to be repaired unmounted using the zeroctl tool due to not being mounted yet).
 
-Once all vdisks fof the storage_engine have been repaired, the storage_engine service will be marked as online again (```status: online```) both in the AYS model and in the etcd cluster. On top of that the storage cluster will be marked healthy again so that vdisk creation and deletion will be operational again.
+Once all vdisks using that storage_engine have been repaired, the storage_engine service will be marked as online again (```status: online```) both in the AYS model and in the etcd cluster. On top of that the storage cluster will be marked healthy again so that vdisk creation and deletion will be operational again.
 
 #### Permanent interruption of the storage engine
 If its permanent, the storage_engine won't be able to run again, and will be given the status (```respread```). This indicates to all mounted vdisks using this dead shard, that the data on it will have to be copied from the relevant slave shard, and respread over the storage_engines which are still up and running.
@@ -50,18 +50,7 @@ Vdisks that were mounted and are being repaired automatically in the runtime of 
 
 A vdisk shouldn't be allowed to mount until it has been repaired (in case it had to be repaired unmounted using the zeroctl tool due to not being mounted yet).
 
-Once all vdisks fof the storage_engine have been repaired, the storage_engine service will be marked as online again (```status: online```) both in the AYS model and in the etcd cluster. On top of that the storage cluster will be marked healthy again so that vdisk creation and deletion will be operational again.
+Once all vdisks using that storage_engine have been repaired, the storage_engine service will be marked as permanently offline (```status: rip```) both in the AYS model and in the etcd cluster. On top of that the storage cluster will be marked healthy again so that vdisk creation and deletion will be operational again.
 
 # SSD failure in slave Storage Cluster
 When an SSD fails in the slave Storage Cluster the NBD server will act similarly as it acts for the Primary Storage Cluster, performing the same kind of restoring actions.
-
-# SSD failure in template Storage Cluster
-When an SSD fails in the template Storage Cluster the NBD has currently no possibility to self-heal from this. It will send an error message to the std-err stream, and make the vdisk that makes use of it fail with an error now and until the template cluster has been fixed.
-
-The message in question it will send is is something like:
-
-```
-2::{"subject":"ardb","status":421,"data":{"address":"1.2.3.4:16379","db":41,"type":"template","vdiskID":"vd2"}}
-```
-
-The status will be any of 421, 422 or 423. See https://github.com/zero-os/0-Disk/blob/master/docs/log.md#status-codes for more information.
