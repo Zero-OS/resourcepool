@@ -174,26 +174,7 @@ def monitor(job):
             update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
             update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
-        # check each node with the rest of the nodes
-        relatives = list()
-        nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
-        nodes.sort(key=lambda n: hash(n.model.data.redisAddr))
-        count = min(len(nodes) - 1, int(math.log(len(nodes)) + 1))
-        for i, n in enumerate(nodes + nodes):
-            if n.model.key == service.model.key and n.model.data.status == 'running':
-                for n in (nodes + nodes)[i+1:i+1+count]:
-                    if n.model.data.status == 'running':
-                        try:
-                            node_sal = Node.from_ays(n, token, timeout=15)
-                        except (RuntimeError, ConnectionError, redis.TimeoutError):
-                            n.model.data.status = 'halted'
-                            n.saveAll()
-                            continue
-                        relatives.append(node_sal)
-                break
-        else:
-            raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
-        update_healthcheck(job, healthcheck_service, node.healthcheck.network_stability(relatives))
+        # check network stability of  node with the rest of the nodes ! TODO
     else:
         service.model.data.status = 'halted'
         nodestatus.add_message('node', 'ERROR', 'Node is halted')
