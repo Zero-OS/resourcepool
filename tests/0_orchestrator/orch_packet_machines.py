@@ -12,7 +12,7 @@ hostname_qu = queue.Queue()
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
     project = manager.list_projects()[0]
     ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id, itsyouonline_org)
-    
+
     available_facility = None
     facilities = [x.code for x in manager.list_facilities()]
     for facility in facilities:
@@ -41,16 +41,18 @@ def delete_devices(manager, hostname):
     devices = manager.list_devices(project.id)
     for dev in devices:
         if dev.hostname == hostname:
-            device_id = dev.id
-            params = {
-                "hostname": dev.hostname,
-                "description": "string",
-                "billing_cycle": "hourly",
-                "userdata": "",
-                "locked": False,
-                "tags": []
-            }
-            manager.call_api('devices/%s' % device_id, type='DELETE', params=params)
+            print('%s is about to be deleted' % hostname)
+            for i in range(5):
+                try:
+                    manager.call_api('devices/%s' % dev.id, type='DELETE')
+                    print("%s has been deleted successfully" % hostname)
+                    break
+                except Exception as e:
+                    print(e.args)
+                    print(e.cause)
+                    continue
+            else:
+                print("%s hasn't been deleted" % hostname)
 
 
 def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
@@ -68,14 +70,13 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
                 raise
             continue
 
-    print(' [*] provisioning the new machine ..')
     while True:
         dev = manager.get_device(device.id)
         if dev.state == 'active':
-            print(' [*] The new machine is active now.')
+            print(' [*] The new machines is active now.')
             break
         else:
-            print(' [*] Waiting The activation of the new machine ....')
+            print(' [*] provisioning the new machine ..')
             time.sleep(10)
     time.sleep(5)
     hostname_qu.put(hostname)
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     token = sys.argv[2]
     manager = packet.Manager(auth_token=token)
     if action == 'delete':
-        print(' [*] Deleting the g8os machines ..')
+        print(' [*] Deleting the zero_os machines ..')
         file_node = open('ZT_HOSTS', 'r')
         hosts = file_node.read().split('\n')[:-1]
         for hostname in hosts:

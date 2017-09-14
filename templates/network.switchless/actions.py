@@ -32,7 +32,7 @@ def configure(job):
     cont_service = actor.serviceCreate(instance='{}_ovs'.format(node.name), args=args)
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     j.tools.async.wrappers.sync(cont_service.executeAction('install', context=job.context))
-    container_client = Container.from_ays(cont_service).client
+    container_client = Container.from_ays(cont_service, logger=service.logger).client
     nics = node.client.info.nic()
     nicmap = {nic['name']: nic for nic in nics}
     freenics = node.network.get_free_nics()

@@ -217,7 +217,7 @@ def processChange(job):
     portforwardchanges = gatewaydata['portforwards'] != args.get('portforwards')
 
     container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'])
+    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
 
     if nicchanges:
         nics_args = {'nics': args['nics']}
@@ -323,7 +323,7 @@ def start(job):
     if str(container.model.data.status) == 'halted':
         j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
 
-    containerobj = Container.from_ays(container, job.context['token'])
+    containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # setup resolv.conf
     containerobj.upload_content('/etc/resolv.conf', 'nameserver 127.0.0.1\n')
 
@@ -369,7 +369,7 @@ def setup_zerotierbridges(job):
 
     service = job.service
     container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'])
+    containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # get dict version of nics
     nics = service.model.data.to_dict()['nics']
 

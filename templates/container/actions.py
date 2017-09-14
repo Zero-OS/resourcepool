@@ -83,7 +83,7 @@ def start(job):
     from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
-    container = Container.from_ays(service, job.context['token'])
+    container = Container.from_ays(service, job.context['token'], logger=service.logger)
     container.start()
 
     if container.is_running():
@@ -106,7 +106,7 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service, job.context['token'])
+    container = Container.from_ays(job.service, job.context['token'], logger=job.service.logger)
     container.stop()
 
     if not container.is_running():
@@ -118,7 +118,6 @@ def stop(job):
 def processChange(job):
     from zeroos.orchestrator.sal.Container import Container
 
-    container = Container.from_ays(job.service, job.context['token'])
     service = job.service
     args = job.model.args
 
@@ -131,12 +130,14 @@ def processChange(job):
 
 def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.core0.client.client import ResultError
     import json
 
     service = job.service
     token = job.context['token']
     logger = job.logger
-    container = Container.from_ays(service, token)
+    container = Container.from_ays(service, token, logger=service.logger)
     cl = container.node.client.container
 
     current_nics = service.model.data.to_dict()['nics']
@@ -182,12 +183,8 @@ def update(job, updated_nics):
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
             try:
                 cl.nic_add(container.id, nic_dict)
-            except RuntimeError as e:
-                if len(e.args) < 2:
-                    raise e
-                core_job = e.args[1]
-                if 499 >= core_job.code >= 400:
-                    job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+            except ResultError as e:
+                Write_Status_code_Error(job, e)
                 service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))
@@ -205,7 +202,7 @@ def monitor(job):
     service = job.service
 
     if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo))
+        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo), logger=service.logger)
         running = container.is_running()
         if not running and service.model.data.status == 'running':
             try:

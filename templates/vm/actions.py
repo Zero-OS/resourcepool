@@ -134,7 +134,7 @@ def start_dependent_services(job):
         node = random.choice(services)
 
     tlog_container = create_zerodisk_container(job, node)
-    tlog_container = Container.from_ays(tlog_container, job.context['token'])
+    tlog_container = Container.from_ays(tlog_container, job.context['token'], logger=service.logger)
 
     nbd_container = create_zerodisk_container(job, service.parent)
     _init_zerodisk_services(job, nbd_container, tlog_container)
@@ -154,7 +154,7 @@ def _start_nbd(job, nbdname=None):
         raise j.exceptions.RuntimeError("Failed to start nbds, no nbds created to start")
     nbdserver = nbdservers[0]
     # build full path of the nbdserver unix socket on the host filesystem
-    container = Container.from_ays(nbdserver.parent, job.context['token'])
+    container = Container.from_ays(nbdserver.parent, job.context['token'], logger=job.service.logger)
     if not container.is_running():
         # start container
         j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start', context=job.context))
@@ -175,7 +175,7 @@ def start_tlog(job):
         raise j.exceptions.RuntimeError("Failed to start tlogs, no tlogs created to start")
     tlogserver = tlogservers[0]
     # build full path of the tlogserver unix socket on the host filesystem
-    container = Container.from_ays(tlogserver.parent, password=job.context['token'])
+    container = Container.from_ays(tlogserver.parent, password=job.context['token'], logger=job.service.logger)
     # make sure container is up
     if not container.is_running():
         j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
@@ -209,6 +209,8 @@ def format_media_nics(job, medias):
 
 def install(job):
     import time
+    from zeroos.core0.client.client import ResultError
+    from zeroos.orchestrator.utils import Write_Status_code_Error
     service = job.service
     node = get_node(job)
 
@@ -222,13 +224,20 @@ def install(job):
 
     kvm = get_domain(job)
     if not kvm:
-        node.client.kvm.create(
-            service.name,
-            media=media,
-            cpu=service.model.data.cpu,
-            memory=service.model.data.memory,
-            nics=nics,
-        )
+        try:
+            node.client.kvm.create(
+                service.name,
+                media=media,
+                cpu=service.model.data.cpu,
+                memory=service.model.data.memory,
+                nics=nics,
+            )
+        except ResultError as e:
+            Write_Status_code_Error(job, e)
+            cleanupzerodisk(job)
+            service.saveAll()
+            raise j.exceptions.Input(str(e))
+        
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
@@ -244,6 +253,7 @@ def install(job):
                 time.sleep(3)
         else:
             service.model.data.status = 'error'
+            cleanupzerodisk(job)
             raise j.exceptions.RuntimeError("Failed to start vm {}".format(service.name))
     service.model.data.status = 'running'
     service.saveAll()
@@ -680,7 +690,7 @@ def updateDisks(job, client, args):
     # Set model to new data
     service.model.data.disks = args['disks']
     vdisk_container = create_zerodisk_container(job, service.parent)
-    container = Container.from_ays(vdisk_container, job.context['token'])
+    container = Container.from_ays(vdisk_container, job.context['token'], logger=service.logger)
 
     # Detatching and Cleaning old disks
     if old_disks != []:

@@ -134,13 +134,13 @@ configuration__main:
     value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
     value: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAES5X8XrfKdx9gYayFITc89wad4usrk0n27MjiGYvqalizeSWTHEpnd7oea9IQ8T5oJjMVH5cc0H5tFSKilFFeh//wngxIyny66+Vq5t5B0V0Ehy01+2ceEon2Y0XDkIKv'
-  - key: 'iyo_org'
+  - key: '0-stor-organization'
     value: 'zero-test'
-  - key: 'iyo_namespace'
+  - key: '0-stor-namespace'
     value: 'namespace'
-  - key: 'iyo_clientID'
+  - key: '0-stor-clientid'
     value: '<clientID>'
-  - key: 'iyo_secret'
+  - key: '0-stor-clientsecret'
     value: '<secret>'
 
 ```
