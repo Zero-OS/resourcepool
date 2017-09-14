@@ -32,7 +32,7 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 	run, resp, err := aysClient.Ays.GetRun(runid, aysRepo, nil, nil)
 	if err != nil {
 		WriteError(w, resp.StatusCode, err, "Error getting run")
-		return Run{}, err
+		return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
 	}
 
 	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
@@ -41,6 +41,7 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		if !ok {
 			errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
 			WriteError(w, http.StatusInternalServerError, err, errmsg)
+			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, err
 		}
 	}
 
@@ -48,28 +49,30 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 	var job ays.Job
 	for _, step := range runstatus.Steps {
 		if len(step.Jobs) > 0 {
-			job, jobErr = aysClient.WaitJobDone(step.Jobs[0].Key, api.AysRepoName())
-			if jobErr != nil {
-				break
+			job := step.Jobs[0]
+			if job.State == "error" {
+				job, jobErr = aysClient.ParseJobError(step.Jobs[0].Key, aysRepo)
+				if jobErr != nil {
+					break
+				}
 			}
 		}
 	}
 	if jobErr != nil {
 		httpErr, ok := jobErr.(HTTPError)
 		if ok {
-			fmt.Println(httpErr.Resp.StatusCode)
 			WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
-		} else {
-			errmsg := fmt.Sprintf("error waiting on job %s", job.Key)
-			WriteError(w, http.StatusInternalServerError, err, errmsg)
+			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, jobErr
 		}
-		return Run{}, jobErr
+		errmsg := fmt.Sprintf("error waiting on job %s", job.Key)
+		WriteError(w, http.StatusInternalServerError, err, errmsg)
+		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 	}
 
 	if EnumRunState(runstatus.State) != EnumRunStateok {
 		err = fmt.Errorf("Internal Server Error")
 		WriteError(w, http.StatusInternalServerError, err, "")
-		return Run{}, err
+		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 	}
 	response := Run{Runid: run.Key, State: EnumRunState(run.State)}
 	return response, nil

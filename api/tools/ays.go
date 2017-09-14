@@ -119,25 +119,32 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 			return job, err
 		}
 	}
+	return aystool.ParseJobError(job.Key, repoName)
+}
 
-	if job.State == "error" {
-		err := AYSError{}
-		if jsonErr := json.Unmarshal([]byte(job.Result), &err); jsonErr != nil {
-			return job, jsonErr
-		}
+// I dont pass the job struct becasue ays does not pass the result even when in error unless a getjob api call is made on it.
+// this will be fixed in ays 9.1.3 ?
+func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, error) {
 
-		err.err = fmt.Errorf(err.Message)
-		errResp := http.Response{
-			StatusCode: err.Code,
-		}
-		httperror := HTTPError{
-			Resp: &errResp,
-			err:  err.err,
-		}
-		fmt.Println(httperror)
-		return job, httperror
+	job, _, ayserr := aystool.Ays.GetJob(jobKey, repoName, nil, nil)
+	if ayserr != nil {
+		return job, ayserr
 	}
-	return job, nil
+
+	err := AYSError{}
+	if jsonErr := json.Unmarshal([]byte(job.Result), &err); jsonErr != nil {
+		return job, jsonErr
+	}
+
+	err.err = fmt.Errorf(err.Message)
+	errResp := http.Response{
+		StatusCode: err.Code,
+	}
+	httperror := HTTPError{
+		Resp: &errResp,
+		err:  err.err,
+	}
+	return job, httperror
 }
 
 // ServiceExists check if an atyourserivce exists
