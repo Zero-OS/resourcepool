@@ -285,6 +285,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// StartVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/start
 	// Start the virtual machine
 	StartVM(http.ResponseWriter, *http.Request)
+	// ExportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/export
+	// export the virtual machine
+	ExportVM(http.ResponseWriter, *http.Request)
 	// StopVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/stop
 	// Stops the VM
 	StopVM(http.ResponseWriter, *http.Request)
@@ -423,6 +426,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/resume", i.ResumeVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/shutdown", i.ShutdownVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/start", i.StartVM).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/export", i.ExportVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/stop", i.StopVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.DeleteVM).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.GetVM).Methods("GET")

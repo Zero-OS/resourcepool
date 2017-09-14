@@ -286,6 +286,52 @@ def rollback(job):
         container.stop()
 
 
+def export(job):
+    import random
+    import time
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
+    service = job.service
+
+    if service.model.data.status != "halted":
+        raise RuntimeError('Can not export a running vdisk')
+
+    if 'vm' not in service.consumers:
+        raise j.exceptions.Input('Can not export a disk that is not attached to a vm')
+    url = job.model.args['url']
+    cryptoKey = job.model.args['cryptoKey']
+    snapshotID = job.model.args['snapshotID']
+
+    clusterconfig = get_cluster_config(job, type="object")
+    node = random.choice(clusterconfig["nodes"])
+    container = create_from_template_container(job, node)
+    try:
+        etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
+        cmd = "/bin/zeroctl export vdisk {vdiskid} {cryptoKey} {snapshotID} \
+               --config {dialstrings} \
+               --storage {ftpurl}".format(vdiskid=service.name,
+                                          cryptoKey=cryptoKey,
+                                          dialstrings=etcd_cluster.dialstrings,
+                                          snapshotID=snapshotID,
+                                          ftpurl=url)
+        job.logger.info(cmd)
+        container.client.system(cmd, id="vdisk.export.%s" % service.name)
+
+        start = time.time()
+        while start + 250 > time.time():
+            try:
+                container.client.job.list("vdisk.export.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to export vdisk {}".format(service.name))
+    finally:
+        container.stop()
+
+
 def resize(job):
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster

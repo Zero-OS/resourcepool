@@ -438,7 +438,7 @@ def start_migartion_channel(job, old_service, new_service):
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
             node.client.filesystem.remove(ssh_config)
-            
+
         # start ssh server on new node for this migration
         node.upload_content(ssh_config, "Port %s" % port)
         res = node.client.system(command.format(config=ssh_config))
@@ -763,7 +763,6 @@ def monitor(job):
 
 
 def update_data(job, args):
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
 
     # mean we want to migrate vm from a node to another
@@ -799,6 +798,66 @@ def update_data(job, args):
     service.saveAll()
 
 
+def export(job):
+    from io import BytesIO
+    import hashlib
+    import time
+    from ftplib import FTP
+    from urllib.parse import urlparse
+    import yaml
+
+    service = job.service
+    # url should be one of those formats
+    # ftp://1.2.3.4:200
+    # ftp://user@127.0.0.1:200
+    # ftp://user:pass@12.30.120.200:3000
+    # ftp://user:pass@12.30.120.200:3000/root/dir
+    url = job.model.args.get("backupUrl", None)
+    if not url:
+        return
+
+    url, filename = url.split("#", 1)
+
+    if not url.startswith("ftp://"):
+        url = "ftp://" + url
+
+    if service.model.data.status != "halted":
+        raise RuntimeError("Can not export a running vm")
+
+    vdisks = service.model.data.vdisks
+
+    # populate the metadata
+    metadata = service.model.data.to_dict()
+    metadata["cryptoKey"] = hashlib.md5(str(int(time.time() * 10**6)).encode("utf-8")).hexdigest()
+    metadata["snapshotIDs"] = []
+
+    args = {
+        "url": url,
+        "cryptoKey": metadata["cryptoKey"],
+    }
+    # TODO: optimize using futures
+    for vdisk in vdisks:
+        snapshotID = str(int(time.time() * 10**6))
+        args["snapshotID"] = snapshotID
+        vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
+        j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
+        metadata["snapshotIDs"].append(snapshotID)
+
+    # upload metadta to ftp server
+    parsed_url = urlparse(url)
+    yamlconfig = yaml.safe_dump(metadata, default_flow_style=False)
+    content = yamlconfig.encode('utf8')
+    bytes = BytesIO(content)
+
+    with FTP() as ftp:
+        port = parsed_url.port or 21
+        ftp.connect(parsed_url.hostname, port=port)
+        ftp.login(user=parsed_url.username, passwd=parsed_url.password)
+        if parsed_url.path:
+            ftp.cwd(parsed_url.path)
+        ftp.storbinary('STOR ' + filename, bytes)
+
+
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
@@ -808,6 +867,9 @@ def processChange(job):
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
             job.context['token'] = get_jwt_token_from_job(job)
+            if args.get('backupUrl', None):
+                export(job)
+                return
             update_data(job, args)
             node = get_node(job)
             updateDisks(job, node, args)
