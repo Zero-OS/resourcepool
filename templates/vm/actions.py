@@ -799,11 +799,9 @@ def update_data(job, args):
 
 
 def export(job):
-    from io import BytesIO
+    from zeroos.orchestrator.sal.FtpClient import FtpClient
     import hashlib
     import time
-    from ftplib import FTP
-    from urllib.parse import urlparse
     import yaml
 
     service = job.service
@@ -836,26 +834,27 @@ def export(job):
         "cryptoKey": metadata["cryptoKey"],
     }
     # TODO: optimize using futures
+    metadata["vdisks"] = []
     for vdisk in vdisks:
         snapshotID = str(int(time.time() * 10**6))
         args["snapshotID"] = snapshotID
         vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
         j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
         metadata["snapshotIDs"].append(snapshotID)
+        metadata["vdisks"].append({
+            vdisk: {
+                "blockSize": vdisksrv.model.data.blocksize,
+                "type": str(vdisksrv.model.data.type),
+                "size": vdisksrv.model.data.size,
+                "readOnly": vdisksrv.model.data.readOnly,
+            },
+        })
 
     # upload metadta to ftp server
-    parsed_url = urlparse(url)
     yamlconfig = yaml.safe_dump(metadata, default_flow_style=False)
     content = yamlconfig.encode('utf8')
-    bytes = BytesIO(content)
-
-    with FTP() as ftp:
-        port = parsed_url.port or 21
-        ftp.connect(parsed_url.hostname, port=port)
-        ftp.login(user=parsed_url.username, passwd=parsed_url.password)
-        if parsed_url.path:
-            ftp.cwd(parsed_url.path)
-        ftp.storbinary('STOR ' + filename, bytes)
+    ftpclient = FtpClient(url)
+    ftpclient.upload(content, filename)
 
 
 def processChange(job):

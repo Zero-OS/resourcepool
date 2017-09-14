@@ -12,6 +12,7 @@ struct Schema {
     timestamp @8: UInt64;
     templateStorageCluster @9 :Text;
     objectStoragecluster @10 :Text; # consume
+    backupUrl @11 :Text;
     enum Status {
         halted @0;
         running @1;
