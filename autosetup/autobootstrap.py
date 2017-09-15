@@ -62,26 +62,47 @@ class OrchestratorInstallerTools:
 
         return resp.content.decode('utf8')
 
-    def containerzt(self, cn):
+    def ztstatus(self, cn, macaddr):
+        """
+        Return a zerotier node object from a mac address
+        """
+        ztinfo = cn.client.zerotier.list()
+        for zt in ztinfo:
+            if zt['mac'] == macaddr:
+                    return zt
+
+        return None
+
+    def ztwait(self, cn, macaddr):
         notified = False
 
         while True:
-            ztinfo = cn.client.zerotier.list()
-            ztdata = ztinfo[0]
+            # get and ensure mac address is there
+            status = self.ztstatus(cn, macaddr)
+            if not status:
+                return None
 
             if not notified:
                 notified = True
-                print("[+] waiting zerotier access with mac address %s" % ztdata['mac'])
+                print("[+] waiting zerotier access (id: %s, hardware: %s)" % (status['nwid'], status['mac']))
                 self.progress()
 
-            if len(ztdata['assignedAddresses']) == 0:
+            if len(status['assignedAddresses']) == 0:
                 self.progressing()
                 time.sleep(1)
                 continue
 
+            # network ready, address set
             self.progressing(True)
+            return status['assignedAddresses'][0].split('/')[0]
 
-            return ztdata['assignedAddresses'][0].split('/')[0]
+    def containerzt(self, cn):
+        # for all zerotier network, waiting for a valid address
+        ztinfo = cn.client.zerotier.list()
+
+        for ztnet in ztinfo:
+            self.ztwait(cn, ztnet['mac'])
+
 
     def progress(self):
         self.xprint("[+] ")
@@ -155,7 +176,7 @@ class OrchestratorInstaller:
 
         return node
 
-    def prepare(self, ctname, ztnetwork, sshkey):
+    def prepare(self, ctname, ztnetwork, ztnetnodes, sshkey):
         """
         node: connected node object
         ctname: container name
@@ -168,6 +189,9 @@ class OrchestratorInstaller:
             {'type': 'default'},
             {'type': 'zerotier', 'id': ztnetwork}
         ]
+
+        if ztnetnodes != ztnetwork:
+            network.append({'type': 'zerotier', 'id': ztnetnodes})
 
         env = {
             "PATH": "/opt/jumpscale9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
@@ -213,7 +237,7 @@ class OrchestratorInstaller:
             cn.client.filesystem.write(fd, export.encode('utf-8'))
         cn.client.filesystem.close(fd)
 
-        print("[+] waiting for zerotier")
+        print("[+] configuring zerotier access")
         containeraddr = self.tools.containerzt(cn)
 
         if sshkey:
@@ -615,7 +639,8 @@ if __name__ == "__main__":
     print("[+] ===============================================================")
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
-    print("[+] zerotier network: %s" % args.zt_net)
+    print("[+] root zt network : %s" % args.zt_net)
+    print("[+] nodes zt network: %s" % args.nodes_zt_net)
     print("[+] container flist : %s" % installer.flist)
     print("[+] container name  : %s" % args.container)
     print("[+] ssh private key : %s" % args.ssh_key)
@@ -643,7 +668,7 @@ if __name__ == "__main__":
     installer.pre_prepare()
 
     print("[+] hook: prepare")
-    prepared = installer.prepare(args.container, args.zt_net, sshkey)
+    prepared = installer.prepare(args.container, args.zt_net, args.nodes_zt_net, sshkey)
 
     print("[+] ==================================================")
     print("[+] container address: %s" % prepared['address'])
