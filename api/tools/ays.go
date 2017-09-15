@@ -60,8 +60,8 @@ func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWrite
 
 func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg string) bool {
 	if err != nil {
-		httpErr := err.(httperror.HTTPError)
-		if httpErr.Resp != nil {
+		httpErr, ok := err.(httperror.HTTPError)
+		if ok && httpErr.Resp != nil {
 			if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
 				httperror.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
 				return false
@@ -69,6 +69,7 @@ func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg str
 			httperror.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 			return false
 		}
+		return false
 	}
 	return true
 }
