@@ -64,7 +64,7 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/graphs/%s/dashboards/%s", graphId, reqBody.Name))

@@ -44,7 +44,7 @@ func (s BaseNic) Validate() error {
 	return validator.Validate(s)
 }
 
-func (s BaseNic) ValidateServices(aysClient tools.AYStool, repoName string) error {
+func (s BaseNic) ValidateServices(aysClient *tools.AYStool, repoName string) error {
 	if s.Type == EnumContainerNICTypebridge {
 		exists, err := aysClient.ServiceExists("bridge", s.Id, repoName)
 		if err != nil {

@@ -83,7 +83,7 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
 		return
 	}
 

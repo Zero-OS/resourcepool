@@ -89,7 +89,7 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
 		return
 	}
 
