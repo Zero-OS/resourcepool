@@ -134,8 +134,7 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 	}
 }
 
-// GetAysConnection get connection For ays access
-func GetAysConnection(r *http.Request, api API) AYStool {
+func GetAysConnection(r *http.Request, api API) *AYStool {
 	aysAPI := api.AysAPIClient()
 
 	token, err := api.GetAysToken()

@@ -22,15 +22,15 @@ func Init(ctx context.Context, bindAddr string) {
 	cbRountine = newCallbackRoutine(ctx, bindAddr)
 }
 
-// Wait return a channel on which the caller can wait to received the status of the callback
+// Register return a channel on which the caller can wait to received the status of the callback
 // and the callback url
-func Wait() (<-chan CallbackStatus, string) {
+func Register() (<-chan CallbackStatus, string) {
 	if cbRountine == nil {
 		panic("no package level callackHandler, call NewCallbackRoutine first")
 	}
 	uuid := uuid.NewRandom()
 
-	return cbRountine.wait(string(uuid))
+	return cbRountine.register(fmt.Sprintf("%x", uuid))
 }
 
 // Handler is the http handler that needs to be registred in the http router to receive the callback
@@ -38,13 +38,13 @@ func Handler() http.HandlerFunc {
 	return cbRountine.handler
 }
 
-type CallbackStatus int
+type CallbackStatus string
 
 const (
 	// CallbackStatusOk is the value return when a runs executed succefully
-	CallbackStatusOk CallbackStatus = iota
+	CallbackStatusOk CallbackStatus = "ok"
 	// CallbackStatusFailure is the value return when a runs failed
-	CallbackStatusFailure
+	CallbackStatusFailure CallbackStatus = "error"
 )
 
 type waitRequest struct {
@@ -84,10 +84,12 @@ func (c *callBackRoutine) start() {
 			log.Info("stop callback gorountine")
 			return
 		case req := <-c.cReq: //TODO: chek if we need a buffered channel
+			c.mu.Lock()
 			if _, ok := c.callbackMap[req.uuid]; ok {
 				log.Warning("erase callback for %s", req.uuid)
 			}
 			c.callbackMap[req.uuid] = req.cbChan
+			c.mu.Unlock()
 		}
 	}()
 }
@@ -105,9 +107,21 @@ func (c *callBackRoutine) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := r.ParseForm(); err != nil {
+		httperror.WriteError(w, http.StatusInternalServerError, fmt.Errorf("fail to parse form for callback:%v", err), "error while parsing requests")
+		return
+	}
+	uuid := r.Form.Get("uuid")
+	if uuid == "" {
+		err := fmt.Errorf("no uuid specified in the callback query")
+		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+		return
+	}
+	log.Debugf("look for callback channel uuid :%s", uuid)
+
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	cbChan, ok := c.callbackMap[cbData.RunID]
+	cbChan, ok := c.callbackMap[uuid]
 	if !ok {
 		log.Warningf("callback received for run id %v, but no callback handler registered for it", cbData.RunID)
 		return
@@ -119,25 +133,25 @@ func (c *callBackRoutine) handler(w http.ResponseWriter, r *http.Request) {
 	switch cbData.State {
 	case "ok":
 		cbChan <- CallbackStatusOk
-		close(cbChan)
 	case "error":
 		cbChan <- CallbackStatusFailure
-		close(cbChan)
 	default:
 		log.Errorf("receveid callback with unknown state: %v", cbData.State)
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// Wait return a chanel on which the caller can wait to received the status of the callback identify by uid
+// register registers a callback and return a chanel on which the caller can wait to received the status of the callback identify by uid
 // and the callback url
-func (c *callBackRoutine) wait(uuid string) (<-chan CallbackStatus, string) {
+func (c *callBackRoutine) register(uuid string) (<-chan CallbackStatus, string) {
 	cbChan := make(chan CallbackStatus)
 
 	c.cReq <- &waitRequest{
 		uuid:   uuid,
 		cbChan: cbChan,
 	}
+	url := fmt.Sprintf("http://%s/callback?uuid=%s", c.bindAddr, uuid)
+	log.Debugf("register callback for %s", url)
 	// TODO: don't hardcode /callback
-	return cbChan, fmt.Sprintf("http://%s/callback?uid=%s", c.bindAddr, uuid)
+	return cbChan, url
 }

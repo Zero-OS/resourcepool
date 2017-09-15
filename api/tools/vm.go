@@ -9,7 +9,7 @@ import (
 )
 
 // ExecuteVMAction executes an action on a vm
-func ExecuteVMAction(aystool AYStool, w http.ResponseWriter, r *http.Request, repoName, action string) {
+func ExecuteVMAction(aystool *AYStool, w http.ResponseWriter, r *http.Request, repoName, action string) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 

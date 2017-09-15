@@ -25,18 +25,15 @@ const (
 	EnumRunStatechanged   EnumRunState = "changed"
 )
 
-// ExecuteVMAction executes an action on a vm
-func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (Run, error) {
-	aysRepo := api.AysRepoName()
-	aysClient := GetAysConnection(r, api)
-
-	run, resp, err := aysClient.Ays.GetRun(runid, aysRepo, nil, nil)
+// WaitOnRun wait the end of execution of a run and deal with potential errors.
+func (aystool *AYStool) WaitOnRun(w http.ResponseWriter, aysRepo, runid string) (Run, error) {
+	run, resp, err := aystool.Ays.GetRun(runid, aysRepo, nil, nil)
 	if err != nil {
 		httperror.WriteError(w, resp.StatusCode, err, "Error getting run")
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
 	}
 
-	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
+	runstatus, err := aystool.WaitRunDone(run.Key, aysRepo)
 	if err != nil {
 		_, ok := err.(httperror.HTTPError)
 		if !ok {
@@ -52,7 +49,7 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		if len(step.Jobs) > 0 {
 			job := step.Jobs[0]
 			if job.State == "error" {
-				job, jobErr = aysClient.ParseJobError(step.Jobs[0].Key, aysRepo)
+				job, jobErr = aystool.ParseJobError(step.Jobs[0].Key, aysRepo)
 				if jobErr != nil {
 					break
 				}

@@ -38,8 +38,8 @@ type ActionBlock struct {
 	Force   bool   `json:"force" validate:"omitempty"`
 }
 
-func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
-	return AYStool{
+func GetAYSClient(client *ays.AtYourServiceAPI) *AYStool {
+	return &AYStool{
 		Ays: client.Ays,
 	}
 }
@@ -78,7 +78,7 @@ func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg str
 // execute blueprint
 // execute run
 // archive the blueprint
-func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (*ays.AYSRun, error) {
+func (aystool *AYStool) ExecuteBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (*ays.AYSRun, error) {
 	blueprintName, err := aystool.UpdateBlueprint(repoName, role, name, action, blueprint)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (aystool AYStool) ExecuteBlueprint(repoName, role, name, action string, blu
 }
 
 //Update blueprint is used to do the ays blueprint action , creating a blueprint jobs (usually in processChange) and then will BLOCK on them.
-func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (string, error) {
+func (aystool *AYStool) UpdateBlueprint(repoName, role, name, action string, blueprint map[string]interface{}) (string, error) {
 	blueprintName := fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
 
 	if err := aystool.createBlueprint(repoName, blueprintName, blueprint); err != nil {
@@ -121,13 +121,26 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 }
 
-func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
+func (aystool *AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	if aystool.waitChan != nil {
 		// block until we have the callback
 		// TODO: timeout to not wait forever ?
-		<-aystool.waitChan
-	}
+		log.Debugf("wait on run %s with callback", runid)
+		i := 0
+		for state := range aystool.waitChan {
+			log.Debugf("callback received, run state: %v", state)
+			//FIXME: find a way to know when ays stops retrying
+			// now I count the retries
+			if state == callback.CallbackStatusOk || i >= 6 {
+				break
+			}
+			i++
+		}
 
+		return aystool.getRun(runid, repoName)
+	}
+	// no callback registered, do pooling
+	log.Debugf("wait on run %s without callback", runid)
 	run, err := aystool.getRun(runid, repoName)
 	if err != nil {
 		return run, err
@@ -144,7 +157,7 @@ func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) 
 	return run, nil
 }
 
-func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
+func (aystool *AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 	job, resp, err := aystool.Ays.GetJob(jobid, repoName, nil, nil)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return job, err
@@ -163,7 +176,7 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 
 // I dont pass the job struct becasue ays does not pass the result even when in error unless a getjob api call is made on it.
 // this will be fixed in ays 9.1.3 ?
-func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, error) {
+func (aystool *AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, error) {
 
 	job, _, ayserr := aystool.Ays.GetJob(jobKey, repoName, nil, nil)
 	if ayserr != nil {
@@ -188,7 +201,7 @@ func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, e
 }
 
 // ServiceExists check if an atyourserivce exists
-func (aystool AYStool) ServiceExists(serviceName string, instance string, repoName string) (bool, error) {
+func (aystool *AYStool) ServiceExists(serviceName string, instance string, repoName string) (bool, error) {
 	_, res, err := aystool.Ays.GetServiceByName(instance, serviceName, repoName, nil, nil)
 	if err != nil {
 		return false, err
@@ -202,7 +215,7 @@ func (aystool AYStool) ServiceExists(serviceName string, instance string, repoNa
 
 }
 
-func (aystool AYStool) createBlueprint(repoName string, name string, bp map[string]interface{}) error {
+func (aystool *AYStool) createBlueprint(repoName string, name string, bp map[string]interface{}) error {
 	bpYaml, err := yaml.Marshal(bp)
 	blueprint := ays.Blueprint{
 		Content: string(bpYaml),
@@ -221,7 +234,7 @@ func (aystool AYStool) createBlueprint(repoName string, name string, bp map[stri
 	return nil
 }
 
-func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (string, []string, error) {
+func (aystool *AYStool) executeBlueprint(blueprintName string, repoName string) (string, []string, error) {
 	errBody := struct {
 		Error string `json:"error"`
 	}{}
@@ -248,13 +261,14 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 	return respData.Msg, respData.ProcessChangeJobs, nil
 }
 
-func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
+func (aystool *AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
 	var callbackURL string
 
-	aystool.waitChan, callbackURL = callback.Wait()
+	aystool.waitChan, callbackURL = callback.Register()
 	queryParams := map[string]interface{}{
 		"callback_url": callbackURL,
 	}
+	log.Debugf("create run with callback %s", callbackURL)
 
 	run, resp, err := aystool.Ays.CreateRun(repoName, nil, queryParams)
 	if err != nil {
@@ -266,7 +280,7 @@ func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
 	return &run, nil
 }
 
-func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) error {
+func (aystool *AYStool) archiveBlueprint(blueprintName string, repoName string) error {
 
 	resp, err := aystool.Ays.ArchiveBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
@@ -278,7 +292,7 @@ func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) e
 	return nil
 }
 
-func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
+func (aystool *AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	run, resp, err := aystool.Ays.GetRun(runid, repoName, nil, nil)
 	if err != nil {
 		return &run, httperror.New(resp, err.Error())
@@ -295,7 +309,7 @@ func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	return &run, nil
 }
 
-func (aystool AYStool) checkRun(run ays.AYSRun) error {
+func (aystool *AYStool) checkRun(run ays.AYSRun) error {
 	var logs string
 	if run.State == "error" {
 		for _, step := range run.Steps {

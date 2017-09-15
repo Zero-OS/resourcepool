@@ -19,7 +19,8 @@ func TestCallBack(t *testing.T) {
 	cbRountine := newCallbackRoutine(ctx, "localhost:8080")
 
 	runid := "testrunid"
-	cbChan, cbURL := cbRountine.wait(runid)
+	cbChan, cbURL := cbRountine.register(runid)
+	assert.Equal(t, cbURL, "http://localhost:8080/callback?uuid=testrunid")
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
