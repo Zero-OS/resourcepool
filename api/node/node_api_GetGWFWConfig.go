@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -22,7 +23,7 @@ func (api *NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	node, err := tools.GetConnection(r, api)
 	containerID, err := tools.GetContainerId(r, api, node, gwname)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
@@ -30,7 +31,7 @@ func (api *NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	err = client.Filesystem(containerClient).Download("/etc/nftables.conf", &config)
 	if err != nil {
 		errmsg := fmt.Sprintf("Error getting  file from container '%s' at path '%s'.\n", gwname, "/etc/nftables.conf")
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

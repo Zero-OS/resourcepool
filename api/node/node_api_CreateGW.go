@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -30,30 +31,30 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	exists, err := aysClient.ServiceExists("gateway", reqBody.Name, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting gateway service by name %s ", reqBody.Name)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name), "")
+		httperror.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name), "")
 		return
 	}
 
 	for _, nic := range reqBody.Nics {
 		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 	}
@@ -78,11 +79,10 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", nodeID, reqBody.Name))
-   w.WriteHeader(http.StatusCreated)
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", nodeID, reqBody.Name))
+	w.WriteHeader(http.StatusCreated)
 
 }

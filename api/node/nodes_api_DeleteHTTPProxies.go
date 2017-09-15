@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -31,13 +32,13 @@ func (api *NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := "Advanced options enabled: cannot delete http proxy for gateway"
-		tools.WriteError(w, http.StatusForbidden, fmt.Errorf("%v: %v", errMessage, gateway), errMessage)
+		httperror.WriteError(w, http.StatusForbidden, fmt.Errorf("%v: %v", errMessage, gateway), errMessage)
 		return
 	}
 
@@ -54,7 +55,7 @@ func (api *NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
-		tools.WriteError(w, http.StatusNotFound, errMessage, "")
+		httperror.WriteError(w, http.StatusNotFound, errMessage, "")
 		return
 	}
 

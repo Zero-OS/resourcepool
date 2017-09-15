@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -22,12 +23,12 @@ func (api *NodeAPI) GetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 
 	node, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 	containerID, err := tools.GetContainerId(r, api, node, gwname)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting NodeId")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting NodeId")
 		return
 	}
 
@@ -35,7 +36,7 @@ func (api *NodeAPI) GetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	err = client.Filesystem(containerClient).Download("/etc/caddy.conf", &config)
 	if err != nil {
 		errmsg := fmt.Sprintf("Error getting  file from container '%s' at path '%s'.\n", gwname, "/etc/caddy.conf")
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

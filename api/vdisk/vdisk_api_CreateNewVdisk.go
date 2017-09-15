@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -17,35 +18,35 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	exists, err := aysClient.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting vdisk service by name %s ", reqBody.ID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID), "")
+		httperror.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID), "")
 		return
 	}
 
 	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.BlockStoragecluster, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.BlockStoragecluster), "")
+		httperror.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.BlockStoragecluster), "")
 		return
 	}
 

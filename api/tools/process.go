@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 	pID, err := strconv.ParseUint(pid, 10, 64)
 	if err != nil {
-		WriteError(w, http.StatusBadRequest, err, "Processid should be valid positive integer")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Processid should be valid positive integer")
 		return
 	}
 
@@ -27,13 +28,13 @@ func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 		}
 
 		if err := core.KillProcess(processID, signal); err != nil {
-			WriteError(w, http.StatusInternalServerError, err, "Error killing process")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error killing process")
 			return
 		}
 		time.Sleep(time.Millisecond * 50)
 
 		if alive, err := core.ProcessAlive(processID); err != nil {
-			WriteError(w, http.StatusInternalServerError, err, "Error checking if process alive")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking if process alive")
 			return
 		} else if !alive {
 			w.WriteHeader(http.StatusNoContent)
@@ -42,5 +43,5 @@ func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 	}
 
 	err = fmt.Errorf("Failed to kill process %v", pID)
-	WriteError(w, http.StatusInternalServerError, err, "")
+	httperror.WriteError(w, http.StatusInternalServerError, err, "")
 }

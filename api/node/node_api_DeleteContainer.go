@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -34,11 +35,11 @@ func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the delete job to be finshed before we delete the service
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for container deletion")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for container deletion")
 		}
 		return
 	}

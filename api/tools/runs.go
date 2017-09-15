@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 type Run struct {
@@ -31,16 +32,16 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 
 	run, resp, err := aysClient.Ays.GetRun(runid, aysRepo, nil, nil)
 	if err != nil {
-		WriteError(w, resp.StatusCode, err, "Error getting run")
+		httperror.WriteError(w, resp.StatusCode, err, "Error getting run")
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
 	}
 
 	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
 	if err != nil {
-		_, ok := err.(HTTPError)
+		_, ok := err.(httperror.HTTPError)
 		if !ok {
 			errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
-			WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, err
 		}
 	}
@@ -59,19 +60,19 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		}
 	}
 	if jobErr != nil {
-		httpErr, ok := jobErr.(HTTPError)
+		httpErr, ok := jobErr.(httperror.HTTPError)
 		if ok {
-			WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, jobErr
 		}
 		errmsg := fmt.Sprintf("error waiting on job %s", job.Key)
-		WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 	}
 
 	if EnumRunState(runstatus.State) != EnumRunStateok {
 		err = fmt.Errorf("Internal Server Error")
-		WriteError(w, http.StatusInternalServerError, err, "")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "")
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 	}
 	response := Run{Runid: run.Key, State: EnumRunState(run.State)}
@@ -84,7 +85,7 @@ func GetRunState(api API, w http.ResponseWriter, r *http.Request, runid string) 
 
 	run, resp, err := aysClient.Ays.GetRun(runid, aysRepo, nil, nil)
 	if err != nil {
-		WriteError(w, resp.StatusCode, err, "Error getting run")
+		httperror.WriteError(w, resp.StatusCode, err, "Error getting run")
 		return "", err
 	}
 

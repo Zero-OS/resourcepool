@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -26,7 +27,7 @@ func (api *NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(srv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 	respBody.Name = srv.Name

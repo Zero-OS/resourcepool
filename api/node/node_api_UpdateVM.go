@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,13 +19,13 @@ func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -38,13 +39,13 @@ func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 
 	if (vm.Memory != reqBody.Memory || vm.Cpu != reqBody.Cpu) && vm.Status != "halted" {
 		err = fmt.Errorf("Can't update memory or CPU of VM %s while it's running", vm.Id)
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 

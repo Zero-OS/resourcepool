@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -14,12 +15,12 @@ import (
 func (api *NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	if path == "" {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing path"), "")
+		httperror.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing path"), "")
 		return
 	}
 
 	if err := r.ParseMultipartForm(4 * 1024 * 1024); err != nil { //4MiB
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -27,21 +28,21 @@ func (api *NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 
 	filesList, ok := r.MultipartForm.File["file"]
 	if !ok {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing file"), "")
+		httperror.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing file"), "")
 		return
 	}
 
 	file := filesList[0]
 	fd, err := file.Open()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error opening file on host")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error opening file on host")
 		return
 	}
 	defer fd.Close()
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
@@ -51,7 +52,7 @@ func (api *NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		containerName := vars["containername"]
 		errmsg := fmt.Sprintf("Error uploading file to container '%s' at path '%s'.\n", containerName, path)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

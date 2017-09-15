@@ -9,6 +9,7 @@ import (
 
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -23,7 +24,7 @@ func (api *NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -31,7 +32,7 @@ func (api *NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 	vms, err := kvmManager.List()
 	if err != nil {
 		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -44,14 +45,14 @@ func (api *NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 
 	if uuid == "" {
 		err = fmt.Errorf("VM %s is not found", vmid)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
 	vminfo, err := kvmManager.InfoPs(uuid)
 	if err != nil {
 		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

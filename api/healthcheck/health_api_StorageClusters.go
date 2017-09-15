@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *h
 	for _, service := range services {
 		var cluster StorageCluster
 		if err := json.Unmarshal(service.Data, &cluster); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 
@@ -47,7 +48,7 @@ func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *h
 
 		var healthcheck HealthCheck
 		if err := json.Unmarshal(healthService.Data, &healthcheck); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,27 +26,27 @@ func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.Unmarshal(service.Data, &vmData); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 
 	for _, nic := range vmData.Nics {
 		if nic.Type == EnumNicLinkTypebridge {
 			err := fmt.Errorf("live migration is not supported for vms with bridges")
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 	}
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -59,7 +60,7 @@ func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 	_, res, err = aysClient.Ays.GetServiceByName(reqBody.Nodeid, "node", api.AysRepo, nil, nil)
 	if res.StatusCode == http.StatusNotFound {
 		errmsg := fmt.Errorf("node %s does not exist", reqBody.Nodeid)
-		tools.WriteError(w, http.StatusBadRequest, errmsg, "")
+		httperror.WriteError(w, http.StatusBadRequest, errmsg, "")
 		return
 	}
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {

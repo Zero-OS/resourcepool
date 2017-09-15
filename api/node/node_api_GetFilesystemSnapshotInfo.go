@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -26,7 +27,7 @@ func (api *NodeAPI) GetFilesystemSnapshotInfo(w http.ResponseWriter, r *http.Req
 
 	respBody.Name = snapshotname
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 

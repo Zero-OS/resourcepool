@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,11 +19,11 @@ func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := aysClient.ServiceExists("gateway", gwID, api.AysRepo)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking gateway service exists")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking gateway service exists")
 		return
 	} else if !exists {
 		err = fmt.Errorf("Gateway with name %s doesn't exists", gwID)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
@@ -43,12 +44,12 @@ func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the job to be finshed
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for stoping gateway %s", gwID)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

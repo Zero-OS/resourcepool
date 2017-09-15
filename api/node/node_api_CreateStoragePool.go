@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -21,19 +22,19 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		errmsg := "Error decoding request for storagepool creation"
-		tools.WriteError(w, http.StatusBadRequest, err, errmsg)
+		httperror.WriteError(w, http.StatusBadRequest, err, errmsg)
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	devices, err := api.GetNodeDevices(w, r)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to get Node device")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get Node device")
 		return
 	}
 
@@ -57,7 +58,7 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 		_, ok := devices[device]
 		if !ok {
 			err := fmt.Errorf("Device %v doesn't exist", device)
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 		bpContent.Devices = append(bpContent.Devices, partitionMap{Device: device})

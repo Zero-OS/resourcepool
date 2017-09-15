@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 
 	nodeDevices, errMsg := api.GetNodeDevices(w, r)
 	if errMsg != nil {
-		tools.WriteError(w, http.StatusInternalServerError, errMsg, "Failed to get Node device")
+		httperror.WriteError(w, http.StatusInternalServerError, errMsg, "Failed to get Node device")
 		return
 	}
 
@@ -38,7 +39,7 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 	var newDevices []string
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&newDevices); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request for storagepool creation")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request for storagepool creation")
 		return
 	}
 
@@ -51,7 +52,7 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 		_, ok := nodeDevices[dev]
 		if !ok {
 			err := fmt.Errorf("Device %v doesn't exist", dev)
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -26,7 +27,7 @@ func (api *HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *ht
 		HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
 	}
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 

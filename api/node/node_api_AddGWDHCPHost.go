@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,7 +19,7 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -39,7 +40,7 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
@@ -49,18 +50,18 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 			exists = true
 			if nic.Dhcpserver == nil {
 				err = fmt.Errorf("Interface %v has no dhcp.", nicInterface)
-				tools.WriteError(w, http.StatusNotFound, err, "")
+				httperror.WriteError(w, http.StatusNotFound, err, "")
 				return
 			}
 			for _, host := range nic.Dhcpserver.Hosts {
 				if host.Macaddress == reqBody.Macaddress {
 					err = fmt.Errorf("A host with macaddress %v already exists for this interface.", reqBody.Macaddress)
-					tools.WriteError(w, http.StatusBadRequest, err, "")
+					httperror.WriteError(w, http.StatusBadRequest, err, "")
 					return
 				}
 				if host.Ipaddress == reqBody.Ipaddress {
 					err = fmt.Errorf("A host with ipaddress %v already exists for this interface.", reqBody.Ipaddress)
-					tools.WriteError(w, http.StatusBadRequest, err, "")
+					httperror.WriteError(w, http.StatusBadRequest, err, "")
 					return
 				}
 			}
@@ -71,7 +72,7 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		err = fmt.Errorf("Interface %v not found.", nicInterface)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 

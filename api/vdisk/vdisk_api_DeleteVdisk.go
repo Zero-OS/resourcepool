@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -19,12 +20,12 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errmsg := fmt.Sprintf("error executing blueprint for vdisk %s deletion", vdiskID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("A vdisk with ID %s does not exist", vdiskID), "")
+		httperror.WriteError(w, http.StatusNotFound, fmt.Errorf("A vdisk with ID %s does not exist", vdiskID), "")
 		return
 	}
 
@@ -46,11 +47,11 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the delete job to be finshed before we delete the service
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for vdisk deletion")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for vdisk deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for vdisk deletion")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for vdisk deletion")
 		}
 		return
 	}
@@ -59,7 +60,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errmsg := fmt.Sprintf("Error in deleting vdisk %s ", vdiskID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

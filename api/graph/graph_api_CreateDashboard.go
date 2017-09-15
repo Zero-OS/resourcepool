@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -19,26 +20,26 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 	graphId := vars["graphid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	exists, err := aysClient.ServiceExists("dashboard", reqBody.Name, api.AysRepo)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
 		return
 	}
 
 	if exists {
 		err = fmt.Errorf("Dashboard with the name %s does exist", reqBody.Name)
-		tools.WriteError(w, http.StatusConflict, err, err.Error())
+		httperror.WriteError(w, http.StatusConflict, err, err.Error())
 		return
 	}
 	// Create blueprint

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -32,7 +33,7 @@ func (api *BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 		}
 		var data Backup
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 			return
 		}
 		data.Name = service.Name

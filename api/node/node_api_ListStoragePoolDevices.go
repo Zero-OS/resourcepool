@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -57,7 +58,7 @@ func (api *NodeAPI) getStoragePoolDevices(node, storagePool string, w http.Respo
 
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal storagepool service '%s'", storagePool)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return nil, true
 	}
 

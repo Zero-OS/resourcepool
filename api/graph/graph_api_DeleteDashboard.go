@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -19,13 +20,13 @@ func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 	exists, err := aysClient.ServiceExists("dashboard", dashboard, api.AysRepo)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
 		return
 	}
 
 	if !exists {
 		err = fmt.Errorf("Dashboard %s doesn't exist", dashboard)
-		tools.WriteError(w, http.StatusNotFound, err, err.Error())
+		httperror.WriteError(w, http.StatusNotFound, err, err.Error())
 		return
 	}
 
@@ -47,11 +48,11 @@ func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the delete job to be finshed before we delete the service
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for dashboard deletion")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for dashboard deletion")
 		}
 		return
 	}
@@ -60,7 +61,7 @@ func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errmsg := fmt.Sprintf("Error in deleting dashboard %s ", dashboard)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

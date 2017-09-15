@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -30,13 +31,13 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot delete forwards for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage, "")
+		httperror.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 
 	log "github.com/Sirupsen/logrus"
@@ -21,12 +22,12 @@ func (api *NodeAPI) GetFilesystemInfo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errmsg := "Error get info about filesystem services"
 
-		if httpErr, ok := err.(tools.HTTPError); ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+		if httpErr, ok := err.(httperror.HTTPError); ok {
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 			return
 		}
 
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -59,11 +60,11 @@ func (api *NodeAPI) getFilesystemDetail(name string, r *http.Request) (*Filesyst
 
 	service, resp, err := aysClient.Ays.GetServiceByName(name, "filesystem", api.AysRepo, nil, nil)
 	if err != nil {
-		return nil, tools.NewHTTPError(resp, err.Error())
+		return nil, httperror.New(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, tools.NewHTTPError(resp, resp.Status)
+		return nil, httperror.New(resp, resp.Status)
 	}
 
 	schema := FilesystemSchema{}

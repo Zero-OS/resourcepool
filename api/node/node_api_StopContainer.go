@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -35,12 +36,12 @@ func (api *NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the job to be finshed
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		errmsg := fmt.Sprintf("Error running blueprint for stopping container %s ", containername)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

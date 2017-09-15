@@ -6,6 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,12 +19,12 @@ func (api *NodeAPI) GetStoragePoolInfo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errmsg := "Error get info about storagepool services"
 
-		if httpErr, ok := err.(tools.HTTPError); ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+		if httpErr, ok := err.(httperror.HTTPError); ok {
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
 			return
 		}
 
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	respBody := StoragePool{
@@ -56,11 +57,11 @@ func (api *NodeAPI) getStoragepoolDetail(name string, r *http.Request) (*storage
 
 	service, resp, err := aysClient.Ays.GetServiceByName(name, "storagepool", api.AysRepo, nil, nil)
 	if err != nil {
-		return nil, tools.NewHTTPError(resp, err.Error())
+		return nil, httperror.New(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, tools.NewHTTPError(resp, resp.Status)
+		return nil, httperror.New(resp, resp.Status)
 	}
 
 	schema := storagePoolSchema{}

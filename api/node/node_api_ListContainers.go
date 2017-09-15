@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -23,7 +24,7 @@ func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting container services from ays")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting container services from ays")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -41,7 +42,7 @@ func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var data containerItem
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

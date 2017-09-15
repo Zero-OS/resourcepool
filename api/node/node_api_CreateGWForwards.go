@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,13 +19,13 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -44,13 +45,13 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot add forwards for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage, "")
+		httperror.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -63,7 +64,7 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 				for _, reqProtocol := range reqBody.Protocols {
 					if protocol == reqProtocol {
 						err := fmt.Errorf("This protocol, srcip and srcport combination already exists")
-						tools.WriteError(w, http.StatusBadRequest, err, "")
+						httperror.WriteError(w, http.StatusBadRequest, err, "")
 						return
 					}
 				}

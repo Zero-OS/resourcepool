@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -33,11 +34,11 @@ func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Requ
 
 	// Wait for the delete job to be finshed before we delete the service
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for fssnapshot deletion")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for fssnapshot deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for fssnapshot deletion")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for fssnapshot deletion")
 		}
 		return
 	}
@@ -45,13 +46,13 @@ func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Requ
 	resp, err := aysClient.Ays.DeleteServiceByName(name, "fssnapshot", api.AysRepo, nil, nil)
 	if err != nil {
 		errmsg := "Error deleting fssnapshot services "
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		errmsg := fmt.Sprintf("Error deleting fssnapshot services : %+v", resp.Status)
-		tools.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status), errmsg)
+		httperror.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status), errmsg)
 		return
 	}
 

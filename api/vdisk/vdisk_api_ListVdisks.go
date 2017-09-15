@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -28,7 +29,7 @@ func (api *VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
 	for idx, service := range services {
 		var vdiskInfo VdiskListItem
 		if err := json.Unmarshal(service.Data, &vdiskInfo); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 			return
 		}
 		vdiskInfo.ID = service.Name

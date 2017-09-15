@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -34,7 +35,7 @@ func (api *NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 

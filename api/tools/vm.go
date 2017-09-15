@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 // ExecuteVMAction executes an action on a vm
@@ -24,16 +25,16 @@ func ExecuteVMAction(aystool AYStool, w http.ResponseWriter, r *http.Request, re
 	res, err := aystool.ExecuteBlueprint(repoName, "vm", vmID, "action", obj)
 	errmsg := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
 	if err != nil {
-		WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	if _, err := aystool.WaitRunDone(res.Key, repoName); err != nil {
-		httpErr, ok := err.(HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 		} else {
-			WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		}
 		return
 	}

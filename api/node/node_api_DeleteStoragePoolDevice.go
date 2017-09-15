@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -33,7 +34,7 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID), "")
+		httperror.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID), "")
 		return
 	}
 

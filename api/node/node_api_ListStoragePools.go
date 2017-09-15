@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -24,7 +25,7 @@ func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	services, _, err := aysClient.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
 	if err != nil {
 		errmsg := "Error listing storagepool services"
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
@@ -39,7 +40,7 @@ func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 
 		data := schema{}
 		if err := json.Unmarshal(service.Data, &data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

@@ -5,6 +5,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -21,7 +22,7 @@ func (api *StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Re
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error calling ays list service")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error calling ays list service")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -32,7 +33,7 @@ func (api *StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Re
 	for _, service := range services {
 		Data := data{}
 		if err := json.Unmarshal(service.Data, &Data); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 			return
 		}
 		respBody = append(respBody, Data.Label)

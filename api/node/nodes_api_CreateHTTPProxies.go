@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -45,13 +46,13 @@ func (api *NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
 	if data.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot add HTTp proxy for gateway")
-		tools.WriteError(w, http.StatusForbidden, errMessage, "")
+		httperror.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
 	}
 
@@ -59,7 +60,7 @@ func (api *NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	for _, proxy := range data.Httpproxies {
 		if proxy.Host == reqBody.Host {
 			errMessage := fmt.Errorf("error proxy %+v already exists in gateway %+v", proxy.Host, gateway)
-			tools.WriteError(w, http.StatusConflict, errMessage, "")
+			httperror.WriteError(w, http.StatusConflict, errMessage, "")
 			return
 		}
 	}

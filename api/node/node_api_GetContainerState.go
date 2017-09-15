@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	client "github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -13,14 +14,14 @@ import (
 func (api *NodeAPI) GetContainerState(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
 	core := client.Core(container)
 	stats, err := core.State()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting state of container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting state of container")
 		return
 	}
 

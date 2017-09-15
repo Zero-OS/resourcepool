@@ -45,6 +45,7 @@ func GetRouter(aysURL, aysRepo, org string, applicationID string, secret string)
 	})
 
 	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, tools.ConnectionMiddleware(), LoggingMiddleware)
+	cbHandler := adapt(api, LoggingMiddleware)
 
 	r.PathPrefix("/nodes").Handler(apihandler)
 	r.PathPrefix("/graphs").Handler(apihandler)
@@ -52,11 +53,16 @@ func GetRouter(aysURL, aysRepo, org string, applicationID string, secret string)
 	r.PathPrefix("/storageclusters").Handler(apihandler)
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
+
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
 	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, applicationID, secret, org), org)
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, applicationID, secret, org), org)
 	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, applicationID, secret, org), org)
 	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, applicationID, secret, org), org)
+
+	r.PathPrefix("/callback").Handler(cbHandler)
+	api.HandleFunc("/callback", cb.Handler).Methods("POST")
+
 	return r
 }

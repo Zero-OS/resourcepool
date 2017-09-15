@@ -2,8 +2,9 @@ package node
 
 import (
 	"fmt"
-	"gopkg.in/validator.v2"
 	"strconv"
+
+	"gopkg.in/validator.v2"
 )
 
 type ListGW struct {

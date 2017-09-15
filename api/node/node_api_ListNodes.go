@@ -5,6 +5,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -24,7 +25,7 @@ func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var node NodeService
 		if err := json.Unmarshal(service.Data, &node); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -23,7 +24,7 @@ func (api *VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
 
 	var respBody Vdisk
 	if err := json.Unmarshal(serv.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling response body")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling response body")
 		return
 	}
 	respBody.ID = serv.Name

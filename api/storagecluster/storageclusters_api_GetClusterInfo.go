@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -79,7 +80,7 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 	}{}
 
 	if err := json.Unmarshal(service.Data, &clusterItem); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "error unmarshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "error unmarshaling ays response")
 		return
 	}
 
@@ -88,7 +89,7 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 		//getting all storageEngine disk services relating to this cluster to get more info on each storageEngine
 		storageServer, nameInfo, err := getStorageEngine(aysClient, storageEngineName, api, w)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting storageEngine service")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting storageEngine service")
 			return
 		}
 

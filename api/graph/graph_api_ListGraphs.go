@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var graph GraphService
 		if err := json.Unmarshal(service.Data, &graph); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 		nodeQueryParams := map[string]interface{}{
@@ -37,7 +38,7 @@ func (api *GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 		}
 		var node NodeService
 		if err := json.Unmarshal(nodeService.Data, &node); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

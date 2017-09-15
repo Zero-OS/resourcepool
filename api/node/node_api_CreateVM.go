@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,25 +19,25 @@ func (api *NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// valdiate name
 	exists, err := aysClient.ServiceExists("vm", reqBody.Id, api.AysRepo)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for conflicting services")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to check for conflicting services")
 		return
 	}
 	if exists {
 		err = fmt.Errorf("VM with name %s already exists", reqBody.Id)
-		tools.WriteError(w, http.StatusConflict, err, err.Error())
+		httperror.WriteError(w, http.StatusConflict, err, err.Error())
 		return
 	}
 

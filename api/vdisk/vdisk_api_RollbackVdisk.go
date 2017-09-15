@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -21,13 +22,13 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
@@ -39,13 +40,13 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	// Validate if disk is halted and of type [db, boot]
 	var disk Vdisk
 	if err := json.Unmarshal(serv.Data, &disk); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
 		return
 	}
 	// Make sure the disk is attached to a tlogStoragecluster
 	if disk.ObjectStoragecluster == "" {
 		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a Object Cluster", vdiskID)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 	// Make sure  this disk is attached to a vm
@@ -58,17 +59,17 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 	if !vmFound {
 		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a machine", vdiskID)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 	if string(disk.Status) != "halted" {
 		err = fmt.Errorf("Failed to rollback %s, vdisk should be halted", vdiskID)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 	if disk.Vdisktype != EnumVdiskVdisktypeboot && disk.Vdisktype != EnumVdiskVdisktypedb {
 		err = fmt.Errorf("Failed to rollback %s, rollback is supported for boot or db only", vdiskID)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 

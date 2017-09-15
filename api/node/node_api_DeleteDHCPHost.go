@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -31,7 +32,7 @@ func (api *NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
@@ -41,7 +42,7 @@ NicsLoop:
 		if nic.Name == nicInterface {
 			if nic.Dhcpserver == nil {
 				err = fmt.Errorf("Interface %v has no dhcp.", nicInterface)
-				tools.WriteError(w, http.StatusNotFound, err, "")
+				httperror.WriteError(w, http.StatusNotFound, err, "")
 				return
 			}
 
@@ -55,14 +56,14 @@ NicsLoop:
 				}
 			}
 			err = fmt.Errorf("Dhcp has no host with macaddress %v", macaddress)
-			tools.WriteError(w, http.StatusNotFound, err, "")
+			httperror.WriteError(w, http.StatusNotFound, err, "")
 			return
 		}
 	}
 
 	if !exists {
 		err = fmt.Errorf("Interface %v not found", nicInterface)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 

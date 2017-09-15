@@ -1,8 +1,9 @@
 package backup
 
 import (
-	"gopkg.in/validator.v2"
 	"net/url"
+
+	"gopkg.in/validator.v2"
 )
 
 type BackupContainer struct {

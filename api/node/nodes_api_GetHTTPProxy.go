@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -35,7 +36,7 @@ func (api *NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.Unmarshal(service.Data, &proxies); err != nil {
 		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s'", gateway)
-		tools.WriteError(w, http.StatusInternalServerError, err, errMessage)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
@@ -52,7 +53,7 @@ func (api *NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
-		tools.WriteError(w, http.StatusNotFound, errMessage, "")
+		httperror.WriteError(w, http.StatusNotFound, errMessage, "")
 		return
 	}
 

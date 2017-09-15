@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -24,7 +25,7 @@ func (api *NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.Unmarshal(service.Data, &gateway); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 

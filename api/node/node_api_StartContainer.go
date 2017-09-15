@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -33,11 +34,11 @@ func (api *NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 
 	// Wait for the job to be finshed
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for starting container")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for starting container")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for starting container")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for starting container")
 		}
 		return
 	}

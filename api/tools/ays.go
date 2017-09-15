@@ -9,7 +9,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	log "github.com/Sirupsen/logrus"
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 var (
@@ -37,6 +39,35 @@ func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
 	return AYStool{
 		Ays: client.Ays,
 	}
+}
+
+func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWriter, action string) bool {
+	if aysErr != nil {
+		errmsg := fmt.Sprintf("AYS threw error while %s.\n", action)
+		httperror.WriteError(w, http.StatusInternalServerError, aysErr, errmsg)
+		return false
+	}
+	if aysRes.StatusCode != http.StatusOK {
+		log.Errorf("AYS returned status %v while %s.\n", aysRes.StatusCode, action)
+		w.WriteHeader(aysRes.StatusCode)
+		return false
+	}
+	return true
+}
+
+func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg string) bool {
+	if err != nil {
+		httpErr := err.(httperror.HTTPError)
+		if httpErr.Resp != nil {
+			if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
+				httperror.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+				return false
+			}
+			httperror.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+			return false
+		}
+	}
+	return true
 }
 
 //ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
@@ -144,11 +175,8 @@ func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, e
 	errResp := http.Response{
 		StatusCode: err.Code,
 	}
-	httperror := HTTPError{
-		Resp: &errResp,
-		err:  err.err,
-	}
-	return job, httperror
+
+	return job, httperror.New(&errResp, err.err.Error())
 }
 
 // ServiceExists check if an atyourserivce exists
@@ -175,11 +203,11 @@ func (aystool AYStool) createBlueprint(repoName string, name string, bp map[stri
 
 	_, resp, err := aystool.Ays.CreateBlueprint(repoName, blueprint, nil, nil)
 	if err != nil {
-		return NewHTTPError(resp, err.Error())
+		return httperror.New(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusConflict {
-		return NewHTTPError(resp, resp.Status)
+		return httperror.New(resp, resp.Status)
 	}
 
 	return nil
@@ -196,17 +224,17 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 
 	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
-		return "", nil, NewHTTPError(resp, err.Error())
+		return "", nil, httperror.New(resp, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
-			return "", nil, NewHTTPError(resp, "Error decoding response body")
+			return "", nil, httperror.New(resp, "Error decoding response body")
 		}
-		return "", nil, NewHTTPError(resp, errBody.Error)
+		return "", nil, httperror.New(resp, errBody.Error)
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-		return "", nil, NewHTTPError(resp, "Error decoding response body")
+		return "", nil, httperror.New(resp, "Error decoding response body")
 	}
 
 	return respData.Msg, respData.ProcessChangeJobs, nil
@@ -216,10 +244,10 @@ func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
 
 	run, resp, err := aystool.Ays.CreateRun(repoName, nil, nil)
 	if err != nil {
-		return nil, NewHTTPError(resp, err.Error())
+		return nil, httperror.New(resp, err.Error())
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewHTTPError(resp, resp.Status)
+		return nil, httperror.New(resp, resp.Status)
 	}
 	return &run, nil
 }
@@ -228,10 +256,10 @@ func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) e
 
 	resp, err := aystool.Ays.ArchiveBlueprint(blueprintName, repoName, nil, nil)
 	if err != nil {
-		return NewHTTPError(resp, err.Error())
+		return httperror.New(resp, err.Error())
 	}
 	if resp.StatusCode != http.StatusOK {
-		return NewHTTPError(resp, resp.Status)
+		return httperror.New(resp, resp.Status)
 	}
 	return nil
 }
@@ -239,16 +267,16 @@ func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) e
 func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	run, resp, err := aystool.Ays.GetRun(runid, repoName, nil, nil)
 	if err != nil {
-		return &run, NewHTTPError(resp, err.Error())
+		return &run, httperror.New(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return &run, NewHTTPError(resp, resp.Status)
+		return &run, httperror.New(resp, resp.Status)
 	}
 
 	if err = aystool.checkRun(run); err != nil {
 		resp.StatusCode = http.StatusInternalServerError
-		return &run, NewHTTPError(resp, err.Error())
+		return &run, httperror.New(resp, err.Error())
 	}
 	return &run, nil
 }

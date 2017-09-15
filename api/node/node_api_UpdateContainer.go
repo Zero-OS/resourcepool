@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -17,13 +18,13 @@ func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -34,17 +35,17 @@ func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	// validate container name
 	exists, err := aysClient.ServiceExists("container", containerName, api.AysRepo)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
 		return
 	} else if !exists {
 		err = fmt.Errorf("Container with name %s does not exists", containerName)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
 	for _, nic := range reqBody.Nics {
 		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 	}

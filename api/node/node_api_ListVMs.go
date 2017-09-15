@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -30,7 +31,7 @@ func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
 	for i, service := range services {
 		var vm VMListItem
 		if err := json.Unmarshal(service.Data, &vm); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 		vm.Id = service.Name

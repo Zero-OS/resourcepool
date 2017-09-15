@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -15,7 +16,7 @@ func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	nodeClient, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to get node connection")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get node connection")
 		return
 	}
 	vars := mux.Vars(r)
@@ -29,7 +30,7 @@ func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 
 	var respBody Container
 	if err := json.Unmarshal(service.Data, &respBody); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 	respBody.Id = id

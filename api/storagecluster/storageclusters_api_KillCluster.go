@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -27,7 +28,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 
 	if len(services) > 0 {
 		err := fmt.Errorf("Can't delete storage clusters with attached vdisks")
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -44,29 +45,29 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		errmsg := fmt.Sprintf("error executing blueprint for Storage cluster %s deletion", storageCluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster), "")
+		httperror.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster), "")
 		return
 	}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
 	if err != nil {
-		httpErr := err.(tools.HTTPError)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for storage_cluster deletion")
+		httpErr := err.(httperror.HTTPError)
+		httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for storage_cluster deletion")
 		return
 	}
 
 	// Wait for the delete job to be finshed before we delete the service
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(tools.HTTPError)
+		httpErr, ok := err.(httperror.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storage_cluster deletion")
+			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storage_cluster deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storage_cluster deletion")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storage_cluster deletion")
 		}
 		return
 	}
@@ -75,7 +76,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		errmsg := fmt.Sprintf("Error in deleting storage_cluster %s", storageCluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

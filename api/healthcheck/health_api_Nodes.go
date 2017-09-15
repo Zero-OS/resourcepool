@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Reques
 	for i, service := range services {
 		var node Node
 		if err := json.Unmarshal(service.Data, &node); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 		respBody[i].ID = service.Name
@@ -41,7 +42,7 @@ func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Reques
 
 		var healthcheck HealthCheck
 		if err := json.Unmarshal(healthService.Data, &healthcheck); err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 

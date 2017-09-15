@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -24,7 +25,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	service, res, err := aysClient.Ays.GetServiceByName(name, "dashboard", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -40,7 +41,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var data dashboardItem
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 
@@ -49,7 +50,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	service, res, err = aysClient.Ays.GetServiceByName(data.Grafana, "grafana", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -64,7 +65,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var grafana grafanaItem
 	if err := json.Unmarshal(service.Data, &grafana); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 	query = map[string]interface{}{
@@ -72,7 +73,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	serviceNode, res, err := aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting node service from ays")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting node service from ays")
 		return
 	}
 	if res.StatusCode != http.StatusOK {
@@ -86,7 +87,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var node nodeItem
 	if err := json.Unmarshal(serviceNode.Data, &node); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
 	}
 

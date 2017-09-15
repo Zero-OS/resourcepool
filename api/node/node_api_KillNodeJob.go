@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,7 +19,7 @@ func (api *NodeAPI) KillNodeJob(w http.ResponseWriter, r *http.Request) {
 	jobID := vars["jobid"]
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
@@ -26,7 +27,7 @@ func (api *NodeAPI) KillNodeJob(w http.ResponseWriter, r *http.Request) {
 
 	if err := core.KillJob(client.JobId(jobID), syscall.SIGKILL); err != nil {
 		errmsg := fmt.Sprintf("Error killing job %s on node", jobID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

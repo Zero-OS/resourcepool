@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -34,7 +35,7 @@ func (api *NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 
 		if err := json.Unmarshal(service.Data, &bridge); err != nil {
 			errmsg := "Error in listing bridges"
-			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return
 		}
 

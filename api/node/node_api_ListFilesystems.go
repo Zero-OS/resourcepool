@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -25,7 +26,7 @@ func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 	services, _, err := aysClient.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
 	if err != nil {
 		errmsg := "Error listing storagepool services"
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 

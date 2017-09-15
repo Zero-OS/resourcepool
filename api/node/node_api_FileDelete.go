@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	client "github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -17,36 +18,36 @@ func (api *NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 	}
 
 	fs := client.Filesystem(container)
 	res, err := fs.Exists(reqBody.Path)
 
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking file exists on container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking file exists on container")
 		return
 	}
 	if res != true {
 		err := fmt.Errorf("path %s does not exist", reqBody.Path)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
 	if err := fs.Remove(reqBody.Path); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error removing file from container")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error removing file from container")
 		return
 	}
 

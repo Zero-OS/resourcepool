@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-core/client/go-client"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,14 +19,14 @@ import (
 func (api *NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
 
 	disk := client.Disk(cl)
 	result, err := disk.List()
 	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error listing disks on node")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error listing disks on node")
 		return
 	}
 
@@ -39,7 +40,7 @@ func (api *NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 
 		size, err := strconv.Atoi(disk.Size)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
+			httperror.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
 			return
 		}
 
@@ -70,7 +71,7 @@ func (api *NodeAPI) GetDiskInfo(w http.ResponseWriter, r *http.Request) {
 
 			size, err := strconv.Atoi(partition.Size)
 			if err != nil {
-				tools.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
+				httperror.WriteError(w, http.StatusInternalServerError, err, "Error converting partition size string to int")
 				return
 			}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
 )
@@ -20,13 +21,13 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	nodeId := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -46,22 +47,22 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 
 		if err := json.Unmarshal(service.Data, &bridge); err != nil {
 			errmsg := fmt.Sprintf("Error in decoding bridges")
-			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			return
 		}
 
 		if bridge.Name == reqBody.Name {
-			tools.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name), "")
+			httperror.WriteError(w, http.StatusConflict, fmt.Errorf("Bridge with name %v already exists", reqBody.Name), "")
 			return
 		}
 
 		overlaps, err := validators.ValidateCIDROverlap(reqBody.Setting.Cidr, bridge.Setting.Cidr)
 		if err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
+			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 		if overlaps {
-			tools.WriteError(w, http.StatusConflict,
+			httperror.WriteError(w, http.StatusConflict,
 				fmt.Errorf("Cidr %v overlaps with existing cidr %v", reqBody.Setting.Cidr, bridge.Setting.Cidr), "")
 			return
 		}
