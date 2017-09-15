@@ -11,6 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"github.com/zero-os/0-orchestrator/api/callback"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -20,6 +21,8 @@ var (
 
 type AYStool struct {
 	Ays *ays.AysService
+	// channel used to wait for run execution
+	waitChan <-chan callback.CallbackStatus
 }
 
 type AYSError struct {
@@ -100,10 +103,10 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 	_, jobs, err := aystool.executeBlueprint(blueprintName, repoName)
 	if err != nil {
-
 		aystool.archiveBlueprint(blueprintName, repoName)
 		return "", err
 	}
+
 	if len(jobs) > 0 {
 		for _, job := range jobs {
 			_, err := aystool.WaitJobDone(job, repoName)
@@ -119,8 +122,13 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 }
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
-	run, err := aystool.getRun(runid, repoName)
+	if aystool.waitChan != nil {
+		// block until we have the callback
+		// TODO: timeout to not wait forever ?
+		<-aystool.waitChan
+	}
 
+	run, err := aystool.getRun(runid, repoName)
 	if err != nil {
 		return run, err
 	}
@@ -241,8 +249,14 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 }
 
 func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
+	var callbackURL string
 
-	run, resp, err := aystool.Ays.CreateRun(repoName, nil, nil)
+	aystool.waitChan, callbackURL = callback.Wait()
+	queryParams := map[string]interface{}{
+		"callback_url": callbackURL,
+	}
+
+	run, resp, err := aystool.Ays.CreateRun(repoName, nil, queryParams)
 	if err != nil {
 		return nil, httperror.New(resp, err.Error())
 	}

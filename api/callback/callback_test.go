@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,12 +16,15 @@ import (
 func TestCallBack(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	cbHandler := NewCallbackRoutine(ctx)
+	cbRountine := newCallbackRoutine(ctx, "localhost:8080")
 
 	runid := "testrunid"
-	cbChan := cbHandler.Wait(runid)
+	cbChan, cbURL := cbRountine.wait(runid)
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		status := <-cbChan
 		assert.Equal(t, CallbackStatusOk, status)
 	}()
@@ -33,10 +37,11 @@ func TestCallBack(t *testing.T) {
 	err := json.NewEncoder(reqBody).Encode(payload)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("POST", "http://example.com/foo", reqBody)
+	req := httptest.NewRequest("POST", cbURL, reqBody)
 	w := httptest.NewRecorder()
-	cbHandler.Handler(w, req)
+	cbRountine.handler(w, req)
 
 	resp := w.Result()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	wg.Wait()
 }

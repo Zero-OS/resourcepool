@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	cache "github.com/patrickmn/go-cache"
 	"github.com/zero-os/0-orchestrator/api/backup"
+	"github.com/zero-os/0-orchestrator/api/callback"
 	"github.com/zero-os/0-orchestrator/api/graph"
 	"github.com/zero-os/0-orchestrator/api/healthcheck"
 	"github.com/zero-os/0-orchestrator/api/node"
@@ -62,7 +63,7 @@ func GetRouter(aysURL, aysRepo, org string, applicationID string, secret string)
 	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, applicationID, secret, org), org)
 
 	r.PathPrefix("/callback").Handler(cbHandler)
-	api.HandleFunc("/callback", cb.Handler).Methods("POST")
+	api.HandleFunc("/callback", callback.Handler()).Methods("POST")
 
 	return r
 }

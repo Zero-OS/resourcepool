@@ -8,12 +8,35 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/pborman/uuid"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 var (
-	cbHandler CallbackHandler
+	cbRountine *callBackRoutine
 )
+
+// Init start a go rountine that will wait for callback and distributed the
+// callback to the proper channels created with Wait
+func Init(ctx context.Context, bindAddr string) {
+	cbRountine = newCallbackRoutine(ctx, bindAddr)
+}
+
+// Wait return a channel on which the caller can wait to received the status of the callback
+// and the callback url
+func Wait() (<-chan CallbackStatus, string) {
+	if cbRountine == nil {
+		panic("no package level callackHandler, call NewCallbackRoutine first")
+	}
+	uuid := uuid.NewRandom()
+
+	return cbRountine.wait(string(uuid))
+}
+
+// Handler is the http handler that needs to be registred in the http router to receive the callback
+func Handler() http.HandlerFunc {
+	return cbRountine.handler
+}
 
 type CallbackStatus int
 
@@ -24,18 +47,14 @@ const (
 	CallbackStatusFailure
 )
 
-type CallbackHandler interface {
-	Handler(w http.ResponseWriter, r *http.Request)
-	Wait(uid string) <-chan CallbackStatus
-}
-
 type waitRequest struct {
-	uid    string
+	uuid   string
 	cbChan chan CallbackStatus
 }
 
 type callBackRoutine struct {
-	ctx context.Context
+	ctx      context.Context
+	bindAddr string
 	// this channel receive the Wait requests
 	cReq chan *waitRequest
 
@@ -44,15 +63,16 @@ type callBackRoutine struct {
 	mu          sync.RWMutex
 }
 
-func NewCallbackRoutine(ctx context.Context) CallbackHandler {
+func newCallbackRoutine(ctx context.Context, bindAddr string) *callBackRoutine {
 	cb := &callBackRoutine{
 		ctx:         ctx,
+		bindAddr:    bindAddr,
 		cReq:        make(chan *waitRequest),
 		callbackMap: make(map[string]chan CallbackStatus),
 		mu:          sync.RWMutex{},
 	}
 	cb.start()
-	cbHandler = cb
+	cbRountine = cb
 	return cb
 }
 
@@ -64,10 +84,10 @@ func (c *callBackRoutine) start() {
 			log.Info("stop callback gorountine")
 			return
 		case req := <-c.cReq: //TODO: chek if we need a buffered channel
-			if _, ok := c.callbackMap[req.uid]; ok {
-				log.Warning("erase callback for %s", req.uid)
+			if _, ok := c.callbackMap[req.uuid]; ok {
+				log.Warning("erase callback for %s", req.uuid)
 			}
-			c.callbackMap[req.uid] = req.cbChan
+			c.callbackMap[req.uuid] = req.cbChan
 		}
 	}()
 }
@@ -77,7 +97,7 @@ type callbackPayload struct {
 	State string `json:"runState"`
 }
 
-func (c *callBackRoutine) Handler(w http.ResponseWriter, r *http.Request) {
+func (c *callBackRoutine) handler(w http.ResponseWriter, r *http.Request) {
 	cbData := callbackPayload{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&cbData); err != nil {
@@ -109,15 +129,15 @@ func (c *callBackRoutine) Handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Wait return a chanel on which the caller can wait to received the status of
-// the callback identify by uid
-func (c *callBackRoutine) Wait(uid string) <-chan CallbackStatus {
+// Wait return a chanel on which the caller can wait to received the status of the callback identify by uid
+// and the callback url
+func (c *callBackRoutine) wait(uuid string) (<-chan CallbackStatus, string) {
 	cbChan := make(chan CallbackStatus)
 
 	c.cReq <- &waitRequest{
-		uid:    uid,
+		uuid:   uuid,
 		cbChan: cbChan,
 	}
-
-	return cbChan
+	// TODO: don't hardcode /callback
+	return cbChan, fmt.Sprintf("http://%s/callback?uid=%s", c.bindAddr, uuid)
 }
