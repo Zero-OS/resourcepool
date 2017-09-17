@@ -4,20 +4,22 @@ import yaml
 import etcd3
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+default_logger = logging.getLogger(__name__)
 
 
 class EtcdCluster:
     """etced server"""
 
-    def __init__(self, name, dialstrings, mgmtdialstrings):
+    def __init__(self, name, dialstrings, mgmtdialstrings, logger=None):
         self.name = name
         self.dialstrings = dialstrings
         self.mgmtdialstrings = mgmtdialstrings
         self._ays = None
+        self.logger = logger if logger else default_logger
 
     @classmethod
-    def from_ays(cls, service, password=None):
+    def from_ays(cls, service, password=None, logger=None):
+        logger = logger or default_logger
         logger.debug("create storageEngine from service (%s)", service)
 
         dialstrings = set()
@@ -33,7 +35,8 @@ class EtcdCluster:
         return cls(
             name=service.name,
             dialstrings=",".join(dialstrings),
-            mgmtdialstrings=",".join(mgmtdialstrings)
+            mgmtdialstrings=",".join(mgmtdialstrings),
+            logger=logger
         )
 
     def put(self, key, value):
@@ -45,7 +48,7 @@ class EtcdCluster:
                 etcd.put(key, value)
                 break
             except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as e:
-                logger.error("Could not connect to etcd on %s:%s" % (host, port))
+                self.logger.error("Could not connect to etcd on %s:%s" % (host, port))
         else:
             raise RuntimeError("etcd cluster %s has now running etcd servers" % self.name)
 
@@ -53,7 +56,8 @@ class EtcdCluster:
 class ETCD:
     """etced server"""
 
-    def __init__(self, name, container, serverBind, clientBind, peers, mgmtClientBind, data_dir='/mnt/data', password=None):
+    def __init__(self, name, container, serverBind, clientBind, peers, mgmtClientBind, data_dir='/mnt/data',
+                 password=None, logger=None):
         self.name = name
         self.container = container
         self.serverBind = serverBind
@@ -63,12 +67,14 @@ class ETCD:
         self.peers = ",".join(peers)
         self._ays = None
         self._password = None
+        self.logger = logger if logger else default_logger
 
     @classmethod
-    def from_ays(cls, service, password=None):
+    def from_ays(cls, service, password=None, logger=None):
+        logger = logger or default_logger
         logger.debug("create storageEngine from service (%s)", service)
         from .Container import Container
-        container = Container.from_ays(service.parent, password)
+        container = Container.from_ays(service.parent, password, logger=service.logger)
 
         return cls(
             name=service.name,
@@ -78,7 +84,8 @@ class ETCD:
             mgmtClientBind=service.model.data.mgmtClientBind,
             data_dir=service.model.data.homeDir,
             peers=service.model.data.peers,
-            password=password
+            password=password,
+            logger=logger
         )
 
     def start(self):
@@ -105,12 +112,18 @@ class ETCD:
             raise RuntimeError('Failed to start etcd server: {}'.format(self.name))
 
     def stop(self):
+        import time
         jobID = "etcd.{}".format(self.name)
         self.container.client.job.kill(jobID)
-        try:
-            self.container.client.job.list(jobID)
-        except RuntimeError:
-            return
+        start = time.time()
+        while start + 15 > time.time():
+            time.sleep(1)
+            try:
+                self.container.client.job.list(jobID)
+            except RuntimeError:
+                return
+            continue
+
         raise RuntimeError('failed to stop etcd.')
 
     def is_running(self):

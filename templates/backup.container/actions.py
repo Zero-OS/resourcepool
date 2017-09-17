@@ -6,7 +6,7 @@ def install(job):
 
     service = job.service
     container_service = service.aysrepo.serviceGet(role='container', instance=service.model.data.container)
-    container = Container.from_ays(container_service, job.context['token'])
+    container = Container.from_ays(container_service, job.context['token'], logger=service.logger)
 
     id = container.id
     client = container.node.client

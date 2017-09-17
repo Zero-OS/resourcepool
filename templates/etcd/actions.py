@@ -11,7 +11,7 @@ def start(job):
 
     service = job.service
 
-    etcd = ETCD.from_ays(service, job.context['token'])
+    etcd = ETCD.from_ays(service, job.context['token'], logger=service.logger)
     etcd.start()
 
     service.model.data.status = "running"
@@ -20,7 +20,7 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.ETCD import ETCD
     service = job.service
-    etcd = ETCD.from_ays(service, job.context['token'])
+    etcd = ETCD.from_ays(service, job.context['token'], logger=service.logger)
     etcd.stop()
 
 
