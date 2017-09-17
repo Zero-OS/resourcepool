@@ -37,7 +37,7 @@ def update(job):
     apply_config(job, job.model.args)
 
 
-def watchdog_handler(job):
+def monitor(job):
     import asyncio
 
     loop = j.atyourservice.server.loop

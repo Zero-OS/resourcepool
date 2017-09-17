@@ -423,3 +423,7 @@ def setup_zerotierbridges(job):
 
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
+
+
+def monitor(job):
+    pass

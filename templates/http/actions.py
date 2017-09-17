@@ -28,8 +28,12 @@ def update(job):
     apply_rules(job, job.model.args["httpproxies"])
 
 
-def watchdog_handler(job):
+def monitor(job):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    token = get_jwt_token(job.service.aysrepo)
+    job.context['token'] = token
 
     loop = j.atyourservice.server.loop
     gateway = job.service.parent.consumers['gateway'][0]

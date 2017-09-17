@@ -38,6 +38,7 @@ def start(job):
     from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
 
     service = job.service
+    service.model.data.status = 'running'
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'])
@@ -46,8 +47,8 @@ def start(job):
         service.model.data.port, service.model.data.db,
         service.model.data.retention, job.context['token'])
     stats_collector.start()
-    job.service.model.data.status = 'running'
-    job.service.saveAll()
+
+    service.saveAll()
 
 
 def stop(job):
@@ -55,6 +56,7 @@ def stop(job):
     from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
 
     service = job.service
+    service.model.data.status = 'halted'
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'])
 
@@ -65,7 +67,6 @@ def stop(job):
             service.model.data.retention, job.context['token'])
         stats_collector.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-    job.service.model.data.status = 'halted'
     job.service.saveAll()
 
 
@@ -120,10 +121,24 @@ def init_actions_(service, args):
     }
 
 
-def watchdog_handler(job):
+def monitor(job):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
 
-    loop = j.atyourservice.server.loop
+    service = job.service
+    token = get_jwt_token(service.aysrepo)
 
-    if job.service.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+    container = get_container(service)
+    container_ays = Container.from_ays(container, token)
+    stats_collector = StatsCollector(
+        container_ays, service.model.data.ip,
+        service.model.data.port, service.model.data.db,
+        service.model.data.retention, token)
+
+    if service.model.data.status == 'running' and not stats_collector.is_running():
+        loop = j.atyourservice.server.loop
+        job.context['token'] = token
+        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=loop)
+

@@ -51,3 +51,7 @@ def init_actions_(service, args):
         'delete': ['uninstall'],
         'uninstall': [],
     }
+
+
+def monitor(job):
+    pass

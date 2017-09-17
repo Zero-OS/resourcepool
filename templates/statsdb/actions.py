@@ -101,14 +101,15 @@ def install(job):
 
 
 def start(job):
+    job.service.model.data.status = 'running'
+    job.service.saveAll()
+
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('install', context=job.context))
     j.tools.async.wrappers.sync(grafana.executeAction('install', context=job.context))
-    job.service.model.data.status = 'running'
-    job.service.saveAll()
 
-    # Install stats_collector on all nodes
+    # Start stats_collector on all nodes
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
@@ -120,12 +121,14 @@ def start(job):
 
 
 def stop(job):
+    job.service.model.data.status = 'halted'
+    job.service.saveAll()
+
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
     j.tools.async.wrappers.sync(grafana.executeAction('stop', context=job.context))
-    job.service.model.data.status = 'halted'
-    job.service.saveAll()
+
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
@@ -157,21 +160,17 @@ def processChange(job):
     if args.get('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    if args.get('port'):
+    if 'port' in args:
+        service.model.data.port = args['port']
+        service.saveAll()
         influxdb = get_influxdb(job.service)
-        grafana = get_grafana(job.service)
         job.context['token'] = get_jwt_token_from_job(job)
         j.tools.async.wrappers.sync(
-            influxdb.executeAction('processChange', context=job.context, args=args))
-        j.tools.async.wrappers.sync(
-            grafana.executeAction('processChange', context=job.context, args=args))
-        influxdb = get_influxdb(job.service)
-        grafana = get_grafana(job.service)
-        if str(influxdb.model.data.status) == 'running' and str(grafana.model.data.status) == 'running':
-            job.service.model.data.status = str(influxdb.model.data.status)
-        else:
-            job.service.model.data.status = 'halted'
-    service.saveAll()
+            influxdb.executeAction('processChange', context=job.context, args={'port': args['port']}))
+
+
+def monitor(job):
+    pass
 
 
 def init_actions_(service, args):

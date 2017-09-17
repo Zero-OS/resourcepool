@@ -34,6 +34,7 @@ def start(job):
     from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
+    service.model.data.status = 'running'
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'])
@@ -41,7 +42,7 @@ def start(job):
         container_ays, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
     influx.start()
-    service.model.data.status = 'running'
+
     influx.create_databases(service.model.data.databases)
     service.saveAll()
 
@@ -51,6 +52,7 @@ def stop(job):
     from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
 
     service = job.service
+    service.model.data.status = 'halted'
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'])
 
@@ -60,7 +62,7 @@ def stop(job):
             service.model.data.rpcport)
         influx.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-    service.model.data.status = 'halted'
+
     service.saveAll()
 
 
@@ -91,14 +93,12 @@ def processChange(job):
         container, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
 
-    if args.get('port'):
+    if 'port' in args:
+        service.model.data.port = args['port']
         if container.is_running() and influx.is_running()[0]:
             influx.stop()
-            service.model.data.status = 'halted'
             influx.port = args['port']
             influx.start()
-            service.model.data.status = 'running'
-        service.model.data.port = args['port']
 
     if args.get('databases'):
         if container.is_running() and influx.is_running()[0]:
@@ -109,6 +109,26 @@ def processChange(job):
         service.model.data.databases = args['databases']
 
     service.saveAll()
+
+
+def monitor(job):
+    import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
+
+    service = job.service
+    token = get_jwt_token(job.service.aysrepo)
+    job.context['token'] = token
+
+    container_service = get_container(service)
+
+    container = Container.from_ays(container_service, token)
+    influx = InfluxDB(
+        container, service.parent.model.data.redisAddr, service.model.data.port,
+        service.model.data.rpcport)
+    if service.model.data.status == 'running' and not influx.is_running():
+        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=service._loop)
 
 
 def init_actions_(service, args):

@@ -38,3 +38,7 @@ def delete(job):
 
 def update_sizeOnDisk(job):
     return False
+
+
+def monitor(job):
+    pass

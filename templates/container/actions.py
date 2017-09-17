@@ -199,6 +199,7 @@ def update(job, updated_nics):
 
 
 def monitor(job):
+    print("**********monitoring container******")
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -215,7 +216,8 @@ def monitor(job):
                 ovs_container = Container.from_ays(ovs_service, get_jwt_token(job.service.aysrepo))
                 if not ovs_container.is_running():
                     job.logger.warning\
-                        ("Can't attempt to restart container {}, container {} is not running".format(service.name, ovs_name))
+                        ("Can't attempt to restart container {}, container {} is not running".format(
+                            service.name, ovs_name))
             try:
                 job.logger.warning("container {} not running, trying to restart".format(service.name))
                 service.model.dbobj.state = 'error'

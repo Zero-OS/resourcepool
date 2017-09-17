@@ -101,12 +101,16 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import math
     import redis
+    import asyncio
     print("*****************************")
 
     service = job.service
     config = get_configuration(service.aysrepo)
     token = get_jwt_token(job.service.aysrepo)
-    if service.model.actionsState['install'] != 'ok':
+    job.context['token'] = token
+
+    install_action = service.model.actionsState['install']
+    if install_action != 'ok' and install_action != 'error':
         return
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
@@ -127,10 +131,13 @@ def monitor(job):
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
+            print("********************configuring node***********")
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
+            print(service.getConsumersRecursive())
+            for consumer in service.getConsumersRecursive():
+                consumer.self_heal_action('monitor')
 
-        job.context['token'] = token
         stats_collector_service = get_stats_collector(service)
         statsdb_service = get_statsdb(service)
 
@@ -187,8 +194,9 @@ def monitor(job):
             raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
         update_healthcheck(job, healthcheck_service, node.healthcheck.network_stability(relatives))
     else:
-        service.model.data.status = 'halted'
-        nodestatus.add_message('node', 'ERROR', 'Node is halted')
+        if service.model.data.status != 'rebooting':
+            service.model.data.status = 'halted'
+            nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
 
     service.saveAll()
@@ -229,8 +237,18 @@ def update_healthcheck(job, health_service, healthchecks):
 
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
+
     service = job.service
-    service.model.data.status = 'rebooting'
+    force_reboot = service.model.data.forceReboot
+    vms = service.consumers.get('vm') or []
+    for vm in vms:
+        if vm.model.data.status != 'halted':
+            if not force_reboot:
+                raise j.exceptions.RuntimeError(
+                    'Failed to reboot node. Force reboot is not enabled and some vms are not halted')
+            else:
+                j.tools.async.wrappers.sync(vm.executeAction(
+                    'shutdown', context=job.context))
 
     # Check if statsdb is installed on this node and stop it
     statsdb_service = get_statsdb(service)
@@ -247,6 +265,7 @@ def reboot(job):
     job.logger.info('reboot node {}'.format(service))
     node = Node.from_ays(service, job.context['token'])
     node.client.raw('core.reboot', {})
+    service.model.data.status = 'rebooting'
 
 
 def uninstall(job):
@@ -304,9 +323,11 @@ def watchdog(job):
         },
         'http': {
             'eof': True,
+            'handler': 'monitor',
         },
         'dhcp': {
             'eof': True,
+            'handler': 'monitor',
         },
         'storage_engine': {
             'eof': True,
@@ -316,6 +337,7 @@ def watchdog(job):
         },
         'stats_collector': {
             'eof': True,
+            'handler': 'monitor',
         },
         'zerostor': {
             'eof': True,
@@ -472,3 +494,14 @@ def vm_handler(job):
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
         shutdown_vm(job, vm)
+
+
+def processChange(job):
+    service = job.service
+    args = job.model.args
+    print("************  NODE PROCESS CHANGE *******")
+    node_data = service.model.data.to_dict()
+    if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
+        service.model.data.forceReboot = args['forceReboot']
+        service.saveAll()
+

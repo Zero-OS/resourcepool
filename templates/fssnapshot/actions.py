@@ -47,3 +47,7 @@ def rollback(job):
     fs = get_filesystem(job)
     snapshot = fs.get(name)
     snapshot.rollback()
+
+
+def monitor(job):
+    pass

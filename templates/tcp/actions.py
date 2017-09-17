@@ -18,3 +18,12 @@ def drop(job):
     node.client.nft.drop_port(service.model.data.port)
     service.model.data.status = "dropped"
     service.saveAll()
+
+
+def monitor(job):
+    import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
+    asyncio.ensure_future(service.executeAction('start', context=job.context), loop=service._loop)

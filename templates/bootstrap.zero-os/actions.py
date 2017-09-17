@@ -165,3 +165,7 @@ def processChange(job):
         token = job.model.args.get('zerotierToken')
         if token:
             service.model.data.zerotierToken = token
+
+
+def monitor(job):
+    pass

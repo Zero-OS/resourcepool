@@ -251,3 +251,7 @@ def watchdog_handler(job):
         if vmachine.model.data.status == 'running':
             j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))
     service.saveAll()
+
+
+def monitor(job):
+    pass

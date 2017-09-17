@@ -30,3 +30,7 @@ def install(job):
     service.model.data.meta = j.data.serializer.json.dumps(meta)
     service.model.data.snapshot = r.get()
     service.saveAll()
+
+
+def monitor(job):
+    pass
