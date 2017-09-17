@@ -131,6 +131,10 @@ func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, e
 		return job, ayserr
 	}
 
+	if job.Result == "" {
+		return job, nil
+	}
+
 	err := AYSError{}
 	if jsonErr := json.Unmarshal([]byte(job.Result), &err); jsonErr != nil {
 		return job, jsonErr
