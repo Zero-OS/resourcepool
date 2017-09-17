@@ -9,7 +9,9 @@ def input(job):
 
 
 def get_pool(job):
+    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     from zeroos.orchestrator.sal.Node import Node
+    job.context['token'] = get_jwt_token_from_job(job)
     nodeservice = job.service.parent.parent
     poolname = job.service.parent.name
     node = Node.from_ays(nodeservice, job.context['token'])
@@ -38,3 +40,17 @@ def delete(job):
 
 def update_sizeOnDisk(job):
     return False
+
+
+def monitor(job):
+    service = job.service
+    pool = get_pool(job)
+    for device in pool.fsinfo['devices']:
+        usage_precentage = (device.get('used')/device.get('size'))*100
+        if usage_precentage == 90:
+            service.model.data.status = 'warning'
+        elif usage_precentage > 99:
+            service.model.data.status = 'error'
+            raise RuntimeError('Filesystem  %s disk  is full !' % service.name)
+        else:
+            pass
