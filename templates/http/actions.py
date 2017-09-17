@@ -22,7 +22,7 @@ def apply_rules(job, httpproxies=None):
     )
 
     service = job.service
-    http = HTTPServer(container, service.model.data.type, httpproxies)
+    http = HTTPServer(container, service, httpproxies)
     http.apply_rules()
 
 
