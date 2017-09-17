@@ -5,6 +5,8 @@ def input(job):
     service = job.service
     # Check the blueprint input for errors
     args = job.model.args
+    job.logger.info("================================================")
+    job.logger.info(args)
     if args.get('vdisks'):
         raise j.exceptions.Input('vdisks property should not be set in the blueprint. Instead use disks property.')
     disks = args.get("disks", [])
@@ -842,12 +844,10 @@ def export(job):
         j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
         metadata["snapshotIDs"].append(snapshotID)
         metadata["vdisks"].append({
-            vdisk: {
-                "blockSize": vdisksrv.model.data.blocksize,
-                "type": str(vdisksrv.model.data.type),
-                "size": vdisksrv.model.data.size,
-                "readOnly": vdisksrv.model.data.readOnly,
-            },
+            "blockSize": vdisksrv.model.data.blocksize,
+            "type": str(vdisksrv.model.data.type),
+            "size": vdisksrv.model.data.size,
+            "readOnly": vdisksrv.model.data.readOnly,
         })
 
     # upload metadta to ftp server

@@ -50,7 +50,6 @@ func (api NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
-	// obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "export", Force: true}}
 
 	res, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "export", obj)
 	errmsg := fmt.Sprintf("error executing blueprint for vm %s export", vmID)

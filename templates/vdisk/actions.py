@@ -302,7 +302,7 @@ def export(job):
     cryptoKey = job.model.args['cryptoKey']
     snapshotID = job.model.args['snapshotID']
 
-    clusterconfig = get_cluster_config(job, type="object")
+    clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
     container = create_from_template_container(job, node)
     try:
@@ -319,7 +319,7 @@ def export(job):
         container.client.system(cmd, id="vdisk.export.%s" % service.name)
 
         start = time.time()
-        while start + 250 > time.time():
+        while start + 500 > time.time():
             try:
                 container.client.job.list("vdisk.export.%s" % service.name)
             except RuntimeError:
@@ -328,6 +328,55 @@ def export(job):
                 time.sleep(10)
         else:
             raise j.exceptions.RuntimeError("Failed to export vdisk {}".format(service.name))
+    finally:
+        container.stop()
+
+
+def import_vdisk(job):
+    import random
+    import os
+    import time
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from urllib.parse import urlparse
+
+    service = job.service
+
+    save_config(job)
+
+    url = service.model.data.backupUrl.split("#")[0]
+    parsed_url = urlparse(url)
+    metadata = os.path.basename(parsed_url.path)
+    url = parsed_url.geturl().split(metadata)[0]
+
+    cryptoKey = service.model.data.backupUrl.split("#")[1]
+    snapshotID = service.model.data.backupUrl.split("#")[2]
+
+    clusterconfig = get_cluster_config(job)
+    node = random.choice(clusterconfig["nodes"])
+    container = create_from_template_container(job, node)
+    try:
+        etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {cryptoKey} {snapshotID} \
+               --config {dialstrings} \
+               --storage {ftpurl}".format(vdiskid=service.name,
+                                          cryptoKey=cryptoKey,
+                                          dialstrings=etcd_cluster.dialstrings,
+                                          snapshotID=snapshotID,
+                                          ftpurl=url)
+        job.logger.info(cmd)
+        container.client.system(cmd, id="vdisk.import.%s" % service.name)
+
+        start = time.time()
+        while start + 500 > time.time():
+            try:
+                container.client.job.list("vdisk.import.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to import vdisk {}".format(service.name))
     finally:
         container.stop()
 

@@ -89,5 +89,4 @@ func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
 	w.WriteHeader(http.StatusCreated)
-
 }
