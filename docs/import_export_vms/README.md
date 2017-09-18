@@ -1,7 +1,7 @@
 # Export VM
 
 ### Requirements:
-* To export a vm, FTP server should be already set up
+* To export a vm, FTP server should be already set up. FTP server container could be build by [vsftpd flist](https://hub.gig.tech/gig-official-apps/vsftpd.flist) or to build your own with [vsftpd-buildscript](../../buildscripts/builder-vsftpd.sh)
 
 ### Flow
 * First FTP server url should be passed to the Orchestrator API like it's described in [api docs](https://rawgit.com/zero-os/0-orchestrator/master/raml/api.html)

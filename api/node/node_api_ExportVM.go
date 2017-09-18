@@ -52,14 +52,6 @@ func (api NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// valdiate name
-	exists, err := aysClient.ServiceExists("vm", vmID, api.AysRepo)
-	if !exists {
-		err = fmt.Errorf("VM with name %s does not exist", vmID)
-		tools.WriteError(w, http.StatusNotFound, err, err.Error())
-		return
-	}
-
 	now := time.Now()
 	bp := struct {
 		URL string `yaml:"backupUrl" json:"backupUrl"`
