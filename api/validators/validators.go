@@ -192,8 +192,12 @@ func ValidateVdisk(vtype string, tlog string, template string, size int, backup 
 		return fmt.Errorf("Tlog storage cluster is required for vdisk backup")
 	}
 
-	if (size % 512) != 0 {
-		return fmt.Errorf("Invalid block size")
+	if size < 512 {
+		return fmt.Errorf("Invalid Blocksize, Blocksize should be larger than 512")
+	}
+
+	if size&(size-1) == 0 {
+		return fmt.Errorf("Invalid Blocksize, Blocksize should be a power of 2")
 	}
 	return nil
 }
