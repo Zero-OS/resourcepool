@@ -245,7 +245,6 @@ class Client(TestCase):
         return False
 
     def create_ovs_container(self):
-        import ipdb ; ipdb.set_trace()
         containers = self.client.container.find('ovs')
         ovs_exist = [key for key, value in containers.items()]
         if not ovs_exist:

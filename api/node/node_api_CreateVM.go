@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	
+
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -45,17 +45,19 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 
 	// Create blueprint
 	bp := struct {
-		Node   string      `yaml:"node" json:"node"`
-		Memory int         `yaml:"memory" json:"memory"`
-		CPU    int         `yaml:"cpu" json:"cpu"`
-		Nics   []NicLink   `yaml:"nics" json:"nics"`
-		Disks  []VDiskLink `yaml:"disks" json:"disks"`
+		Node      string      `yaml:"node" json:"node"`
+		Memory    int         `yaml:"memory" json:"memory"`
+		CPU       int         `yaml:"cpu" json:"cpu"`
+		Nics      []NicLink   `yaml:"nics" json:"nics"`
+		Disks     []VDiskLink `yaml:"disks" json:"disks"`
+		BackupURL string      `yaml:"backupUrl" json:"backupUrl"`
 	}{
-		Node:   nodeid,
-		Memory: reqBody.Memory,
-		CPU:    reqBody.Cpu,
-		Nics:   reqBody.Nics,
-		Disks:  reqBody.Disks,
+		Node:      nodeid,
+		Memory:    reqBody.Memory,
+		CPU:       reqBody.Cpu,
+		Nics:      reqBody.Nics,
+		Disks:     reqBody.Disks,
+		BackupURL: "",
 	}
 
 	obj := make(map[string]interface{})
@@ -68,11 +70,10 @@ func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeid, reqBody.Id))
-   w.WriteHeader(http.StatusCreated)
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeid, reqBody.Id))
+	w.WriteHeader(http.StatusCreated)
 
 }
