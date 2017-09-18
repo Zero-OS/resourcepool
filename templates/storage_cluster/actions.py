@@ -88,9 +88,9 @@ def get_disks(job, nodes):
             # populate datadisks, metadisks based on their disk type
             if key == diskType:
                 datadisks[node] = disks[:serverpernode]
+                disks = disks[serverpernode:]
 
             if service.model.data.clusterType == "object":
-                disks = disks[serverpernode:]
                 if key == metadiskType:
                     metadisks[node] = disks[:serverpernode]
 
