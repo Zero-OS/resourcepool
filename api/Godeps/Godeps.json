@@ -1,7 +1,10 @@
 {
 	"ImportPath": "github.com/zero-os/0-orchestrator/api",
 	"GoVersion": "go1.8",
-	"GodepVersion": "v62",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -16,6 +19,11 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "v1.19.1-36-gd70f47e",
 			"Rev": "d70f47eeca3afd795160003bc6e28b001d60c67c"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-6-gadab964",
+			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
 		},
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
@@ -61,6 +69,11 @@
 			"Rev": "769512c448b98e9efa243279a7e281248332aa98"
 		},
 		{
+			"ImportPath": "github.com/justinas/alice",
+			"Comment": "1.0.0",
+			"Rev": "052b8b6c18edb9db317af86806d8e00ebaa94160"
+		},
+		{
 			"ImportPath": "github.com/patrickmn/go-cache",
 			"Comment": "v2.0.0-9-g7ac1518",
 			"Rev": "7ac151875ffb48b9f3ccce9ea20f020b0c1596c8"
@@ -69,6 +82,11 @@
 			"ImportPath": "github.com/pborman/uuid",
 			"Comment": "v1.0-21-g1b00554",
 			"Rev": "1b00554d822231195d1babd97ff4a781231955c9"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
 		},
 		{
 			"ImportPath": "github.com/shirou/gopsutil/cpu",
@@ -108,6 +126,10 @@
 		{
 			"ImportPath": "github.com/shirou/w32",
 			"Rev": "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Rev": "3b361f7ebbeff8f74ac0af5b9751f01b32cd74e5"
 		},
 		{
 			"ImportPath": "github.com/zero-os/0-core/client/go-client",
