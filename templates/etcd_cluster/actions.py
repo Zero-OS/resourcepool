@@ -26,7 +26,7 @@ def configure(job):
     config = get_configuration(service.aysrepo)
 
     nodes = set()
-    for node_service in service.producers['node']:            
+    for node_service in service.producers['node']:
         nodes.add(Node.from_ays(node_service, job.context['token']))
     nodes = list(nodes)
 
@@ -152,8 +152,8 @@ def watchdog_handler(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
-    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler so here 
-    # can focus on only the recovery 
+    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler so here
+    # can focus on only the recovery
 
     service = job.service
     if service.model.data.status == 'recovering':
@@ -242,7 +242,7 @@ def watchdog_handler(job):
         for etcd_service in service.producers['etcd']:
             service.model.producerRemove(etcd_service)
             service.saveAll()
-        
+
         for node_service in service.producers['node']:
             if node_service.name not in service.model.data.nodes:
                 service.model.producerRemove(node_service)
@@ -292,5 +292,3 @@ def watchdog_handler(job):
             if not etcd_status:
                 j.tools.async.wrappers.sync(etcd_service.parent.delete())
     service.logger.info("etcd_cluster  %s respawned" % service.name)
-    
-    
