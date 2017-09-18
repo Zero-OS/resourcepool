@@ -378,6 +378,7 @@ def import_vdisk(job):
         else:
             raise j.exceptions.RuntimeError("Failed to import vdisk {}".format(service.name))
     finally:
+        service.model.data.backupUrl = ""
         container.stop()
 
 
