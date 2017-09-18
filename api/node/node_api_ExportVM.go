@@ -77,7 +77,7 @@ func (api NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := struct {
-		BackupURL string `yaml:"backupUrl" json:"backupUrl"`
+		BackupURL string `yaml:"url" json:"url"`
 	}{
 		BackupURL: strings.Replace(bp.URL, "#", "/", 1),
 	}
