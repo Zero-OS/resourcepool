@@ -181,6 +181,7 @@ def monitor(job):
             update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
             update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
+        # check network stability of  node with the rest of the nodes ! TODO
     else:
         if service.model.data.status != 'rebooting':
             service.model.data.status = 'halted'

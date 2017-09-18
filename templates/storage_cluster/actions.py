@@ -2,6 +2,7 @@ from js9 import j
 
 
 def input(job):
+    from zeroos.orchestrator.configuration import get_configuration
     for arg in ['filesystems', 'arbds']:
         if job.model.args.get(arg, []) != []:
             raise j.exceptions.Input("{} should not be set as input".format(arg))
@@ -16,6 +17,14 @@ def input(job):
     cluster_type = job.model.args.get("clusterType")
 
     if cluster_type == "object":
+        aysconfig = get_configuration(job.service.aysrepo)
+        zstor_organization = aysconfig.get("0-stor-organization")
+        zstor_namespace = aysconfig.get("0-stor-namespace")
+        zstor_clientid = aysconfig.get("0-stor-clientid")
+        zstor_clientsecret = aysconfig.get("0-stor-clientsecret")
+        if not (zstor_organization and zstor_namespace and zstor_clientid and zstor_clientsecret):
+            raise RuntimeError('Missing 0-stor configuration, please fix configuration blueprint and try again.')
+
         data_shards = job.model.args.get("dataShards", 0)
         parity_shards = job.model.args.get("parityShards", 0)
         if not data_shards or not parity_shards:
@@ -268,24 +277,6 @@ def save_config(job):
     zstor_namespace = aysconfig["0-stor-namespace"]
     zstor_clientid = aysconfig["0-stor-clientid"]
     zstor_clientsecret = aysconfig["0-stor-clientsecret"]
-
-    # The conactenation here because ays parsing can't handle the string in one line
-    url = "https://itsyou.online/v1/oauth/access_token"
-    scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
-    scope = scope.format(
-        org=zstor_organization,
-        namespace=zstor_namespace
-    )
-    params = {
-        "client_id": zstor_clientid,
-        "client_secret": zstor_clientsecret,
-        "grant_type": "client_credentials",
-        "response_type": "id_token",
-        "scope": scope,
-    }
-    res = requests.post(url, params=params)
-    if res.status_code != 200:
-        raise RuntimeError("Invalid itsyouonline configuration")
 
     zerostor_config = {
         "iyo": {
