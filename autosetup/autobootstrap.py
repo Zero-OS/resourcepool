@@ -573,15 +573,15 @@ if __name__ == "__main__":
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
     parser.add_argument('--password', type=str, help='password (jwt) used to connect the host')
     parser.add_argument('--flist', type=str, help='flist container base image')
-    parser.add_argument('--container', type=str, help='container deployment name', required=True)
+    parser.add_argument('--container', type=str, help='container deployment name', default="orchestrator")
     parser.add_argument('--domain', type=str, help='domain on which caddy should be listening, if not specified caddy will listen on port 80 and 443, but with self-signed certificate')
     parser.add_argument('--zt-net', type=str, help='zerotier network id of the container', required=True)
     parser.add_argument('--upstream', type=str, help='remote upstream git address', required=True)
-    parser.add_argument('--email', type=str, help='email used by caddy for certificates')
+    parser.add_argument('--email', type=str, help='email used by caddy for certificates (default: info@gig.tech)', default="info@gig.tech")
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
     parser.add_argument('--client-id', type=str, help='itsyou.online client-id for jwt-token', required=True)
     parser.add_argument('--client-secret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
-    parser.add_argument('--ssh-key', type=str, help='ssh private key filename (need to be passphrase less')
+    parser.add_argument('--ssh-key', type=str, help='ssh private key filename (need to be passphrase less)')
     parser.add_argument('--network', type=str, help='network type: g8, switchless, packet', required=True)
     parser.add_argument('--network-vlan', type=str, help='g8/switchless only: vlan id')
     parser.add_argument('--network-cidr', type=str, help='g8/switchless only: cidr address')
@@ -592,9 +592,6 @@ if __name__ == "__main__":
     parser.add_argument('--stor-client-id', type=str, help='0-stor itsyou.online client id (default: --client-id)')
     parser.add_argument('--stor-client-secret', type=str, help='0-stor itsyou.online client secret (default: --client-secret)')
     args = parser.parse_args()
-
-    if args.email == None:
-        args.email = "info@gig.tech"
 
     if args.flist:
         installer.flist = args.flist
@@ -611,6 +608,7 @@ if __name__ == "__main__":
     if not args.stor_organization or not args.stor_namespace or not args.stor_client_id or not args.stor_client_secret:
         print("[-] warning: 0-stor: values not fully explicitly specified")
         print("[-] warning: 0-stor: some of them will be set implicitly")
+        warning = True
 
     if installer.tools.ssh.localkeys() == "" and not args.ssh_key:
         print("[-] error: ssh-agent: no keys found on ssh-agent and")
@@ -660,6 +658,11 @@ if __name__ == "__main__":
     print("[+] optional range  : %s" % args.network_cidr)
     print("[+] ===============================================================")
     print("[+]")
+
+    if warning:
+        print("[-] take some time to review summary, some variables are implicit")
+        print("[+] setup will continue in 8 seconds, press CTRL+C now to cancel")
+        time.sleep(8)
 
     print("[+] initializing connection")
     node = installer.connector(args.server, args.password)
