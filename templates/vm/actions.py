@@ -5,8 +5,6 @@ def input(job):
     service = job.service
     # Check the blueprint input for errors
     args = job.model.args
-    job.logger.info("================================================")
-    job.logger.info(args)
     if args.get('vdisks'):
         raise j.exceptions.Input('vdisks property should not be set in the blueprint. Instead use disks property.')
     disks = args.get("disks", [])
@@ -239,7 +237,7 @@ def install(job):
             cleanupzerodisk(job)
             service.saveAll()
             raise j.exceptions.Input(str(e))
-        
+
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
