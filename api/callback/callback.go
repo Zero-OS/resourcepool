@@ -17,7 +17,7 @@ var (
 )
 
 // Init start a go rountine that will wait for callback and distributed the
-// callback to the proper channels created with Wait
+// callback to the proper channels created with Register
 func Init(ctx context.Context, bindAddr string) {
 	cbRountine = newCallbackRoutine(ctx, bindAddr)
 }
@@ -26,7 +26,7 @@ func Init(ctx context.Context, bindAddr string) {
 // and the callback url
 func Register() (<-chan CallbackStatus, string) {
 	if cbRountine == nil {
-		panic("no package level callackHandler, call NewCallbackRoutine first")
+		panic("no package level callackHandler, call Init first")
 	}
 	uuid := uuid.NewRandom()
 
@@ -80,7 +80,6 @@ func (c *callBackRoutine) start() {
 	go func() {
 		select {
 		case <-c.ctx.Done():
-			fmt.Println("stop callback gorountine")
 			log.Info("stop callback gorountine")
 			return
 		case req := <-c.cReq: //TODO: chek if we need a buffered channel
