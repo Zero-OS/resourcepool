@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jlaffaye/ftp"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -30,14 +31,14 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 	reqBody.URL = strings.TrimRight(reqBody.URL, "/")
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
@@ -45,7 +46,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	exists, err := aysClient.ServiceExists("vm", vmID, api.AysRepo)
 	if exists {
 		err = fmt.Errorf("VM with name %s already exists", vmID)
-		tools.WriteError(w, http.StatusConflict, err, err.Error())
+		httperror.WriteError(w, http.StatusConflict, err, err.Error())
 		return
 	}
 
@@ -54,21 +55,21 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	cl, err := ftp.Dial(ftpinfo.Host)
 	if err != nil {
 		err = fmt.Errorf("Could not connect to %s", reqBody.URL)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 
 	err = cl.Login(ftpinfo.Username, ftpinfo.Passwd)
 	if err != nil {
 		err = fmt.Errorf("Could not login to %s", reqBody.URL)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 
 	res, err := cl.Retr(ftpinfo.Path)
 	if err != nil {
 		err = fmt.Errorf("Could not retrieve to %s from the ftp server", ftpinfo.Path)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
+		httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 
@@ -77,7 +78,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err.Error())
 		err = fmt.Errorf("Failed to read %s", ftpinfo.Path)
-		tools.WriteError(w, http.StatusInternalServerError, err, err.Error())
+		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
 		return
 	}
 
@@ -86,7 +87,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err.Error())
 		err = fmt.Errorf("Invalid metadata to import vm %s", ftpinfo.Path)
-		tools.WriteError(w, http.StatusInternalServerError, err, err.Error())
+		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
 		return
 	}
 
@@ -130,11 +131,11 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if _, err := aysClient.WaitRunDone(res.Key, api.AysRepo); err != nil {
-			httpErr, ok := err.(tools.HTTPError)
+			httpErr, ok := err.(httperror.HTTPError)
 			if ok {
-				tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+				httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
 			} else {
-				tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+				httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 			}
 			return
 		}
@@ -174,7 +175,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
 		return
 	}
 

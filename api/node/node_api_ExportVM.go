@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -24,7 +25,7 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
+		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
 
@@ -35,20 +36,20 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	}
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
 
 	if vm.Status != EnumVMStatushalted {
 		err = fmt.Errorf("VM %s must be halted before export", vmID)
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate request
 	reqBody.URL = strings.TrimRight(reqBody.URL, "/")
 	if err := reqBody.Validate(); err != nil {
-		tools.WriteError(w, http.StatusBadRequest, err, "")
+		httperror.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
