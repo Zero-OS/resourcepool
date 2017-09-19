@@ -59,19 +59,22 @@ func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWrite
 }
 
 func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg string) bool {
-	if err != nil {
-		httpErr, ok := err.(httperror.HTTPError)
-		if ok && httpErr.Resp != nil {
-			if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
-				httperror.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-				return false
-			}
-			httperror.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+	if err == nil {
+		return true
+	}
+
+	httpErr, ok := err.(httperror.HTTPError)
+	if ok && httpErr.Resp != nil {
+		if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
+			httperror.WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
 			return false
 		}
+		httperror.WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
 		return false
 	}
-	return true
+
+	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	return false
 }
 
 //ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
