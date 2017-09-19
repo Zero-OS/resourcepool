@@ -7,7 +7,7 @@ struct Schema {
     readOnly @3: Bool;
     quota @4: UInt32; # Amount of MiB that can be written to the filesystem. 0 means no quota is set.
     mountpoint @5:Text;
-    status @6:Satus;
+    status @6:Status;
 }
 
 
