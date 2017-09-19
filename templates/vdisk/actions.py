@@ -53,7 +53,7 @@ def install(job):
             volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
 
             start = time.time()
-            while start + 500 > time.time():
+            while start + 900 > time.time():
                 try:
                     volume_container.client.job.list("vdisk.copy.%s" % service.name)
                 except RuntimeError:
@@ -272,7 +272,7 @@ def rollback(job):
 
         container.client.system(cmd, id="vdisk.rollback.%s" % service.name)
         start = time.time()
-        while start + 500 > time.time():
+        while start + 900 > time.time():
             try:
                 container.client.job.list("vdisk.rollback.%s" % service.name)
             except RuntimeError:
