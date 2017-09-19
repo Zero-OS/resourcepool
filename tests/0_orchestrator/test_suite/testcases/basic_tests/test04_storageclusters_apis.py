@@ -12,9 +12,9 @@ class TestStorageclustersAPI(TestcasesBase):
         if free_disks == []:
             self.skipTest(' [*] No free disks to create storagecluster')
         else:
-            self.response, self.data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid,
-                                                                                     servers=randint(1, len(free_disks)))
-        self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s."%self.response.content)
+            numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
+            self.response, self.data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=randint(1, numberOfDisks))
+            self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s." % self.response.content)
 
     def tearDown(self):
         self.lg.info(' [*] Kill storage cluster (SC0)')

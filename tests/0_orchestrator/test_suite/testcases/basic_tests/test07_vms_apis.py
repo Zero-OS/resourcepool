@@ -15,7 +15,8 @@ class TestVmsAPI(TestcasesBase):
             if free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
 
-            response, body = self.storageclusters_api.post_storageclusters(node_id=self.nodeid)
+            numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
+            response, data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=1)
             self.assertEqual(response.status_code, 201)
             self.storagecluster = body['label']
         else:
