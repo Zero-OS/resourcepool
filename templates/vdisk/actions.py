@@ -130,6 +130,8 @@ def save_config(job):
         config = {
             "storageClusterID": templateStorageclusterId,
         }
+        if service.model.data.objectStoragecluster:
+            config["tlogServerClusterID"] = "temp"
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
 
@@ -160,6 +162,8 @@ def save_config(job):
         "storageClusterID": service.model.data.blockStoragecluster,
         "templateStorageClusterID": templateStorageclusterId,
     }
+    if service.model.data.objectStoragecluster:
+        config["tlogServerClusterID"] = "temp"
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 
