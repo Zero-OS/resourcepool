@@ -37,8 +37,8 @@ pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-core.g
 pip3 install --root ${TARGET} --upgrade "git+https://github.com/zero-os/0-orchestrator.git@${ORCH_BRANCH}#subdirectory=pyclient"
 pip3 install --root ${TARGET} --upgrade zerotier
 
-curl https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz > /tmp/go1.8.3.linux-amd64.tar.gz
-tar -C /usr/local -xzf /tmp/go1.8.3.linux-amd64.tar.gz
+curl https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz > /tmp/go1.9.linux-amd64.tar.gz
+tar -C /usr/local -xzf /tmp/go1.9.linux-amd64.tar.gz
 
 export GOPATH=/gopath
 mkdir -p $GOPATH
