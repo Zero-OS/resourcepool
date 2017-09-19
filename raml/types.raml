@@ -28,6 +28,43 @@ CPUInfo:
       type: number
       format: float
 
+ExportUrl:
+  type: object
+  description: FTP server url
+  properties:
+    url:
+      type: string
+      description: |
+          FTP server url to export the vm from, and it should be in one of the following formats
+          - localhost:22
+          - ftp://1.2.3.4:200
+          - ftp://user@127.0.0.1:200
+          - ftp://user:pass@12.30.120.200:3000
+          - ftp://user:pass@12.30.120.200:3000/root/dir
+
+ImportVM:
+  type: object
+  description: Import VM from ftp server
+  properties:
+    url:
+      type: string
+      description: |
+        FTP server url of the metadata to import the vm from, and it should be in one of the following formats
+        - localhost:22
+        - ftp://1.2.3.4:200
+        - ftp://user@127.0.0.1:200
+        - ftp://user:pass@12.30.120.200:3000
+        - ftp://user:pass@12.30.120.200:3000/root/dir
+    blockStoragecluster:
+      type: string
+    objectStoragecluster:
+      type: string
+      required: false
+    backupStoragecluster:
+      type: string
+      required: false
+
+
 MemInfo:
   type: object
   description: Information about memory
@@ -1087,6 +1124,9 @@ Vdisk:
     readOnly:
       type: boolean
       default: false
+      required: false
+    templatevdisk:
+      type: string
       required: false
     blockStoragecluster:
       type: string

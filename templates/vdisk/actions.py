@@ -1,8 +1,21 @@
 from js9 import j
 
 
+def input(job):
+    service = job.service
+    blockStoragecluster = job.model.args.get('blockStoragecluster', None)
+    objectStoragecluster = job.model.args.get('objectStoragecluster', None)
+
+    if objectStoragecluster:
+        block_st = service.aysrepo.serviceGet(role='storage_cluster', instance=blockStoragecluster)
+        object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
+        if block_st.model.data.nrServer < object_st.model.data.nrServer:
+            raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
+
+
 def install(job):
     import random
+    import time
     from urllib.parse import urlparse
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
@@ -17,10 +30,17 @@ def install(job):
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         blockStoragecluster = service.model.data.blockStoragecluster
+        objectStoragecluster = service.model.data.objectStoragecluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = './bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+
+            if objectStoragecluster:
+                object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
+                dataShards = object_st.model.data.dataShards
+                parityShards = object_st.model.data.parityShards
+                CMD += ' --data-shards %s --parity-shards %s' % (dataShards, parityShards)
 
             etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
             etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
@@ -30,9 +50,18 @@ def install(job):
                              tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
-            result = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name).get()
-            if result.state != 'SUCCESS':
-                raise j.exceptions.RuntimeError("Failed to run zeroctl copy {} {}".format(result.stdout, result.stderr))
+            volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
+
+            start = time.time()
+            while start + 900 > time.time():
+                try:
+                    volume_container.client.job.list("vdisk.copy.%s" % service.name)
+                except RuntimeError:
+                    break
+                else:
+                    time.sleep(10)
+            else:
+                raise j.exceptions.RuntimeError("Failed to copy vdisk {}".format(service.name))
         finally:
             volume_container.stop()
 
@@ -212,6 +241,7 @@ def get_srcstorageEngine(container, template):
 
 def rollback(job):
     import random
+    import time
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
@@ -239,11 +269,116 @@ def rollback(job):
                                                        data_shards=data_shards,
                                                        parity_shards=parity_shards)
         job.logger.info(cmd)
-        result = container.client.system(cmd, id="vdisk.rollback.%s" % service.name).get()
-        if result.state != 'SUCCESS':
-            raise j.exceptions.RuntimeError("Failed to run zeroctl restore {} {}".format(result.stdout, result.stderr))
-        service.model.data.status = 'running'
+
+        container.client.system(cmd, id="vdisk.rollback.%s" % service.name)
+        start = time.time()
+        while start + 900 > time.time():
+            try:
+                container.client.job.list("vdisk.rollback.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to restore vdisk {}".format(service.name))
+        service.model.data.status = 'halted'
     finally:
+        container.stop()
+
+
+def export(job):
+    import random
+    import time
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
+    service = job.service
+
+    if service.model.data.status != "halted":
+        raise RuntimeError('Can not export a running vdisk')
+
+    if 'vm' not in service.consumers:
+        raise j.exceptions.Input('Can not export a disk that is not attached to a vm')
+    url = job.model.args['url']
+    cryptoKey = job.model.args['cryptoKey']
+    snapshotID = job.model.args['snapshotID']
+
+    clusterconfig = get_cluster_config(job)
+    node = random.choice(clusterconfig["nodes"])
+    container = create_from_template_container(job, node)
+    try:
+        etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
+        cmd = "/bin/zeroctl export vdisk {vdiskid} {cryptoKey} {snapshotID} \
+               --config {dialstrings} \
+               --storage {ftpurl}".format(vdiskid=service.name,
+                                          cryptoKey=cryptoKey,
+                                          dialstrings=etcd_cluster.dialstrings,
+                                          snapshotID=snapshotID,
+                                          ftpurl=url)
+        job.logger.info(cmd)
+        container.client.system(cmd, id="vdisk.export.%s" % service.name)
+
+        start = time.time()
+        while start + 500 > time.time():
+            try:
+                container.client.job.list("vdisk.export.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to export vdisk {}".format(service.name))
+    finally:
+        container.stop()
+
+
+def import_vdisk(job):
+    import random
+    import os
+    import time
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from urllib.parse import urlparse
+
+    service = job.service
+
+    save_config(job)
+
+    url = service.model.data.backupUrl.split("#")[0]
+    parsed_url = urlparse(url)
+    metadata = os.path.basename(parsed_url.path)
+    url = parsed_url.geturl().split(metadata)[0]
+
+    cryptoKey = service.model.data.backupUrl.split("#")[1]
+    snapshotID = service.model.data.backupUrl.split("#")[2]
+
+    clusterconfig = get_cluster_config(job)
+    node = random.choice(clusterconfig["nodes"])
+    container = create_from_template_container(job, node)
+    try:
+        etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
+        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {cryptoKey} {snapshotID} \
+               --config {dialstrings} \
+               --storage {ftpurl}".format(vdiskid=service.name,
+                                          cryptoKey=cryptoKey,
+                                          dialstrings=etcd_cluster.dialstrings,
+                                          snapshotID=snapshotID,
+                                          ftpurl=url)
+        job.logger.info(cmd)
+        container.client.system(cmd, id="vdisk.import.%s" % service.name)
+
+        start = time.time()
+        while start + 500 > time.time():
+            try:
+                container.client.job.list("vdisk.import.%s" % service.name)
+            except RuntimeError:
+                break
+            else:
+                time.sleep(10)
+        else:
+            raise j.exceptions.RuntimeError("Failed to import vdisk {}".format(service.name))
+    finally:
+        service.model.data.backupUrl = ""
         container.stop()
 
 

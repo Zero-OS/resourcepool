@@ -209,6 +209,8 @@ def format_media_nics(job, medias):
 
 def install(job):
     import time
+    from zeroos.core0.client.client import ResultError
+    from zeroos.orchestrator.utils import Write_Status_code_Error
     service = job.service
     node = get_node(job)
 
@@ -222,13 +224,20 @@ def install(job):
 
     kvm = get_domain(job)
     if not kvm:
-        node.client.kvm.create(
-            service.name,
-            media=media,
-            cpu=service.model.data.cpu,
-            memory=service.model.data.memory,
-            nics=nics,
-        )
+        try:
+            node.client.kvm.create(
+                service.name,
+                media=media,
+                cpu=service.model.data.cpu,
+                memory=service.model.data.memory,
+                nics=nics,
+            )
+        except ResultError as e:
+            Write_Status_code_Error(job, e)
+            cleanupzerodisk(job)
+            service.saveAll()
+            raise j.exceptions.Input(str(e))
+
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
@@ -244,6 +253,7 @@ def install(job):
                 time.sleep(3)
         else:
             service.model.data.status = 'error'
+            cleanupzerodisk(job)
             raise j.exceptions.RuntimeError("Failed to start vm {}".format(service.name))
     service.model.data.status = 'running'
     service.saveAll()
@@ -428,7 +438,7 @@ def start_migartion_channel(job, old_service, new_service):
         # check channel does not exist
         if node.client.filesystem.exists(ssh_config):
             node.client.filesystem.remove(ssh_config)
-            
+
         # start ssh server on new node for this migration
         node.upload_content(ssh_config, "Port %s" % port)
         res = node.client.system(command.format(config=ssh_config))
@@ -753,7 +763,6 @@ def monitor(job):
 
 
 def update_data(job, args):
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     service = job.service
 
     # mean we want to migrate vm from a node to another
@@ -789,6 +798,63 @@ def update_data(job, args):
     service.saveAll()
 
 
+def export(job):
+    from zeroos.orchestrator.sal.FtpClient import FtpClient
+    import hashlib
+    import time
+    import yaml
+
+    service = job.service
+    # url should be one of those formats
+    # ftp://1.2.3.4:200
+    # ftp://user@127.0.0.1:200
+    # ftp://user:pass@12.30.120.200:3000
+    # ftp://user:pass@12.30.120.200:3000/root/dir
+    url = job.model.args.get("backupUrl", None)
+    if not url:
+        return
+
+    url, filename = url.split("#", 1)
+
+    if not url.startswith("ftp://"):
+        url = "ftp://" + url
+
+    if service.model.data.status != "halted":
+        raise RuntimeError("Can not export a running vm")
+
+    vdisks = service.model.data.vdisks
+
+    # populate the metadata
+    metadata = service.model.data.to_dict()
+    metadata["cryptoKey"] = hashlib.md5(str(int(time.time() * 10**6)).encode("utf-8")).hexdigest()
+    metadata["snapshotIDs"] = []
+
+    args = {
+        "url": url,
+        "cryptoKey": metadata["cryptoKey"],
+    }
+    # TODO: optimize using futures
+    metadata["vdisks"] = []
+    for vdisk in vdisks:
+        snapshotID = str(int(time.time() * 10**6))
+        args["snapshotID"] = snapshotID
+        vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
+        j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
+        metadata["snapshotIDs"].append(snapshotID)
+        metadata["vdisks"].append({
+            "blockSize": vdisksrv.model.data.blocksize,
+            "type": str(vdisksrv.model.data.type),
+            "size": vdisksrv.model.data.size,
+            "readOnly": vdisksrv.model.data.readOnly,
+        })
+
+    # upload metadta to ftp server
+    yamlconfig = yaml.safe_dump(metadata, default_flow_style=False)
+    content = yamlconfig.encode('utf8')
+    ftpclient = FtpClient(url)
+    ftpclient.upload(content, filename)
+
+
 def processChange(job):
     from zeroos.orchestrator.configuration import get_jwt_token_from_job
 
@@ -798,6 +864,9 @@ def processChange(job):
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
             job.context['token'] = get_jwt_token_from_job(job)
+            if args.get('backupUrl', None):
+                export(job)
+                return
             update_data(job, args)
             node = get_node(job)
             updateDisks(job, node, args)
