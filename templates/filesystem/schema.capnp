@@ -12,7 +12,7 @@ struct Schema {
 
 
 enum Status{
-    error @1;
-    warning @2;
-    running @3;
+    error @0;
+    warning @1;
+    running @2;
 }
