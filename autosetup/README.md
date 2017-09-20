@@ -37,7 +37,7 @@ Here is the workflow of the deployment:
   - connect and authentificate to a remote Zero-OS server
 - prepare
   - run a container using the 0-orchestrator flist
-    - `/optvar` will be mounted from host `/var/cache/containers/orchestrator`
+    - `/optvar` will be mounted from host `/var/cache/containers/orchestrator-[name]`
     - the container will join a zerotier network
   - openssh is configured and then started
   - generate an ssh key
@@ -66,10 +66,11 @@ In order to configure this workflow, you need to pass multiple arguments to the 
     - `--host-iyo-client-secret`: IYO user client-secret
 - **Orchestrator container deployment parameters**
   - `--orchestrator-container-name`: 0-orchestrator container name
+  - `--orchestrator-container-flist`: (optional) alternative 0-orchestrator flist used for the container
   - `--orchestrator-iyo-organization`: IYO organization of which rest api clients need to member of to access the 0-orchestrator RESTful api
   - **Network configuration**
     - `--orchestrator-zt-net`: zerotier network in which the 0-orchestrator rest-api will be reachable
-    - `--orchestrator-zt-net-token`: (optional: for unattended deployment only) api token to automatically authorize the container in the `orchestrator-zt-net`
+    - `--orchestrator-zt-token`: (optional: for unattended deployment only) api token to automatically authorize the container in the `orchestrator-zt-net`
   - **Git configuration** (needed for external redundancy and version tracking of the orchestrator services)
     - `--orchestrator-git-repo`: upstream git repository for the AYS server part of the 0-orchestrator (Supported formats: `ssh://user@host:repository` & `git@github.com:user/repo`)
     - `--orchestrator-git-email`: e-mail address used by git commits (default: `info@gig.tech`)
