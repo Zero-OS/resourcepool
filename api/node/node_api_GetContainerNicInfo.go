@@ -10,7 +10,7 @@ import (
 
 // GetContainerNicInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/nics
 // Get detailed information about the network interfaces in the container
-func (api NodeAPI) GetContainerNicInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainerNicInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetContainerConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")

@@ -10,7 +10,7 @@ import (
 
 // ListContainerProcesses is the handler for GET /nodes/{nodeid}/containers/{containername}/process
 // Get running processes in this container
-func (api NodeAPI) ListContainerProcesses(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListContainerProcesses(w http.ResponseWriter, r *http.Request) {
 	var respBody []Process
 
 	conn, err := tools.GetContainerConnection(r, api)

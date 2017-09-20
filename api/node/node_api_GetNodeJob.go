@@ -11,7 +11,7 @@ import (
 
 // GetNodeJob is the handler for GET /nodes/{nodeid}/job/{jobid}
 // Get the details of a submitted job
-func (api NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult
 	vars := mux.Vars(r)
 	jobID := client.JobId(vars["jobid"])

@@ -41,12 +41,18 @@ def init(job):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
     from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = get_container(service)
@@ -62,6 +68,9 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = get_container(service)
@@ -76,6 +85,9 @@ def stop(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = get_container(service, False)
 
@@ -88,6 +100,9 @@ def uninstall(job):
 def processChange(job):
     from zeroos.orchestrator.sal.grafana.grafana import Grafana
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     args = job.model.args

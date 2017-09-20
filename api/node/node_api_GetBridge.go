@@ -13,7 +13,7 @@ import (
 
 // GetBridge is the handler for GET /nodes/{nodeid}/bridges/{bridgeid}
 // Get bridge details
-func (api NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var respBody Bridge
 
