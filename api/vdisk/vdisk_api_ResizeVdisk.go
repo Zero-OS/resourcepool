@@ -12,7 +12,7 @@ import (
 
 // ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
 // Resize Vdisk
-func (api VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
+func (api *VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskResize
 

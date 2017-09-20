@@ -11,7 +11,7 @@ import (
 
 // CreateNewVdisk is the handler for POST /vdisks
 // Create a new vdisk, can be a copy from an existing vdisk
-func (api VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
+func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskCreate
 

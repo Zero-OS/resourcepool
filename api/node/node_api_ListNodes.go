@@ -10,7 +10,7 @@ import (
 
 // ListNodes is the handler for GET /nodes
 // List Nodes
-func (api NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "hostname,status,id,redisAddr",

@@ -10,7 +10,7 @@ import (
 
 // DeleteFilesystem is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}
 // Delete filesystem
-func (api NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	name := vars["filesystemname"]

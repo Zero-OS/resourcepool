@@ -11,7 +11,7 @@ import (
 
 // ListStorageClustersHealth is the handler for GET /health/storageclusters
 // List StorageClustersHealth
-func (api HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *http.Request) {
+func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "label,clusterType",

@@ -12,7 +12,7 @@ import (
 
 // ListDashboards is the handler for GET /nodes/{nodeid}/dashboards
 // List running Dashboards
-func (api GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
+func (api *GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]

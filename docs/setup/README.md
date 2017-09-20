@@ -48,6 +48,8 @@ This script takes the following parameters:
 - `ZEROTIERNWID`: ZeroTier network ID
 - `ZEROTIERTOKEN`: ZeroTier API token
 - `ITSYOUONLINEORG`: ItsYou.online organization to authenticate against
+- `ITSYOUONLINEAPPID`: ItsYou.online application id to authenticate against
+- `ITSYOUONLINESECRET`: ItsYou.online secret to authenticate against
 - `DOMAIN`: Optional domain to listen on, if omitted Caddy will listen on the Zero-Tier network with a self-signed certificate
 - `--development`: When domain is passed and you want to force a self-signed certificate
 
@@ -58,9 +60,11 @@ export BRANCH="master"
 export ZEROTIERNWID="<Your ZeroTier network ID>"
 export ZEROTIERTOKEN="<Your ZeroTier token>"
 export ITSYOUONLINEORG="<itsyou.online organization>"
+export ITSYOUONLINEAPPID="<itsyou.online appid>"
+export ITSYOUONLINESECRET="<itsyou.online secret>"
 export DOMAIN="<Your domain name>"
 curl -o install-orchestrator.sh https://raw.githubusercontent.com/zero-os/0-orchestrator/${BRANCH}/scripts/install-orchestrator.sh
-bash install-orchestrator.sh "$BRANCH" "$ZEROTIERNWID" "$ZEROTIERTOKEN" "$ITSYOUONLINEORG" ["$DOMAIN" [--development]]
+bash install-orchestrator.sh "$BRANCH" "$ZEROTIERNWID" "$ZEROTIERTOKEN" "$ITSYOUONLINEORG" "$ITSYOUONLINEAPPID" "$ITSYOUONLINESECRET" ["$DOMAIN" [--development]]
 ```
 
 In order to see the full log details while `install-orchestrator.sh` executes:

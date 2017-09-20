@@ -13,7 +13,7 @@ import (
 
 // StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/jobs
 // Start a new process in this container
-func (api NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 	var reqBody CoreSystem
 	env := map[string]string{}
 

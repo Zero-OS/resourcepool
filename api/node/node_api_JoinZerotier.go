@@ -12,7 +12,7 @@ import (
 
 // JoinZerotier is the handler for POST /nodes/{nodeid}/zerotiers
 // Join Zerotier network
-func (api NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ZerotierJoin
 

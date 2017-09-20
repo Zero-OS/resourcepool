@@ -12,7 +12,7 @@ import (
 
 // ListVdisks is the handler for GET /vdisks
 // Get vdisk information
-func (api VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
+func (api *VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vdiskID := mux.Vars(r)["vdiskid"]
 	queryParams := map[string]interface{}{

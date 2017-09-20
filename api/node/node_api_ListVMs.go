@@ -13,7 +13,7 @@ import (
 
 // ListVMs is the handler for GET /node/{nodeid}/vm
 // List VMs
-func (api NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 

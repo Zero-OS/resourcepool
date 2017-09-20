@@ -13,7 +13,7 @@ import (
 
 // GetNode is the handler for GET /nodes/{nodeid}
 // Get detailed information of a node
-func (api NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
