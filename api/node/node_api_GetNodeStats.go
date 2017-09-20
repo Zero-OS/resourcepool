@@ -10,7 +10,7 @@ import (
 
 // GetNodeStats is the handler for GET /nodes/{nodeid}/stats
 // The aggregated stats of node
-func (api NodeAPI) GetNodeStats(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNodeStats(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")

@@ -12,7 +12,7 @@ import (
 
 // GetHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
 // Get list for HTTP proxies
-func (api NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]

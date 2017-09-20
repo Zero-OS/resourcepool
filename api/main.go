@@ -20,11 +20,13 @@ import (
 
 func main() {
 	var (
-		debugLogging bool
-		bindAddr     string
-		aysURL       string
-		aysRepo      string
-		organization string
+		debugLogging  bool
+		bindAddr      string
+		aysURL        string
+		aysRepo       string
+		organization  string
+		applicationID string
+		secret        string
 	)
 	app := cli.NewApp()
 	app.Version = "0.2.0"
@@ -58,6 +60,16 @@ func main() {
 			Usage:       "Itsyouonline organization to authenticate against",
 			Destination: &organization,
 		},
+		cli.StringFlag{
+			Name:        "application-id",
+			Usage:       "Itsyouonline applicationID",
+			Destination: &applicationID,
+		},
+		cli.StringFlag{
+			Name:        "secret",
+			Usage:       "Itsyouonline secret",
+			Destination: &secret,
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -81,8 +93,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
-
-		r := router.GetRouter(aysURL, aysRepo, organization)
+		r := router.GetRouter(aysURL, aysRepo, organization, applicationID, secret)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)

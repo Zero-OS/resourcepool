@@ -9,7 +9,7 @@ import (
 
 // DeleteContainer is the handler for DELETE /nodes/{nodeid}/containers/{containername}
 // Delete Container instance
-func (api NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteContainerId(r, api)
 

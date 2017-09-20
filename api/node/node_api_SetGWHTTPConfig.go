@@ -13,7 +13,7 @@ import (
 
 // SetGWHTTPConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/http
 // Set HTTP config
-func (api NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var gatewayBase GW
 	vars := mux.Vars(r)

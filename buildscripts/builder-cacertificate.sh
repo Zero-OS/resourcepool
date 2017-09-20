@@ -3,8 +3,8 @@ set -e
 
 source $(dirname $0)/tools.sh
 
-aptupdate
-aptinstall ca-certificates
+# aptupdate
+# aptinstall ca-certificates
 
 TARGET=/tmp/catarget
 rm -rf $TARGET

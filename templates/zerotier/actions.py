@@ -38,6 +38,9 @@ def _update_model(job, network):
 def install(job):
     import time
     from zerotier import client as ztclient
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     client = _get_client(job, job.context['token'])
     client.zerotier.join(job.service.model.data.nwid)
@@ -76,6 +79,9 @@ def install(job):
 
 
 def delete(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     client = _get_client(job, job.context['token'])
     client.zerotier.leave(service.model.data.nwid)

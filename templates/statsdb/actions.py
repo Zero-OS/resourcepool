@@ -97,10 +97,16 @@ def get_stats_collector_from_node(service):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('install', context=job.context))
@@ -120,6 +126,10 @@ def start(job):
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
     j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
@@ -134,6 +144,10 @@ def stop(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     influxdb = get_influxdb(job.service, False)
     grafana = get_grafana(job.service, False)
 

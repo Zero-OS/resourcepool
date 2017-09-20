@@ -11,7 +11,7 @@ import (
 
 // GetContainer is the handler for GET /nodes/{nodeid}/containers/{containername}
 // Get Container
-func (api NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	nodeClient, err := tools.GetConnection(r, api)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 
 // PingContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/ping
 // Ping this container
-func (api NodeAPI) PingContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) PingContainer(w http.ResponseWriter, r *http.Request) {
 	var respBody bool
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {

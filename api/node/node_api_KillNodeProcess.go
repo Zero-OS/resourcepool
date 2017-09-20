@@ -9,7 +9,7 @@ import (
 
 // KillNodeProcess is the handler for DELETE /nodes/{nodeid}/processes/{processid}
 // Kill Process
-func (api NodeAPI) KillNodeProcess(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) KillNodeProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	cl, err := tools.GetConnection(r, api)

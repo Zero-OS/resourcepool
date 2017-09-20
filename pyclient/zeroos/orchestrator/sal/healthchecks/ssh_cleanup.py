@@ -2,7 +2,7 @@ from ..healthcheck import HealthCheckRun
 from js9 import j
 
 descr = """
-Clean up ssh deamons and tcp services from migration 
+Clean up ssh deamons and tcp services from migration
 """
 
 
