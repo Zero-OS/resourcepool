@@ -169,11 +169,11 @@ def monitor(job):
         update_healthcheck(job, healthcheck_service, node.healthcheck.disk_usage())
         update_healthcheck(job, healthcheck_service, node.healthcheck.ssh_cleanup(job=job))
 
-        # flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
-        # with node.healthcheck.with_container(flist) as cont:
-        #     update_healthcheck(job, healthcheck_service, node.healthcheck.node_temperature(cont))
-        #     update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
-        #     update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
+        flist = config.get('healthcheck-flist', 'https://hub.gig.tech/gig-official-apps/healthcheck.flist')
+        with node.healthcheck.with_container(flist) as cont:
+            update_healthcheck(job, healthcheck_service, node.healthcheck.node_temperature(cont))
+            update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
+            update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
         # check network stability of  node with the rest of the nodes ! TODO
     else:
