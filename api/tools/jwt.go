@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func refreshToken(applicationID string, secret string, org string) (string, error) {
+func RefreshToken(applicationID string, secret string, org string) (string, error) {
 	url := fmt.Sprintf("https://itsyou.online/v1/oauth/access_token?client_id=%s&client_secret=%s&grant_type=client_credentials&response_type=id_token&scope=user:memberof:%s,offline_access", applicationID, secret, org)
 	resp, err := http.Post(url, "", nil)
 	if err != nil {
@@ -32,7 +32,7 @@ func refreshToken(applicationID string, secret string, org string) (string, erro
 
 func GetToken(token string, applicationID string, secret string, org string) (string, error) {
 	if token == "" {
-		token, err := refreshToken(applicationID, secret, org)
+		token, err := RefreshToken(applicationID, secret, org)
 		if err != nil {
 			return "", err
 		}
@@ -45,7 +45,7 @@ func GetToken(token string, applicationID string, secret string, org string) (st
 	}
 	exp := claim["exp"].(float64)
 	if exp < 300 {
-		token, err = refreshToken(applicationID, secret, org)
+		token, err = RefreshToken(applicationID, secret, org)
 		if err != nil {
 			return "", err
 		}

@@ -12,6 +12,7 @@ import (
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/zero-os/0-orchestrator/api/goraml"
 	"github.com/zero-os/0-orchestrator/api/router"
+	"github.com/zero-os/0-orchestrator/api/tools"
 
 	"fmt"
 
@@ -86,6 +87,12 @@ func main() {
 
 		if err := ensureAYSRepo(aysURL, aysRepo); err != nil {
 			log.Fatalln(err.Error())
+		}
+
+		if organization != "" {
+			if _, err := tools.RefreshToken(applicationID, secret, organization); err != nil {
+				log.Fatalln(err.Error())
+			}
 		}
 
 		return nil
