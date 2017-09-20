@@ -78,7 +78,7 @@ class Container:
         if not arguments['tags']:
             # we don't deal with tagless containers
             raise ValueError("Could not load containerinfo withouth tags")
-        return cls(arguments['tags'][0],
+        return cls(arguments['name'],
                    node,
                    arguments['root'],
                    arguments['hostname'],
@@ -176,6 +176,7 @@ class Container:
             nics=self.nics,
             port=self.ports,
             tags=tags,
+            name=self.name,
             hostname=self.hostname,
             storage=self.storage,
             privileged=self.privileged,
