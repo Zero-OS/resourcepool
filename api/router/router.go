@@ -49,11 +49,9 @@ func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http
 
 	r.PathPrefix("/nodes").Handler(apihandler)
 	r.PathPrefix("/graphs").Handler(apihandler)
-	r.PathPrefix("/vdisks").Handler(apihandler)
 	r.PathPrefix("/storageclusters").Handler(apihandler)
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
-
 	r.PathPrefix("/vdiskstorage").Handler(apihandler)
 
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
