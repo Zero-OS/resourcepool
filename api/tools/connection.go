@@ -140,7 +140,9 @@ func GetAysConnection(r *http.Request, api API) AYStool {
 
 	token, err := api.GetAysToken()
 	if err != nil {
-		log.Error(err.Error())
+		if r.Header.Get("Authorization") != "" {
+			log.Error(err.Error())
+		}
 		aysAPI.AuthHeader = r.Header.Get("Authorization")
 	} else {
 		aysAPI.AuthHeader = token
