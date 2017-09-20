@@ -14,7 +14,7 @@ class TestVdisks(TestcasesBase):
 
             self.lg.info(' [*] Deploy new storage cluster (SC0)')
             numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
-            response, data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=randint(1, numberOfDisks))
+            response, data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=random.randint(1, numberOfDisks))
             self.assertEqual(response.status_code, 201)
             self.storagecluster = data['label']
         else:
