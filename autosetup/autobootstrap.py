@@ -8,6 +8,80 @@ import yaml
 import pytoml as toml
 from urllib.parse import urlparse
 from zeroos.orchestrator.sal.Node import Node
+from zerotier import client as ztclient
+
+class ZerotierAuthorizer:
+    def __init__(self, token):
+        self.client = ztclient.Client()
+        self.client.set_auth_header("Bearer " + token)
+
+    def validate(self, networkid):
+        try:
+            x = self.client.network.getNetwork(networkid)
+            return True
+
+        except Exception:
+            return False
+
+    def memberMacAddress(self, memberid, networkid):
+        n = int(networkid[0:8] or "0", 16)
+        r = int(networkid[8:16] or "0", 16)
+        i = 254 & r | 2
+
+        if i == 82:
+            i = 50
+
+        o = i << 8 & 65280
+        while True:
+            o |= 255 & (int(memberid[0:2], 16) or 0)
+            o ^= r >> 8 & 255
+            if len("%04x" % o) == 4:
+                break
+
+        a = int(memberid[2:6], 16)
+        while True:
+            a ^= (r >> 16 & 255) << 8
+            a ^= r >> 24 & 255
+            if len("%04x" % a) == 4:
+                break
+
+        s = int(memberid[6:10], 16)
+        while True:
+            s ^= (255 & n) << 8
+            s ^= n >> 8 & 255
+            if len("%04x" % s) == 4:
+                break
+
+        def segment(source):
+            computed = "%04x" % source
+            return "%s:%s" % (computed[0:2], computed[2:4])
+
+        return "%s:%s:%s" % (segment(o), segment(a), segment(s))
+
+    def authorize_node(self, member):
+        member['config']['authorized'] = True
+        self.client.network.updateMember(member, member['nodeId'], member['networkId'])
+
+    def memberFromMac(self, networkid, hwaddr):
+        members = self.client.network.listMembers(networkid).json()
+
+        for member in members:
+            usermac = self.memberMacAddress(member['nodeId'], networkid)
+            if usermac == hwaddr:
+                return member
+
+        return None
+
+    def authorize(self, networkid, hwaddr):
+        netinfo = self.client.network.getNetwork(networkid).json()
+        netname = netinfo['config']['name']
+
+        member = self.memberFromMac(networkid, hwaddr)
+        if not member:
+            print("[-] member not found, you should waits for it before")
+            return None
+
+        self.authorize_node(member)
 
 class OrchestratorSSHTools:
     def __init__(self):
@@ -62,32 +136,67 @@ class OrchestratorInstallerTools:
 
         return resp.content.decode('utf8')
 
-    def containerzt(self, cn):
-        notified = False
+    def ztstatus(self, cn, macaddr):
+        """
+        Return a zerotier node object from a mac address
+        """
+        ztinfo = cn.client.zerotier.list()
+        for zt in ztinfo:
+            if zt['mac'] == macaddr:
+                    return zt
 
+        return None
+
+    def ztwait(self, cn, macaddr):
         while True:
-            ztinfo = cn.client.zerotier.list()
-            ztdata = ztinfo[0]
+            self.progressing()
 
-            if not notified:
-                notified = True
-                print("[+] waiting zerotier access with mac address %s" % ztdata['mac'])
-                self.progress()
+            # get and ensure mac address is there
+            status = self.ztstatus(cn, macaddr)
+            if not status:
+                return None
 
-            if len(ztdata['assignedAddresses']) == 0:
-                self.progressing()
+            if len(status['assignedAddresses']) == 0:
                 time.sleep(1)
                 continue
 
+            # network ready, address set
             self.progressing(True)
+            return status['assignedAddresses'][0].split('/')[0]
 
-            return ztdata['assignedAddresses'][0].split('/')[0]
+    def ztdiscover(self, authorizer, networkid, hwaddr):
+        while True:
+            self.progressing()
+
+            if authorizer.memberFromMac(networkid, hwaddr):
+                self.progressing(final=False, step=True)
+                return True
+
+            time.sleep(1)
+
+    def containerzt(self, cn, authorizer):
+        # for all zerotier network, waiting for a valid address
+        ztinfo = cn.client.zerotier.list()
+
+        for ztnet in ztinfo:
+            print("[+] waiting zerotier access (id: %s, hardware: %s)" % (ztnet['nwid'], ztnet['mac']))
+            self.progress()
+
+            # waiting for client discovered
+            self.ztdiscover(authorizer, ztnet['nwid'], ztnet['mac'])
+
+            # self-authorizing client
+            authorizer.authorize(ztnet['nwid'], ztnet['mac'])
+
+            # waiting for ip-address
+            self.ztwait(cn, ztnet['mac'])
+
 
     def progress(self):
         self.xprint("[+] ")
 
-    def progressing(self, final=False):
-        progression = "."
+    def progressing(self, final=False, step=False):
+        progression = "." if not step else "+"
         if final:
             progression = " done\n"
 
@@ -155,7 +264,7 @@ class OrchestratorInstaller:
 
         return node
 
-    def prepare(self, ctname, ztnetwork, sshkey):
+    def prepare(self, ctname, ztnetwork, ztnetnodes, sshkey, ztauthorizer):
         """
         node: connected node object
         ctname: container name
@@ -168,6 +277,9 @@ class OrchestratorInstaller:
             {'type': 'default'},
             {'type': 'zerotier', 'id': ztnetwork}
         ]
+
+        if ztnetnodes != ztnetwork:
+            network.append({'type': 'zerotier', 'id': ztnetnodes})
 
         env = {
             "PATH": "/opt/jumpscale9/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
@@ -213,8 +325,8 @@ class OrchestratorInstaller:
             cn.client.filesystem.write(fd, export.encode('utf-8'))
         cn.client.filesystem.close(fd)
 
-        print("[+] waiting for zerotier")
-        containeraddr = self.tools.containerzt(cn)
+        print("[+] configuring zerotier access")
+        containeraddr = self.tools.containerzt(cn, ztauthorizer)
 
         if sshkey:
             print("[+] writing ssh private key")
@@ -517,6 +629,17 @@ class OrchestratorInstaller:
 
         return running
 
+    def validate(self, ztauthorizer, zt_net, zt_nodes_net):
+        if not ztauthorizer.validate(zt_net):
+            print("[-] error: cannot validate zerotier network %s" % zt_net)
+            print("[-] error: with token provided, abording")
+            sys.exit(1)
+
+        if not ztauthorizer.validate(zt_nodes_net):
+            print("[-] error: cannot validate zerotier nodes network %s" % zt_nodes_net)
+            print("[-] error: with token provided, abording")
+            sys.exit(1)
+
     """
     You can just extends this class to implements theses hooks
     This will allows you to customize the setup
@@ -549,15 +672,15 @@ if __name__ == "__main__":
     parser.add_argument('--server', type=str, help='zero-os remote server to connect', required=True)
     parser.add_argument('--password', type=str, help='password (jwt) used to connect the host')
     parser.add_argument('--flist', type=str, help='flist container base image')
-    parser.add_argument('--container', type=str, help='container deployment name', required=True)
+    parser.add_argument('--container', type=str, help='container deployment name', default="orchestrator")
     parser.add_argument('--domain', type=str, help='domain on which caddy should be listening, if not specified caddy will listen on port 80 and 443, but with self-signed certificate')
     parser.add_argument('--zt-net', type=str, help='zerotier network id of the container', required=True)
     parser.add_argument('--upstream', type=str, help='remote upstream git address', required=True)
-    parser.add_argument('--email', type=str, help='email used by caddy for certificates')
+    parser.add_argument('--email', type=str, help='email used by caddy for certificates (default: info@gig.tech)', default="info@gig.tech")
     parser.add_argument('--organization', type=str, help='itsyou.online organization of ays')
     parser.add_argument('--client-id', type=str, help='itsyou.online client-id for jwt-token', required=True)
     parser.add_argument('--client-secret', type=str, help='itsyou.online client-secret for jwt-token', required=True)
-    parser.add_argument('--ssh-key', type=str, help='ssh private key filename (need to be passphrase less')
+    parser.add_argument('--ssh-key', type=str, help='ssh private key filename (need to be passphrase less)')
     parser.add_argument('--network', type=str, help='network type: g8, switchless, packet', required=True)
     parser.add_argument('--network-vlan', type=str, help='g8/switchless only: vlan id')
     parser.add_argument('--network-cidr', type=str, help='g8/switchless only: cidr address')
@@ -568,9 +691,6 @@ if __name__ == "__main__":
     parser.add_argument('--stor-client-id', type=str, help='0-stor itsyou.online client id (default: --client-id)')
     parser.add_argument('--stor-client-secret', type=str, help='0-stor itsyou.online client secret (default: --client-secret)')
     args = parser.parse_args()
-
-    if args.email == None:
-        args.email = "info@gig.tech"
 
     if args.flist:
         installer.flist = args.flist
@@ -587,6 +707,7 @@ if __name__ == "__main__":
     if not args.stor_organization or not args.stor_namespace or not args.stor_client_id or not args.stor_client_secret:
         print("[-] warning: 0-stor: values not fully explicitly specified")
         print("[-] warning: 0-stor: some of them will be set implicitly")
+        warning = True
 
     if installer.tools.ssh.localkeys() == "" and not args.ssh_key:
         print("[-] error: ssh-agent: no keys found on ssh-agent and")
@@ -615,7 +736,8 @@ if __name__ == "__main__":
     print("[+] ===============================================================")
     print("[+] -- global -----------------------------------------------------")
     print("[+] remote server   : %s" % args.server)
-    print("[+] zerotier network: %s" % args.zt_net)
+    print("[+] root zt network : %s" % args.zt_net)
+    print("[+] nodes zt network: %s" % args.nodes_zt_net)
     print("[+] container flist : %s" % installer.flist)
     print("[+] container name  : %s" % args.container)
     print("[+] ssh private key : %s" % args.ssh_key)
@@ -636,6 +758,19 @@ if __name__ == "__main__":
     print("[+] ===============================================================")
     print("[+]")
 
+    if warning:
+        print("[-] take some time to review summary, some variables are implicit")
+        print("[+] setup will continue in 8 seconds, press CTRL+C now to cancel")
+        time.sleep(8)
+
+
+    ztauthorizer = ZerotierAuthorizer(args.nodes_zt_token)
+
+    # testing credentials, prevent some die during process
+    # TODO: improve validator, add more checker
+    print("[+] preliminary checks")
+    installer.validate(ztauthorizer, args.zt_net, args.nodes_zt_net)
+
     print("[+] initializing connection")
     node = installer.connector(args.server, args.password)
 
@@ -643,12 +778,14 @@ if __name__ == "__main__":
     installer.pre_prepare()
 
     print("[+] hook: prepare")
-    prepared = installer.prepare(args.container, args.zt_net, sshkey)
+    prepared = installer.prepare(args.container, args.zt_net, args.nodes_zt_net, sshkey, ztauthorizer)
 
     print("[+] ==================================================")
     print("[+] container address: %s" % prepared['address'])
     print("[+] container key: %s" % prepared['publickey'])
     print("[+] ==================================================")
+
+    # sys.exit(1)
 
     print("[+] hook: post-prepare")
     installer.post_prepare()
