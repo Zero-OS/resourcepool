@@ -1122,6 +1122,22 @@ VdiskCreate:
         This property can only be used when the disk is of type boot or db.
       required: false
 
+VdiskStorage:
+  properties:
+    id: string
+    blockCluster:
+      type: string
+      description: block cluster to assign to vdisk store
+      required: True
+    slaveCluster:
+      type: string
+      description: slave cluster to assign to vdisk store
+      required: True
+    objectCluster:
+      type: string
+      description: object cluster to assign to vdisk store
+      required: True
+
 Vdisk:
   properties:
     id: string

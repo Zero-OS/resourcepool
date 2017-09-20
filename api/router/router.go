@@ -16,6 +16,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/vdisk"
+	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -52,11 +53,15 @@ func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http
 	r.PathPrefix("/storageclusters").Handler(apihandler)
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
+
+	r.PathPrefix("/vdiskstorage").Handler(apihandler)
+
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)), org)
 	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)), org)
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, jwtProvider), org)
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, jwtProvider), org)
 	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, jwtProvider), org)
 	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, jwtProvider), org)
+	vdiskstorage.VdiskstorageInterfaceRoutes(api, vdiskstorage.NewVdiskStorageAPI(aysRepo, aysURL), org)
 	return r
 }

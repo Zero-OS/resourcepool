@@ -1363,6 +1363,47 @@ types:
       responses:
         204:
           description: Storage cluster destroyed successfully
+/vdiskstorage:
+  get:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    displayName: ListVdiskStorages
+    description: List vdisks storages
+    responses:
+      200:
+        body:
+          application/json:
+            type: VdiskStorage[]
+  post:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    displayName: CreateNewVdiskStorage
+    description: Create a new vdisk storage, can be a copy from an existing vdisk
+    body:
+      application/json:
+        type: VdiskStorage
+    responses:
+      201:
+        headers:
+          Location:
+            description: URL to the created vdisk storage resource
+      400:
+        description: The storagecluster does not exist
+      409:
+        description: A vdisk storage with this ID already exists
+  /{vdiskstorageid}:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      displayName: GetVdiskStorageInfo
+      description: Get vdisk storage information
+      responses:
+        200:
+          body:
+            application/json:
+              type: VdiskStorage
+        404:
+          description: The vdisk storage does not exist
 /vdisks:
   get:
     (AYSBased):
