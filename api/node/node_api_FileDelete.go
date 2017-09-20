@@ -11,7 +11,7 @@ import (
 
 // FileDelete is the handler for DELETE /nodes/{nodeid}/container/{containername}/filesystem
 // Delete file from container
-func (api NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 
 	var reqBody DeleteFile
 

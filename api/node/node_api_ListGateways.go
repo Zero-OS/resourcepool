@@ -12,7 +12,7 @@ import (
 
 // ListGateways is the handler for GET /nodes/{nodeid}/gws
 // List running gateways
-func (api NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]

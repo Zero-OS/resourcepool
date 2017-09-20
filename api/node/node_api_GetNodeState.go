@@ -10,7 +10,7 @@ import (
 
 // GetNodeState is the handler for GET /nodes/{nodeid}/state
 // The aggregated consumption of node + all processes (cpu, memory, etc...)
-func (api NodeAPI) GetNodeState(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNodeState(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")

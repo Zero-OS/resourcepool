@@ -14,7 +14,7 @@ import (
 
 // GetVMInfo is the handler for GET /nodes/{nodeid}/vms/{vmid}/info
 // Get statistical information about the virtual machine.
-func (api NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 	var respBody VMInfo
 
 	vars := mux.Vars(r)

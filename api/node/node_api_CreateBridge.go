@@ -13,7 +13,7 @@ import (
 
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
-func (api NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody BridgeCreate
 	vars := mux.Vars(r)

@@ -11,7 +11,7 @@ import (
 
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
 // Exit the Zerotier network
-func (api NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := mux.Vars(r)["nodeid"]

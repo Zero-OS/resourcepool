@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -21,7 +21,7 @@ type CreateGWBP struct {
 
 // CreateGW is the handler for POST /nodes/{nodeid}/gws
 // Create a new gateway
-func (api NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody GWCreate
 

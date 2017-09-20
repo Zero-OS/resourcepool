@@ -14,7 +14,7 @@ import (
 
 // GetContainerProcess is the handler for GET /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Get process details
-func (api NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	conn, err := tools.GetContainerConnection(r, api)
 	if err != nil {

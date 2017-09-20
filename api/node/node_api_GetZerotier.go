@@ -12,7 +12,7 @@ import (
 
 // GetZerotier is the handler for GET /nodes/{nodeid}/zerotiers/{zerotierid}
 // Get Zerotier network details
-func (api NodeAPI) GetZerotier(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetZerotier(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var respBody Zerotier
 
