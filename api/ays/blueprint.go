@@ -14,11 +14,23 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+func BlueprintName(role, name, action string) string {
+	return fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
+}
+
 // Blueprint represent the content of a blueprint, which is a yaml file
 type Blueprint map[string]interface{}
 
+// ActionBlock
+type ActionBlock struct {
+	Action  string `json:"action"`
+	Actor   string `json:"actor"`
+	Service string `json:"service"`
+	Force   bool   `json:"force" validate:"omitempty"`
+}
+
 // CreateBlueprint create a blueprint called name
-func (c *Client) CreateBlueprint(name string, blueprint Blueprint) error {
+func (c *Client) CreateBlueprint(name string, blueprint Blueprint) *Error {
 	bpYaml, err := yaml.Marshal(blueprint)
 
 	bp := client.Blueprint{
@@ -26,7 +38,7 @@ func (c *Client) CreateBlueprint(name string, blueprint Blueprint) error {
 		Name:    name,
 	}
 
-	_, resp, err := c.client.Ays.CreateBlueprint(c.repo, bp, nil, nil)
+	_, resp, err := c.AYS().CreateBlueprint(c.repo, bp, nil, nil)
 	if err != nil {
 		return newError(resp, err)
 	}
@@ -41,7 +53,7 @@ func (c *Client) CreateBlueprint(name string, blueprint Blueprint) error {
 // DeleteBlueprint delete the blueprint called name
 // if no blueprint exists with this name, error is nil
 func (c *Client) DeleteBlueprint(name string) error {
-	resp, err := c.client.Ays.DeleteBlueprint(name, c.repo, nil, nil)
+	resp, err := c.AYS().DeleteBlueprint(name, c.repo, nil, nil)
 	if err != nil {
 		return newError(resp, err)
 	}
@@ -56,7 +68,7 @@ func (c *Client) DeleteBlueprint(name string) error {
 // ArchiveBlueprint archives the blueprint called name
 // if no blueprint exists with this name, error is nil
 func (c *Client) ArchiveBlueprint(name string) error {
-	resp, err := c.client.Ays.ArchiveBlueprint(name, c.repo, nil, nil)
+	resp, err := c.AYS().ArchiveBlueprint(name, c.repo, nil, nil)
 	if err != nil {
 		return newError(resp, err)
 	}
@@ -150,7 +162,7 @@ func (c *Client) ExecuteBlueprint(name string) (*ProcessChangeJobs, error) {
 		ProcessChangeJobs []string `json:"processChangeJobs"`
 	}{}
 
-	resp, err := c.client.Ays.ExecuteBlueprint(name, c.repo, nil, nil)
+	resp, err := c.AYS().ExecuteBlueprint(name, c.repo, nil, nil)
 	if err != nil {
 		return nil, newError(resp, err)
 	}

@@ -80,7 +80,7 @@ type callbackPayload struct {
 	State Status `json:"runState"`
 }
 
-func (c *Mgr) handler(w http.ResponseWriter, r *http.Request) {
+func (c *Mgr) Handler(w http.ResponseWriter, r *http.Request) {
 	cbData := callbackPayload{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&cbData); err != nil {

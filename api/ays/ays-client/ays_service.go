@@ -281,8 +281,8 @@ func (s *AysService) ListServices(repository string, headers, queryParams map[st
 }
 
 // List all services of role 'role' in the repository
-func (s *AysService) ListServicesByRole(role, repository string, headers, queryParams map[string]interface{}) ([]ServiceData, *http.Response, error) {
-	var u []ServiceData
+func (s *AysService) ListServicesByRole(role, repository string, headers, queryParams map[string]interface{}) ([]*ServiceData, *http.Response, error) {
+	var u []*ServiceData
 
 	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role, headers, queryParams)
 	if err != nil {
@@ -294,16 +294,16 @@ func (s *AysService) ListServicesByRole(role, repository string, headers, queryP
 }
 
 // Get a service by its name
-func (s *AysService) GetServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (Service, *http.Response, error) {
+func (s *AysService) GetServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (*Service, *http.Response, error) {
 	var u Service
 
 	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role+"/"+name, headers, queryParams)
 	if err != nil {
-		return u, nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+	return &u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
 // Get a jobid

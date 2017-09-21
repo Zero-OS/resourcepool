@@ -4,16 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateNewVdisk is the handler for POST /vdisks
 // Create a new vdisk, can be a copy from an existing vdisk
 func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskCreate
 
 	// decode request
@@ -21,6 +23,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		httperror.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
+	log.Debugf("%+v", reqBody)
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
@@ -28,22 +31,29 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
+	exists, err := api.client.IsServiceExists("vdisk", reqBody.ID)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting vdisk service by name %s ", reqBody.ID)
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
+	// exists, err := aysClient.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
+	// if err != nil {
+	// 	errmsg := fmt.Sprintf("error getting vdisk service by name %s ", reqBody.ID)
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	return
+	// }
 	if exists {
 		httperror.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", reqBody.ID), "")
 		return
 	}
 
-	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.BlockStoragecluster, api.AysRepo)
+	exists, err = api.client.IsServiceExists("storage_cluster", reqBody.BlockStoragecluster)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		err.Handle(w, http.StatusInternalServerError)
 		return
+		// errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
+		// httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		// return
 	}
 	if !exists {
 		httperror.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.BlockStoragecluster), "")
@@ -73,21 +83,31 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)
 
-	obj := make(map[string]interface{})
-	obj[bpName] = bp
-	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}}
+	obj := ays.Blueprint{
+		bpName:    bp,
+		"actions": []ays.ActionBlock{{Action: "install", Service: reqBody.ID, Actor: "vdisk"}},
+	}
+	// obj[bpName] = bp
+	// obj["actions"] =
 
 	// And Execute
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
+		if ayserr, ok := err.(*ays.Error); ok {
+			ayserr.Handle(w, http.StatusInternalServerError)
+		} else {
+			httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
+		}
 		return
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for vdisk %s creation", reqBody.ID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
 	w.WriteHeader(http.StatusCreated)
 }

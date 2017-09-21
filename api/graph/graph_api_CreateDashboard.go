@@ -7,14 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateDashboard is the handler for POST /graph/{graphid}/dashboards
 // Creates a new dashboard
 func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody Dashboard
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]
@@ -30,44 +30,57 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("dashboard", reqBody.Name, api.AysRepo)
-
+	exists, err := api.client.IsServiceExists("dashboard", reqBody.Name)
 	if err != nil {
-		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
 
 	if exists {
-		err = fmt.Errorf("Dashboard with the name %s does exist", reqBody.Name)
+		err := fmt.Errorf("Dashboard with the name %s does exist", reqBody.Name)
 		httperror.WriteError(w, http.StatusConflict, err, err.Error())
 		return
 	}
 	// Create blueprint
-	bp := struct {
-		Dashboard string `json:"dashboard" yaml:"dashboard"`
-		Grafana   string `json:"grafana" yaml:"grafana"`
-	}{
-		Dashboard: reqBody.Dashboard,
-		Grafana:   graphId,
+	// bp := struct {
+	// 	Dashboard string `json:"dashboard" yaml:"dashboard"`
+	// 	Grafana   string `json:"grafana" yaml:"grafana"`
+	// }{
+	// 	Dashboard: reqBody.Dashboard,
+	// 	Grafana:   graphId,
+	// }
+	bp := ays.Blueprint{
+		"dashboard": reqBody.Dashboard,
+		"grafana":   graphId,
 	}
 
 	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("dashboard__%s", reqBody.Name)] = bp
-	obj["actions"] = []tools.ActionBlock{{
+	obj["actions"] = []ays.ActionBlock{{
 		Action:  "install",
 		Actor:   "dashboard",
 		Service: reqBody.Name}}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "dashboard", reqBody.Name, "install", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for dashboard %s creation", reqBody.Name)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
-		return
+	{
+		bpName := ays.BlueprintName("dashboard", reqBody.Name, "install")
+		_, err := api.client.CreateExecRun(bpName, obj, true)
+		if err != nil {
+			if aysErr, ok := err.(*ays.Error); ok {
+				aysErr.Handle(w, http.StatusInternalServerError)
+				return
+			}
+			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+			return
+		}
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "dashboard", reqBody.Name, "install", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for dashboard %s creation", reqBody.Name)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 	w.Header().Set("Location", fmt.Sprintf("/graphs/%s/dashboards/%s", graphId, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
-
 }

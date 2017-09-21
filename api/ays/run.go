@@ -33,7 +33,7 @@ func (c *Client) CreateRun(simulate bool, wait bool) (*Run, error) {
 		queryParams["callback_url"] = cb.URL
 	}
 
-	run, resp, err := c.client.Ays.CreateRun(c.repo, nil, queryParams)
+	run, resp, err := c.AYS().CreateRun(c.repo, nil, queryParams)
 	if err != nil {
 		return nil, newError(resp, err)
 	}
@@ -66,7 +66,7 @@ func (c *Client) ExecuteRun(runID string, wait bool) (*Run, error) {
 		queryParams["callback_url"] = cb.URL
 	}
 
-	_, resp, err := c.client.Ays.ExecuteRun(runID, c.repo, nil, queryParams)
+	_, resp, err := c.AYS().ExecuteRun(runID, c.repo, nil, queryParams)
 	if err != nil {
 		return nil, newError(resp, err)
 	}
@@ -88,7 +88,7 @@ func (c *Client) ExecuteRun(runID string, wait bool) (*Run, error) {
 
 // GetRun retreive a run from AYS server
 func (c *Client) GetRun(runID string) (*Run, error) {
-	run, resp, err := c.client.Ays.GetRun(runID, c.repo, nil, nil)
+	run, resp, err := c.AYS().GetRun(runID, c.repo, nil, nil)
 	if err != nil {
 		return nil, newError(resp, err)
 	}

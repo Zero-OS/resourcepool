@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeployNewCluster is the handler for POST /storageclusters
 // Deploy New Cluster
 func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody ClusterCreate
 
 	// decode request
@@ -28,12 +29,17 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
+	exists, err := api.client.IsServiceExists("storage_cluster", reqBody.Label)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting storage cluster service by name %s ", reqBody.Label)
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
+	// exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
+	// if err != nil {
+	// 	errmsg := fmt.Sprintf("error getting storage cluster service by name %s ", reqBody.Label)
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	return
+	// }
 	if exists {
 		httperror.WriteError(w, http.StatusConflict, fmt.Errorf("A storage cluster with label %s already exists", reqBody.Label), "")
 		return
@@ -68,24 +74,43 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		blueprint.MetaDiskType = string(EnumClusterCreateDriveTypessd)
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("storage_cluster__%s", reqBody.Label)] = blueprint
-	obj["actions"] = []tools.ActionBlock{{
-		Action:  "install",
-		Actor:   "storage_cluster",
-		Service: reqBody.Label,
-	}}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
-		return
+	bp := ays.Blueprint{
+		fmt.Sprintf("storage_cluster__%s", reqBody.Label): blueprint,
+		"actions": ays.ActionBlock{
+			Action:  "install",
+			Actor:   "storage_cluster",
+			Service: reqBody.Label,
+		},
+	}
+	// obj[] = blueprint
+	// obj["actions"] = []tools.ActionBlock{{
+	// 	Action:  "install",
+	// 	Actor:   "storage_cluster",
+	// 	Service: reqBody.Label,
+	// }}
+	{
+		bpName := ays.BlueprintName("storage_cluster", reqBody.Label, "install")
+		_, err := api.client.CreateExecRun(bpName, bp, true)
+		if err != nil {
+			if ayserr, ok := err.(*ays.Error); ok {
+				ayserr.Handle(w, http.StatusInternalServerError)
+			} else {
+				httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+			}
+			return
+		}
 	}
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 
 	w.Header().Set("Location", fmt.Sprintf("/storageclusters/%s", reqBody.Label))
 	w.WriteHeader(http.StatusCreated)

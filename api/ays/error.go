@@ -55,7 +55,12 @@ func (e *Error) Handle(w http.ResponseWriter, code int) error {
 	log.Errorf(tracebackError)
 
 	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(code)
+	if e.resp != nil {
+		w.WriteHeader(e.resp.StatusCode)
+	} else {
+		w.WriteHeader(code)
+	}
+
 	v := struct {
 		Error string `json:"error"`
 	}{Error: e.Error()}

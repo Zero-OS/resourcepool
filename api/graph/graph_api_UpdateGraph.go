@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateGraph is the handler for POST /graphs/{graphid}
 // Update Graph
 func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody Graph
 	vars := mux.Vars(r)
 	graphid := vars["graphid"]
@@ -30,20 +31,44 @@ func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, res, err := aysClient.Ays.GetServiceByName(graphid, "grafana", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "Getting grafana service") {
+	if _, err := api.client.IsServiceExists("grafana", graphid); err != nil {
+		// if err != nil {
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("grafana__%s", graphid)] = reqBody
+	// _, res, err := aysClient.Ays.GetServiceByName(graphid, "grafana", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting grafana service") {
+	// 	return
+	// }
+	// obj := make(map[string]interface{})
+	bp := ays.Blueprint{
+		fmt.Sprintf("grafana__%s", graphid): reqBody,
+	}
+	bpName := ays.BlueprintName("grafana", graphid, "update")
+	if err := api.client.CreateBlueprint(bpName, bp); err != nil {
+		err.Handle(w, http.StatusInternalServerError)
+		return
+	}
 
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "grafana", graphid, "update", obj)
+	// var processJobs ays.ProcessChangeJobs
+	processJobs, err := api.client.ExecuteBlueprint(bpName)
+	if err != nil {
+		if ayserr, ok := err.(*ays.Error); ok {
+			ayserr.Handle(w, http.StatusInternalServerError)
+		} else {
+			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+		}
+		return
+	}
 
-	errmsg := fmt.Sprintf("error executing blueprint for grafana %s update", graphid)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	if err := processJobs.Wait(); err != nil {
+		if ayserr, ok := err.(*ays.Error); ok {
+			ayserr.Handle(w, http.StatusInternalServerError)
+		} else {
+			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+		}
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-
 }

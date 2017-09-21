@@ -10,6 +10,7 @@ type StorageServer struct {
 	IP        string                  `yaml:"ip" json:"ip" validate:"nonzero"`
 	Port      int                     `yaml:"port" json:"port" validate:"nonzero"`
 	Status    EnumStorageServerStatus `yaml:"status" json:"status" validate:"nonzero"`
+	Type      string                  `yaml:"-" json:"-"`
 }
 
 func (s StorageServer) Validate() error {

@@ -2,25 +2,28 @@ package vdisk
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetVdiskInfo is the handler for GET /vdisks/{vdiskid}
 // Get vdisk information
 func (api *VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vdiskID := mux.Vars(r)["vdiskid"]
 
-	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting info about vdisk %s", vdiskID)) {
+	serv, err := api.client.GetService("vdisk", vdiskID, "", []string{})
+	if err != nil {
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
+	// serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting info about vdisk %s", vdiskID)) {
+	// 	return
+	// }
 
 	var respBody Vdisk
 	if err := json.Unmarshal(serv.Data, &respBody); err != nil {
