@@ -120,16 +120,16 @@ func (s *AysService) ListRuns(repository string, headers, queryParams map[string
 // This is an asyncronous call. To be notify of the status of the run when then execution is finised or when an error occurs, you need to specify a callback url.
 // A post request will be send to this callback url with the status of the run and the key of the run. Using this key you can inspect in detail the result of the run
 // using the 'GET /ays/repository/{repository}/aysrun/{aysrun_key}' endpoint
-func (s *AysService) CreateRun(repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
+func (s *AysService) CreateRun(repository string, headers, queryParams map[string]interface{}) (*AYSRun, *http.Response, error) {
 	var u AYSRun
 
 	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun", nil, headers, queryParams)
 	if err != nil {
-		return u, nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+	return &u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
 // execute an aysrun
@@ -146,16 +146,16 @@ func (s *AysService) ExecuteRun(runid, repository string, headers, queryParams m
 }
 
 // Get an aysrun
-func (s *AysService) GetRun(runid, repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
+func (s *AysService) GetRun(runid, repository string, headers, queryParams map[string]interface{}) (*AYSRun, *http.Response, error) {
 	var u AYSRun
 
 	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, headers, queryParams)
 	if err != nil {
-		return u, nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+	return &u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
 // delete a run
