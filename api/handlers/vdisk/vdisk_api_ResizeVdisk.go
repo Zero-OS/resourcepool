@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -38,7 +39,7 @@ func (api *VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 	// }
 	srv, err := api.client.GetService("vdisk", vdiskID, "", []string{})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -70,30 +71,21 @@ func (api *VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
 	// And execute
 	bpName := ays.BlueprintName("vdisk", vdiskID, "resize")
 	if err := api.client.CreateBlueprint(bpName, obj); err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
-	{
-		procesChanges, err := api.client.ExecuteBlueprint(bpName)
-		if err != nil {
-			if ayserr, ok := err.(*ays.Error); ok {
-				ayserr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
-			}
-			return
-		}
-
-		if err := procesChanges.Wait(); err != nil {
-			if ayserr, ok := err.(*ays.Error); ok {
-				ayserr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
-			}
-			return
-		}
+	procesChanges, err := api.client.ExecuteBlueprint(bpName)
+	if err != nil {
+		handlers.HandleError(w, err)
+		return
 	}
+
+	if err := procesChanges.Wait(); err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
+
 	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "resize", obj)
 
 	// errmsg := fmt.Sprintf("error executing blueprint for vdisk %s resize", vdiskID)

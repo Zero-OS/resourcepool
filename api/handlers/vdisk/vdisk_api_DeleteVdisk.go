@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
@@ -19,7 +20,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := api.client.IsServiceExists("vdisk", vdiskID)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	if !exists {
@@ -51,11 +52,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	bpName := ays.BlueprintName("vdisk", vdiskID, "delete")
 	if _, err := api.client.CreateExecRun(bpName, blueprint, true); err != nil {
-		if ayserr, ok := err.(*ays.Error); ok {
-			ayserr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
-		}
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "delete", blueprint)
@@ -77,7 +74,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// _, err = aysClient.Ays.DeleteServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
 	if err := api.client.DeleteService("vdisk", vdiskID); err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/zero-os/0-orchestrator/api/ays"
-	"github.com/zero-os/0-orchestrator/api/httperror"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/siddontang/go/log"
 	"github.com/zero-os/0-orchestrator/api/ays/ays-client"
@@ -28,7 +27,7 @@ func (api *BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 
 	services, err := api.client.ListServices("backup")
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// services, res, err := aysClient.Ays.ListServicesByRole("backup", api.AysRepo, nil, nil)
@@ -81,11 +80,7 @@ func (api *BackupAPI) List(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := range errs {
 		if err != nil {
-			if aysErr, ok := err.(*ays.Error); ok {
-				aysErr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-			}
+			handlers.HandleError(w, err)
 			return
 		}
 	}

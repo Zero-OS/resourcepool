@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -21,7 +22,7 @@ func (api *GraphAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 	// }
 	graphService, err := api.client.GetService("grafana", graphId, "", []string{"node", "port"})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// service, res, err := aysClient.Ays.GetServiceByName(graphId, "grafana", api.AysRepo, nil, queryParams)
@@ -38,7 +39,7 @@ func (api *GraphAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
 
 	nodeService, err := api.client.GetService("node.zero-os", graph.Node, "", []string{"redisAddr"})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 

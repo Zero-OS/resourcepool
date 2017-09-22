@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
@@ -39,11 +40,13 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 	// 	return
 	// }
-
-	listOptions := ListServiceOpt{Parent: fmt.Sprintf("node.zero-os!%s", nodeId), Fields: []string{"setting"}}
+	listOptions := ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeId),
+		Fields: []string{"setting"},
+	}
 	services, err := api.client.ListServices("bridge", listOptions)
 	if err != nil {
-		api.client.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -110,11 +113,15 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	serviceName := fmt.Sprintf("bridge__%s", reqBody.Name)
 	blueprint := Blueprint{
 		serviceName: bp,
-		"actions":   []tools.ActionBlock{{Action: "install", Actor: "bridge", Service: reqBody.Name}},
+		"actions": []tools.ActionBlock{
+			Action:  "install",
+			Actor:   "bridge",
+			Service: reqBody.Name,
+		},
 	}
 	blueprintName := ays.BlueprintName("bridge", reqBody.Name, "create")
 	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
-		api.client.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 

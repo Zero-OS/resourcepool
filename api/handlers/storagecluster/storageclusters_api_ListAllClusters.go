@@ -5,6 +5,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -24,7 +25,7 @@ func (api *StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Re
 		Fields: []string{"label"},
 	})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	log.Debug("storage clusters", services)

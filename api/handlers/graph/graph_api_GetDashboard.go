@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -20,7 +21,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	dashboardService, err := api.client.GetService("dashboard", name, fmt.Sprintf("grafana!%s", graphId), []string{"dashboard", "slug", "grafana"})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -38,7 +39,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	grafanaService, err := api.client.GetService("grafana", data.Grafana, "", []string{"node", "port"})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// query = map[string]interface{}{
@@ -67,7 +68,7 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	nodeService, err := api.client.GetService("node.zero-os", grafana.Node, "", []string{"RedisAddr"})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// query = map[string]interface{}{

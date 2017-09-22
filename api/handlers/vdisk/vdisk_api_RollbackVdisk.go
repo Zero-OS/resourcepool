@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 
@@ -35,7 +36,7 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	serv, err := api.client.GetService("vdisk", vdiskID, "", nil)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)
@@ -94,11 +95,7 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 
 	bpName := ays.BlueprintName("vdisk", vdiskID, "rollback")
 	if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
-		if ayserr, ok := err.(*ays.Error); ok {
-			ayserr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
-		}
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vdiskID, "rollback", obj)

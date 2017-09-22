@@ -7,6 +7,7 @@ import (
 
 	"github.com/zero-os/0-orchestrator/api/ays"
 	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -24,7 +25,7 @@ func (api *GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 		Fields: []string{"node", "port"},
 	})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 

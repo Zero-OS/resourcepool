@@ -11,6 +11,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers/backup"
 	"github.com/zero-os/0-orchestrator/api/handlers/graph"
+	"github.com/zero-os/0-orchestrator/api/handlers/healthcheck"
 	"github.com/zero-os/0-orchestrator/api/handlers/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/handlers/vdisk"
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -65,7 +66,7 @@ func GetRouter(aysCl *ays.Client, org string) http.Handler {
 	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysCl))
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysCl))
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysCl))
-	// healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, applicationID, secret, org), org)
+	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysCl))
 	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysCl))
 
 	r.PathPrefix("/callback").Handler(cbHandler)

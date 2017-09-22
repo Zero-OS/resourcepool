@@ -6,23 +6,27 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListNodeHealth is the handler for GET /health/nodes/{nodeid}
 // List NodeHealth
 func (api *HealthCheckApi) ListNodeHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
 	serviceName := fmt.Sprintf("node_%s", nodeID)
-	service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
-
-	if !tools.HandleAYSResponse(err, res, w, "listing nodes health checks") {
+	service, err := api.client.GetService("healthcheck", serviceName, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// // service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
+
+	// if !tools.HandleAYSResponse(err, res, w, "listing nodes health checks") {
+	// 	return
+	// }
 	var respBody struct {
 		HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
 	}

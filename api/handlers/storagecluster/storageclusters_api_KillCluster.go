@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -22,7 +23,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		Consume: fmt.Sprintf("storage_cluster!%s", storageCluster),
 	})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// query := map[string]interface{}{
@@ -50,7 +51,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 
 	exist, err := api.client.IsServiceExists("storage_cluster", storageCluster)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// _, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
@@ -70,11 +71,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		bpName := ays.BlueprintName("storage_cluster", storageCluster, "delete")
 		_, err := api.client.CreateExecRun(bpName, blueprint, true)
 		if err != nil {
-			if ayserr, ok := err.(*ays.Error); ok {
-				ayserr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-			}
+			handlers.HandleError(w, err)
 			return
 		}
 	}
@@ -96,7 +93,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	// 	return
 	// }
 	if err := api.client.DeleteService("storage_cluster", storageCluster); err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// _, err = aysClient.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)

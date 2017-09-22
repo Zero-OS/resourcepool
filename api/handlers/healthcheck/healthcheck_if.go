@@ -26,7 +26,7 @@ type HealthCheckInterface interface {
 }
 
 // HealthcheckInterfaceRoutes is routing for /health root endpoint
-func HealthChechInterfaceRoutes(r *mux.Router, i HealthCheckInterface, org string) {
+func HealthChechInterfaceRoutes(r *mux.Router, i HealthCheckInterface) {
 	r.HandleFunc("/health/nodes", i.ListNodesHealth).Methods("GET")
 	r.HandleFunc("/health/nodes/{nodeid}", i.ListNodeHealth).Methods("GET")
 	r.HandleFunc("/health/storageclusters", i.ListStorageClustersHealth).Methods("GET")

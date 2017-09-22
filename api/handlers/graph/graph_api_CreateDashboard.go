@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -32,7 +33,7 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := api.client.IsServiceExists("dashboard", reqBody.Name)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -64,11 +65,7 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		bpName := ays.BlueprintName("dashboard", reqBody.Name, "install")
 		_, err := api.client.CreateExecRun(bpName, obj, true)
 		if err != nil {
-			if aysErr, ok := err.(*ays.Error); ok {
-				aysErr.Handle(w, http.StatusInternalServerError)
-				return
-			}
-			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+			handlers.HandleError(w, err)
 			return
 		}
 	}

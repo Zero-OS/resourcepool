@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
@@ -23,7 +25,7 @@ type CreateGWBP struct {
 // CreateGW is the handler for POST /nodes/{nodeid}/gws
 // Create a new gateway
 func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody GWCreate
 
 	vars := mux.Vars(r)
@@ -41,12 +43,18 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("gateway", reqBody.Name, api.AysRepo)
+	exists, err := api.client.IsServiceExists("gatewat", reqBody.Name)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting gateway service by name %s ", reqBody.Name)
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		api.client.HandleError(w, err)
 		return
 	}
+	// exists, err := aysClient.ServiceExists("gateway", reqBody.Name, api.AysRepo)
+	// if err != nil {
+	// 	errmsg := fmt.Sprintf("error getting gateway service by name %s ", reqBody.Name)
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	return
+	// }
+
 	if exists {
 		httperror.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name), "")
 		return
@@ -68,20 +76,25 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		Advanced:     false,
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", reqBody.Name)] = gateway
-	obj["actions"] = []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	obj := ays.Blueprint{
+		fmt.Sprintf("gateway__%s", reqBody.Name): gateway,
+		"actions": []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}},
+	}
+	bpName := ays.BlueprintName("gateway", reqBody.Name, "install")
+	if _, err := api.client.CreateExecRun(bpName, bp, true); err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", reqBody.Name)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", nodeID, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 

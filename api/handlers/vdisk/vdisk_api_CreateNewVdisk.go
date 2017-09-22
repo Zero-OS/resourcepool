@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -33,7 +34,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := api.client.IsServiceExists("vdisk", reqBody.ID)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// exists, err := aysClient.ServiceExists("vdisk", reqBody.ID, api.AysRepo)
@@ -49,7 +50,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	exists, err = api.client.IsServiceExists("storage_cluster", reqBody.BlockStoragecluster)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 		// errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
 		// httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
@@ -92,11 +93,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 
 	// And Execute
 	if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
-		if ayserr, ok := err.(*ays.Error); ok {
-			ayserr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, "fail to create vdisk")
-		}
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", reqBody.ID, "install", obj)

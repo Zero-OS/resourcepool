@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
@@ -31,7 +32,7 @@ func (api *BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	// validate container name
 	exists, err := api.client.IsServiceExists("container", reqBody.Container)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -52,7 +53,7 @@ func (api *BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	// validate container name
 	exists, err = api.client.IsServiceExists("container_backup", reqBody.Container)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -80,11 +81,7 @@ func (api *BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	bpName := ays.BlueprintName("container_backup", reqBody.Name, "install")
 	if _, err := api.client.CreateExecRun(bpName, bp, true); err != nil {
-		if aysErr, ok := err.(*ays.Error); ok {
-			aysErr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-		}
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container_backup", reqBody.Name, "install", bp)

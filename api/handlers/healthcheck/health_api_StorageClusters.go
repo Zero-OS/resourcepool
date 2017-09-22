@@ -4,21 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStorageClustersHealth is the handler for GET /health/storageclusters
 // List StorageClustersHealth
 func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-	queryParams := map[string]interface{}{
-		"fields": "label,clusterType",
-	}
-	services, res, err := aysClient.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "listing storagecluster health checks") {
+	services, err := api.client.ListServices("storage_cluster", ays.ListServiceOpt{
+		Fields: []string{"label", "clusterType"},
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -41,8 +42,9 @@ func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *h
 
 		// Get healthcheck data
 		serviceName := fmt.Sprintf("storage_cluster_%s", service.Name)
-		healthService, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
-		if !tools.HandleAYSResponse(err, res, w, "listing storage clusters health checks") {
+		healthService, err := api.client.GetService("healthcheck", serviceName, "", nil)
+		if err != nil {
+			handlers.HandleError(w, err)
 			return
 		}
 

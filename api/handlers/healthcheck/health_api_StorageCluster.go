@@ -6,23 +6,23 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStorageClusterHealth is the handler for GET /health/storageclusters/{storageclusterid}
 // List NodeHealth
 func (api *HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	storageClusterID := vars["storageclusterid"]
 
 	serviceName := fmt.Sprintf("storage_cluster_%s", storageClusterID)
-	service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
-
-	if !tools.HandleAYSResponse(err, res, w, "listing storage cluster health checks") {
+	service, err := api.client.GetService("healthcheck", serviceName, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+
 	var respBody struct {
 		HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
 	}

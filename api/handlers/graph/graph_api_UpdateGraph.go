@@ -33,8 +33,7 @@ func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := api.client.IsServiceExists("grafana", graphid); err != nil {
-		// if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// _, res, err := aysClient.Ays.GetServiceByName(graphid, "grafana", api.AysRepo, nil, nil)

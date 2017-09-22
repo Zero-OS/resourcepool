@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -77,7 +77,7 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 	//getting cluster service
 	clusterService, err := api.client.GetService("storage_cluster", label, "", []string{})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// service, res, err := aysClient.Ays.GetServiceByName(label, "storage_cluster", api.AysRepo, nil, nil)
@@ -139,11 +139,7 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 	// could create a better error message with all erros that happened
 	for _, err := range errs {
 		if err != nil {
-			if ayserr, ok := err.(*ays.Error); ok {
-				ayserr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting storageEngine service")
-			}
+			handlers.HandleError(w, err)
 			return
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -31,7 +32,7 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 
 	exists, err := api.client.IsServiceExists("storage_cluster", reqBody.Label)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 	// exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
@@ -92,11 +93,7 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		bpName := ays.BlueprintName("storage_cluster", reqBody.Label, "install")
 		_, err := api.client.CreateExecRun(bpName, bp, true)
 		if err != nil {
-			if ayserr, ok := err.(*ays.Error); ok {
-				ayserr.Handle(w, http.StatusInternalServerError)
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-			}
+			handlers.HandleError(w, err)
 			return
 		}
 	}

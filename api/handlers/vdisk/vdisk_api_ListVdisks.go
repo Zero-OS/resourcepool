@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 
 	"net/http"
@@ -26,7 +27,7 @@ func (api *VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
 		Fields: []string{"blockStoragecluster", "objectStoragecluster", "backupStoragecluster", "type"},
 	})
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 
