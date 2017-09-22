@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/zero-os/0-orchestrator/api/handlers"
-
-	"github.com/siddontang/go/log"
+	log "github.com/Sirupsen/logrus"
 	"github.com/zero-os/0-orchestrator/api/ays/ays-client"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 )
 
 type backup struct {

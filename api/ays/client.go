@@ -10,7 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	jwt "github.com/dgrijalva/jwt-go"
-	cache "github.com/robfig/go-cache"
+	"github.com/patrickmn/go-cache"
 	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
 	"github.com/zero-os/0-orchestrator/api/ays/callback"
 )
