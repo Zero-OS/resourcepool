@@ -9,8 +9,8 @@ import (
 type NodeAPI struct {
 	// AysRepo       string
 	// AysURL        string
-	aysCl *ays.Client
-	Cache *cache.Cache
+	client *ays.Client
+	Cache  *cache.Cache
 	// ApplicationID string
 	// Secret        string
 	// Org           string
@@ -22,8 +22,8 @@ func NewNodeAPI(aysCl *ays.Client, c *cache.Cache) *NodeAPI {
 	return &NodeAPI{
 		// AysRepo:       repo,
 		// AysURL:        aysurl,
-		aysCl: aysCl,
-		Cache: c,
+		client: aysCl,
+		Cache:  c,
 		// ApplicationID: applicationID,
 		// Secret:        secret,
 		// Org:           org,

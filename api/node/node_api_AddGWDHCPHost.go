@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // AddGWDHCPHost is the handler for POST /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
@@ -28,12 +28,11 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 	nodeId := vars["nodeid"]
 	nicInterface := vars["interface"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
-	}
+	parent := fmt.Sprintf("node.zero-os!%s", nodeId)
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	service, err := api.client.GetService("gateway", gateway, parent, nil)
+	if err != nil {
+		err.Handle(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -76,15 +75,26 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", gateway)] = data
+	serviceName := fmt.Sprintf("gateway__%s", gateway)
+	blueprint := ays.Blueprint{serviceName: data}
 
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+	blueprintName := ays.BlueprintName("grafana", graphid, "update")
 
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	if err := api.client.CreateExec(bpName, bueprint); err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
+
+	// if err := api.client.CreateBlueprint(bpName, blueprint); err != nil {
+	// 	err.Handle(w, http.StatusInternalServerError)
+	// 	return
+	// }
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusNoContent)
 }

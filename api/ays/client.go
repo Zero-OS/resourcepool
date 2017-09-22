@@ -11,6 +11,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
 	"github.com/zero-os/0-orchestrator/api/ays/callback"
+	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 // Client is the main type of this package, it prove an easy to use API on top of the
@@ -61,6 +62,9 @@ func (c *Client) CallbackHandler() http.HandlerFunc {
 	return c.cbMgr.Handler
 }
 
+// CreateExecRun creates and executes a blueprint, and then schedules a run for it.
+// If wait == true then this method will also wait until the run and all its reties have finished
+// or timeout after 1h
 func (c *Client) CreateExecRun(name string, bp Blueprint, wait bool) (*Run, error) {
 	if err := c.CreateBlueprint(name, bp); err != nil {
 		return nil, err
@@ -71,6 +75,30 @@ func (c *Client) CreateExecRun(name string, bp Blueprint, wait bool) (*Run, erro
 	}
 
 	return c.CreateRun(false, wait)
+}
+
+// CreateExec creates and executes a blueprint, and waits until the jobs created by AYS have executed
+func (c *Client) CreateExec(blueprintName string, blueprint Blueprint) error {
+	if err := c.CreateBlueprint(blueprintName, blueprint); err != nil {
+		return err
+	}
+
+	processJobs, err := c.ExecuteBlueprint(blueprintName)
+	if err != nil {
+		return err
+	}
+
+	return processJobs.Wait()
+}
+
+// HandleError examines the err error object and will return a correct error notification to the http response
+func (c *Client) HandleError(w http.ResponseWriter, err error) {
+	if ayserr, ok := err.(*ays.Error); ok {
+		ayserr.Handle(w, http.StatusInternalServerError)
+	} else {
+		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+	}
+	return
 }
 
 func getToken(token string, applicationID string, secret string, org string) (string, error) {

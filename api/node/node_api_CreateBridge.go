@@ -15,7 +15,6 @@ import (
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
 func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
 	var reqBody BridgeCreate
 	vars := mux.Vars(r)
 	nodeId := vars["nodeid"]
@@ -31,12 +30,18 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
-		"fields": "setting",
-	}
-	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+	// 	"fields": "setting",
+	// }
+	// services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
+	// 	return
+	// }
+	listOptions := ListServiceOpt{Parent: fmt.Sprintf("node.zero-os!%s", nodeId), Fields: []{"setting"}}
+	services, err := api.client.ListServices("bridge", listOptions)
+	if err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
 
@@ -83,22 +88,36 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Node:        nodeId,
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("bridge__%s", reqBody.Name)] = bp
-	obj["actions"] = []tools.ActionBlock{{
-		Action:  "install",
-		Actor:   "bridge",
-		Service: reqBody.Name}}
+	// obj := make(map[string]interface{})
+	// obj[fmt.Sprintf("bridge__%s", reqBody.Name)] = bp
+	// obj["actions"] = []tools.ActionBlock{{
+	// 	Action:  "install",
+	// 	Actor:   "bridge",
+	// 	Service: reqBody.Name}}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "bridge", reqBody.Name, "install", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for bridge %s creation", reqBody.Name)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
+
+	serviceName := fmt.Sprintf("bridge__%s", reqBody.Name)
+	blueprint := Blueprint {
+		serviceName: bp, 
+		"actions": []tools.ActionBlock{
+			{Action: "install", Actor: "bridge", Service: reqBody.Name}
+		}
+	}
+	blueprintName := ays.BlueprintName("bridge", reqBody.Name, "create")	
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 

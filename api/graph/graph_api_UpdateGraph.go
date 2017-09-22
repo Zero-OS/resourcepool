@@ -45,28 +45,34 @@ func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("grafana__%s", graphid): reqBody,
 	}
 	bpName := ays.BlueprintName("grafana", graphid, "update")
-	if err := api.client.CreateBlueprint(bpName, bp); err != nil {
-		err.Handle(w, http.StatusInternalServerError)
-		return
-	}
 
-	// var processJobs ays.ProcessChangeJobs
-	processJobs, err := api.client.ExecuteBlueprint(bpName)
-	if err != nil {
-		if ayserr, ok := err.(*ays.Error); ok {
-			ayserr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-		}
-		return
-	}
+	// if err := api.client.CreateBlueprint(bpName, bp); err != nil {
+	// 	err.Handle(w, http.StatusInternalServerError)
+	// 	return
+	// }
 
-	if err := processJobs.Wait(); err != nil {
-		if ayserr, ok := err.(*ays.Error); ok {
-			ayserr.Handle(w, http.StatusInternalServerError)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-		}
+	// // var processJobs ays.ProcessChangeJobs
+	// processJobs, err := api.client.ExecuteBlueprint(bpName)
+	// if err != nil {
+	// 	if ayserr, ok := err.(*ays.Error); ok {
+	// 		ayserr.Handle(w, http.StatusInternalServerError)
+	// 	} else {
+	// 		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+	// 	}
+	// 	return
+	// }
+
+	// if err := processJobs.Wait(); err != nil {
+	// 	if ayserr, ok := err.(*ays.Error); ok {
+	// 		ayserr.Handle(w, http.StatusInternalServerError)
+	// 	} else {
+	// 		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
+	// 	}
+	// 	return
+	// }
+
+	if err := api.client.CreateExec(bpName, bp); err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
 
