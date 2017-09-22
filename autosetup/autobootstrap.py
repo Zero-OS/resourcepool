@@ -741,6 +741,8 @@ if __name__ == "__main__":
     parser.add_argument('--cluster-backend-network-cidr', type=str, help='g8/switchless only: cidr address')
     parser.add_argument('--cluster-management-zt-net',    type=str, help='zerotier-network id of the cluster-nodes', required=True)
     parser.add_argument('--cluster-management-zt-token',  type=str, help='zerotier-token to manage the cluster-nodes', required=True)
+
+    parser.add_argument('--dry-run', help='only shows arguments summary, tokens and tests status (no install)', action="store_true")
     args = parser.parse_args()
 
     #
@@ -834,8 +836,6 @@ if __name__ == "__main__":
     print("[+] upstream repository  : %s" % args.orchestrator_git_repo)
     print("[+]")
     print("[+] -- cluster ----------------------------------------------------")
-    print("[+] container name       : %s" % args.orchestrator_container_name)
-    print("[+] iyo organization     : %s" % args.orchestrator_iyo_organization)
     print("[+] refreshable jwt      : %s" % args.cluster_jwt)
     print("[+] iyo organization     : %s" % args.cluster_iyo_organization)
     print("[+] iyo client-id (jwt)  : %s" % args.cluster_iyo_client_id)
@@ -845,6 +845,8 @@ if __name__ == "__main__":
     print("[+] backend network set : %s" % args.cluster_backend_network_type)
     print("[+] backend vlan-id     : %s" % args.cluster_backend_network_vlan)
     print("[+] backend address cidr: %s" % args.cluster_backend_network_cidr)
+    print("[+]")
+    print("[+] ===============================================================")
     print("[+]")
 
     # print("[+] -- notice -----------------------------------------------------")
@@ -938,7 +940,13 @@ if __name__ == "__main__":
 
     print("[+] cluster jwt organization: %s" % cluster_jwt.organization())
     print("[+]")
+
     print("[+] == wouhou ==")
+
+    if args.dry_run:
+        print("[+] everything looks correct, you asked a dry-run, nothing more do do")
+        sys.exit(0)
+
     print("[+] everything looks correct, let's go installing all of this !")
     print("[+]")
 
