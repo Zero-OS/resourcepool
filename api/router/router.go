@@ -9,10 +9,11 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/ays"
-	"github.com/zero-os/0-orchestrator/api/graph"
-	"github.com/zero-os/0-orchestrator/api/storagecluster"
+	"github.com/zero-os/0-orchestrator/api/handlers/backup"
+	"github.com/zero-os/0-orchestrator/api/handlers/graph"
+	"github.com/zero-os/0-orchestrator/api/handlers/storagecluster"
+	"github.com/zero-os/0-orchestrator/api/handlers/vdisk"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/zero-os/0-orchestrator/api/vdisk"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -65,7 +66,7 @@ func GetRouter(aysCl *ays.Client, org string) http.Handler {
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysCl))
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysCl))
 	// healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, applicationID, secret, org), org)
-	// backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, applicationID, secret, org), org)
+	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysCl))
 
 	r.PathPrefix("/callback").Handler(cbHandler)
 	api.HandleFunc("/callback", aysCl.CallbackHandler()).Methods("POST")
