@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/zero-os/0-orchestrator/api",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
@@ -72,6 +72,10 @@
 			"ImportPath": "github.com/justinas/alice",
 			"Comment": "1.0.0",
 			"Rev": "052b8b6c18edb9db317af86806d8e00ebaa94160"
+		},
+		{
+			"ImportPath": "github.com/orcaman/concurrent-map",
+			"Rev": "2ae17bc4c860c83513ee50feb9746f3e50d7515d"
 		},
 		{
 			"ImportPath": "github.com/patrickmn/go-cache",
