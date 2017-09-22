@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +17,7 @@ import (
 // JoinZerotier is the handler for POST /nodes/{nodeid}/zerotiers
 // Join Zerotier network
 func (api *NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody ZerotierJoin
 
 	nodeID := mux.Vars(r)["nodeid"]
@@ -42,32 +45,45 @@ func (api *NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		Node:      nodeID,
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid)] = bp
-	obj["actions"] = []tools.ActionBlock{{
-		Action:  "install",
-		Actor:   "zerotier",
-		Service: fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid),
-		Force:   true,
-	}}
+	obj := ays.Blueprint{
+		fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid): bp,
+		"actions": []tools.ActionBlock{{
+			Action:  "install",
+			Actor:   "zerotier",
+			Service: fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid),
+			Force:   true,
+		}},
+	}
+	// obj[fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid)] = bp
+	// obj["actions"] = []tools.ActionBlock{{
+	// 	Action:  "install",
+	// 	Actor:   "zerotier",
+	// 	Service: fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid),
+	// 	Force:   true,
+	// }}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	bpName := ays.BlueprintName("zerotier", reqBody.Nwid, "join")
+	if err := api.client.CreateExecRun(bpName, bp); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", reqBody.Nwid, "join", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for zerotiers %s join ", reqBody.Nwid)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
-	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		httpErr, ok := err.(httperror.HTTPError)
-		errmsg := fmt.Sprintf("Error running blueprint for zerotiers %s join ", reqBody.Nwid)
-		if ok {
-			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
-		} else {
-			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		}
-		aysClient.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid), "zerotier", api.AysRepo, nil, nil)
-		return
-	}
+	// if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
+	// 	httpErr, ok := err.(httperror.HTTPError)
+	// 	errmsg := fmt.Sprintf("Error running blueprint for zerotiers %s join ", reqBody.Nwid)
+	// 	if ok {
+	// 		httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, errmsg)
+	// 	} else {
+	// 		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	}
+	// 	aysClient.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid), "zerotier", api.AysRepo, nil, nil)
+	// 	return
+	// }
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/zerotiers/%s", nodeID, reqBody.Nwid))
 	w.WriteHeader(http.StatusCreated)

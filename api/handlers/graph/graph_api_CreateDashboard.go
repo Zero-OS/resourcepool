@@ -61,13 +61,12 @@ func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		Action:  "install",
 		Actor:   "dashboard",
 		Service: reqBody.Name}}
-	{
-		bpName := ays.BlueprintName("dashboard", reqBody.Name, "install")
-		_, err := api.client.CreateExecRun(bpName, obj, true)
-		if err != nil {
-			handlers.HandleError(w, err)
-			return
-		}
+
+	bpName := ays.BlueprintName("dashboard", reqBody.Name, "install")
+	_, err = api.client.CreateExecRun(bpName, obj, true)
+	if err != nil {
+		handlers.HandleError(w, err)
+		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "dashboard", reqBody.Name, "install", obj)
 	// errmsg := fmt.Sprintf("error executing blueprint for dashboard %s creation", reqBody.Name)

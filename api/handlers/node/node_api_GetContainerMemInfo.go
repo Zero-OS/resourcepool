@@ -6,13 +6,13 @@ import (
 
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetContainerMemInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/mem
 // Get detailed information about the memory in the container
 func (api *NodeAPI) GetContainerMemInfo(w http.ResponseWriter, r *http.Request) {
-	cl, err := tools.GetContainerConnection(r, api)
+	// cl, err := tools.GetContainerConnection(r, api)
+	cl, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -43,7 +44,7 @@ func (api *NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 
 	service, err := api.client.GetService("gateway", gwname)
 	if err != nil {
-		api.client.HandleError(err)
+		handlers.HandleError(w, err)
 		return
 	}
 	// service, res, err := aysClient.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
@@ -72,7 +73,7 @@ func (api *NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 
 	bpName := ays.BlueprintName("gateway", gwname, "update")
 	if err := api.client.CreateExec(bpName, bp); err != nil {
-		api.client.HandleError(err)
+		handlers.HandleError(w, err)
 		return
 	}
 	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj)

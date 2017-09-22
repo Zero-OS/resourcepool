@@ -4,26 +4,36 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListVMs is the handler for GET /node/{nodeid}/vm
 // List VMs
 func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 
-	queryParams := map[string]interface{}{
-		"fields": "status,id",
-		"parent": fmt.Sprintf("node.zero-os!%s", vars["nodeid"]),
-	}
-	services, res, err := aysClient.Ays.ListServicesByRole("vm", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+	// queryParams := map[string]interface{}{
+	// 	"fields": "status,id",
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", vars["nodeid"]),
+	// }
+	// services, res, err := aysClient.Ays.ListServicesByRole("vm", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+	// 	return
+	// }
+	services, err := api.client.ListServices("vm", ays.ListServiceOpt{
+		Parent:   fmt.Sprintf("node.zero-os!%s", vars["nodeid"]),
+		"fields": []string{"status", "id"},
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

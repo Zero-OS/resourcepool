@@ -7,25 +7,35 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetGWForwards is the handler for GET /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Get list for IPv4 Forwards
 func (api *NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeId := vars["nodeid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
-		"fields": "portforwards",
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+	// 	"fields": "portforwards",
+	// }
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// 	return
+	// }
+
+	services, err := api.client.ListServices("gateway", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeId),
+		Fields: []string{"portforwards"},
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

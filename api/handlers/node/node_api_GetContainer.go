@@ -15,7 +15,7 @@ func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	containername := vars["containername"]
-	id, err := api.client.GetContainerID(r, api, nodeClient, containername)
+	id, err := api.client.GetContainerID(r, containername)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get container id")
 		return

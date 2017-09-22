@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -18,17 +20,25 @@ func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	query := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
-		"fields": "flist,hostname,status",
-	}
-	services, res, err := aysClient.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
+	// query := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// 	"fields": "flist,hostname,status",
+	// }
+	// services, res, err := aysClient.Ays.ListServicesByRole("container", api.AysRepo, nil, query)
+	// if err != nil {
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting container services from ays")
+	// 	return
+	// }
+	// if res.StatusCode != http.StatusOK {
+	// 	w.WriteHeader(res.StatusCode)
+	// 	return
+	// }
+	services, err := api.client.ListServices("container", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeID),
+		Fields: []string{"flist", "hostname", "status"},
+	})
 	if err != nil {
-		httperror.WriteError(w, http.StatusInternalServerError, err, "Error getting container services from ays")
-		return
-	}
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
+		handlers.HandleError(w, err)
 		return
 	}
 

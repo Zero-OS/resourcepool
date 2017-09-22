@@ -7,23 +7,32 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
 // List bridges
 func (api *NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
-		"fields": "setting,status",
-	}
-	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
+	// 	"fields": "setting,status",
+	// }
+	// services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
+	// 	return
+	// }
+	services, err := api.client.ListServices("bridge", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeid),
+		Fields: []string{"setting", "status"},
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

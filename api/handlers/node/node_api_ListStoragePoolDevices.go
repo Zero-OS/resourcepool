@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePoolDevices is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/devices
@@ -19,8 +20,9 @@ func (api *NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Reques
 	storagePoolName := vars["storagepoolname"]
 	nodeId := vars["nodeid"]
 
-	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w, r)
+	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName)
 	if err {
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -43,13 +45,19 @@ type DeviceInfo struct {
 }
 
 // Get storagepool devices
-func (api *NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
-	aysClient := tools.GetAysConnection(r, api)
-	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
+func (api *NodeAPI) getStoragePoolDevices(node, storagePool string) ([]DeviceInfo, bool) {
+	// aysClient := tools.GetAysConnection(r, api)
+	// queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
-	service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
-		return nil, true
+	// service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
+	// 	return nil, true
+	// }
+	services, err := api.client.ListServices("storagepool", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", node),
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	var data struct {

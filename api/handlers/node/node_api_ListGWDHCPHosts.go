@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -20,13 +21,18 @@ func (api *NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 	nodeId := vars["nodeid"]
 	nicInterface := vars["interface"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
-		"fields": "nics",
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+	// 	"fields": "nics",
+	// }
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// 	return
+	// }
+	service, err := api.client.GetService("gateway", gateway, fmt.Sprintf("node.zero-os!%s", nodeId), []string{"nics"})
+	if err != nil {
+		handlers.HandlerError(err)
 		return
 	}
 

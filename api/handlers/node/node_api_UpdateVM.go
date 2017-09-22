@@ -4,17 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateVM is the handler for PUT /nodes/{nodeid}/vms/{vmid}
 // Updates the VM
 func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMUpdate
 
 	// decode request
@@ -32,10 +34,15 @@ func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
-	srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	srv, err := api.client.GetService("vm", vmID, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	// 	return
+	// }
 
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
@@ -61,15 +68,22 @@ func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 		Disks:  reqBody.Disks,
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("vm__%s", vmID)] = bp
-
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	obj := ays.Blueprint{
+		fmt.Sprintf("vm__%s", vmID): bp,
+	}
+	bpName := ays.BlueprintName("vm", vmID, "update")
+	if err := api.client.CreateExec(bpName, bp); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// obj[fmt.Sprintf("vm__%s", vmID)] = bp
+
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for vm %s creation ", vmID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusNoContent)
 }

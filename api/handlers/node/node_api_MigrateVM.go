@@ -4,27 +4,35 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // MigrateVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/migrate
 // Migrate the VM to another host
 func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMMigrate
 	var vmData VMCreate
 
 	vmID := mux.Vars(r)["vmid"]
 
 	// check if vm has bridge
-	service, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+	service, err := api.client.GetService("vm", vmID, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// service, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+	// 	return
+	// }
+
 	if err := json.Unmarshal(service.Data, &vmData); err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 		return
@@ -57,33 +65,37 @@ func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 		Node: reqBody.Nodeid,
 	}
 
-	_, res, err = aysClient.Ays.GetServiceByName(reqBody.Nodeid, "node", api.AysRepo, nil, nil)
-	if res.StatusCode == http.StatusNotFound {
+	exists, err := api.client.IsServiceExists("node", reqBody.Nodeid)
+	if err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
+	if !exists {
 		errmsg := fmt.Errorf("node %s does not exist", reqBody.Nodeid)
 		httperror.WriteError(w, http.StatusBadRequest, errmsg, "")
 		return
 	}
-	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
-		return
+
+	obj := ays.Blueprint{
+		fmt.Sprintf("vm__%v", vmID): bp,
 	}
-
-	decl := fmt.Sprintf("vm__%v", vmID)
-
-	obj := make(map[string]interface{})
-	obj[decl] = bp
 
 	// And execute
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for vm %s migration", vmID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	bpName := ays.BlueprintName("vm", vmID, "migrate")
+	if _, err := api.client.CreateExecRun(bpName, obj); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// errmsg := fmt.Sprintf("error executing blueprint for vm %s migration", vmID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", reqBody.Nodeid, vmID))
 	w.WriteHeader(http.StatusNoContent)
 

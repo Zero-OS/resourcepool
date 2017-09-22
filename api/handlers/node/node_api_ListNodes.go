@@ -2,22 +2,32 @@ package node
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListNodes is the handler for GET /nodes
 // List Nodes
 func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-	queryParams := map[string]interface{}{
-		"fields": "hostname,status,id,redisAddr",
-	}
-	services, res, err := aysClient.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
+	// aysClient := tools.GetAysConnection(r, api)
+	// queryParams := map[string]interface{}{
+	// 	"fields": "hostname,status,id,redisAddr",
+	// }
+	// services, res, err := aysClient.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
+	// 	return
+	// }
+	services, err := api.client.ListServices("node.zero-os", ays.ListServiceOpt{
+		Parent:   fmt.Sprintf("node.zero-os!%s", nodeid),
+		"fields": []string{"hostname", "status", "id", "redisAddr"},
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

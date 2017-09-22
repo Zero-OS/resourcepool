@@ -8,12 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	yaml "gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jlaffaye/ftp"
 
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -21,7 +24,7 @@ import (
 // ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
 // Import the VM
 func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
@@ -43,7 +46,13 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// valdiate name
-	exists, err := aysClient.ServiceExists("vm", vmID, api.AysRepo)
+
+	// exists, err := aysClient.ServiceExists("vm", vmID, api.AysRepo)
+	exists, err := api.client.IsServiceExists("vm", vmID)
+	if err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
 	if exists {
 		err = fmt.Errorf("VM with name %s already exists", vmID)
 		httperror.WriteError(w, http.StatusConflict, err, err.Error())
@@ -91,6 +100,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: make this concurent
 	vdiskServices := []string{}
 	for idx, val := range metadata.Vdisks {
 		backupURL := fmt.Sprintf("%s#%s#%s", reqBody.URL, metadata.CryptoKey, metadata.SnapshotIDs[idx])
@@ -118,27 +128,34 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		serviceName := fmt.Sprintf("%s_%v", vmID, now.Unix())
 		vdiskServices = append(vdiskServices, serviceName)
-		bpName := fmt.Sprintf("vdisk__%v", serviceName)
+		// bpName :=
 
-		obj := make(map[string]interface{})
-		obj[bpName] = bp
-		obj["actions"] = []tools.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}}
-
-		res, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vmID, "import_vdisk", obj)
-		errmsg := fmt.Sprintf("error executing blueprint for vm %s import", vmID)
-		if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+		obj := ays.Blueprint{
+			fmt.Sprintf("vdisk__%v", serviceName): bp,
+			"actions": []tools.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}},
+		}
+		// obj[bpName] = bp
+		// obj["actions"] = []tools.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}}
+		bpName := ays.BlueprintName("vdisk", vmID, "import_vdisk")
+		if _, run := api.client.CreateExecRun(bpName, obj); err != nil {
+			handlers.HandleError(w, err)
 			return
 		}
+		// res, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk", vmID, "import_vdisk", obj)
+		// errmsg := fmt.Sprintf("error executing blueprint for vm %s import", vmID)
+		// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+		// 	return
+		// }
 
-		if _, err := aysClient.WaitRunDone(res.Key, api.AysRepo); err != nil {
-			httpErr, ok := err.(httperror.HTTPError)
-			if ok {
-				httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
-			} else {
-				httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
-			}
-			return
-		}
+		// if _, err := aysClient.WaitRunDone(res.Key, api.AysRepo); err != nil {
+		// 	httpErr, ok := err.(httperror.HTTPError)
+		// 	if ok {
+		// 		httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
+		// 	} else {
+		// 		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		// 	}
+		// 	return
+		// }
 	}
 
 	// Change diskids with new ones
@@ -165,19 +182,27 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		BackupURL: "",
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("vm__%s", vmID)] = bp
-	obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}}
+	obj := ays.Blueprint{
+		fmt.Sprintf("vm__%s", vmID): bp,
+		"actions":                   []ays.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}},
+	}
+	// obj[fmt.Sprintf("vm__%s", vmID)] = bp
+	// obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "install", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", vmID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	bpName := ays.BlueprintName("vm", vmID, "install")
+	if _, err := api.client.CreateExecRun(bpName, obj); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "install", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for vm %s creation", vmID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeID, vmID))
 	w.WriteHeader(http.StatusCreated)

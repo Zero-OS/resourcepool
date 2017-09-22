@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // KillContainerProcess is the handler for DELETE /nodes/{nodeid}/containers/{containername}/processes/{processid}
@@ -13,11 +13,17 @@ import (
 func (api *NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	cl, err := tools.GetContainerConnection(r, api)
+	// cl, err := tools.GetContainerConnection(r, api)
+	cl, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
-	tools.KillProcess(vars["processid"], cl, w)
+	if err := api.client.KillProcess(vars["processid"]); err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+	// tools.KillProcess(vars["processid"], cl, w)
 }

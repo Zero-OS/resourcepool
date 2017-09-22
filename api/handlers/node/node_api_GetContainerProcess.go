@@ -10,14 +10,14 @@ import (
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetContainerProcess is the handler for GET /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Get process details
 func (api *NodeAPI) GetContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	conn, err := tools.GetContainerConnection(r, api)
+	// conn, err := tools.GetContainerConnection(r, api)
+	conn, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

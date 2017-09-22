@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // FileDownload is the handler for GET /nodes/{nodeid}/container/{containername}/filesystem
@@ -20,7 +19,8 @@ func (api *NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	container, err := tools.GetContainerConnection(r, api)
+	// container, err := tools.GetContainerConnection(r, api)
+	container, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		vars := mux.Vars(r)
 		errmsg := fmt.Sprintf("Failed to connect to container %v", vars["containername"])

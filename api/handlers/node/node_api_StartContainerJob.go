@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StartContainerProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/jobs
@@ -35,7 +34,7 @@ func (api *NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 		env[items[0]] = items[1]
 	}
 
-	containerClient, err := tools.GetContainerConnection(r, api)
+	containerClient, err := api.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

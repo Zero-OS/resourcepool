@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 )
 
 // GetStoragePoolDeviceInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/device/{deviceuuid}
@@ -15,8 +16,9 @@ func (api *NodeAPI) GetStoragePoolDeviceInfo(w http.ResponseWriter, r *http.Requ
 	nodeId := vars["nodeid"]
 	deviceUuid := vars["deviceuuid"]
 
-	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName, w, r)
-	if err {
+	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

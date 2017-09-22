@@ -8,21 +8,28 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetBridge is the handler for GET /nodes/{nodeid}/bridges/{bridgeid}
 // Get bridge details
 func (api *NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
+
 	var respBody Bridge
 
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
-	srv, resp, err := aysClient.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	// srv, resp, err := aysClient.Ays.GetServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
 
-	if !tools.HandleAYSResponse(err, resp, w, "Get bridge by name") {
+	// if !tools.HandleAYSResponse(err, resp, w, "Get bridge by name") {
+	// 	return
+	// }
+
+	srv, err := api.client.GetService("bridge", bridge, "", []string{"RedisAddr"})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

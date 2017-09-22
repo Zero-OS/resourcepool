@@ -92,7 +92,7 @@ func getContainerWithTag(containers map[int16]goclient.ContainerResult, tag stri
 	return 0
 }
 
-func (c *connectionMgr) getContainerIDByName(r *http.Request, containername string) (int, error) {
+func (c *connectionMgr) GetContainerID(r *http.Request, containername string) (int, error) {
 	if containername == "" {
 		vars := mux.Vars(r)
 		containername = vars["containername"]
@@ -134,8 +134,31 @@ func (c *Client) GetNodeConnection(r *http.Request) (goclient.Client, error) {
 	return c.connectionMgr.getNodeConnection(nodeid)
 }
 
+//GetContainerConnection returns a client for a direct access into a container
+// container id is extracted from r
+func (c *Client) GetContainerConnection(r *http.Request) (goclient.Client, error) {
+	nodeClient, err := c.GetNodeConnection(r)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := c.GetContainerID(r, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return goclient.Container(nodeClient).Client(id), nil
+}
+
 // GetContainerID returns the id of the container associated with name.
 // It connects to the node that host the container to do so. The node id is exrtaced from URL in r
 func (c *Client) GetContainerID(r *http.Request, name string) (int, error) {
-	return c.connectionMgr.getContainerIDByName(r, name)
+	return c.connectionMgr.GetContainerID(r, name)
+}
+
+// DeleteContainerId remove the container id from the connection cache
+// containerid is extracted from r
+func (c *Client) DeleteContainerId(r *http.Request) {
+	vars := mux.Vars(r)
+	c.cache.Delete(vars["containername"])
 }

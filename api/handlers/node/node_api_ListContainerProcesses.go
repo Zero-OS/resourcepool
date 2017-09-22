@@ -6,7 +6,6 @@ import (
 
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListContainerProcesses is the handler for GET /nodes/{nodeid}/containers/{containername}/process
@@ -14,7 +13,8 @@ import (
 func (api *NodeAPI) ListContainerProcesses(w http.ResponseWriter, r *http.Request) {
 	var respBody []Process
 
-	conn, err := tools.GetContainerConnection(r, api)
+	// conn, err := tools.GetContainerConnection(r, api)
+	conn, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

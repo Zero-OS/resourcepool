@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // FileUpload is the handler for POST /node/{nodeid}/container/{containername}/filesystem
@@ -40,7 +39,8 @@ func (api *NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer fd.Close()
 
-	container, err := tools.GetContainerConnection(r, api)
+	// container, err := tools.GetContainerConnection(r, api)
+	container, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

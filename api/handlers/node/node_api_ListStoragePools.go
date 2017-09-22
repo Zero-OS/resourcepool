@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -18,14 +20,22 @@ func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
-		"fields": "status,freeCapacity",
-	}
-	services, _, err := aysClient.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
+	// 	"fields": "status,freeCapacity",
+	// }
+	// services, _, err := aysClient.Ays.ListServicesByRole("storagepool", api.AysRepo, nil, queryParams)
+	// if err != nil {
+	// 	errmsg := "Error listing storagepool services"
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	return
+	// }
+	services, err := api.client.ListServices("vm", ays.ListServiceOpt{
+		Parent:   fmt.Sprintf("node.zero-os!%s", nodeid),
+		"fields": []string{"status", "freeCapacity"},
+	})
 	if err != nil {
-		errmsg := "Error listing storagepool services"
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		handlers.HandleError(w, err)
 		return
 	}
 

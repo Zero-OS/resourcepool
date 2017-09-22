@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -14,15 +16,23 @@ import (
 // ListGateways is the handler for GET /nodes/{nodeid}/gws
 // List running gateways
 func (api *NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	query := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
-	}
-	services, res, err := aysClient.Ays.ListServicesByRole("gateway", api.AysRepo, nil, query)
-	if !tools.HandleAYSResponse(err, res, w, "listing gateways") {
+	// query := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// }
+	// services, res, err := aysClient.Ays.ListServicesByRole("gateway", api.AysRepo, nil, query)
+	// if !tools.HandleAYSResponse(err, res, w, "listing gateways") {
+	// 	return
+	// }
+
+	services, err := api.client.ListServices("gateway", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeid),
+	})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

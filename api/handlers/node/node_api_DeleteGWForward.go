@@ -6,14 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteGWForward is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
 // Delete portforward, forwardid = srcip:srcport
 func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
@@ -23,8 +24,13 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 	}
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// 	return
+	// }
+	nodeService, err := api.client.GetService("gateway", gateway, "", []string{"RedisAddr"})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -60,15 +66,23 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 
 	data.Portforwards = updatedForwards
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", gateway)] = data
-
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	obj := ays.Blueprint{
+		fmt.Sprintf("gateway__%s", gateway): data,
+	}
+	// obj[fmt.Sprintf("gateway__%s", gateway)] = data
+	bpName := ays.BlueprintName("gateway", gateway, "update")
+	_, err := api.client.CreateExec(bpName, obj)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s update ", gateway)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusNoContent)
 }

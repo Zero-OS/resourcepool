@@ -9,14 +9,15 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ExportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/export
 // Creates the VM
 func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
@@ -30,10 +31,16 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if vm running
-	srv, getres, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, getres, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	// srv, getres, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, getres, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	// 	return
+	// }
+	nodeService, err := api.client.GetService("vm", vmID, "", []string{"RedisAddr"})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+
 	var vm VM
 	if err := json.Unmarshal(srv.Data, &vm); err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
@@ -60,14 +67,19 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 		URL: fmt.Sprintf("%s#%s_%v", reqBody.URL, vmID, now.Unix()),
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("vm__%s", vmID)] = bp
-
-	_, err = aysClient.UpdateBlueprint(api.AysRepo, "vm", vmID, "export", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for vm %s export", vmID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	obj := ays.Blueprint{
+		fmt.Sprintf("vm__%s", vmID): bp,
+	}
+	bName := ays.BluprintName("vm", vmID, "export")
+	if err := api.client.CreateExec(bpName, obj); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// _, err = aysClient.UpdateBlueprint(api.AysRepo, "vm", vmID, "export", obj)
+	// errmsg := fmt.Sprintf("error executing blueprint for vm %s export", vmID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	respBody := struct {
 		BackupURL string `yaml:"url" json:"url"`

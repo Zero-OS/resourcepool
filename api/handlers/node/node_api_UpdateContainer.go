@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateContainer is the handler for PUT /nodes/{nodeid}/containers/{containername}
 // Update a new Container
 func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	var reqBody ContainerUpdate
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -33,11 +35,17 @@ func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	containerName := vars["containername"]
 
 	// validate container name
-	exists, err := aysClient.ServiceExists("container", containerName, api.AysRepo)
+	exists, err := api.client.IsServiceExists("container", containerName)
 	if err != nil {
-		httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
+		handlers.HandleError(w, err)
 		return
-	} else if !exists {
+	}
+	// exists, err := aysClient.ServiceExists("container", containerName, api.AysRepo)
+	// if err != nil {
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking container service exists")
+	// 	return
+	// } else
+	if !exists {
 		err = fmt.Errorf("Container with name %s does not exists", containerName)
 		httperror.WriteError(w, http.StatusNotFound, err, "")
 		return
@@ -50,13 +58,19 @@ func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("container__%s", containerName)] = reqBody
+	obj := ays.Blueprint{
+		fmt.Sprintf("container__%s", containerName): reqBody,
+	}
+	bpName := ays.BlueprintName("container", containerName, "install")
 
-	_, err = aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj)
-	if !tools.HandleExecuteBlueprintResponse(err, w, "") {
+	if err := api.client.CreateExec(bpName, bp); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// _, err = aysClient.UpdateBlueprint(api.AysRepo, "container", containerName, "install", obj)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, "") {
+	// 	return
+	// }
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, containerName))
 	w.WriteHeader(http.StatusCreated)

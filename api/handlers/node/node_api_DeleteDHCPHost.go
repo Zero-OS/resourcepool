@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -13,7 +15,7 @@ import (
 // DeleteDHCPHost is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts/{macaddress}
 // Delete dhcp host
 func (api *NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeId := vars["nodeid"]
@@ -26,6 +28,11 @@ func (api *NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+		return
+	}
+	service, err := api.client.GetService("gateway", gateway, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -67,15 +74,21 @@ NicsLoop:
 		return
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", gateway)] = data
-
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	obj := ays.Blueprint{
+		fmt.Sprintf("gateway__%s", gateway): data,
+	}
+	bpName := ays.BlueprintName("gateway", gateway, "update")
+	_, err := api.client.CreateExec(bpName, obj)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s update", gateway)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusNoContent)
 }

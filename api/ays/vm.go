@@ -1,42 +1,28 @@
 package ays
 
-// import (
-// 	"fmt"
-// 	"net/http"
+import (
+	"net/http"
 
-// 	"github.com/gorilla/mux"
-// 	"github.com/zero-os/0-orchestrator/api/httperror"
-// )
+	"github.com/gorilla/mux"
+)
 
-// // ExecuteVMAction executes an action on a vm
-// func ExecuteVMAction(aystool *AYStool, w http.ResponseWriter, r *http.Request, repoName, action string) {
-// 	vars := mux.Vars(r)
-// 	vmID := vars["vmid"]
+// ExecuteVMAction is a helper method that send a blueprint with an action block
+// to execute an action on a vm
+// the VM id is extracted from r
+func (c *Client) ExecuteVMAction(r *http.Request, action string) error {
+	vars := mux.Vars(r)
+	vmID := vars["vmid"]
 
-// 	obj := map[string]interface{}{
-// 		"actions": []ActionBlock{{
-// 			Action:  action,
-// 			Actor:   "vm",
-// 			Service: vmID,
-// 			Force:   true,
-// 		}},
-// 	}
+	bp := Blueprint{
+		"actions": []ActionBlock{{
+			Action:  action,
+			Actor:   "vm",
+			Service: vmID,
+			Force:   true,
+		}},
+	}
 
-// 	res, err := aystool.ExecuteBlueprint(repoName, "vm", vmID, "action", obj)
-// 	errmsg := fmt.Sprintf("error executing blueprint for vm %s %s", vmID, action)
-// 	if err != nil {
-// 		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
-// 		return
-// 	}
-
-// 	if _, err := aystool.WaitRunDone(res.Key, repoName); err != nil {
-// 		httpErr, ok := err.(httperror.HTTPError)
-// 		if ok {
-// 			httperror.WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
-// 		} else {
-// 			httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
-// 		}
-// 		return
-// 	}
-// 	w.WriteHeader(http.StatusNoContent)
-// }
+	bpName := BlueprintName("vm", vmID, "action")
+	_, err := c.CreateExecRun(bpName, bp, true)
+	return err
+}

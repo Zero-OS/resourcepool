@@ -18,8 +18,13 @@ func (api *NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
-	srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	// srv, res, err := aysClient.Ays.GetServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("getting vm %s details", vmID)) {
+	// 	return
+	// }
+	srv, err := api.client.GetService("vm", vmID, "", nil)
+	if err != nil {
+		handler.HandleError(w, err)
 		return
 	}
 

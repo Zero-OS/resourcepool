@@ -3,12 +3,14 @@ package node
 import (
 	"net/http"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 )
 
 // PauseVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/pause
 // Pauses the VM
 func (api *NodeAPI) PauseVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-	tools.ExecuteVMAction(aysClient, w, r, api.AysRepo, "pause")
+	if err := api.client.ExecuteVMAction(r, "pause"); err != nil {
+		handlers.HandlerError(w, err)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

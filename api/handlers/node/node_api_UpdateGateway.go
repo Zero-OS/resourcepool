@@ -4,19 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
 	"reflect"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
 // Update Gateway
 func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody GW
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
@@ -33,10 +35,15 @@ func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, res, err := aysClient.Ays.GetServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
+	service, err := api.client.GetService("gateway", gwID, "", nil)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// service, res, err := aysClient.Ays.GetServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
+	// 	return
+	// }
 
 	var data CreateGWBP
 	if err := json.Unmarshal(service.Data, &data); err != nil {
@@ -53,15 +60,21 @@ func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", gwID)] = reqBody
+	obj := ays.Blueprint{
+		fmt.Sprintf("gateway__%s", gwID): reqBody,
+	}
 
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	bpName := ays.BlueprintName("gateway", gwID, "update")
+	if err := api.client.CreateExec(bpName, bp); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwID)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusNoContent)
 }

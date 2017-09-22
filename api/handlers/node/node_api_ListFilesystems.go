@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-orchestrator/api/httperror"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -19,14 +20,21 @@ func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 	storagepool := vars["storagepoolname"]
 
 	// only show the filesystem under the storagepool specified in the URL
-	querParams := map[string]interface{}{
-		"parent": fmt.Sprintf("storagepool!%s", storagepool),
-	}
+	// querParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("storagepool!%s", storagepool),
+	// }
 
-	services, _, err := aysClient.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
+	// services, _, err := aysClient.Ays.ListServicesByRole("filesystem", api.AysRepo, nil, querParams)
+	// if err != nil {
+	// 	errmsg := "Error listing storagepool services"
+	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// 	return
+	// }
+	services, err := api.client.ListServices("fssnapshot", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("filesystem!%s", fileSystemName),
+	})
 	if err != nil {
-		errmsg := "Error listing storagepool services"
-		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		handlers.HandleError(w, err)
 		return
 	}
 

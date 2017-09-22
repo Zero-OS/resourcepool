@@ -5,21 +5,23 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteStoragePoolDevice is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/device/{deviceuuid}
 // Removes the device from the storagepool
 func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagePool := vars["storagepoolname"]
 	toDeleteUUID := vars["deviceuuid"]
 
-	devices, errBool := api.getStoragePoolDevices(node, storagePool, w, r)
-	if errBool {
+	devices, errBool := api.getStoragePoolDevices(node, storagePool)
+	if errBool != nil {
+		handlers.HandlerError(w, err)
 		return
 	}
 
@@ -43,13 +45,19 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 	}{
 		Devices: updatedDevices,
 	}
-	blueprint := map[string]interface{}{
+	blueprint := ays.Blueprint{
 		fmt.Sprintf("storagepool__%s", storagePool): bpContent,
 	}
 
-	_, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint)
-	errmsg := "Error executing blueprint for storagepool device deletion "
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// _, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint)
+	// errmsg := "Error executing blueprint for storagepool device deletion "
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+	bpName := ays.BlueprintName("storagepool", storagepool, "removeDevices")
+	_, err := api.client.CreateExecRun(bpName, obj, true)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
