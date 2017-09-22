@@ -7,14 +7,15 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateStoragePoolDevices is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/device
 // Add extra devices to this storage pool
 func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
@@ -61,25 +62,39 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 		})
 	}
 
-	bpContent := struct {
+	// bpContent := struct {
+	// 	Devices []DeviceInfo `yaml:"devices" json:"devices"`
+	// }{
+	// 	Devices: devices,
+	// }
+	// blueprint := map[string]interface{}{
+	// 	fmt.Sprintf("storagepool__%s", storagepool): bpContent,
+	// }
+
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
+	// errmsg := "Error executing blueprint for storagepool device creation "
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
+
+	storagePoolDevices := struct {
 		Devices []DeviceInfo `yaml:"devices" json:"devices"`
 	}{
 		Devices: devices,
 	}
-	blueprint := map[string]interface{}{
-		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
+	serviceName := fmt.Sprintf("storagepool__%s", storagepool)
+	blueprint := ays.Blueprint{
+		serviceName: storagePoolDevices,
 	}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagepool, "addDevices", blueprint)
-	errmsg := "Error executing blueprint for storagepool device creation "
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
-		return
-	}
-
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	blueprintName := ays.BlueprintName("storagepool", storagepool, "addDevices")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-
 }

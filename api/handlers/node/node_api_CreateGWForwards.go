@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 
@@ -31,31 +32,32 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	gateway := vars["gwname"]
+	gatewayName := vars["gwname"]
 	nodeID := vars["nodeid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
-	}
-
-	service, err := api.client.GetService("gateway", gateway, "", nil)
-	if err != nil {
-		api.client.HandleError(w, err)
-		return
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// }
 	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 	// 	return
 	// }
 
-	var data CreateGWBP
-	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gateway)
+	parent := fmt.Sprintf("node.zero-os!%s", nodeID)
+	service, err := api.client.GetService("gateway", gatewayName, parent, nil)
+	if err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
+
+	var gateway CreateGWBP
+	if err := json.Unmarshal(service.Data, &gateway); err != nil {
+		errMessage := fmt.Sprintf("Error Unmarshal gateway service '%s' data", gatewayName)
 		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
 		return
 	}
 
-	if data.Advanced {
+	if gateway.Advanced {
 		errMessage := fmt.Errorf("Advanced options enabled: cannot add forwards for gateway")
 		httperror.WriteError(w, http.StatusForbidden, errMessage, "")
 		return
@@ -64,7 +66,7 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	// Check if this portforward exists and return a bad request if the combination exists
 	// or update the protocols list if the protocol doesn't exist
 	var exists bool
-	for i, portforward := range data.Portforwards {
+	for i, portforward := range gateway.Portforwards {
 		if portforward.Srcip == reqBody.Srcip && portforward.Srcport == reqBody.Srcport {
 			for _, protocol := range portforward.Protocols {
 				for _, reqProtocol := range reqBody.Protocols {
@@ -76,18 +78,14 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			exists = true
-			data.Portforwards[i].Protocols = append(data.Portforwards[i].Protocols, reqBody.Protocols...)
+			gateway.Portforwards[i].Protocols = append(gateway.Portforwards[i].Protocols, reqBody.Protocols...)
 		}
 	}
 
 	if !exists {
-		data.Portforwards = append(data.Portforwards, reqBody)
+		gateway.Portforwards = append(gateway.Portforwards, reqBody)
 	}
 
-	obj := ays.Blueprint{
-		fmt.Sprintf("gateway__%s", gateway): data,
-	}
-	bpName := ays.BlueprintName("gateway", gateway, "update")
 	// obj[] = data
 
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gateway, "update", obj)
@@ -99,7 +97,18 @@ func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
 	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
 	// 	return
 	// }
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gateway, reqBody.Srcip, reqBody.Srcport))
+
+	serviceName := fmt.Sprintf("gateway__%s", gatewayName)
+	blueprint := ays.Blueprint{
+		serviceName: gateway,
+	}
+	blueprintName := ays.BlueprintName("gateway", gatewayName, "update")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		handlers.HandleError(w, err)
+		return
+	}
+
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/firewall/forwards/%v:%v", nodeID, gatewayName, reqBody.Srcip, reqBody.Srcport))
 	w.WriteHeader(http.StatusCreated)
 
 }

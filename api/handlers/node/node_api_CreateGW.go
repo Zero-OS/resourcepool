@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type CreateGWBP struct {
@@ -43,9 +43,9 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := api.client.IsServiceExists("gatewat", reqBody.Name)
+	exists, err := api.client.IsServiceExists("gateway", reqBody.Name)
 	if err != nil {
-		api.client.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 	// exists, err := aysClient.ServiceExists("gateway", reqBody.Name, api.AysRepo)
@@ -61,7 +61,7 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
+		if err = nic.ValidateServices(api.client); err != nil {
 			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
@@ -76,13 +76,18 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		Advanced:     false,
 	}
 
-	obj := ays.Blueprint{
-		fmt.Sprintf("gateway__%s", reqBody.Name): gateway,
-		"actions": []tools.ActionBlock{{Action: "install", Service: reqBody.Name, Actor: "gateway"}},
+	serviceName := fmt.Sprintf("gateway__%s", reqBody.Name)
+	blueprint := ays.Blueprint{
+		serviceName: gateway,
+		"actions": []ays.ActionBlock{{
+			Action:  "install",
+			Service: reqBody.Name,
+			Actor:   "gateway",
+		}},
 	}
-	bpName := ays.BlueprintName("gateway", reqBody.Name, "install")
-	if _, err := api.client.CreateExecRun(bpName, bp, true); err != nil {
-		api.client.HandleError(w, err)
+	blueprintName := ays.BlueprintName("gateway", reqBody.Name, "install")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", reqBody.Name, "install", obj)

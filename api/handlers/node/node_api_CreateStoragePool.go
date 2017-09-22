@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
@@ -44,7 +45,7 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 		PartUUID string `yaml:"partUUID" json:"partUUID"`
 	}
 
-	bpContent := struct {
+	storagePool := struct {
 		DataProfile     EnumStoragePoolCreateDataProfile     `yaml:"dataProfile" json:"dataProfile"`
 		Devices         []partitionMap                       `yaml:"devices" json:"devices"`
 		MetadataProfile EnumStoragePoolCreateMetadataProfile `yaml:"metadataProfile" json:"metadataProfile"`
@@ -62,20 +63,21 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
-		bpContent.Devices = append(bpContent.Devices, partitionMap{Device: device})
+		storagePool.Devices = append(storagePool.Devices, partitionMap{Device: device})
 	}
 
+	serviceName := fmt.Sprintf("storagepool__%s", reqBody.Name)
 	blueprint := ays.Blueprint{
-		fmt.Sprintf("storagepool__%s", reqBody.Name): bpContent,
+		serviceName: storagePool,
 		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "storagepool",
 			Service: reqBody.Name}},
 	}
 
-	bpName := ays.BlueprintName("storagepool", reqBody.Name, "install")
-	if _, err := api.client.CreateExecRun(bpName, blueprint); err != nil {
-		api.client.HandleError(w, err)
+	blueprintName := ays.BlueprintName("storagepool", reqBody.Name, "install")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

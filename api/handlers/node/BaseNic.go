@@ -3,16 +3,18 @@ package node
 import (
 	"fmt"
 
-	"github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
 )
 
+// NicInterface interface
 type NicInterface interface {
-	ValidateServices(tools.AYStool, string) error
+	ValidateServices(*ays.Client) error
 	Validate() error
 }
 
+// BaseNic struct is ancestor for nic structs
 type BaseNic struct {
 	Id    string               `json:"id,omitempty" yaml:"id,omitempty"`
 	Name  string               `json:"name,omitempty" yaml:"name,omitempty"`
@@ -20,6 +22,7 @@ type BaseNic struct {
 	Token string               `json:"token,omitempty" yaml:"token,omitempty"`
 }
 
+// Validate if the nic is valid
 func (s BaseNic) Validate() error {
 	typeEnums := map[interface{}]struct{}{
 		EnumContainerNICTypezerotier: struct{}{},
@@ -38,19 +41,19 @@ func (s BaseNic) Validate() error {
 	}
 
 	if s.Type != EnumContainerNICTypezerotier && s.Token != "" {
-		return fmt.Errorf("Token: set for a nic that is not of type zerotier.")
+		return fmt.Errorf("token: set for a nic that is not of type zerotier")
 	}
 
 	return validator.Validate(s)
 }
 
-func (s BaseNic) ValidateServices(aysClient *tools.AYStool, repoName string) error {
+// ValidateServices validates
+func (s BaseNic) ValidateServices(aysClient *ays.Client) error {
 	if s.Type == EnumContainerNICTypebridge {
-		exists, err := aysClient.ServiceExists("bridge", s.Id, repoName)
+		exists, err := aysClient.IsServiceExists("bridge", s.Id)
 		if err != nil {
 			return err
-		}
-		if !exists {
+		} else if !exists {
 			return fmt.Errorf("Bridge %s does not exists", s.Id)
 		}
 	}

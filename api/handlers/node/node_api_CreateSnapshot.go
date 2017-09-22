@@ -7,14 +7,15 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateSnapshot is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
 // Create a new readonly filesystem of the current state of the vdisk
 func (api *NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	filessytem := mux.Vars(r)["filesystemname"]
 	nodeid := mux.Vars(r)["nodeid"]
 	storagepool := mux.Vars(r)["storagepoolname"]
@@ -33,32 +34,47 @@ func (api *NodeAPI) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bpContent := struct {
+	fssnapshot := struct {
 		Filesystem string `yaml:"filesystem" json:"filesystem"`
 		Name       string `yaml:"name" json:"name"`
 	}{
-
 		Filesystem: filessytem,
 		Name:       reqBody.Name,
 	}
 
-	blueprint := map[string]interface{}{
-		fmt.Sprintf("fssnapshot__%s", reqBody.Name): bpContent,
-		"actions": []tools.ActionBlock{{
+	// blueprint := map[string]interface{}{
+	// 	fmt.Sprintf("fssnapshot__%s", reqBody.Name): bpContent,
+	// 	"actions": []tools.ActionBlock{{
+	// 		Action:  "install",
+	// 		Actor:   "fssnapshot",
+	// 		Service: reqBody.Name}},
+	// }
+
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
+	// errmsg := "Error executing blueprint for fssnapshot creation "
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
+
+	serviceName := fmt.Sprintf("fssnapshot__%s", reqBody.Name)
+	blueprint := ays.Blueprint{
+		serviceName: fssnapshot,
+		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "fssnapshot",
-			Service: reqBody.Name}},
+			Service: reqBody.Name,
+		}},
 	}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "fssnapshot", reqBody.Name, "install", blueprint)
-	errmsg := "Error executing blueprint for fssnapshot creation "
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	blueprintName := ays.BlueprintName("fssnapshot", reqBody.Name, "create")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s/filesystems/%s/snapshots/%s", nodeid, storagepool, filessytem, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 

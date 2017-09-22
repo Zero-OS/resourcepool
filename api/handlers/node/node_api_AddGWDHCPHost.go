@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -25,10 +26,10 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
-	nodeId := vars["nodeid"]
+	nodeID := vars["nodeid"]
 	nicInterface := vars["interface"]
 
-	parent := fmt.Sprintf("node.zero-os!%s", nodeId)
+	parent := fmt.Sprintf("node.zero-os!%s", nodeID)
 
 	service, err := api.client.GetService("gateway", gateway, parent, nil)
 	if err != nil {
@@ -78,10 +79,10 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 	serviceName := fmt.Sprintf("gateway__%s", gateway)
 	blueprint := ays.Blueprint{serviceName: data}
 
-	blueprintName := ays.BlueprintName("grafana", graphid, "update")
+	blueprintName := ays.BlueprintName("gateway", gateway, "update")
 
-	if err := api.client.CreateExec(bpName, bueprint); err != nil {
-		api.client.HandleError(w, err)
+	if err := api.client.CreateExec(blueprintName, blueprint); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

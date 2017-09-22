@@ -10,7 +10,6 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
 )
 
@@ -19,7 +18,7 @@ import (
 func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	var reqBody BridgeCreate
 	vars := mux.Vars(r)
-	nodeId := vars["nodeid"]
+	nodeID := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		httperror.WriteError(w, http.StatusBadRequest, err, "")
@@ -40,8 +39,8 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleAYSResponse(err, resp, w, "listing bridges") {
 	// 	return
 	// }
-	listOptions := ListServiceOpt{
-		Parent: fmt.Sprintf("node.zero-os!%s", nodeId),
+	listOptions := ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeID),
 		Fields: []string{"setting"},
 	}
 	services, err := api.client.ListServices("bridge", listOptions)
@@ -79,7 +78,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create blueprint
-	bp := struct {
+	bridge := struct {
 		Hwaddr      string                      `json:"hwaddr" yaml:"hwaddr"`
 		Nat         bool                        `json:"nat" yaml:"nat"`
 		NetworkMode EnumBridgeCreateNetworkMode `json:"networkMode" yaml:"networkMode"`
@@ -90,7 +89,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Nat:         reqBody.Nat,
 		NetworkMode: reqBody.NetworkMode,
 		Setting:     reqBody.Setting,
-		Node:        nodeId,
+		Node:        nodeID,
 	}
 
 	// obj := make(map[string]interface{})
@@ -111,13 +110,13 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	serviceName := fmt.Sprintf("bridge__%s", reqBody.Name)
-	blueprint := Blueprint{
-		serviceName: bp,
-		"actions": []tools.ActionBlock{
+	blueprint := ays.Blueprint{
+		serviceName: bridge,
+		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "bridge",
 			Service: reqBody.Name,
-		},
+		}},
 	}
 	blueprintName := ays.BlueprintName("bridge", reqBody.Name, "create")
 	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
@@ -125,7 +124,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeID, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 
 }

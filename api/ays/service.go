@@ -10,7 +10,7 @@ import (
 )
 
 // IsServiceExists test if a service exists
-func (c *Client) IsServiceExists(role, name string) (bool, *Error) {
+func (c *Client) IsServiceExists(role, name string) (bool, error) {
 	_, resp, err := c.AYS().GetServiceByName(name, role, c.repo, nil, nil)
 	if err != nil {
 		return false, newError(resp, err)
@@ -28,13 +28,13 @@ func (c *Client) IsServiceExists(role, name string) (bool, *Error) {
 }
 
 // DeleteService deletes a service identify by role and name
-func (c *Client) DeleteService(role, name string) *Error {
+func (c *Client) DeleteService(role, name string) error {
 	resp, err := c.AYS().DeleteServiceByName(name, role, c.repo, nil, nil)
 	return newError(resp, err)
 }
 
 // GetService is a shorthand function for getting a single service
-func (c *Client) GetService(role, name, parent string, fields []string) (*client.Service, *Error) {
+func (c *Client) GetService(role, name, parent string, fields []string) (*client.Service, error) {
 	opt := ListServiceOpt{
 		Parent: parent,
 		Fields: fields,
@@ -65,7 +65,7 @@ func (l *ListServiceOpt) buildQuery() map[string]interface{} {
 }
 
 // ListServices lists ays services using the role and ListServiceOpt query parameters
-func (c *Client) ListServices(role string, opt ...ListServiceOpt) ([]*client.ServiceData, *Error) {
+func (c *Client) ListServices(role string, opt ...ListServiceOpt) ([]*client.ServiceData, error) {
 	var (
 		services []*client.ServiceData
 		resp     *http.Response
