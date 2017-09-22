@@ -7,26 +7,31 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}
 // Get list for HTTP proxies
 func (api *NodeAPI) GetHTTPProxy(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
 	proxyID := vars["proxyid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
-		"fields": "httpproxies",
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// 	"fields": "httpproxies",
+	// }
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+	// 	return
+	// }
+	service, err := api.client.GetService("gateway", gateway, fmt.Sprintf("node.zero-os!%s", nodeID), []string{"httpproxies"})
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

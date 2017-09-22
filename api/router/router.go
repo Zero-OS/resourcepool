@@ -12,6 +12,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/handlers/backup"
 	"github.com/zero-os/0-orchestrator/api/handlers/graph"
 	"github.com/zero-os/0-orchestrator/api/handlers/healthcheck"
+	"github.com/zero-os/0-orchestrator/api/handlers/node"
 	"github.com/zero-os/0-orchestrator/api/handlers/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/handlers/vdisk"
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -28,7 +29,6 @@ func adapt(h http.Handler, adapters ...func(http.Handler) http.Handler) http.Han
 	return h
 }
 
-// func GetRouter(aysURL, aysRepo, cbMgr callback.Mgr, org string, applicationID string, secret string) http.Handler {
 func GetRouter(aysCl *ays.Client, org string) http.Handler {
 	r := mux.NewRouter()
 	api := mux.NewRouter()
@@ -45,7 +45,6 @@ func GetRouter(aysCl *ays.Client, org string) http.Handler {
 	})
 
 	apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, LoggingMiddleware)
-	// apihandler := adapt(api, tools.NewOauth2itsyouonlineMiddleware(org).Handler, tools.ConnectionMiddleware(), LoggingMiddleware)
 	cbHandler := adapt(api, LoggingMiddleware)
 
 	r.PathPrefix("/nodes").Handler(apihandler)
@@ -55,14 +54,7 @@ func GetRouter(aysCl *ays.Client, org string) http.Handler {
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
 
-	// node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
-	// graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
-	// storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, applicationID, secret, org), org)
-	// vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, applicationID, secret, org), org)
-	// healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, applicationID, secret, org), org)
-	// backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, applicationID, secret, org), org)
-
-	// node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysCL, cache.New(5*time.Minute, 1*time.Minute)), org)
+	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysCl))
 	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysCl))
 	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysCl))
 	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysCl))

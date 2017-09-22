@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StopGateway is the handler for POST /nodes/{nodeid}/gws/{gwname}/stop
@@ -37,7 +36,7 @@ func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bp := ays.Blueprint{
-		"actions": []tools.ActionBlock{{
+		"actions": []ays.ActionBlock{{
 			Action:  "stop",
 			Actor:   "gateway",
 			Service: gwID,
@@ -47,7 +46,7 @@ func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 	bpName := ays.BlueprintName("gateway", gwID, "stop")
 	if err := api.client.CreateExec(bpName, bp); err != nil {
 		handlers.HandleError(w, err)
-		return err
+		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "stop", bp)
 	// errmsg := fmt.Sprintf("Error executing blueprint for stoping gateway %s", gwID)

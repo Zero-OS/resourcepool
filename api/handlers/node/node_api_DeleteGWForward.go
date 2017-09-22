@@ -29,7 +29,7 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 	parent := fmt.Sprintf("node.zero-os!%s", nodeID)
-	service, err := api.client.GetService("gateway", gateway, "", []string{"RedisAddr"})
+	service, err := api.client.GetService("gateway", gateway, parent, []string{"RedisAddr"})
 	if err != nil {
 		handlers.HandleError(w, err)
 		return

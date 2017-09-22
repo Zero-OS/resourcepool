@@ -81,6 +81,10 @@ func (c *connectionMgr) getNodeConnection(nodeid string) (goclient.Client, error
 	return goclient.NewClientWithPool(pool), nil
 }
 
+func (c *connectionMgr) deleteConnection(id string) {
+	c.pools.Delete(id)
+}
+
 func getContainerWithTag(containers map[int16]goclient.ContainerResult, tag string) int {
 	for containerID, container := range containers {
 		for _, containertag := range container.Container.Arguments.Tags {
@@ -154,6 +158,11 @@ func (c *Client) GetContainerConnection(r *http.Request) (goclient.Client, error
 // It connects to the node that host the container to do so. The node id is exrtaced from URL in r
 func (c *Client) GetContainerID(r *http.Request, name string) (int, error) {
 	return c.connectionMgr.GetContainerID(r, name)
+}
+
+func (c *Client) DeleteConnection(r *http.Request) {
+	vars := mux.Vars(r)
+	c.connectionMgr.deleteConnection(vars["nodeid"])
 }
 
 // DeleteContainerId remove the container id from the connection cache
