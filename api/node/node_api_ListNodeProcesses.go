@@ -6,15 +6,13 @@ import (
 
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListNodeProcesses is the handler for GET /nodes/{nodeid}/processes
-// Get Processes
 func (api *NodeAPI) ListNodeProcesses(w http.ResponseWriter, r *http.Request) {
 	var respBody []Process
 
-	conn, err := tools.GetConnection(r, api)
+	conn, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

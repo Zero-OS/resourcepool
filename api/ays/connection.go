@@ -1,254 +1,141 @@
 package ays
 
-// import (
-// 	"context"
-// 	"fmt"
-// 	"net/http"
-// 	"strings"
-// 	"sync"
-// 	"time"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
+	"time"
 
-// 	"encoding/json"
+	"github.com/garyburd/redigo/redis"
+	"github.com/gorilla/mux"
+	"github.com/patrickmn/go-cache"
+	goclient "github.com/zero-os/0-core/client/go-client"
+)
 
-// 	"github.com/garyburd/redigo/redis"
-// 	"github.com/gorilla/mux"
-// 	"github.com/patrickmn/go-cache"
-// 	"github.com/zero-os/0-core/client/go-client"
-// 	"github.com/zero-os/0-orchestrator/api/ays"
-// )
+const (
+	connectionPoolMiddlewareDefaultPort = 6379
+)
 
-// const (
-// 	connectionPoolMiddlewareKey         = "github.com/zero-os/0-orchestrator+connection-pool"
-// 	connectionPoolMiddlewareDefaultPort = 6379
-// )
+type connectionMgr struct {
+	client *Client
+	pools  *cache.Cache
+	m      sync.Mutex
+	port   int
+	// password string
+}
 
-// type ConnectionOptions func(*connectionMiddleware)
+type connectionOptions func(*connectionMgr)
 
-// type NAPI interface {
-// 	ContainerCache() *cache.Cache
-// 	AysAPIClient() *ays.AtYourServiceAPI
-// 	AysRepoName() string
-// 	GetAysToken() (string, error)
-// }
+// newConnectionMgr creates a new connecion manager
+// it's used to get direct connection to the nodes and container
+func newConnectionMgr(client *Client, opt ...connectionOptions) *connectionMgr {
+	p := &connectionMgr{
+		client: client,
+		pools:  cache.New(5*time.Minute, 1*time.Minute),
+		port:   connectionPoolMiddlewareDefaultPort,
+	}
 
-// type API interface {
-// 	AysAPIClient() *ays.AtYourServiceAPI
-// 	AysRepoName() string
-// 	GetAysToken() (string, error)
-// }
+	p.pools.OnEvicted(p.onEvict)
+	for _, o := range opt {
+		o(p)
+	}
 
-// type redisInfo struct {
-// 	RedisAddr     string
-// 	RedisPort     int
-// 	RedisPassword string
-// }
+	return p
+}
 
-// func ConnectionPortOption(port int) ConnectionOptions {
-// 	return func(c *connectionMiddleware) {
-// 		c.port = port
-// 	}
-// }
+func (c *connectionMgr) onEvict(_ string, x interface{}) {
+	x.(*redis.Pool).Close()
+}
 
-// func ConnectionPasswordOption(password string) ConnectionOptions {
-// 	return func(c *connectionMiddleware) {
-// 		c.password = password
-// 	}
-// }
+func (c *connectionMgr) getNodeConnection(nodeid string) (goclient.Client, error) {
+	c.m.Lock()
+	defer c.m.Unlock()
 
-// type connectionMiddleware struct {
-// 	handler  http.Handler
-// 	pools    *cache.Cache
-// 	m        sync.Mutex
-// 	port     int
-// 	password string
-// }
+	srv, err := c.client.GetService("node", nodeid, "", nil)
+	if err != nil {
+		return nil, err
+	}
 
-// func (c *connectionMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-// 	ctx := context.WithValue(r.Context(), connectionPoolMiddlewareKey, c)
-// 	r = r.WithContext(ctx)
+	poolID := nodeid
+	if c.client.token != "" {
+		poolID = fmt.Sprintf("%s#%s", nodeid, c.client.token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+	}
 
-// 	c.handler.ServeHTTP(w, r)
-// }
+	if pool, ok := c.pools.Get(poolID); ok {
+		c.pools.Set(poolID, pool, cache.DefaultExpiration)
+		return goclient.NewClientWithPool(pool.(*redis.Pool)), nil
+	}
 
-// func (c *connectionMiddleware) getConnection(nodeid string, token string, api NAPI) (client.Client, error) {
-// 	c.m.Lock()
-// 	defer c.m.Unlock()
+	var info struct {
+		RedisAddr     string
+		RedisPort     int
+		RedisPassword string
+	}
+	if err := json.Unmarshal(srv.Data, &info); err != nil {
+		return nil, err
+	}
 
-// 	// set auth token for ays to make call to get node info
-// 	aysAPI := api.AysAPIClient()
-// 	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
-// 	ays := GetAYSClient(aysAPI)
-// 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
+	pool := goclient.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), c.client.token)
+	c.pools.Set(poolID, pool, cache.DefaultExpiration)
+	return goclient.NewClientWithPool(pool), nil
+}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func getContainerWithTag(containers map[int16]goclient.ContainerResult, tag string) int {
+	for containerID, container := range containers {
+		for _, containertag := range container.Container.Arguments.Tags {
+			if containertag == tag {
+				return int(containerID)
+			}
+		}
+	}
+	return 0
+}
 
-// 	poolID := nodeid
-// 	if token != "" {
-// 		poolID = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
-// 	}
+func (c *connectionMgr) getContainerId(r *http.Request, containername string) (int, error) {
+	if containername == "" {
+		vars := mux.Vars(r)
+		containername = vars["containername"]
+	}
 
-// 	if pool, ok := c.pools.Get(poolID); ok {
-// 		c.pools.Set(poolID, pool, cache.DefaultExpiration)
-// 		return client.NewClientWithPool(pool.(*redis.Pool)), nil
-// 	}
+	id := 0
+	nodeClient, err := c.client.GetNodeConnection(r)
+	if err != nil {
+		return id, err
+	}
 
-// 	if res.StatusCode != http.StatusOK {
-// 		return nil, fmt.Errorf("Error getting service %v", nodeid)
-// 	}
+	if cachedID, ok := c.client.cache.Get(containername); !ok {
+		containermanager := goclient.Container(nodeClient)
+		containers, err := containermanager.List()
+		if err != nil {
+			return id, err
+		}
+		id = getContainerWithTag(containers, containername)
+	} else {
+		id = cachedID.(int)
+	}
 
-// 	var info redisInfo
-// 	if err := json.Unmarshal(srv.Data, &info); err != nil {
-// 		return nil, err
-// 	}
+	if id == 0 {
+		return id, fmt.Errorf("ContainerID is not known")
+	}
 
-// 	pool := client.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
-// 	c.pools.Set(poolID, pool, cache.DefaultExpiration)
-// 	return client.NewClientWithPool(pool), nil
-// }
+	c.client.cache.Set(containername, id, cache.DefaultExpiration)
+	return id, nil
+}
 
-// func (c *connectionMiddleware) deleteConnection(id string) {
-// 	c.pools.Delete(id)
-// }
+// GetNodeConnection return a client for direct node access.
+// It extract the node id from the URL of the requests
+func (c *Client) GetNodeConnection(r *http.Request) (goclient.Client, error) {
+	vars := mux.Vars(r)
+	nodeid := vars["nodeid"]
+	if nodeid == "" {
+		return nil, fmt.Errorf("node id not found")
+	}
+	return c.connectionMgr.getNodeConnection(nodeid)
+}
 
-// func (c *connectionMiddleware) onEvict(_ string, x interface{}) {
-// 	x.(*redis.Pool).Close()
-// }
-
-// func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Handler {
-// 	return func(h http.Handler) http.Handler {
-// 		p := &connectionMiddleware{
-// 			pools:   cache.New(5*time.Minute, 1*time.Minute),
-// 			port:    connectionPoolMiddlewareDefaultPort,
-// 			handler: h,
-// 		}
-
-// 		p.pools.OnEvicted(p.onEvict)
-// 		for _, o := range opt {
-// 			o(p)
-// 		}
-
-// 		return p
-// 	}
-// }
-
-// // func GetAysConnection(r *http.Request, api API) *AYStool {
-// // 	aysAPI := api.AysAPIClient()
-
-// // 	token, err := api.GetAysToken()
-// // 	if err != nil {
-// // 		if r.Header.Get("Authorization") != "" {
-// // 			log.Error(err.Error())
-// // 		}
-// // 		aysAPI.AuthHeader = r.Header.Get("Authorization")
-// // 	} else {
-// // 		aysAPI.AuthHeader = token
-// // 	}
-// // 	return GetAYSClient(aysAPI)
-// // }
-
-// func extractToken(token string) (string, error) {
-// 	if token == "" {
-// 		return "", nil
-// 	}
-// 	parts := strings.Split(token, " ")
-// 	if len(parts) < 2 {
-// 		return "", fmt.Errorf("JWT token is not set correctly in the authorization header")
-// 	}
-
-// 	return parts[1], nil
-// }
-
-// // GetConnection get connection For direct access
-// func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
-// 	p := r.Context().Value(connectionPoolMiddlewareKey)
-// 	if p == nil {
-// 		panic("middleware not injected")
-// 	}
-
-// 	vars := mux.Vars(r)
-// 	token := ""
-// 	var err error
-// 	if r.Header.Get("Authorization") != "" {
-// 		token, err = api.GetAysToken()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// 	nodeid := vars["nodeid"]
-
-// 	mw := p.(*connectionMiddleware)
-// 	return mw.getConnection(nodeid, token, api)
-// }
-
-// func GetContainerConnection(r *http.Request, api NAPI) (client.Client, error) {
-// 	nodeClient, err := GetConnection(r, api)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	id, err := GetContainerId(r, api, nodeClient, "")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	container := client.Container(nodeClient).Client(id)
-
-// 	return container, nil
-// }
-
-// func getContainerWithTag(containers map[int16]client.ContainerResult, tag string) int {
-// 	for containerID, container := range containers {
-// 		for _, containertag := range container.Container.Arguments.Tags {
-// 			if containertag == tag {
-// 				return int(containerID)
-// 			}
-// 		}
-// 	}
-// 	return 0
-// }
-
-// func GetContainerId(r *http.Request, api NAPI, nodeClient client.Client, containername string) (int, error) {
-// 	vars := mux.Vars(r)
-// 	if containername == "" {
-// 		containername = vars["containername"]
-// 	}
-// 	c := api.ContainerCache()
-// 	id := 0
-
-// 	if cachedID, ok := c.Get(containername); !ok {
-// 		containermanager := client.Container(nodeClient)
-// 		containers, err := containermanager.List()
-// 		if err != nil {
-// 			return id, err
-// 		}
-// 		id = getContainerWithTag(containers, containername)
-// 	} else {
-// 		id = cachedID.(int)
-// 	}
-
-// 	if id == 0 {
-// 		return id, fmt.Errorf("ContainerID is not known")
-// 	}
-// 	c.Set(containername, id, cache.DefaultExpiration)
-// 	return id, nil
-// }
-
-// func DeleteContainerId(r *http.Request, api NAPI) {
-// 	vars := mux.Vars(r)
-// 	c := api.ContainerCache()
-// 	c.Delete(vars["containername"])
-// }
-
-// func DeleteConnection(r *http.Request) {
-// 	p := r.Context().Value(connectionPoolMiddlewareKey)
-// 	if p == nil {
-// 		panic("middleware not injected")
-// 	}
-
-// 	vars := mux.Vars(r)
-// 	mw := p.(*connectionMiddleware)
-// 	mw.deleteConnection(vars["nodeid"])
-// }
+// GetContainerId returns the id of the container associated with name.
+// It connects to the node that host the container to do so. The node id is exrtaced from URL in r
+func (c *Client) GetContainerID(r *http.Request, name string) (int, error) {
+	return c.connectionMgr.getContainerId(r, name)
+}

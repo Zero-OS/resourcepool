@@ -6,14 +6,13 @@ import (
 
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // PingNode is the handler for POST /nodes/{nodeid}/ping
 // Ping this node
 func (api *NodeAPI) PingNode(w http.ResponseWriter, r *http.Request) {
 	var respBody bool
-	cl, err := tools.GetConnection(r, api)
+	cl, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

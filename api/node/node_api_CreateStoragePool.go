@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateStoragePool is the handler for POST /nodes/{nodeid}/storagepools
 // Create a new storage pool
 func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var reqBody StoragePoolCreate
 	node := mux.Vars(r)["nodeid"]
 
@@ -32,7 +33,7 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	devices, err := api.GetNodeDevices(w, r)
+	devices, err := api.getNodeDevices(w, r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get Node device")
 		return
@@ -64,31 +65,36 @@ func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
 		bpContent.Devices = append(bpContent.Devices, partitionMap{Device: device})
 	}
 
-	blueprint := map[string]interface{}{
+	blueprint := ays.Blueprint{
 		fmt.Sprintf("storagepool__%s", reqBody.Name): bpContent,
-		"actions": []tools.ActionBlock{{
+		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "storagepool",
 			Service: reqBody.Name}},
 	}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint)
-	errmsg := "Error executing blueprint for storagepool creation "
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	bpName := ays.BlueprintName("storagepool", reqBody.Name, "install")
+	if _, err := api.client.CreateExecRun(bpName, blueprint); err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
 
-	if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
-		return
-	}
+	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", reqBody.Name, "install", blueprint)
+	// errmsg := "Error executing blueprint for storagepool creation "
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
+
+	// if _, errr := aysClient.WaitOnRun(w, api.AysRepo, run.Key); errr != nil {
+	// 	return
+	// }
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/storagepools/%s", node, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
-
 }
 
-func (api *NodeAPI) GetNodeDevices(w http.ResponseWriter, r *http.Request) (map[string]struct{}, error) {
+func (api *NodeAPI) getNodeDevices(w http.ResponseWriter, r *http.Request) (map[string]struct{}, error) {
 
-	cl, err := tools.GetConnection(r, api)
+	cl, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		return nil, err
 	}

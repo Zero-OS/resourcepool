@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetNodeJob is the handler for GET /nodes/{nodeid}/job/{jobid}
@@ -16,7 +15,7 @@ func (api *NodeAPI) GetNodeJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult
 	vars := mux.Vars(r)
 	jobID := client.JobId(vars["jobid"])
-	cl, err := tools.GetConnection(r, api)
+	cl, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

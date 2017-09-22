@@ -6,13 +6,12 @@ import (
 
 	"github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetMemInfo is the handler for GET /nodes/{nodeid}/mem
 // Get detailed information about the memory in the node
 func (api *NodeAPI) GetMemInfo(w http.ResponseWriter, r *http.Request) {
-	cl, err := tools.GetConnection(r, api)
+	cl, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

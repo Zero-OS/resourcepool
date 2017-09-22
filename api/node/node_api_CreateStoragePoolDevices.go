@@ -24,7 +24,7 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	nodeDevices, errMsg := api.GetNodeDevices(w, r)
+	nodeDevices, errMsg := api.getNodeDevices(w, r)
 	if errMsg != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, errMsg, "Failed to get Node device")
 		return

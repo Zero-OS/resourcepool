@@ -4,29 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/ays"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // SetGWFWConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
 // Set FW config
 func (api *NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	var gatewayBase GW
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]
 	nodeID := vars["nodeid"]
 
-	node, err := tools.GetConnection(r, api)
+	node, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return
 	}
-	containerID, err := tools.GetContainerId(r, api, node, gwname)
+	containerID, err := api.client.GetContainerID(r, gwname)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get container id")
 		return
@@ -40,11 +41,16 @@ func (api *NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, res, err := aysClient.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
-
-	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
+	service, err := api.client.GetService("gateway", gwname)
+	if err != nil {
+		api.client.HandleError(w, err)
 		return
 	}
+	// service, res, err := aysClient.Ays.GetServiceByName(gwname, "gateway", api.AysRepo, nil, nil)
+
+	// if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
+	// 	return
+	// }
 
 	if err := json.Unmarshal(service.Data, &gatewayBase); err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
@@ -60,15 +66,23 @@ func (api *NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 		Advanced:     true,
 	}
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("gateway__%s", gwname)] = gatewayNew
+	bp := ays.Blueprint{
+		fmt.Sprintf("gateway__%s", gwname): gatewayNew,
+	}
+	bpName := ays.BlueprintName("gateway", gwname, "update")
 
-	_, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
-	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	if err := api.client.CreateExec(bpName, bp); err != nil {
+		api.client.HandleError(err)
 		return
 	}
+	// obj[] = gatewayNew
+
+	// _, err = aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", obj)
+
+	// errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation : %+v", gwname, err)
+	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
+	// 	return
+	// }
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s/advanced/http", nodeID, gwname))
 	w.WriteHeader(http.StatusCreated)

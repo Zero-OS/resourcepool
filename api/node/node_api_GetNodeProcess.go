@@ -9,14 +9,13 @@ import (
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetNodeProcess is the handler for GET /nodes/{nodeid}/processes/{processid}
 // Get process details
 func (api *NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	conn, err := tools.GetConnection(r, api)
+	conn, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

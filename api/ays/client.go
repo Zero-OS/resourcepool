@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	jwt "github.com/dgrijalva/jwt-go"
+	cache "github.com/robfig/go-cache"
 	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
 	"github.com/zero-os/0-orchestrator/api/ays/callback"
 	"github.com/zero-os/0-orchestrator/api/httperror"
@@ -21,9 +23,15 @@ type Client struct {
 	repo   string
 	client *client.AtYourServiceAPI
 
+	// used to manage direct connection to the nodes and containers
+	connectionMgr *connectionMgr
+	// cache for container ids
+	cache *cache.Cache
+
 	iyoOrganization string
 	iyoAppID        string
 	iyoSecret       string
+	token           string
 
 	cbMgr *callback.Mgr
 }
@@ -37,9 +45,12 @@ func NewClient(url, repo, org, appID, secret string) (*Client, error) {
 		iyoAppID:        appID,
 		iyoSecret:       secret,
 
+		cache: cache.New(5*time.Minute, 1*time.Minute),
+
 		client: client.NewAtYourServiceAPI(),
 		cbMgr:  callback.NewMgr(fmt.Sprintf("%s/callback", url)),
 	}
+	cl.connectionMgr = newConnectionMgr(cl)
 
 	// TODO: auto refresh
 	token, err := getToken("", appID, secret, org)
@@ -93,7 +104,7 @@ func (c *Client) CreateExec(blueprintName string, blueprint Blueprint) error {
 
 // HandleError examines the err error object and will return a correct error notification to the http response
 func (c *Client) HandleError(w http.ResponseWriter, err error) {
-	if ayserr, ok := err.(*ays.Error); ok {
+	if ayserr, ok := err.(*Error); ok {
 		ayserr.Handle(w, http.StatusInternalServerError)
 	} else {
 		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())

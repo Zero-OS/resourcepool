@@ -10,7 +10,7 @@ type NodeAPI struct {
 	// AysRepo       string
 	// AysURL        string
 	client *ays.Client
-	Cache  *cache.Cache
+	// Cache  *cache.Cache
 	// ApplicationID string
 	// Secret        string
 	// Org           string
@@ -18,12 +18,12 @@ type NodeAPI struct {
 }
 
 // func NewNodeAPI(repo string, aysurl string, applicationID string, secret string, org string, c *cache.Cache) *NodeAPI {
-func NewNodeAPI(aysCl *ays.Client, c *cache.Cache) *NodeAPI {
+func NewNodeAPI(aysCl *ays.Client) *NodeAPI {
 	return &NodeAPI{
 		// AysRepo:       repo,
 		// AysURL:        aysurl,
 		client: aysCl,
-		Cache:  c,
+		// Cache:  c,
 		// ApplicationID: applicationID,
 		// Secret:        secret,
 		// Org:           org,

@@ -1,47 +1,43 @@
 package ays
 
-// import (
-// 	"fmt"
-// 	"net/http"
-// 	"strconv"
-// 	"syscall"
-// 	"time"
+import (
+	"fmt"
+	"strconv"
+	"syscall"
+	"time"
 
-// 	"github.com/zero-os/0-core/client/go-client"
-// 	"github.com/zero-os/0-orchestrator/api/httperror"
-// )
+	goclient "github.com/zero-os/0-core/client/go-client"
+)
 
-// func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
-// 	pID, err := strconv.ParseUint(pid, 10, 64)
-// 	if err != nil {
-// 		httperror.WriteError(w, http.StatusBadRequest, err, "Processid should be valid positive integer")
-// 		return
-// 	}
+var ErrBadProcessId = fmt.Errorf("Processid should be valid positive integer")
 
-// 	processID := client.ProcessId(pID)
-// 	core := client.Core(cl)
-// 	signal := syscall.SIGTERM
+// KillProcess kills a process on a node pointed by nodeClient
+func (c *Client) KillProcess(pid string, nodeClient goclient.Client) error {
+	pID, err := strconv.ParseUint(pid, 10, 64)
+	if err != nil {
+		return ErrBadProcessId
+	}
 
-// 	for i := 0; i < 4; i++ {
-// 		if i == 3 {
-// 			signal = syscall.SIGKILL
-// 		}
+	processID := goclient.ProcessId(pID)
+	core := goclient.Core(nodeClient)
+	signal := syscall.SIGTERM
 
-// 		if err := core.KillProcess(processID, signal); err != nil {
-// 			httperror.WriteError(w, http.StatusInternalServerError, err, "Error killing process")
-// 			return
-// 		}
-// 		time.Sleep(time.Millisecond * 50)
+	for i := 0; i < 4; i++ {
+		if i == 3 {
+			signal = syscall.SIGKILL
+		}
 
-// 		if alive, err := core.ProcessAlive(processID); err != nil {
-// 			httperror.WriteError(w, http.StatusInternalServerError, err, "Error checking if process alive")
-// 			return
-// 		} else if !alive {
-// 			w.WriteHeader(http.StatusNoContent)
-// 			return
-// 		}
-// 	}
+		if err := core.KillProcess(processID, signal); err != nil {
+			return fmt.Errorf("Error killing process: %v", err)
+		}
+		time.Sleep(time.Millisecond * 50)
 
-// 	err = fmt.Errorf("Failed to kill process %v", pID)
-// 	httperror.WriteError(w, http.StatusInternalServerError, err, "")
-// }
+		if alive, err := core.ProcessAlive(processID); err != nil {
+			return fmt.Errorf("Error checking if process alive: %v", err)
+		} else if !alive {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Failed to kill process %v", pID)
+}

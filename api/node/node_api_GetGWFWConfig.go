@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetGWFWConfig is the handler for GET /nodes/{nodeid}/gws/{gwname}/advanced/firewall
@@ -20,8 +19,8 @@ func (api *NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]
 
-	node, err := tools.GetConnection(r, api)
-	containerID, err := tools.GetContainerId(r, api, node, gwname)
+	node, err := api.client.GetNodeConnection(r)
+	containerID, err := api.client.GetContainerId(r, gwname)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

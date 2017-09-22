@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetVMInfo is the handler for GET /nodes/{nodeid}/vms/{vmid}/info
@@ -21,7 +20,7 @@ func (api *NodeAPI) GetVMInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmid := vars["vmid"]
 
-	cl, err := tools.GetConnection(r, api)
+	cl, err := api.client.GetNodeConnection(r)
 	if err != nil {
 		errmsg := fmt.Sprintf("Error: in getting VM %s information", vmid)
 		httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)

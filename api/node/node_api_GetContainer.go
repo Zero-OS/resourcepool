@@ -7,24 +7,23 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetContainer is the handler for GET /nodes/{nodeid}/containers/{containername}
 // Get Container
 func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-	nodeClient, err := tools.GetConnection(r, api)
-	if err != nil {
-		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get node connection")
-		return
-	}
+
 	vars := mux.Vars(r)
 	containername := vars["containername"]
-	id, _ := tools.GetContainerId(r, api, nodeClient, containername)
-	service, res, err := aysClient.Ays.GetServiceByName(containername, "container", api.AysRepo, nil, nil)
+	id, err := api.client.GetContainerID(r, api, nodeClient, containername)
+	if err != nil {
+		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to get container id")
+		return
+	}
 
-	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
+	service, err := api.client.GetService("container", containername)
+	if err != nil {
+		api.client.HandlerError(err)
 		return
 	}
 
