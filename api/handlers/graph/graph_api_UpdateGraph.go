@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
@@ -72,7 +73,7 @@ func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	if err := api.client.CreateExec(bpName, bp); err != nil {
-		api.client.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 

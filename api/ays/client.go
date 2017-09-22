@@ -13,7 +13,6 @@ import (
 	cache "github.com/robfig/go-cache"
 	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
 	"github.com/zero-os/0-orchestrator/api/ays/callback"
-	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 // Client is the main type of this package, it prove an easy to use API on top of the
@@ -64,11 +63,13 @@ func NewClient(url, repo, org, appID, secret string) (*Client, error) {
 	return cl, nil
 }
 
+// AYS service
 func (c *Client) AYS() *client.AysService {
 	// TODO: refresh token
 	return c.client.Ays
 }
 
+// CallbackHandler function
 func (c *Client) CallbackHandler() http.HandlerFunc {
 	return c.cbMgr.Handler
 }
@@ -100,16 +101,6 @@ func (c *Client) CreateExec(blueprintName string, blueprint Blueprint) error {
 	}
 
 	return processJobs.Wait()
-}
-
-// HandleError examines the err error object and will return a correct error notification to the http response
-func (c *Client) HandleError(w http.ResponseWriter, err error) {
-	if ayserr, ok := err.(*Error); ok {
-		ayserr.Handle(w, http.StatusInternalServerError)
-	} else {
-		httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())
-	}
-	return
 }
 
 func getToken(token string, applicationID string, secret string, org string) (string, error) {
@@ -178,6 +169,7 @@ func getJWTClaim(tokenStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
+// JWTPublicKey of itsyou.online
 var JWTPublicKey *ecdsa.PublicKey
 
 const (

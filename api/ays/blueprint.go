@@ -14,6 +14,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+// BlueprintName formats a correct name for a blueprint file
 func BlueprintName(role, name, action string) string {
 	return fmt.Sprintf("%s_%s_%s_%+v", role, name, action, time.Now().Unix())
 }
@@ -21,7 +22,7 @@ func BlueprintName(role, name, action string) string {
 // Blueprint represent the content of a blueprint, which is a yaml file
 type Blueprint map[string]interface{}
 
-// ActionBlock
+// ActionBlock structure for ays
 type ActionBlock struct {
 	Action  string `json:"action"`
 	Actor   string `json:"actor"`

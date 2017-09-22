@@ -92,7 +92,7 @@ func getContainerWithTag(containers map[int16]goclient.ContainerResult, tag stri
 	return 0
 }
 
-func (c *connectionMgr) getContainerId(r *http.Request, containername string) (int, error) {
+func (c *connectionMgr) getContainerIDByName(r *http.Request, containername string) (int, error) {
 	if containername == "" {
 		vars := mux.Vars(r)
 		containername = vars["containername"]
@@ -134,8 +134,8 @@ func (c *Client) GetNodeConnection(r *http.Request) (goclient.Client, error) {
 	return c.connectionMgr.getNodeConnection(nodeid)
 }
 
-// GetContainerId returns the id of the container associated with name.
+// GetContainerID returns the id of the container associated with name.
 // It connects to the node that host the container to do so. The node id is exrtaced from URL in r
 func (c *Client) GetContainerID(r *http.Request, name string) (int, error) {
-	return c.connectionMgr.getContainerId(r, name)
+	return c.connectionMgr.getContainerIDByName(r, name)
 }

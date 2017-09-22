@@ -33,6 +33,7 @@ func (c *Client) DeleteService(role, name string) *Error {
 	return newError(resp, err)
 }
 
+// GetService is a shorthand function for getting a single service
 func (c *Client) GetService(role, name, parent string, fields []string) (*client.Service, *Error) {
 	opt := ListServiceOpt{
 		Parent: parent,
@@ -45,6 +46,7 @@ func (c *Client) GetService(role, name, parent string, fields []string) (*client
 	return service, nil
 }
 
+// ListServiceOpt is used to build queries to AYS
 type ListServiceOpt struct {
 	Parent  string
 	Fields  []string
@@ -62,6 +64,7 @@ func (l *ListServiceOpt) buildQuery() map[string]interface{} {
 	return query
 }
 
+// ListServices lists ays services using the role and ListServiceOpt query parameters
 func (c *Client) ListServices(role string, opt ...ListServiceOpt) ([]*client.ServiceData, *Error) {
 	var (
 		services []*client.ServiceData
