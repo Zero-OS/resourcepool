@@ -52,12 +52,14 @@ func NewClient(url, repo, org, appID, secret string) (*Client, error) {
 	cl.connectionMgr = newConnectionMgr(cl)
 
 	// TODO: auto refresh
-	token, err := getToken("", appID, secret, org)
+	var err error
+	cl.token, err = getToken("", appID, secret, org)
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("token generated %s", cl.token)
 
-	cl.client.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	cl.client.AuthHeader = fmt.Sprintf("Bearer %s", cl.token)
 	cl.client.BaseURI = url
 
 	return cl, nil
@@ -104,6 +106,8 @@ func (c *Client) CreateExec(blueprintName string, blueprint Blueprint) error {
 }
 
 func getToken(token string, applicationID string, secret string, org string) (string, error) {
+	log.Debug("generate token")
+
 	if token == "" {
 		token, err := refreshToken(applicationID, secret, org)
 		if err != nil {
@@ -127,6 +131,7 @@ func getToken(token string, applicationID string, secret string, org string) (st
 }
 
 func refreshToken(applicationID string, secret string, org string) (string, error) {
+	log.Debug("refresh token")
 	url := fmt.Sprintf("https://itsyou.online/v1/oauth/access_token?client_id=%s&client_secret=%s&grant_type=client_credentials&response_type=id_token&scope=user:memberof:%s,offline_access", applicationID, secret, org)
 	resp, err := http.Post(url, "", nil)
 	if err != nil {

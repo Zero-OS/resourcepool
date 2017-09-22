@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -52,8 +53,11 @@ func (c *connectionMgr) getNodeConnection(nodeid string) (goclient.Client, error
 	c.m.Lock()
 	defer c.m.Unlock()
 
+	log.Debugf("get connection for %s", nodeid)
+
 	srv, err := c.client.GetService("node", nodeid, "", nil)
 	if err != nil {
+		log.Errorf("error get connection for %s", nodeid)
 		return nil, err
 	}
 
@@ -63,6 +67,7 @@ func (c *connectionMgr) getNodeConnection(nodeid string) (goclient.Client, error
 	}
 
 	if pool, ok := c.pools.Get(poolID); ok {
+		log.Debugf("connection from cache for %s", nodeid)
 		c.pools.Set(poolID, pool, cache.DefaultExpiration)
 		return goclient.NewClientWithPool(pool.(*redis.Pool)), nil
 	}
@@ -76,7 +81,10 @@ func (c *connectionMgr) getNodeConnection(nodeid string) (goclient.Client, error
 		return nil, err
 	}
 
-	pool := goclient.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), c.client.token)
+	poolAddr := fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort))
+	log.Debugf("new connection for %s - %s", nodeid, poolAddr)
+	log.Debugf("token: %s", c.client.token)
+	pool := goclient.NewPool(poolAddr, c.client.token)
 	c.pools.Set(poolID, pool, cache.DefaultExpiration)
 	return goclient.NewClientWithPool(pool), nil
 }
