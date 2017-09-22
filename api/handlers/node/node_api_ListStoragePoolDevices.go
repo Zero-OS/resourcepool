@@ -6,9 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
-	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
 // ListStoragePoolDevices is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/devices
@@ -21,7 +19,7 @@ func (api *NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Reques
 	nodeId := vars["nodeid"]
 
 	devices, err := api.getStoragePoolDevices(nodeId, storagePoolName)
-	if err {
+	if err != nil {
 		handlers.HandleError(w, err)
 		return
 	}
@@ -45,7 +43,7 @@ type DeviceInfo struct {
 }
 
 // Get storagepool devices
-func (api *NodeAPI) getStoragePoolDevices(node, storagePool string) ([]DeviceInfo, bool) {
+func (api *NodeAPI) getStoragePoolDevices(node, storagePool string) ([]DeviceInfo, error) {
 	// aysClient := tools.GetAysConnection(r, api)
 	// queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
@@ -53,9 +51,8 @@ func (api *NodeAPI) getStoragePoolDevices(node, storagePool string) ([]DeviceInf
 	// if !tools.HandleAYSResponse(err, res, w, "Getting storagepool service") {
 	// 	return nil, true
 	// }
-	services, err := api.client.ListServices("storagepool", ays.ListServiceOpt{
-		Parent: fmt.Sprintf("node.zero-os!%s", node),
-	})
+	parent := fmt.Sprintf("node.zero-os!%s", node)
+	service, err := api.client.GetService("storagepool", storagePool, parent, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +62,8 @@ func (api *NodeAPI) getStoragePoolDevices(node, storagePool string) ([]DeviceInf
 	}
 
 	if err := json.Unmarshal(service.Data, &data); err != nil {
-		errMessage := fmt.Sprintf("Error Unmarshal storagepool service '%s'", storagePool)
-		httperror.WriteError(w, http.StatusInternalServerError, err, errMessage)
-		return nil, true
+		return nil, err
 	}
 
-	return data.Devices, false
+	return data.Devices, nil
 }

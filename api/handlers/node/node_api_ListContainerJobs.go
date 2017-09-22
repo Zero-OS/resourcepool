@@ -6,13 +6,12 @@ import (
 
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListContainerJobs is the handler for GET /nodes/{nodeid}/container/{containername}/job
 // List running jobs on the container
 func (api *NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
-	container, err := tools.GetContainerConnection(r, api)
+	container, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

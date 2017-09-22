@@ -1,7 +1,6 @@
 package node
 
 import (
-	"github.com/patrickmn/go-cache"
 	"github.com/zero-os/0-orchestrator/api/ays"
 )
 
@@ -49,6 +48,6 @@ func NewNodeAPI(aysCl *ays.Client) *NodeAPI {
 // 	return token, nil
 // }
 
-func (api *NodeAPI) ContainerCache() *cache.Cache {
-	return api.Cache
-}
+// func (api *NodeAPI) ContainerCache() *cache.Cache {
+// 	return api.Cache
+// }

@@ -35,14 +35,14 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleAYSResponse(err, getres, w, fmt.Sprintf("getting vm %s details", vmID)) {
 	// 	return
 	// }
-	nodeService, err := api.client.GetService("vm", vmID, "", []string{"RedisAddr"})
+	service, err := api.client.GetService("vm", vmID, "", nil)
 	if err != nil {
 		handlers.HandleError(w, err)
 		return
 	}
 
 	var vm VM
-	if err := json.Unmarshal(srv.Data, &vm); err != nil {
+	if err := json.Unmarshal(service.Data, &vm); err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
 		return
 	}
@@ -70,7 +70,7 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	obj := ays.Blueprint{
 		fmt.Sprintf("vm__%s", vmID): bp,
 	}
-	bName := ays.BluprintName("vm", vmID, "export")
+	bpName := ays.BlueprintName("vm", vmID, "export")
 	if err := api.client.CreateExec(bpName, obj); err != nil {
 		handlers.HandleError(w, err)
 		return

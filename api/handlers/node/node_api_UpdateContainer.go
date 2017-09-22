@@ -52,13 +52,13 @@ func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
+		if err = nic.ValidateServices(api.client); err != nil {
 			httperror.WriteError(w, http.StatusBadRequest, err, "")
 			return
 		}
 	}
 
-	obj := ays.Blueprint{
+	bp := ays.Blueprint{
 		fmt.Sprintf("container__%s", containerName): reqBody,
 	}
 	bpName := ays.BlueprintName("container", containerName, "install")

@@ -9,13 +9,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListFilesystems is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // List filesystems
 func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	storagepool := vars["storagepoolname"]
 
@@ -30,8 +29,8 @@ func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 	// 	return
 	// }
-	services, err := api.client.ListServices("fssnapshot", ays.ListServiceOpt{
-		Parent: fmt.Sprintf("filesystem!%s", fileSystemName),
+	services, err := api.client.ListServices("filesystem", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("storagepool!%s", storagepool),
 	})
 	if err != nil {
 		handlers.HandleError(w, err)

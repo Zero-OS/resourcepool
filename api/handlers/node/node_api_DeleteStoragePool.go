@@ -42,9 +42,8 @@ func (api *NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	bpName := ays.BlueprintName("storagepool", name, "delete")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
-	if err != nil {
+	blueprintName := ays.BlueprintName("storagepool", name, "delete")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

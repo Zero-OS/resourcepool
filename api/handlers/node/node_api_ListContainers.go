@@ -10,13 +10,12 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListContainers is the handler for GET /nodes/{nodeid}/containers
 // List running Containers
 func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 

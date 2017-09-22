@@ -9,13 +9,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListGWDHCPHosts is the handler for GET /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
 // List DHCPHosts for specified interface
 func (api *NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeId := vars["nodeid"]
@@ -32,7 +31,7 @@ func (api *NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 	// }
 	service, err := api.client.GetService("gateway", gateway, fmt.Sprintf("node.zero-os!%s", nodeId), []string{"nics"})
 	if err != nil {
-		handlers.HandlerError(err)
+		handlers.HandleError(w, err)
 		return
 	}
 

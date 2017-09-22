@@ -34,7 +34,7 @@ func (api *NodeAPI) StartContainerJob(w http.ResponseWriter, r *http.Request) {
 		env[items[0]] = items[1]
 	}
 
-	containerClient, err := api.GetContainerConnection(r)
+	containerClient, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return

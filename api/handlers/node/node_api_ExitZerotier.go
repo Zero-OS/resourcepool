@@ -30,7 +30,7 @@ func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 
 	// And execute
 	bpName := ays.BlueprintName("zerotier", zerotierID, "delete")
-	if _, err := api.client.CreateExecRun(bpName, bp); err != nil {
+	if _, err := api.client.CreateExecRun(bpName, bp, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

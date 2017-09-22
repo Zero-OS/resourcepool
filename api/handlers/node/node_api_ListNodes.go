@@ -2,7 +2,6 @@ package node
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"net/http"
 
@@ -23,8 +22,7 @@ func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 	services, err := api.client.ListServices("node.zero-os", ays.ListServiceOpt{
-		Parent:   fmt.Sprintf("node.zero-os!%s", nodeid),
-		"fields": []string{"hostname", "status", "id", "redisAddr"},
+		Fields: []string{"hostname", "status", "id", "redisAddr"},
 	})
 	if err != nil {
 		handlers.HandleError(w, err)

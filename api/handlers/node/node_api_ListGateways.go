@@ -10,7 +10,6 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListGateways is the handler for GET /nodes/{nodeid}/gws
@@ -29,7 +28,7 @@ func (api *NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	services, err := api.client.ListServices("gateway", ays.ListServiceOpt{
-		Parent: fmt.Sprintf("node.zero-os!%s", nodeid),
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeID),
 	})
 	if err != nil {
 		handlers.HandleError(w, err)
@@ -38,8 +37,13 @@ func (api *NodeAPI) ListGateways(w http.ResponseWriter, r *http.Request) {
 
 	var respBody = make([]ListGW, len(services))
 	for i, serviceData := range services {
-		service, res, err := aysClient.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
-		if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+		// service, res, err := aysClient.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
+		// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
+		// 	return
+		// }
+		service, err := api.client.GetService(serviceData.Role, serviceData.Name, "", nil)
+		if err != nil {
+			handlers.HandleError(w, err)
 			return
 		}
 		var data ListGW

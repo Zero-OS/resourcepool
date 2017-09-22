@@ -22,7 +22,7 @@ func (api *NodeAPI) KillNodeProcess(w http.ResponseWriter, r *http.Request) {
 
 	err = api.client.KillProcess(vars["processid"], nodeCl)
 	if err != nil {
-		if err == ays.ErrBadProcessId {
+		if err == ays.ErrBadProcessID {
 			httperror.WriteError(w, http.StatusBadRequest, err, err.Error())
 		} else {
 			httperror.WriteError(w, http.StatusInternalServerError, err, err.Error())

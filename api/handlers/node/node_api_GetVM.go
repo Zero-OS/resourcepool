@@ -7,14 +7,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetVM is the handler for GET /nodes/{nodeid}/vms/{vmid}
 // Get detailed virtual machine object
 func (api *NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 
@@ -24,7 +24,7 @@ func (api *NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
 	// }
 	srv, err := api.client.GetService("vm", vmID, "", nil)
 	if err != nil {
-		handler.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 

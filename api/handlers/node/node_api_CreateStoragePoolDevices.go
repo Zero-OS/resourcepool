@@ -20,8 +20,9 @@ func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Requ
 	node := vars["nodeid"]
 	storagepool := vars["storagepoolname"]
 
-	devices, notok := api.getStoragePoolDevices(node, storagepool, w, r)
-	if notok {
+	devices, err := api.getStoragePoolDevices(node, storagepool)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 

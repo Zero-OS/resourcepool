@@ -42,7 +42,7 @@ func (api *NodeAPI) SetGWHTTPConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := api.client.GetService("gateway", gwname)
+	service, err := api.client.GetService("gateway", gwname, "", nil)
 	if err != nil {
 		handlers.HandleError(w, err)
 		return

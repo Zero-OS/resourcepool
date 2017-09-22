@@ -16,12 +16,12 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]
-	storagePool := vars["storagepoolname"]
+	storagepool := vars["storagepoolname"]
 	toDeleteUUID := vars["deviceuuid"]
 
-	devices, errBool := api.getStoragePoolDevices(node, storagePool)
-	if errBool != nil {
-		handlers.HandlerError(w, err)
+	devices, err := api.getStoragePoolDevices(node, storagepool)
+	if err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 
@@ -46,7 +46,7 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 		Devices: updatedDevices,
 	}
 	blueprint := ays.Blueprint{
-		fmt.Sprintf("storagepool__%s", storagePool): bpContent,
+		fmt.Sprintf("storagepool__%s", storagepool): bpContent,
 	}
 
 	// _, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagepool", storagePool, "removeDevices", blueprint)
@@ -55,8 +55,7 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 	// 	return
 	// }
 	bpName := ays.BlueprintName("storagepool", storagepool, "removeDevices")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
-	if err != nil {
+	if _, err := api.client.CreateExecRun(bpName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

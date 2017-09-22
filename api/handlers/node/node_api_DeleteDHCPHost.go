@@ -9,7 +9,6 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteDHCPHost is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts/{macaddress}
@@ -18,19 +17,16 @@ func (api *NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
-	nodeId := vars["nodeid"]
+	nodeID := vars["nodeid"]
 	nicInterface := vars["interface"]
 	macaddress := vars["macaddress"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// }
 
-	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
-	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
-		return
-	}
-	service, err := api.client.GetService("gateway", gateway, "", nil)
+	parent := fmt.Sprintf("node.zero-os!%s", nodeID)
+	service, err := api.client.GetService("gateway", gateway, parent, nil)
 	if err != nil {
 		handlers.HandleError(w, err)
 		return
@@ -74,12 +70,12 @@ NicsLoop:
 		return
 	}
 
-	obj := ays.Blueprint{
-		fmt.Sprintf("gateway__%s", gateway): data,
+	serviceName := fmt.Sprintf("gateway__%s", gateway)
+	blueprint := ays.Blueprint{
+		serviceName: data,
 	}
-	bpName := ays.BlueprintName("gateway", gateway, "update")
-	_, err := api.client.CreateExec(bpName, obj)
-	if err != nil {
+	blueprintName := ays.BlueprintName("gateway", gateway, "update")
+	if err := api.client.CreateExec(blueprintName, blueprint); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 	//"fmt"
 )
 
@@ -18,8 +17,8 @@ func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	vmId := vars["vmid"]
 
-	obj := ays.Blueprint{
-		"actions": []tools.ActionBlock{{
+	blueprint := ays.Blueprint{
+		"actions": []ays.ActionBlock{{
 			Action:  "destroy",
 			Actor:   "vm",
 			Service: vmId,
@@ -46,7 +45,7 @@ func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	bpName := ays.BlueprintName("vm", vmId, "delete")
-	if _, err := api.client.CreateExecRun(bpName, bp); err != nil {
+	if _, err := api.client.CreateExecRun(bpName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}
@@ -55,8 +54,7 @@ func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleAYSResponse(err, res, w, "deleting vm") {
 	// 	return
 	// }
-	bpName := ays.BlueprintName("vm", vmId, "delete")
-	if _, err := api.client.CreateExecRun(bpName, bp); err != nil {
+	if err := api.client.DeleteService("vm", vmId); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

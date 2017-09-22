@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -22,7 +23,7 @@ func (api *NodeAPI) GetFilesystemSnapshotInfo(w http.ResponseWriter, r *http.Req
 	// }
 	service, err := api.client.GetService("fssnapshot", snapshotname, "", nil)
 	if err != nil {
-		handler.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 

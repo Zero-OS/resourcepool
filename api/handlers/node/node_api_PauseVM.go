@@ -10,7 +10,7 @@ import (
 // Pauses the VM
 func (api *NodeAPI) PauseVM(w http.ResponseWriter, r *http.Request) {
 	if err := api.client.ExecuteVMAction(r, "pause"); err != nil {
-		handlers.HandlerError(w, err)
+		handlers.HandleError(w, err)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

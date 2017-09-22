@@ -18,7 +18,6 @@ import (
 
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
@@ -132,12 +131,12 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 
 		obj := ays.Blueprint{
 			fmt.Sprintf("vdisk__%v", serviceName): bp,
-			"actions": []tools.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}},
+			"actions": []ays.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}},
 		}
 		// obj[bpName] = bp
 		// obj["actions"] = []tools.ActionBlock{{Action: "import_vdisk", Service: serviceName, Actor: "vdisk"}}
 		bpName := ays.BlueprintName("vdisk", vmID, "import_vdisk")
-		if _, run := api.client.CreateExecRun(bpName, obj); err != nil {
+		if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
 			handlers.HandleError(w, err)
 			return
 		}
@@ -190,7 +189,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	// obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}}
 
 	bpName := ays.BlueprintName("vm", vmID, "install")
-	if _, err := api.client.CreateExecRun(bpName, obj); err != nil {
+	if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

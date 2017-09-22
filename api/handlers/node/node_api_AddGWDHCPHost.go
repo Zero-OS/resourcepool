@@ -33,7 +33,7 @@ func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
 
 	service, err := api.client.GetService("gateway", gateway, parent, nil)
 	if err != nil {
-		err.Handle(w, http.StatusInternalServerError)
+		handlers.HandleError(w, err)
 		return
 	}
 

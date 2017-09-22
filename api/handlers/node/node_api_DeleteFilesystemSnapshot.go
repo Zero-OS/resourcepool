@@ -41,9 +41,8 @@ func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Requ
 	// 	}
 	// 	return
 	// }
-	bpName := ays.BlueprintName("fssnapshot", name, "delete")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
-	if err != nil {
+	blueprintName := ays.BlueprintName("fssnapshot", name, "delete")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}
@@ -61,7 +60,7 @@ func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Requ
 	// 	return
 	// }
 
-	if err := api.client.DeleteService("dashboard", dashboard); err != nil {
+	if err := api.client.DeleteService("fssnapshot", name); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

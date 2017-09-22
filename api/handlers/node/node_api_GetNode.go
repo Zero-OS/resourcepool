@@ -5,29 +5,21 @@ import (
 
 	"net/http"
 
-	"fmt"
-
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // GetNode is the handler for GET /nodes/{nodeid}
 // Get detailed information of a node
 func (api *NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
-	service, res, err := aysClient.Ays.GetServiceByName(nodeID, "node", api.AysRepo, nil, nil)
-
+	service, err := api.client.GetService("node", nodeID, "", nil)
 	if err != nil {
-		httperror.WriteError(w, http.StatusInternalServerError, err, fmt.Sprintf("Error getting node service %s", nodeID))
-		return
-	}
-
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
+		handlers.HandleError(w, err)
 		return
 	}
 

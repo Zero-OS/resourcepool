@@ -10,15 +10,14 @@ import (
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // ListStoragePools is the handler for GET /node/{nodeid}/storagepool
 // List storage pools present in the node
 func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	// aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
+	nodeID := vars["nodeid"]
 
 	// queryParams := map[string]interface{}{
 	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeid),
@@ -30,9 +29,9 @@ func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	// 	httperror.WriteError(w, http.StatusInternalServerError, err, errmsg)
 	// 	return
 	// }
-	services, err := api.client.ListServices("vm", ays.ListServiceOpt{
-		Parent:   fmt.Sprintf("node.zero-os!%s", nodeid),
-		"fields": []string{"status", "freeCapacity"},
+	services, err := api.client.ListServices("storagepool", ays.ListServiceOpt{
+		Parent: fmt.Sprintf("node.zero-os!%s", nodeID),
+		Fields: []string{"status", "freeCapacity"},
 	})
 	if err != nil {
 		handlers.HandleError(w, err)

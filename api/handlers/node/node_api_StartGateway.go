@@ -48,7 +48,7 @@ func (api *NodeAPI) StartGateway(w http.ResponseWriter, r *http.Request) {
 	bpName := ays.BlueprintName("gateway", gwID, "start")
 	if err := api.client.CreateExec(bpName, bp); err != nil {
 		handlers.HandleError(w, err)
-		return err
+		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwID, "start", bp)
 

@@ -29,8 +29,8 @@ func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 	services, err := api.client.ListServices("vm", ays.ListServiceOpt{
-		Parent:   fmt.Sprintf("node.zero-os!%s", vars["nodeid"]),
-		"fields": []string{"status", "id"},
+		Parent: fmt.Sprintf("node.zero-os!%s", vars["nodeid"]),
+		Fields: []string{"status", "id"},
 	})
 	if err != nil {
 		handlers.HandleError(w, err)

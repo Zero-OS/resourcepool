@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/zero-os/0-orchestrator/api/ays"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 
 	"net/http"
 
@@ -24,8 +25,8 @@ func (api *NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 	bpName := ays.BlueprintName("container", containername, "strat")
-	if _, err := api.client.CreateExecRun(bpName, bp); err != nil {
-		handler.HandleError(w, err)
+	if _, err := api.client.CreateExecRun(bpName, bp, true); err != nil {
+		handlers.HandleError(w, err)
 		return
 	}
 	// run, err := aysClient.ExecuteBlueprint(api.AysRepo, "container", containername, "start", bp)

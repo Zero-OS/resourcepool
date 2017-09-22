@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
@@ -20,7 +19,7 @@ func (api *NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	containername := vars["containername"]
 	// execute the delete action of the snapshot
 	bp := ays.Blueprint{
-		"actions": []tools.ActionBlock{{
+		"actions": []ays.ActionBlock{{
 			Action:  "stop",
 			Actor:   "container",
 			Service: containername,
@@ -28,6 +27,7 @@ func (api *NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 
+	bpName := ays.BlueprintName("container", containername, "stop")
 	if err := api.client.CreateExec(bpName, bp); err != nil {
 		handlers.HandleError(w, err)
 		return

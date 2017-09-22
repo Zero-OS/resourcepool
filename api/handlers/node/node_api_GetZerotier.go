@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -26,7 +27,7 @@ func (api *NodeAPI) GetZerotier(w http.ResponseWriter, r *http.Request) {
 	// }
 	srv, err := api.client.GetService("zerotier", fmt.Sprintf("%s_%s", nodeID, zerotierID), "", nil)
 	if err != nil {
-		handler.HandleError(w, err)
+		handlers.HandleError(w, err)
 		return
 	}
 

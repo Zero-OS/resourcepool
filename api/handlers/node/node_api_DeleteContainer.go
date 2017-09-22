@@ -16,14 +16,14 @@ func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	// tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)
-	containername := vars["containername"]
+	containerName := vars["containername"]
 
 	// execute the delete action of the snapshot
-	bp := ays.Blueprint{
+	blueprint := ays.Blueprint{
 		"actions": []ays.ActionBlock{{
 			Action:  "stop",
 			Actor:   "container",
-			Service: containername,
+			Service: containerName,
 			Force:   true,
 		}},
 	}
@@ -44,8 +44,8 @@ func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	// 	}
 	// 	return
 	// }
-	bpName := ays.BlueprintName("container", container, "stop")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
+	blueprintName := ays.BlueprintName("container", containerName, "stop")
+	_, err := api.client.CreateExecRun(blueprintName, blueprint, true)
 	if err != nil {
 		handlers.HandleError(w, err)
 		return
@@ -55,7 +55,7 @@ func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleAYSResponse(err, res, w, "deleting service") {
 	// 	return
 	// }
-	if err := api.client.DeleteService("container", container); err != nil {
+	if err := api.client.DeleteService("container", containerName); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/httperror"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // JoinZerotier is the handler for POST /nodes/{nodeid}/zerotiers
@@ -45,9 +44,9 @@ func (api *NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 		Node:      nodeID,
 	}
 
-	obj := ays.Blueprint{
+	blueprint := ays.Blueprint{
 		fmt.Sprintf("zerotier__%s_%s", nodeID, reqBody.Nwid): bp,
-		"actions": []tools.ActionBlock{{
+		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "zerotier",
 			Service: fmt.Sprintf("%s_%s", nodeID, reqBody.Nwid),
@@ -63,7 +62,7 @@ func (api *NodeAPI) JoinZerotier(w http.ResponseWriter, r *http.Request) {
 	// }}
 
 	bpName := ays.BlueprintName("zerotier", reqBody.Nwid, "join")
-	if err := api.client.CreateExecRun(bpName, bp); err != nil {
+	if _, err := api.client.CreateExecRun(bpName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

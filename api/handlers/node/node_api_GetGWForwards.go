@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
@@ -30,10 +29,8 @@ func (api *NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	services, err := api.client.ListServices("gateway", ays.ListServiceOpt{
-		Parent: fmt.Sprintf("node.zero-os!%s", nodeId),
-		Fields: []string{"portforwards"},
-	})
+	parent := fmt.Sprintf("node.zero-os!%s", nodeId)
+	service, err := api.client.GetService("gateway", gateway, parent, []string{"portforwards"})
 	if err != nil {
 		handlers.HandleError(w, err)
 		return

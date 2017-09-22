@@ -20,7 +20,7 @@ func (api *NodeAPI) GetGWFWConfig(w http.ResponseWriter, r *http.Request) {
 	gwname := vars["gwname"]
 
 	node, err := api.client.GetNodeConnection(r)
-	containerID, err := api.client.GetContainerId(r, gwname)
+	containerID, err := api.client.GetContainerID(r, gwname)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")
 		return

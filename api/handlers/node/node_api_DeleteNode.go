@@ -16,7 +16,7 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 
 	// execute the uninstall action of the node
-	bp := ays.Blueprint{
+	blueprint := ays.Blueprint{
 		"actions": []ays.ActionBlock{{
 			Action:  "uninstall",
 			Actor:   "node.zero-os",
@@ -42,9 +42,8 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	bpName := ays.BlueprintName("node.zero-os", nodeID, "uninstall")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
-	if err != nil {
+	blueprintName := ays.BlueprintName("node.zero-os", nodeID, "uninstall")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

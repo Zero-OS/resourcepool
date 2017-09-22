@@ -10,7 +10,7 @@ import (
 // Resumes the VM
 func (api *NodeAPI) ResumeVM(w http.ResponseWriter, r *http.Request) {
 	if err := api.client.ExecuteVMAction(r, "resume"); err != nil {
-		handlers.HandlerError(w, err)
+		handlers.HandleError(w, err)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

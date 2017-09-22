@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/handlers"
 	"github.com/zero-os/0-orchestrator/api/httperror"
 )
 
@@ -21,9 +22,9 @@ func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := api.client.GetService("container", containername)
+	service, err := api.client.GetService("container", containername, "", nil)
 	if err != nil {
-		api.client.HandlerError(err)
+		handlers.HandleError(w, err)
 		return
 	}
 

@@ -61,8 +61,7 @@ func (api *NodeAPI) getStoragepoolDetail(name string) (*storagePoolSchema, error
 
 	service, err := api.client.GetService("storagepool", name, "", nil)
 	if err != nil {
-		handler.HandleError(w, err)
-		return
+		return nil, err
 	}
 
 	// if resp.StatusCode != http.StatusOK {

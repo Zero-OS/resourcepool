@@ -20,15 +20,16 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	nodeID := vars["nodeid"]
 	forwardID := vars["forwardid"]
 
-	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
-	}
+	// queryParams := map[string]interface{}{
+	// 	"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
+	// }
 
 	// service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
 	// if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 	// 	return
 	// }
-	nodeService, err := api.client.GetService("gateway", gateway, "", []string{"RedisAddr"})
+	parent := fmt.Sprintf("node.zero-os!%s", nodeID)
+	service, err := api.client.GetService("gateway", gateway, "", []string{"RedisAddr"})
 	if err != nil {
 		handlers.HandleError(w, err)
 		return
@@ -66,13 +67,13 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 
 	data.Portforwards = updatedForwards
 
-	obj := ays.Blueprint{
-		fmt.Sprintf("gateway__%s", gateway): data,
+	serviceName := fmt.Sprintf("gateway__%s", gateway)
+	blueprint := ays.Blueprint{
+		serviceName: data,
 	}
 	// obj[fmt.Sprintf("gateway__%s", gateway)] = data
-	bpName := ays.BlueprintName("gateway", gateway, "update")
-	_, err := api.client.CreateExec(bpName, obj)
-	if err != nil {
+	blueprintName := ays.BlueprintName("gateway", gateway, "update")
+	if err := api.client.CreateExec(blueprintName, blueprint); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

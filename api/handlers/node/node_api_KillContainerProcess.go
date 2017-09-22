@@ -14,13 +14,13 @@ func (api *NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 
 	// cl, err := tools.GetContainerConnection(r, api)
-	cl, err := api.client.GetContainerConnection(r)
+	containerConnection, err := api.client.GetContainerConnection(r)
 	if err != nil {
 		httperror.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")
 		return
 	}
 
-	if err := api.client.KillProcess(vars["processid"]); err != nil {
+	if err := api.client.KillProcess(vars["processid"], containerConnection); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

@@ -68,11 +68,11 @@ func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
 		Disks:  reqBody.Disks,
 	}
 
-	obj := ays.Blueprint{
+	blueprint := ays.Blueprint{
 		fmt.Sprintf("vm__%s", vmID): bp,
 	}
 	bpName := ays.BlueprintName("vm", vmID, "update")
-	if err := api.client.CreateExec(bpName, bp); err != nil {
+	if err := api.client.CreateExec(bpName, blueprint); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

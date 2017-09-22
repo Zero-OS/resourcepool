@@ -16,7 +16,7 @@ func (api *NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
 	gwID := vars["gwname"]
 
 	// execute the uninstall action of the node
-	bp := ays.Blueprint{
+	blueprint := ays.Blueprint{
 		"actions": []ays.ActionBlock{{
 			Action:  "uninstall",
 			Actor:   "gateway",
@@ -30,9 +30,8 @@ func (api *NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
 	// if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 	// 	return
 	// }
-	bpName := ays.BlueprintName("gateway", gwID, "uninstall")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
-	if err != nil {
+	blueprintName := ays.BlueprintName("gateway", gwID, "uninstall")
+	if _, err := api.client.CreateExecRun(blueprintName, blueprint, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

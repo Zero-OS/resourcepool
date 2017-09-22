@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/ays"
 	"github.com/zero-os/0-orchestrator/api/handlers"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // DeleteFilesystem is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}
@@ -18,7 +17,7 @@ func (api *NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
-		"actions": []tools.ActionBlock{{
+		"actions": []ays.ActionBlock{{
 			Action:  "delete",
 			Actor:   "filesystem",
 			Service: name,
@@ -43,8 +42,8 @@ func (api *NodeAPI) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	bpName := ays.BlueprintName("filesystem", name, "delete")
-	_, err := api.client.CreateExecRun(bpName, obj, true)
+	blueprintName := ays.BlueprintName("filesystem", name, "delete")
+	_, err := api.client.CreateExecRun(blueprintName, blueprint, true)
 	if err != nil {
 		handlers.HandleError(w, err)
 		return

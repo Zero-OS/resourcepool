@@ -82,7 +82,7 @@ func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	// And execute
 	bpName := ays.BlueprintName("vm", vmID, "migrate")
-	if _, err := api.client.CreateExecRun(bpName, obj); err != nil {
+	if _, err := api.client.CreateExecRun(bpName, obj, true); err != nil {
 		handlers.HandleError(w, err)
 		return
 	}

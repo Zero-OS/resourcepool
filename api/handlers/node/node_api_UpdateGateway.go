@@ -60,7 +60,7 @@ func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	obj := ays.Blueprint{
+	bp := ays.Blueprint{
 		fmt.Sprintf("gateway__%s", gwID): reqBody,
 	}
 
