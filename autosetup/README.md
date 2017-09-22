@@ -91,3 +91,6 @@ In order to configure this workflow, you need to pass multiple arguments to the 
       - `--cluster-backend-network-type`: network type to use (`g8`, `switchless` or `packet`)
       - `--cluster-backend-network-vlan`: (only for `g8` and `switchless`) vlan tag id to use
       - `--cluster-backend-network-cidr`: (only for `g8` and `switchless`) address CIDR to use
+
+- **Management**
+  - `--dry-run`: shows the summary and performs some tests but don't do any changes (no install)
