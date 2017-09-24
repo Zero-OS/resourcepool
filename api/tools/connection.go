@@ -77,7 +77,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 
 	// set auth token for ays to make call to get node info
 	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	aysAPI.AuthHeader = token
 	ays := GetAYSClient(aysAPI)
 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
@@ -86,6 +86,8 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	}
 
 	poolID := nodeid
+
+	token = strings.Trim(token, "Bearer ")
 	if token != "" {
 		poolID = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
 	}
