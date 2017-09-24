@@ -9,7 +9,7 @@ import (
 )
 
 // Creates the VM
-func (api VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http.Request) {
+func (api *VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskStorage
 

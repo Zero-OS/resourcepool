@@ -9,7 +9,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
-func (api VdiskstorageAPI) GetVdiskStorageInfo(w http.ResponseWriter, r *http.Request) {
+func (api *VdiskstorageAPI) GetVdiskStorageInfo(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var respBody VdiskStorage
 
