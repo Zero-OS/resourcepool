@@ -1,18 +1,6 @@
 from js9 import j
 
 
-def input(job):
-    service = job.service
-    blockStoragecluster = job.model.args.get('blockStoragecluster', None)
-    objectStoragecluster = job.model.args.get('objectStoragecluster', None)
-
-    if objectStoragecluster:
-        block_st = service.aysrepo.serviceGet(role='storage_cluster', instance=blockStoragecluster)
-        object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
-        if block_st.model.data.nrServer < object_st.model.data.nrServer:
-            raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
-
-
 def install(job):
     import random
     import time
@@ -32,8 +20,9 @@ def install(job):
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
-        blockStoragecluster = service.model.data.blockStoragecluster
-        objectStoragecluster = service.model.data.objectStoragecluster
+        vdiskstore = service.producers['vdiskstorage'][0]
+        blockStoragecluster = vdiskstore.model.data.blockCluster
+        objectStoragecluster = vdiskstore.model.data.objectCluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
@@ -177,8 +166,9 @@ def get_cluster_config(job, type="block"):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    vdiskstore = service.producers['vdiskstorage'][0]
 
-    cluster = service.model.data.blockStoragecluster if type == "block" else service.model.data.objectStoragecluster
+    cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
 
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=cluster)
