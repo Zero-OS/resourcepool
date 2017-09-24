@@ -157,18 +157,5 @@ def init_actions_(service, args):
 
 
 def monitor(job):
-    import asyncio
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.grafana.grafana import Grafana
-
-    service = job.service
-    token = get_jwt_token(job.service.aysrepo)
-    job.context['token'] = token
-
-    container = get_container(service)
-    container_ays = Container.from_ays(container, job.context['token'])
-    grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
-    if service.model.data.status == 'running' and not grafana.is_running():
-        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=service._loop)
+    pass
 

@@ -34,13 +34,4 @@ def update(job):
 
 
 def monitor(job):
-    import asyncio
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    token = get_jwt_token(job.service.aysrepo)
-    job.context['token'] = token
-
-    loop = j.atyourservice.server.loop
-    gateway = job.service.parent.consumers['gateway'][0]
-    if gateway.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+    pass

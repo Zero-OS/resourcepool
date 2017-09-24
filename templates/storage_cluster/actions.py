@@ -31,6 +31,11 @@ def input(job):
             raise j.exceptions.Input("dataShards and parityShards should be larger than 0")
         if (data_shards + parity_shards) > nrserver:
             raise j.exceptions.Input("dataShards and parityShards should be greater than or equal to number of servers")
+
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        raise j.exceptions.Input('No etcd cluster service found.')
+
     return job.model.args
 
 
@@ -260,7 +265,11 @@ def save_config(job):
     aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
-    etcd_cluster = service.producers['etcd_cluster'][0]
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        j.exceptions.RuntimeError('No etcd cluster found')
+
+    etcd_cluster = etcd_clusters[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
@@ -442,8 +451,6 @@ def list_vdisks(job):
         cluster = StorageCluster.from_ays(service, job.context['token'])
         clusterconfig = cluster.get_config()
 
-        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
@@ -456,6 +463,7 @@ def list_vdisks(job):
 
 def monitor(job):
     import time
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -466,6 +474,10 @@ def monitor(job):
 
     if service.model.data.clusterType == "object":
         return
+
+    cluster = StorageCluster.from_ays(service, job.context['token'])
+    if service.model.data.status == 'ready' and not cluster.is_running():
+        cluster.start()
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:

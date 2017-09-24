@@ -207,46 +207,52 @@ def update(job, updated_nics):
 
 
 def monitor(job):
-    print("**********monitoring container******")
-    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
+    if service.model.actionsState['install'] != 'ok' or service.parent.model.data.status != 'running':
+        return
 
-    if service.model.actionsState['install'] == 'ok' and service.parent.model.data.status == 'running':
-        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo), logger=service.logger)
-        running = container.is_running()
+    token = get_jwt_token(job.service.aysrepo)
+    node = Node.from_ays(service.parent, token, timeout=5)
+    if not node.is_configured():
+        return
 
-        if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
-            ovs_name = '{}_ovs'.format(container.node.name)
-            if ovs_name != service.name:
-                ovs_service = service.aysrepo.serviceGet(role='container', instance=ovs_name)
-                ovs_container = Container.from_ays(ovs_service, get_jwt_token(job.service.aysrepo))
-                if not ovs_container.is_running():
-                    job.logger.warning\
-                        ("Can't attempt to restart container {}, container {} is not running".format(
-                            service.name, ovs_name))
-            try:
-                job.logger.warning("container {} not running, trying to restart".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.start()
+    container = Container.from_ays(job.service, token, logger=service.logger)
+    running = container.is_running()
 
-                if container.is_running():
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't restart container {} not running".format(service.name))
-                service.model.dbobj.state = 'error'
-        elif running and service.model.data.status == 'halted':
-            try:
-                job.logger.warning("container {} running, trying to stop".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.stop()
-                running, _ = container.is_running()
-                if not running:
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't stop container {} is running".format(service.name))
-                service.model.dbobj.state = 'error'
+    if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
+        ovs_name = '{}_ovs'.format(container.node.name)
+        if ovs_name != service.name:
+            ovs_service = service.aysrepo.serviceGet(role='container', instance=ovs_name)
+            ovs_container = Container.from_ays(ovs_service, token)
+            if not ovs_container.is_running():
+                job.logger.warning\
+                    ("Can't attempt to restart container {}, container {} is not running".format(
+                        service.name, ovs_name))
+        try:
+            job.logger.warning("container {} not running, trying to restart".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.start()
+
+            if container.is_running():
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't restart container {} not running".format(service.name))
+            service.model.dbobj.state = 'error'
+    elif running and service.model.data.status == 'halted':
+        try:
+            job.logger.warning("container {} running, trying to stop".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.stop()
+            running, _ = container.is_running()
+            if not running:
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't stop container {} is running".format(service.name))
+            service.model.dbobj.state = 'error'
 
 
 def watchdog_handler(job):

@@ -45,7 +45,6 @@ def update_sizeOnDisk(job):
 
 def monitor(job):
     service = job.service
-
     if service.model.actionsState['install'] != 'ok':
         return
 

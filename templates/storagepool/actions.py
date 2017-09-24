@@ -144,6 +144,9 @@ def monitor(job):
 
         try:
             pool = node.storagepools.get(service.name)
+            if not pool.mountpoint:
+                j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+
             devices, status = pool.get_devices_and_status()
 
             service.model.data.init('devices', len(devices))

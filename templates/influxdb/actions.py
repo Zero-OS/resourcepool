@@ -124,23 +124,7 @@ def processChange(job):
 
 
 def monitor(job):
-    import asyncio
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.influxdb.influxdb import InfluxDB
-
-    service = job.service
-    token = get_jwt_token(job.service.aysrepo)
-    job.context['token'] = token
-
-    container_service = get_container(service)
-
-    container = Container.from_ays(container_service, token)
-    influx = InfluxDB(
-        container, service.parent.model.data.redisAddr, service.model.data.port,
-        service.model.data.rpcport)
-    if service.model.data.status == 'running' and not influx.is_running():
-        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=service._loop)
+    pass
 
 
 def init_actions_(service, args):

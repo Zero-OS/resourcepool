@@ -183,7 +183,13 @@ def processChange(job):
 
 
 def monitor(job):
-    pass
+    import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    loop = j.atyourservice.server.loop
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    if job.service.model.data.status == 'running':
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
 
 
 def init_actions_(service, args):

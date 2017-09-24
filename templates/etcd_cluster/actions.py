@@ -299,8 +299,7 @@ def watchdog_handler(job):
             if not etcd_status:
                 j.tools.async.wrappers.sync(etcd_service.parent.delete())
     service.logger.info("etcd_cluster  %s respawned" % service.name)
-    
-    
+
 
 def monitor(job):
     pass

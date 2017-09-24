@@ -133,24 +133,11 @@ def init_actions_(service, args):
     }
 
 
-def monitor(job):
+def watchdog_handler(job):
     import asyncio
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
 
-    service = job.service
-    token = get_jwt_token(service.aysrepo)
+    loop = j.atyourservice.server.loop
 
-    container = get_container(service)
-    container_ays = Container.from_ays(container, token)
-    stats_collector = StatsCollector(
-        container_ays, service.model.data.ip,
-        service.model.data.port, service.model.data.db,
-        service.model.data.retention, token)
-
-    if service.model.data.status == 'running' and not stats_collector.is_running():
-        loop = j.atyourservice.server.loop
-        job.context['token'] = token
-        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=loop)
+    if job.service.model.data.status == 'running':
+        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
 
