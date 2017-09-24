@@ -16,7 +16,9 @@ export TERM=xterm-256color
 ## generate ssh key
 echo "[#] Generate SSH key ..."
 ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
-
+echo "#############################################################[#] ${ITSYOUONLINE_CL_ID}
+######################################################################################
+ ${ITSYOUONLINE_CL_SECRET}"
 #install requirments
 sudo apt-get update
 sudo pip3 install -U git+https://github.com/zero-os/0-orchestrator.git${TRAVIS_BRANCH}#subdirectory=pyclient
