@@ -9,10 +9,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/codegangsta/cli"
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"github.com/zero-os/0-orchestrator/api/ays"
+	client "github.com/zero-os/0-orchestrator/api/ays/ays-client"
 	"github.com/zero-os/0-orchestrator/api/goraml"
 	"github.com/zero-os/0-orchestrator/api/router"
-	"github.com/zero-os/0-orchestrator/api/tools"
 
 	"fmt"
 
@@ -85,22 +85,29 @@ func main() {
 			time.Sleep(time.Second)
 		}
 
-		if err := ensureAYSRepo(aysURL, aysRepo); err != nil {
-			log.Fatalln(err.Error())
-		}
-
-		if organization != "" {
-			if _, err := tools.RefreshToken(applicationID, secret, organization); err != nil {
-				log.Fatalln(err.Error())
-			}
-		}
+		// if organization != "" {
+		// 	if _, err := tools.RefreshToken(applicationID, secret, organization); err != nil {
+		// 		log.Fatalln(err.Error())
+		// 	}
+		// }
 
 		return nil
 	}
 
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
-		r := router.GetRouter(aysURL, aysRepo, organization, applicationID, secret)
+
+		aysCL, err := ays.NewClient(aysURL, aysRepo, organization, applicationID, secret)
+		if err != nil {
+			log.Fatalf("error creation AYS client: %v", err)
+			return
+		}
+
+		if err := ensureAYSRepo(aysCL, aysRepo); err != nil {
+			log.Fatalln(err.Error())
+		}
+
+		r := router.GetRouter(aysCL, organization) //, organization, applicationID, secret)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)
@@ -134,19 +141,19 @@ func testAYSURL(aysURL string) error {
 }
 
 //ensureAYSRepo make sure that the AYS repository we are going to use exists
-func ensureAYSRepo(url, name string) error {
-	aysAPI := ays.NewAtYourServiceAPI()
-	aysAPI.BaseURI = url
-	_, resp, _ := aysAPI.Ays.GetRepository(name, map[string]interface{}{}, map[string]interface{}{})
+func ensureAYSRepo(aysCL *ays.Client, repoName string) error {
+	// aysAPI := ays.NewAtYourServiceAPI()
+	// aysAPI.BaseURI = url
+	_, resp, _ := aysCL.AYS().GetRepository(repoName, map[string]interface{}{}, map[string]interface{}{})
 	if resp.StatusCode == http.StatusNotFound {
 
-		req := ays.AysRepositoryPostReqBody{
-			Name:    name,
+		req := client.AysRepositoryPostReqBody{
+			Name:    repoName,
 			Git_url: "http://github.com/fake/fake",
 		}
-		_, resp, err := aysAPI.Ays.CreateRepository(req, map[string]interface{}{}, map[string]interface{}{})
+		_, resp, err := aysCL.AYS().CreateRepository(req, map[string]interface{}{}, map[string]interface{}{})
 		if err != nil || resp.StatusCode != http.StatusCreated {
-			return fmt.Errorf("Can't create AYS Repo %s :%v", name, err)
+			return fmt.Errorf("Can't create AYS Repo %s :%v", repoName, err)
 		}
 	}
 	return nil
