@@ -83,7 +83,7 @@ sleep 5
 
 ## install orchestrator
 echo "[#] Installing orchestrator ..."
-ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
+ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s ${TRAVIS_BRANCH} ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
 
 #passing jwt
 echo "Enabling JWT..."
