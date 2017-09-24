@@ -8,6 +8,9 @@ def start(job):
 def apply_rules(job, httpproxies=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.http import HTTPServer
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
 

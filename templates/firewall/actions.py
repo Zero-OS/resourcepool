@@ -7,6 +7,9 @@ def start(job):
 def apply_rules(job, gwdata=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.firewall import Firewall, Network
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     gwdata = {} if gwdata is None else gwdata
     container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)

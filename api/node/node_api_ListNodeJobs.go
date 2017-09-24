@@ -10,7 +10,7 @@ import (
 
 // ListNodeJobs is the handler for GET /nodes/{nodeid}/job
 // List running jobs
-func (api NodeAPI) ListNodeJobs(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListNodeJobs(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")

@@ -12,7 +12,7 @@ import (
 
 // CreateStoragePoolDevices is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/device
 // Add extra devices to this storage pool
-func (api NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) CreateStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	node := vars["nodeid"]

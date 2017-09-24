@@ -15,7 +15,7 @@ type RebootBP struct {
 
 // RebootNode is the handler for POST /nodes/{nodeid}/reboot
 // Immediately reboot the machine.
-func (api NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteConnection(r)
 	vars := mux.Vars(r)

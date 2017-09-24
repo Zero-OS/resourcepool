@@ -12,7 +12,7 @@ import (
 
 // KillContainerJob is the handler for DELETE /nodes/{nodeid}/container/{containername}/job/{jobid}
 // Kills the job
-func (api NodeAPI) KillContainerJob(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) KillContainerJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobID := client.JobId(vars["jobid"])
 

@@ -11,7 +11,7 @@ import (
 
 // DeleteDashboard is the handler for DELETE /graph/{graphid}/dashboard/{dashboardname}
 // Remove dashboard
-func (api GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
+func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	dashboard := vars["dashboardname"]

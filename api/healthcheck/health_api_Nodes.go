@@ -11,7 +11,7 @@ import (
 
 // ListNodesHealth is the handler for GET /health/nodes
 // List NodesHealth
-func (api HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request) {
+func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	queryParams := map[string]interface{}{
 		"fields": "hostname,id",

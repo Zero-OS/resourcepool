@@ -12,7 +12,7 @@ import (
 
 // ListGWDHCPHosts is the handler for GET /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
 // List DHCPHosts for specified interface
-func (api NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListGWDHCPHosts(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]

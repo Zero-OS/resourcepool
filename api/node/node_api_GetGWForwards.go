@@ -12,7 +12,7 @@ import (
 
 // GetGWForwards is the handler for GET /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Get list for IPv4 Forwards
-func (api NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]

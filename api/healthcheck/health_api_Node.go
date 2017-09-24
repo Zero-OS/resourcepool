@@ -11,7 +11,7 @@ import (
 
 // ListNodeHealth is the handler for GET /health/nodes/{nodeid}
 // List NodeHealth
-func (api HealthCheckApi) ListNodeHealth(w http.ResponseWriter, r *http.Request) {
+func (api *HealthCheckApi) ListNodeHealth(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]

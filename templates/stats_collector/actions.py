@@ -30,12 +30,18 @@ def init(job):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     service.model.data.status = 'running'
@@ -54,6 +60,9 @@ def start(job):
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.stats_collector.stats_collector import StatsCollector
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     service.model.data.status = 'halted'
@@ -71,6 +80,9 @@ def stop(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     container = get_container(job.service, False)
     if container:
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))

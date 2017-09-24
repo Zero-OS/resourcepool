@@ -11,7 +11,7 @@ import (
 
 // KillCluster is the handler for DELETE /storageclusters/{label}
 // Kill cluster
-func (api StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request) {
+func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	storageCluster := vars["label"]
