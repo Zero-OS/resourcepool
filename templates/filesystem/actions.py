@@ -45,6 +45,10 @@ def update_sizeOnDisk(job):
 
 def monitor(job):
     service = job.service
+
+    if service.model.actionsState['install'] != 'ok':
+        return
+
     pool = get_pool(job)
     for device in pool.fsinfo['devices']:
         usage_precentage = (device.get('used')/device.get('size'))*100
