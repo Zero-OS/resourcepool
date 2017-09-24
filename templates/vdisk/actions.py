@@ -53,18 +53,13 @@ def install(job):
                              tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
-            volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
+            job_id = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
 
-            start = time.time()
-            while start + 900 > time.time():
-                try:
-                    volume_container.client.job.list("vdisk.copy.%s" % service.name)
-                except RuntimeError:
-                    break
-                else:
-                    time.sleep(10)
-            else:
-                raise j.exceptions.RuntimeError("Failed to copy vdisk {}".format(service.name))
+            try:
+                volume_container.waitOnJob(job_id)
+            except Exception as e:
+                strerror = e.args[0]
+                raise RuntimeError("Failed to create vdisk %s: %s", (service.name, strerror))
         finally:
             volume_container.stop()
 
@@ -139,8 +134,6 @@ def save_config(job):
         config = {
             "storageClusterID": templateStorageclusterId,
         }
-        if service.model.data.objectStoragecluster:
-            config["tlogServerClusterID"] = "temp"
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
 
@@ -296,17 +289,14 @@ def rollback(job):
                                                        parity_shards=parity_shards)
         job.logger.info(cmd)
 
-        container.client.system(cmd, id="vdisk.rollback.%s" % service.name)
-        start = time.time()
-        while start + 900 > time.time():
-            try:
-                container.client.job.list("vdisk.rollback.%s" % service.name)
-            except RuntimeError:
-                break
-            else:
-                time.sleep(10)
-        else:
-            raise j.exceptions.RuntimeError("Failed to restore vdisk {}".format(service.name))
+        container_job = container.client.system(cmd, id="vdisk.rollback.%s" % service.name)
+
+        try:
+            container.waitOnJob(container_job)
+        except Exception as e:
+            strerror = e.args[0]
+            raise RuntimeError("Failed to restore vdisk %s: %s", (service.name, strerror))
+
         service.model.data.status = 'halted'
     finally:
         container.stop()
@@ -314,7 +304,6 @@ def rollback(job):
 
 def export(job):
     import random
-    import time
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
@@ -342,18 +331,13 @@ def export(job):
                                           snapshotID=snapshotID,
                                           ftpurl=url)
         job.logger.info(cmd)
-        container.client.system(cmd, id="vdisk.export.%s" % service.name)
+        container_job = container.client.system(cmd, id="vdisk.export.%s" % service.name)
 
-        start = time.time()
-        while start + 500 > time.time():
-            try:
-                container.client.job.list("vdisk.export.%s" % service.name)
-            except RuntimeError:
-                break
-            else:
-                time.sleep(10)
-        else:
-            raise j.exceptions.RuntimeError("Failed to export vdisk {}".format(service.name))
+        try:
+            container.waitOnJob(container_job)
+        except Exception as e:
+            strerror = e.args[0]
+            raise RuntimeError("Failed to export vdisk %s: %s", (service.name, strerror))
     finally:
         container.stop()
 
@@ -391,18 +375,13 @@ def import_vdisk(job):
                                           snapshotID=snapshotID,
                                           ftpurl=url)
         job.logger.info(cmd)
-        container.client.system(cmd, id="vdisk.import.%s" % service.name)
+        container_job = container.client.system(cmd, id="vdisk.import.%s" % service.name)
 
-        start = time.time()
-        while start + 500 > time.time():
-            try:
-                container.client.job.list("vdisk.import.%s" % service.name)
-            except RuntimeError:
-                break
-            else:
-                time.sleep(10)
-        else:
-            raise j.exceptions.RuntimeError("Failed to import vdisk {}".format(service.name))
+        try:
+            container.waitOnJob(container_job)
+        except Exception as e:
+            strerror = e.args[0]
+            raise RuntimeError("Failed to import vdisk %s: %s", (service.name, strerror))
     finally:
         service.model.data.backupUrl = ""
         container.stop()
