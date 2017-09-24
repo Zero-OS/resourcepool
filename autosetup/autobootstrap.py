@@ -445,7 +445,8 @@ class OrchestratorInstaller:
         if 'orchestrator' not in running:
             print("[+] starting 0-orchestrator")
             if organization:
-                jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org "%s" --application-id %s --secret %s' % (organization, appID, secret))
+                # TODO: Add secret and application-id to args when updating the flist to master or beta-1
+                jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org "%s"' % (organization))
 
             else:
                 jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server')
