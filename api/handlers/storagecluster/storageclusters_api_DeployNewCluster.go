@@ -77,11 +77,11 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 
 	bp := ays.Blueprint{
 		fmt.Sprintf("storage_cluster__%s", reqBody.Label): blueprint,
-		"actions": ays.ActionBlock{
+		"actions": []ays.ActionBlock{{
 			Action:  "install",
 			Actor:   "storage_cluster",
 			Service: reqBody.Label,
-		},
+		}},
 	}
 	// obj[] = blueprint
 	// obj["actions"] = []tools.ActionBlock{{
