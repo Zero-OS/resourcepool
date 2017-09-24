@@ -54,6 +54,14 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// validate vdisk type with tlog server
+	tlog := vdiskstore.ObjectCluster
+	vtype := reqBody.Vdisktype
+	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
+		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Vdisks of type %v can't be redundant", vtype), "")
+		return
+	}
+
 	// Create the blueprint
 	bp := struct {
 		Size          int    `yaml:"size" json:"size"`

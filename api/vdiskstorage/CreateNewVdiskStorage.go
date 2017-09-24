@@ -26,10 +26,14 @@ func (api *VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http
 	}
 
 	// validate vdiskstorage name
-	if exists, err := aysClient.ServiceExists("vdiskstorage", reqBody.ID, api.AysRepo); err != nil {
+	exists, err := aysClient.ServiceExists("vdiskstorage", reqBody.ID, api.AysRepo)
+
+	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking vdiskstorage service exists")
 		return
-	} else if exists {
+	}
+
+	if exists {
 		err = fmt.Errorf("vdiskstorage with name %s does  exists", reqBody.ID)
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return

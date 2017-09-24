@@ -9,7 +9,7 @@ import (
 
 func (api *VdiskstorageAPI) ListVdiskStorages(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
-	vdiskstorages := []CreateVdiskStorage{}
+	vdiskstorages := []VdiskStorage{}
 
 	queryParams := map[string]interface{}{"fields": "blockCluster,slaveCluster,objectCluster"}
 	services, res, err := aysClient.Ays.ListServicesByRole("vdiskstorage", api.AysRepo, nil, queryParams)
@@ -18,7 +18,8 @@ func (api *VdiskstorageAPI) ListVdiskStorages(w http.ResponseWriter, r *http.Req
 	}
 
 	for _, service := range services {
-		var data CreateVdiskStorage
+		var data VdiskStorage
+		data.ID = service.Name
 		if err := json.Unmarshal(service.Data, &data); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
