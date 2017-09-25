@@ -1259,6 +1259,36 @@ types:
             responses:
               204:
                 description: Virtual machine migration request passed successfully
+        /export:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: ExportVM
+            description: Export the virtual machine to ftp server
+            body:
+              application/json:
+                type: ExportUrl
+            responses:
+              200:
+                description: Virtual machine export is done successfully
+                body:
+                  application/json:
+                  type: ExportUrl
+
+        /import:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: ImportVM
+            description: Import the virtual machine from ftp server
+            body:
+              application/json:
+                type: ImportVM
+            responses:
+              200:
+                description: Virtual machine is imported successfully
+
+
 /backup:
   get:
     (AYSBased):

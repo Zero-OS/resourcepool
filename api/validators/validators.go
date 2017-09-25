@@ -196,7 +196,7 @@ func ValidateVdisk(vtype string, tlog string, template string, size int, backup 
 		return fmt.Errorf("Invalid Blocksize, Blocksize should be larger than 512")
 	}
 
-	if size&(size-1) == 0 {
+	if size&(size-1) != 0 {
 		return fmt.Errorf("Invalid Blocksize, Blocksize should be a power of 2")
 	}
 	return nil
@@ -234,7 +234,27 @@ func ValidateCluster(ctype string, k int, m int, nrServers int, metaDisk string)
 		}
 	}
 	if (k + m) > nrServers {
-		return fmt.Errorf("Number of servers should be greater than or equal to K + M")
+		return fmt.Errorf("Number of servers should be greater than or equal to dataShards + parityShards")
+	}
+	return nil
+}
+
+// ValidateFtpURL Validate if ftp url format is supported
+// localhost:22;
+// ftp://1.2.3.4:200;
+// ftp://user@127.0.0.1:200;
+// ftp://user:pass@12.30.120.200:3000;
+// ftp://user:pass@12.30.120.200:3000/root/dir
+func ValidateFtpURL(url string) error {
+	pattern := "^(ftp://(\\w+(:.*)?@)?)?((\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3})|[a-z]+):\\d+(/\\w+)*$"
+
+	matched, err := regexp.MatchString(pattern, url)
+	if err != nil {
+		return err
+	}
+
+	if matched != true {
+		return fmt.Errorf("Invalid ftp url format")
 	}
 	return nil
 }

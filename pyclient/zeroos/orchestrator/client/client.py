@@ -1,5 +1,6 @@
 import requests
 
+from .backup_service import BackupService 
 from .graphs_service import GraphsService 
 from .health_service import HealthService 
 from .nodes_service import NodesService 
@@ -12,6 +13,7 @@ class Client:
         self.base_url = base_uri
         self.session = requests.Session()
         
+        self.backup = BackupService(self)
         self.graphs = GraphsService(self)
         self.health = HealthService(self)
         self.nodes = NodesService(self)

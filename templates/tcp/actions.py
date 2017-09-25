@@ -1,6 +1,9 @@
 def install(job):
-    service = job.service
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     node = Node.from_ays(service.parent, job.context['token'])
     if node.client.nft.rule_exists(service.model.data.port):
         return
@@ -10,8 +13,11 @@ def install(job):
 
 
 def drop(job):
-    service = job.service
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     node = Node.from_ays(service.parent, job.context['token'])
     if not node.client.nft.rule_exists(service.model.data.port):
         return

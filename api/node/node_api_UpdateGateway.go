@@ -14,7 +14,7 @@ import (
 
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
 // Update Gateway
-func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody GW
 	vars := mux.Vars(r)

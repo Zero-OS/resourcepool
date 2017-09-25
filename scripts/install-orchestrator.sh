@@ -26,7 +26,7 @@ fi
 logfile="/tmp/install.log"
 
 if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
-  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> [<DOMAIN> [--development]]"
+  echo "Usage: installgrid.sh <BRANCH> <ZEROTIERNWID> <ZEROTIERTOKEN> <ITSYOUONLINEORG> <ITSYOUONLINEAPPID> <ITSYOUONLINESECRET> [<DOMAIN> [--development]]"
   echo
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
@@ -49,6 +49,10 @@ shift
 ZEROTIERTOKEN=$1
 shift
 ITSYOUONLINEORG=$1
+shift
+ITSYOUONLINEAPPID=$1
+shift
+ITSYOUONLINESECRET=$1
 shift
 
 if [ "$1" != "" ] && [ "${1:0:1}" != "-" ]; then
@@ -230,7 +234,7 @@ echo '#!/bin/bash -x' > ${orchinit}
 if [ -z "${ITSYOUONLINEORG}" ]; then
     echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server\"" >> ${orchinit}
 else
-    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}'\"" >> ${orchinit}
+    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}' --application-id '${ITSYOUONLINEAPPID}' --secret '${ITSYOUONLINESECRET}'\"" >> ${orchinit}
 fi
 
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}

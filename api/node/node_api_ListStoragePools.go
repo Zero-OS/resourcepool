@@ -12,7 +12,7 @@ import (
 
 // ListStoragePools is the handler for GET /node/{nodeid}/storagepool
 // List storage pools present in the node
-func (api NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListStoragePools(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]

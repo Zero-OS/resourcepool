@@ -11,7 +11,7 @@ import (
 
 // UpdateGraph is the handler for POST /graphs/{graphid}
 // Update Graph
-func (api GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
+func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody Graph
 	vars := mux.Vars(r)

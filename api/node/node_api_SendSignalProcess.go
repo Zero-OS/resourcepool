@@ -16,7 +16,7 @@ import (
 
 // SendSignalProcess is the handler for POST /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Send signal to the process
-func (api NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) SendSignalProcess(w http.ResponseWriter, r *http.Request) {
 	var reqBody ProcessSignal
 
 	// decode request

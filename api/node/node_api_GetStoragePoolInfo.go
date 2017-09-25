@@ -11,7 +11,7 @@ import (
 
 // GetStoragePoolInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}
 // Get detailed information of this storage pool
-func (api NodeAPI) GetStoragePoolInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetStoragePoolInfo(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["storagepoolname"]
 
 	schema, err := api.getStoragepoolDetail(name, r)
@@ -50,7 +50,7 @@ type storagePoolSchema struct {
 	TotalCapacity   uint64                         `json:"totalCapacity"`
 }
 
-func (api NodeAPI) getStoragepoolDetail(name string, r *http.Request) (*storagePoolSchema, error) {
+func (api *NodeAPI) getStoragepoolDetail(name string, r *http.Request) (*storagePoolSchema, error) {
 	aysClient := tools.GetAysConnection(r, api)
 	log.Debugf("Get schema detail for storagepool %s\n", name)
 

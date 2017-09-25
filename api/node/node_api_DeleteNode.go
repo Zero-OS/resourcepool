@@ -9,7 +9,7 @@ import (
 
 // DeleteNode is the handler for DELETE /nodes/{nodeid}
 // Delete Node
-func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]

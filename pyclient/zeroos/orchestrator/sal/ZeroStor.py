@@ -59,7 +59,6 @@ class ZeroStor:
             --bind {bind} \
             --data "{datadir}" \
             --meta "{metadir}" \
-            --interface grpc \
             '.format(bind=self.bind, datadir=self.data_dir, metadir=self.meta_dir)
         self.container.client.system(cmd, id="zerostor.{}".format(self.name))
         if not self.container.is_port_listening(int(self.bind.split(":")[1])):
