@@ -16,7 +16,9 @@ export TERM=xterm-256color
 ## generate ssh key
 echo "[#] Generate SSH key ..."
 ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
-
+echo "#############################################################[#] ${ITSYOUONLINE_CL_ID}
+######################################################################################
+ ${ITSYOUONLINE_CL_SECRET}"
 #install requirments
 sudo apt-get update
 sudo pip3 install -U git+https://github.com/zero-os/0-orchestrator.git${TRAVIS_BRANCH}#subdirectory=pyclient
@@ -81,7 +83,7 @@ sleep 5
 
 ## install orchestrator
 echo "[#] Installing orchestrator ..."
-ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
+ssh -tA root@localhost -p 2222 "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s ${TRAVIS_BRANCH} ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
 
 #passing jwt
 echo "Enabling JWT..."
