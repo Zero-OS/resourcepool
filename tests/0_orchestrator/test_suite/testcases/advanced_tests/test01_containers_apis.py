@@ -4,7 +4,7 @@ from urllib.request import urlopen
 import requests
 import json
 
-@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
+# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestcontaineridAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -18,8 +18,9 @@ class TestcontaineridAPI(TestcasesBase):
             self.containers_api.delete_containers_containerid(self.nodeid, container_name)
         for bridge_name in self.created['bridge']:
             self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, bridge_name)
+    
+    def test001_create_containers_with_zerotier(self):
 
- 
         """ GAT-089
         *Test case for create containers with same zerotier network *
 
@@ -33,7 +34,7 @@ class TestcontaineridAPI(TestcasesBase):
 
         Z_Id = self.create_zerotier_network()
 
-        time.sleep(5)
+        time.sleep(15)
 
         self.lg.info(' [*] Create 2 containers C1, C2 with same zerotier network Id , should succeed')
         nic = [{'type': 'default'}, {'type': 'zerotier', 'id': Z_Id}]
@@ -59,10 +60,12 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
         for i in range(5):
-            time.sleep(5)
             response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
             if response.state == "SUCCESS":
                 break
+            else:
+                time.sleep(5)
+    
         self.assertEqual(response.state, "SUCCESS")
         self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
         response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
@@ -81,15 +84,13 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(" [*] Delete zerotier network ")
         self.delete_zerotier_network(Z_Id)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test001_create_containers_with_vlan_network(self):
+    def test002_create_containers_with_vlan_network(self):
         """ GAT-090
 
         *Test case for test creation of containers with vlan network*
 
         **Test Scenario:**
 
-        #. Create ovs container .
         #. Create two containers with same vlan tag, should succeed.
         #. Check that two containers get correct vlan ip, should succeed.
         #. First container C1 ping second container C2 ,should succeed.
@@ -98,8 +99,6 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check if third container (c3) can ping first container (c1), should fail.
 
         """
-        self.lg.info(" [*] create ovs container")
-        self.core0_client.create_ovs_container()
 
         self.lg.info(" [*] create two container with same vlan tag,should succeed")
         vlan1_id, vlan2_id = random.sample(range(1, 4096), 2)
@@ -147,15 +146,13 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 2 %s' % C1_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test002_create_containers_with_vxlan_network(self):
+    def test003_create_containers_with_vxlan_network(self):
         """ GAT-091
 
         *Test case for test creation of containers with vxlan network*
 
         **Test Scenario:**
 
-        #. Create ovs container .
         #. Create two containers with same vxlan tag, should succeed.
         #. Check that two containers get correct vxlan ip, should succeed.
         #. First container C1 ping second container C2 ,should succeed.
@@ -163,8 +160,6 @@ class TestcontaineridAPI(TestcasesBase):
         #. Create third container c3 with different vxlan Id,should succeed
         #. Check if third container (c3) can ping first container (c1), should fail.
         """
-        self.lg.info("create ovs container")
-        self.core0_client.create_ovs_container()
 
         self.lg.info("create two container with same vxlan id,shoc3_nameuld succeed")
 
@@ -216,8 +211,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, 'ERROR')
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test003_create_containers_with_gateway_network_in_config(self):
+    def test004_create_containers_with_gateway_network_in_config(self):
         """ GAT-092
 
         *Test case for test creation of containers with gateway in configeration  *
@@ -228,35 +222,37 @@ class TestcontaineridAPI(TestcasesBase):
         #. Create container (C1) with (B0) without gateway.
         #. Create container (C2) with (B0) with gateway same ip of bridge.
         #. Check that (C1) can connect to internet, should fail.
-        #. Check that (C2) can connect to internt, should succeed.
+        #. Check that (C2) can connect to internet, should succeed.
 
         """
-        self.lg.info("create ovs container")
-        self.core0_client.create_ovs_container()
 
         self.lg.info('Create bridge with static network and nat true , should succeed')
-        response, data_bridge_1 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='static',
-                                                                      nat=True)
+        response, data_bridge_1 = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq', nat=True)
         self.created['bridge'].append(data_bridge_1['name'])
         self.assertEqual(response.status_code, 201, response.content)
+
         time.sleep(3)
 
         self.lg.info("Create container (C1) with (B0) without gateway.")
-        nics = [{"type": "bridge", "id": data_bridge_1['name'], "config": {"cidr": "190.122.2.4/24"}, "status": "up"}]
+        nics = [{"type": "bridge", "id": data_bridge_1['name'], "status": "up", "name":"test"}]
         response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_c1.status_code, 201)
         self.created['container'].append(data_c1['name'])
 
         self.lg.info("Create container (C2) with (B0) with gateway same ip of bridge.")
         nics = [{"type": "bridge", "id": data_bridge_1['name'],
-                 "config": {"cidr": "192.122.2.3/24", "gateway": data_bridge_1['setting']['static']},
+                 "config": {"cidr": "192.122.2.3/24", "gateway": data_bridge_1['setting']['cidr'][:-3]},
                  "status": "up"}]
+
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
 
+       
         c1_client = self.core0_client.get_container_client(data_c1['name'])
         c2_client = self.core0_client.get_container_client(data_c2['name'])
+
+        time.sleep(5)
 
         self.lg.info("Check that C1 can connect to internet, should fail.")
         response = c1_client.bash("ping -w 5  8.8.8.8").get()
@@ -269,8 +265,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Delete created bridge ")
         self.bridges_api.delete_nodes_bridges_bridgeid(self.nodeid, data_bridge_1['name'])
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test004_create_container_with_dns_in_config(self):
+    def test005_create_container_with_dns_in_config(self):
         """ GAT-093
 
         *Test case for test creation of containers with different network and with dns *
@@ -283,9 +278,6 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check if values of dns in /etc/resolve.conf ,should succeed .
 
         """
-
-        self.lg.info("create ovs container")
-        self.core0_client.create_ovs_container()
 
         self.lg.info("create container (C1) with type default in nic with dns , should succeed")
 
@@ -317,7 +309,8 @@ class TestcontaineridAPI(TestcasesBase):
         response = c2_client.bash('ping -c 2 %s' % dns).get()
         self.assertEqual(response.state, "SUCCESS")
 
-   
+    
+    def test006_create_containers_with_ports(self):
         """ GAT-096
 
         *Test case for test create containers with open ports*
@@ -369,7 +362,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertIn("test", html.decode('utf-8'))
 
     @unittest.skip("https://github.com/g8os/resourcepool/issues/297")
-    def test005_post_new_job_to_container_with_specs(self):
+    def test007_post_new_job_to_container_with_specs(self):
         """ GAT-097
 
         *Test case for test create containers with open ports*
@@ -415,15 +408,13 @@ class TestcontaineridAPI(TestcasesBase):
         response = c1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get Env varaible  correctly")
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
-    def test006_Create_containers_with_common_vlan(self):
+    def test008_Create_containers_with_common_vlan(self):
         """ GAT-098
 
         *Test case for test creation of containers with cmmon vlan  network*
 
         **Test Scenario:**
 
-        #. Create ovs container .
         #. Create C1 which is binding to vlan1 and vlan2.
         #. Create C2 which is binding to vlan1.
         #. Create C3 which is binding to vlan2.
@@ -433,29 +424,28 @@ class TestcontaineridAPI(TestcasesBase):
         #. Check that C3 can ping C1 and can't ping C2,should succeed.
 
         """
-        self.lg.info(" [*] create ovs container")
-        self.core0_client.create_ovs_container()
-        vlan1_id, vlan2_id = random.sample(range(1, 4096), 2)
+
+        vlan1_id, vlan2_id = random.sample(range(1, 4095), 2)
         C1_ip_vlan1 = "201.100.2.1"
         C1_ip_vlan2 = "201.100.3.1"
         C2_ip = "201.100.2.2"
         C3_ip = "201.100.3.2"
 
-        nic = [{'type': 'vlan', 'id': vlan1_id, 'config': {'cidr': '%s/24' % C1_ip_vlan1}},
-               {'type': 'vlan', 'id': vlan2_id, 'config': {'cidr': '%s/24' % C1_ip_vlan2}}]
+        nic = [{'type': 'vlan', 'id': str(vlan1_id), 'config': {'cidr': '%s/24' % C1_ip_vlan1}},
+               {'type': 'vlan', 'id': str(vlan2_id), 'config': {'cidr': '%s/24' % C1_ip_vlan2}}]
         self.lg.info(" [*] Create container C1")
         response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
         self.assertEqual(response_c1.status_code, 201)
         self.created['container'].append(data_c1['name'])
 
         self.lg.info("Create C2 which is binding to vlan1.")
-        nic = [{'type': 'vlan', 'id': vlan1_id, 'config': {'cidr': '%s/24' % C2_ip}}]
+        nic = [{'type': 'vlan', 'id': str(vlan1_id), 'config': {'cidr': '%s/24' % C2_ip}}]
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
         self.assertEqual(response_c2.status_code, 201)
         self.created['container'].append(data_c2['name'])
 
         self.lg.info("Create C3 which is binding to vlan2.")
-        nic = [{'type': 'vlan', 'id': vlan2_id, 'config': {'cidr': '%s/24' % C3_ip}}]
+        nic = [{'type': 'vlan', 'id': str(vlan2_id), 'config': {'cidr': '%s/24' % C3_ip}}]
         response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
         self.assertEqual(response_c3.status_code, 201)
 
@@ -490,6 +480,7 @@ class TestcontaineridAPI(TestcasesBase):
         response = C3_client.bash('ping -w 5 %s' % C2_ip).get()
         self.assertEqual(response.state, "ERROR")
 
+    def test009_Create_containers_with_different_nics(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
 

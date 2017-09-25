@@ -2,11 +2,12 @@ import random, time
 from testcases.testcases_base import TestcasesBase
 import unittest
 
-@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
+# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestGatewayAPICreation(TestcasesBase):
     def setUp(self):
         super().setUp()
         self.core0_client.create_ovs_container()
+        self.core0_client.timeout = 30
         self.flist = 'https://hub.gig.tech/gig-official-apps/ubuntu1604.flist'
         self.container_body = {"name": self.rand_str(),
                                "hostname": self.rand_str(),
@@ -119,8 +120,11 @@ class TestGatewayAPICreation(TestcasesBase):
                                       'gateway': nics[2]['config']['cidr'][:-3],
                                       'cidr': nics[2]['config']['cidr'][:-4] + '10/24'}
                            }]
+
         uid = self.core0_client.client.container.create(self.flist, nics=nics_container).get()
         container_2 = self.core0_client.client.container.client(int(uid))
+
+        time.sleep(5)
 
         self.lg.info(' [*] Make sure that those two containers can ping each others')
         response = container_1.bash('ping -w5 %s' % nics[2]['config']['cidr'][:-4] + '10').get()
@@ -240,7 +244,6 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(self.response.status_code, 201)
 
         self.lg.info(' [*] Create container')
-        self.core0_client.create_ovs_container()
         nics_container = [{"type": nics[1]['type'],
                            "id": nics[1]['id'],
                            "hwaddr": nics[1]['dhcpserver']['hosts'][0]['macaddress'],
@@ -250,7 +253,8 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.status_code, 201, " [*] Can't create container.")
         container = self.core0_client.get_container_client(self.container_data['name'])
         self.assertTrue(container)
-        response = container.bash('ping -c 5 google.com').get()
+        time.sleep(5)
+        response = container.bash('ping -w3 8.8.8.8').get()
         self.assertEqual(response.state, 'SUCCESS')
         self.assertNotIn("unreachable", response.stdout)
 
@@ -347,16 +351,20 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(self.response.status_code, 201, response.content)
 
         nics_container = [{
-            'type': 'vlan',
+            'type': nics[1]['type'],
+            'name': 'test',
             'id': nics[1]['id'],
             'hwaddr': nics[1]['dhcpserver']['hosts'][0]['macaddress'],
             'config': {'dhcp': True}
         }]
 
         uid = self.core0_client.client.container.create(self.flist, nics=nics_container).get()
+        
+        time.sleep(5)
+
         container_1 = self.core0_client.client.container.client(int(uid))
         container_1_nics = container_1.info.nic()
-        interface = [x for x in container_1_nics if x['name'] == 'eth0']
+        interface = [x for x in container_1_nics if x['name'] == 'test']
         self.assertNotEqual(interface, [])
         self.assertIn(nics[1]['dhcpserver']['hosts'][0]['ipaddress'], [x['addr'][:-3] for x in interface[0]['addrs']])
         self.assertEqual(nics[1]['dhcpserver']['hosts'][0]['macaddress'], interface[0]['hardwareaddr'])
@@ -492,6 +500,12 @@ class TestGatewayAPICreation(TestcasesBase):
             }
         ]
 
+        self.lg.info("[*] Create rule on port 80")
+        try:
+            self.core0_client.client.nft.open_port(80)
+        except:
+            pass
+
         self.response, self.data = self.gateways_api.post_nodes_gateway(node_id=self.nodeid, nics=nics, portforwards=portforwards)
         self.assertEqual(self.response.status_code, 201, response.content)
 
@@ -511,7 +525,6 @@ class TestGatewayAPICreation(TestcasesBase):
         file_name = self.rand_str()
         response = container.bash("mkdir {0} && cd {0}&& touch {0}.text ".format(file_name)).get()
         self.assertEqual(response.state, "SUCCESS")
-
         container.bash("cd %s &&  python3 -m http.server %s & " % (file_name, 80))
         time.sleep(3)
 
@@ -631,7 +644,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.state, 'SUCCESS')
         self.assertNotIn("unreachable", response.stdout)
 
-@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
+# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestGatewayAPIUpdate(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -662,7 +675,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
     def tearDown(self):
         self.lg.info(' [*] Delete all node {} gateways'.format(self.nodeid))
         if 'data' in self.__dict__.keys():
-            self.gateways_api.delete_nodes_gateway(self.nodeid, self.data['name'])
+            self.gateways_api.delete_nodes_gateway(self.nodeid, self.gw_name)
         super().tearDown()
 
     def test001_list_gateways(self):
@@ -820,7 +833,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
                 {
                     "macaddress": self.randomMAC(),
                     "hostname": self.random_string(),
-                    "ipaddress": "192.168.2.100"
+                    "ipaddress": self.data['nics'][1]['config']['cidr'][:-4] + '10'
                 }
             ]
         }
@@ -930,7 +943,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
         #. Verify that is the list has the config
         """
         self.lg.info(' [*] Add new dhcp host to an interface')
-        interface = 'private'
+        interface = [x for x in self.nics if x.get('dhcpserver')][0]['name']
         hostname = self.random_string()
         macaddress = self.randomMAC()
         ipaddress = '192.168.2.3'
@@ -963,7 +976,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
         #. Verify that the dhcp has been updated
         """
         self.lg.info(' [*] Add new dhcp host to an interface')
-        interface = 'private'
+        interface = [x for x in self.nics if x.get('dhcpserver')][0]['name']
         hostname = self.random_string()
         macaddress = self.randomMAC()
         ipaddress = '192.168.2.3'
@@ -977,8 +990,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*]  Delete one host form the dhcp')
-        response = self.gateways_api.delete_nodes_gateway_dhcp_host(self.nodeid, self.gw_name, interface,
-                                                                    macaddress.replace(':', ''))
+        response = self.gateways_api.delete_nodes_gateway_dhcp_host(self.nodeid, self.gw_name, interface, macaddress)
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] List dhcp hosts')
@@ -1000,7 +1012,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
         self.lg.info(' [*] Add new httpproxy host to an interface')
         body = {
             "host": self.random_string(),
-            "destinations": ['http://192.168.2.200:500'],
+            "destinations": ['http://192.168.2.200:5000'],
             "types": ['http', 'https']
         }
 
@@ -1014,6 +1026,7 @@ class TestGatewayAPIUpdate(TestcasesBase):
         self.lg.info(' [*] Verify that is the list has the config')
         httpproxy_host = [x for x in response.json() if x['host'] == body['host']]
         self.assertNotEqual(httpproxy_host, [])
+
         for key in body.keys():
             self.assertTrue(body[key], httpproxy_host[0][key])
 
