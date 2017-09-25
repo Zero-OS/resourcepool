@@ -268,6 +268,7 @@ def watchdog(job):
     from asyncio import sleep
     import asyncio
     import re
+    import traceback
 
     service = job.service
     watched_roles = {
@@ -398,6 +399,11 @@ def watchdog(job):
                 subscribed = None
             except RuntimeError as e:
                 job.logger.error(e)
+                await check_node(job)
+                cl = None
+                subscribed = None
+            except Exception as e:
+                job.logger.error(traceback.format_exc())
                 await check_node(job)
                 cl = None
                 subscribed = None
