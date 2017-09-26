@@ -1,6 +1,14 @@
 # Setup Zero-OS Orchestrator using Autosetup
 
-Steps:
+## Setup
+
+![](Images/setup.png)
+
+## ItsYou.online organizations:
+
+![](Images/organizations.png)
+
+## Steps
 - [Get JumpScale9](#js9)
 - [Setup the ZeroTier host network](#zt-host)
 - [Get the Zero-OS image for host](#host-image)
@@ -17,6 +25,7 @@ Steps:
 - [Actual installation](#actual-installation)
 - [Add a first Zero-OS node into the cluster](#first-node)
 - [Test the RESTful API](#test-api)
+
 
 
 <a id="js9"></a>
