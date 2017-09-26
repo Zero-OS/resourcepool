@@ -576,6 +576,15 @@ Backup:
     url:
       type: string
       description: restic url
+    type:
+      type: string
+      description: backup type
+    timestamp:
+      type: int64
+      description: unix timestamp of creation
+    meta:
+      type: object
+      description: meta data object
 
 BackupContainer:
   type: object
