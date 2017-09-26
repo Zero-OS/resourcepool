@@ -20,7 +20,7 @@ type BaseNic struct {
 	Token string               `json:"token,omitempty" yaml:"token,omitempty"`
 }
 
-func (s BaseNic) Validate() error {
+func (s BaseNic) Validate(aysClient tools.AYStool, repoName string) error {
 	typeEnums := map[interface{}]struct{}{
 		EnumContainerNICTypezerotier: struct{}{},
 		EnumContainerNICTypevxlan:    struct{}{},
@@ -41,18 +41,15 @@ func (s BaseNic) Validate() error {
 		return fmt.Errorf("Token: set for a nic that is not of type zerotier.")
 	}
 
-	return validator.Validate(s)
-}
-
-func (s BaseNic) ValidateServices(aysClient tools.AYStool, repoName string) error {
 	if s.Type == EnumContainerNICTypebridge {
 		exists, err := aysClient.ServiceExists("bridge", s.Id, repoName)
 		if err != nil {
 			return err
 		}
 		if !exists {
-			return fmt.Errorf("Bridge %s does not exists", s.Id)
+			return fmt.Errorf("bridge %s does not exists", s.Id)
 		}
 	}
-	return nil
+
+	return validator.Validate(s)
 }
