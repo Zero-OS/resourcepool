@@ -34,27 +34,48 @@ func (api *VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http
 	}
 
 	if exists {
-		err = fmt.Errorf("vdiskstorage with name %s does  exists", reqBody.ID)
+		err = fmt.Errorf("vdiskstorage with name %s already exists", reqBody.ID)
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate block cluster name
-	_, response, err := aysClient.Ays.GetServiceByName(reqBody.BlockCluster, "storage_cluster", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, response, w, fmt.Sprintf("getting service %s", reqBody.BlockCluster)) {
+	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.BlockCluster, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking storage_cluster service exists")
+		return
+	}
+	if !exists {
+		err = fmt.Errorf("storage_cluster with name %s does not exists", reqBody.BlockCluster)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 
 	// validate object cluster name
-	_, response, err = aysClient.Ays.GetServiceByName(reqBody.ObjectCluster, "storage_cluster", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, response, w, fmt.Sprintf("getting service %s", reqBody.ObjectCluster)) {
-		return
-	}
-
-	// validate slave cluster name
-	_, response, err = aysClient.Ays.GetServiceByName(reqBody.SlaveCluster, "storage_cluster", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, response, w, fmt.Sprintf("getting service %s", reqBody.SlaveCluster)) {
-		return
+	if reqBody.ObjectCluster != "" {
+		exists, err = aysClient.ServiceExists("storage_cluster", reqBody.ObjectCluster, api.AysRepo)
+		if err != nil {
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error checking storage_cluster service exists")
+			return
+		}
+		if !exists {
+			err = fmt.Errorf("storage_cluster with name %s does not exists", reqBody.ObjectCluster)
+			tools.WriteError(w, http.StatusBadRequest, err, "")
+			return
+		}
+		if reqBody.SlaveCluster != "" {
+			// validate slave cluster name
+			exists, err = aysClient.ServiceExists("storage_cluster", reqBody.SlaveCluster, api.AysRepo)
+			if err != nil {
+				tools.WriteError(w, http.StatusInternalServerError, err, "Error checking storage_cluster service exists")
+				return
+			}
+			if !exists {
+				err = fmt.Errorf("storage_cluster with name %s does not exists", reqBody.SlaveCluster)
+				tools.WriteError(w, http.StatusBadRequest, err, "")
+				return
+			}
+		}
 	}
 
 	obj := make(map[string]interface{})
