@@ -1128,15 +1128,15 @@ VdiskStorage:
     blockCluster:
       type: string
       description: block cluster to assign to vdisk store
-      required: True
+      required: true
     slaveCluster:
       type: string
       description: slave cluster to assign to vdisk store
-      required: True
+      required: false
     objectCluster:
       type: string
       description: object cluster to assign to vdisk store
-      required: True
+      required: false
 
 Vdisk:
   properties:
@@ -1161,15 +1161,10 @@ Vdisk:
     templatevdisk:
       type: string
       required: false
-    blockStoragecluster:
+    vdiskstorage:
       type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-    objectStoragecluster:
-      type: string
-      description: the ObjectStoragecluster used for this vdisk's object storage
-    backupStoragecluster:
-      type: string
-      description: the backupStoragecluster used for this vdisk's backup storage
+      required: true
+      description: Collection of different kinds of  storage_clusters to deploy on.
 
 VdiskListItem:
   properties:
@@ -1180,15 +1175,10 @@ VdiskListItem:
     type:
       enum: [boot, db, cache, tmp]
       description: The type of vdisk.
-    blockStoragecluster:
+    vdiskstorage:
       type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-    objectStoragecluster:
-      type: string
-      description: the ObjectStoragecluster used for this vdisk's object storage.
-    backupStoragecluster:
-      type: string
-      description: the blockStoragecluster used for this vdisk's backup storage.
+      required: true
+      description: Collection of different kinds of  storage_clusters to deploy on.
 
 VdiskResize:
   properties:

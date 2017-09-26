@@ -81,13 +81,14 @@ def install(job):
 
     backup = False
     for vdiskservice in vdisks:
-        objectcluster = vdiskservice.model.data.objectStoragecluster
+        vdiskstore = vdiskservice.producers['vdiskstorage'][0]
+        objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
             _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
             config['storageClusters'].add(objectcluster)
             config['data-shards'] += data_shards
             config['parity-shards'] += parity_shards
-            if vdiskservice.model.data.backupStoragecluster:
+            if vdiskstore.model.data.slaveCluster:
                 backup = True
 
     if not config['storageClusters']:

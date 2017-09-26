@@ -22,7 +22,7 @@ type VdiskstorageInterface interface { // GetVdiskStorageInfo is the handler for
 }
 
 // VdiskstorageInterfaceRoutes is routing for /vdiskstorage root endpoint
-func VdiskstorageInterfaceRoutes(r *mux.Router, i VdiskstorageInterface, org string) {
+func VdiskstorageInterfaceRoutes(r *mux.Router, i VdiskstorageInterface) {
 	r.HandleFunc("/vdiskstorage/{vdiskstorageid}", i.GetVdiskStorageInfo).Methods("GET")
 	r.HandleFunc("/vdiskstorage", i.ListVdiskStorages).Methods("GET")
 	r.HandleFunc("/vdiskstorage", i.CreateNewVdiskStorage).Methods("POST")

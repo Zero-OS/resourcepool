@@ -11,7 +11,7 @@ class VdiskStorage(object):
     """
 
     @staticmethod
-    def create(blockCluster, id, objectCluster, slaveCluster):
+    def create(blockCluster, id, objectCluster=None, slaveCluster=None):
         """
         :type blockCluster: str
         :type id: str
@@ -67,8 +67,6 @@ class VdiskStorage(object):
                 self.objectCluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'slaveCluster'
         val = data.get(property_name)
@@ -78,8 +76,6 @@ class VdiskStorage(object):
                 self.slaveCluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
     def __str__(self):
         return self.as_json(indent=4)

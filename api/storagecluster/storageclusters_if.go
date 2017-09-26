@@ -25,7 +25,7 @@ type StorageclustersInterface interface { // KillCluster is the handler for DELE
 }
 
 // StorageclustersInterfaceRoutes is routing for /storageclusters root endpoint
-func StorageclustersInterfaceRoutes(r *mux.Router, i StorageclustersInterface, org string) {
+func StorageclustersInterfaceRoutes(r *mux.Router, i StorageclustersInterface) {
 	r.HandleFunc("/storageclusters/{label}", i.KillCluster).Methods("DELETE")
 	r.HandleFunc("/storageclusters/{label}", i.GetClusterInfo).Methods("GET")
 	r.HandleFunc("/storageclusters", i.ListAllClusters).Methods("GET")
