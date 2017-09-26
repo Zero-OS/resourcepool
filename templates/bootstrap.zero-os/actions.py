@@ -150,7 +150,7 @@ def try_authorize(job, logger, netid, member, zerotier):
 
     # do ERP registrations
     for prod in service.producers.get('erp_registration', []):
-        erp_job=prod.getJob('register', args={'node_id': member['nodeId']})
+        erp_job=prod.getJob('register', args={'node_id': name, 'zerotier_address': member['nodeId']})
         j.tools.async.wrappers.sync(erp_job.execute())
 
 
