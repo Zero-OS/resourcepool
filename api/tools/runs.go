@@ -29,25 +29,19 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 	aysRepo := api.AysRepoName()
 	aysClient := GetAysConnection(r, api)
 
-	run, resp, err := aysClient.Ays.GetRun(runid, aysRepo, nil, nil)
-	if err != nil {
-		WriteError(w, resp.StatusCode, err, "Error getting run")
-		return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
-	}
-
-	runstatus, err := aysClient.WaitRunDone(run.Key, aysRepo)
+	run, err := aysClient.WaitRunDone(runid, aysRepo)
 	if err != nil {
 		_, ok := err.(HTTPError)
 		if !ok {
 			errmsg := fmt.Sprintf("error waiting on run %s", run.Key)
 			WriteError(w, http.StatusInternalServerError, err, errmsg)
-			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, err
+			return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
 		}
 	}
 
 	var jobErr error
 	var job ays.Job
-	for _, step := range runstatus.Steps {
+	for _, step := range run.Steps {
 		if len(step.Jobs) > 0 {
 			job := step.Jobs[0]
 			if job.State == "error" {
@@ -62,14 +56,14 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		httpErr, ok := jobErr.(HTTPError)
 		if ok {
 			WriteError(w, httpErr.Resp.StatusCode, httpErr, "")
-			return Run{Runid: runstatus.Key, State: EnumRunState(runstatus.State)}, jobErr
+			return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 		}
 		errmsg := fmt.Sprintf("error waiting on job %s", job.Key)
 		WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
 	}
 
-	if EnumRunState(runstatus.State) != EnumRunStateok {
+	if EnumRunState(run.State) != EnumRunStateok {
 		err = fmt.Errorf("Internal Server Error")
 		WriteError(w, http.StatusInternalServerError, err, "")
 		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
