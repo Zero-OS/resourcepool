@@ -13,7 +13,7 @@ import (
 
 // GetNodeProcess is the handler for GET /nodes/{nodeid}/processes/{processid}
 // Get process details
-func (api NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	conn, err := tools.GetConnection(r, api)
 	if err != nil {

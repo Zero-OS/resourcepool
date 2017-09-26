@@ -80,6 +80,8 @@ def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
 
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
@@ -108,7 +110,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
-    import math
     import redis
 
     service = job.service
@@ -218,6 +219,9 @@ def update_healthcheck(job, health_service, healthchecks):
 
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
 
     # Check if statsdb is installed on this node and stop it
@@ -238,6 +242,10 @@ def reboot(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
@@ -260,6 +268,7 @@ def watchdog(job):
     from asyncio import sleep
     import asyncio
     import re
+    import traceback
 
     service = job.service
     watched_roles = {
@@ -393,6 +402,11 @@ def watchdog(job):
                 await check_node(job)
                 cl = None
                 subscribed = None
+            except Exception as e:
+                job.logger.error(traceback.format_exc())
+                await check_node(job)
+                cl = None
+                subscribed = None
 
     return streaming(job)
 
@@ -439,6 +453,10 @@ def ork_handler(job):
 
 def start_vm(job, vm):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     if vm.model.data.status == 'running':
         asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=service._loop)
@@ -446,6 +464,10 @@ def start_vm(job, vm):
 
 def shutdown_vm(job, vm):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     if vm.model.data.status == 'running':
         asyncio.ensure_future(vm.executeAction('shutdown', context=job.context), loop=service._loop)

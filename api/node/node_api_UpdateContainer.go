@@ -11,7 +11,7 @@ import (
 
 // UpdateContainer is the handler for PUT /nodes/{nodeid}/containers/{containername}
 // Update a new Container
-func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	var reqBody ContainerUpdate
 	aysClient := tools.GetAysConnection(r, api)
 

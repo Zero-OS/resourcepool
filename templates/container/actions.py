@@ -39,7 +39,12 @@ def init(job):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     job.service.model.data.status = "halted"
+
     j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
 
 
@@ -81,6 +86,9 @@ def zerotier_nic_config(service, logger, container, nic):
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = Container.from_ays(service, job.context['token'], logger=service.logger)
@@ -105,6 +113,9 @@ def start(job):
 
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     container = Container.from_ays(job.service, job.context['token'], logger=job.service.logger)
     container.stop()
@@ -116,8 +127,6 @@ def stop(job):
 
 
 def processChange(job):
-    from zeroos.orchestrator.sal.Container import Container
-
     service = job.service
     args = job.model.args
 
@@ -132,7 +141,9 @@ def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.utils import Write_Status_code_Error
     from zeroos.core0.client.client import ResultError
-    import json
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     token = job.context['token']
@@ -230,11 +241,15 @@ def monitor(job):
 
 def watchdog_handler(job):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
-        return 
+        return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:

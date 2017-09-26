@@ -11,7 +11,7 @@ import (
 
 // DeployNewCluster is the handler for POST /storageclusters
 // Deploy New Cluster
-func (api StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Request) {
+func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody ClusterCreate
 

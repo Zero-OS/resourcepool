@@ -11,7 +11,7 @@ import (
 
 // StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
 // Stop Container instance
-func (api NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	tools.DeleteContainerId(r, api)
 

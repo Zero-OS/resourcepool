@@ -11,7 +11,7 @@ import (
 
 // GetContainerJob is the handler for GET /nodes/{nodeid}/container/{containername}/job/{jobid}
 // Get details of a submitted job on the container
-func (api NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainerJob(w http.ResponseWriter, r *http.Request) {
 	var respBody JobResult
 
 	vars := mux.Vars(r)

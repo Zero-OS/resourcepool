@@ -12,7 +12,7 @@ import (
 
 // ListContainers is the handler for GET /nodes/{nodeid}/containers
 // List running Containers
-func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]

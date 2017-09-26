@@ -12,7 +12,7 @@ import (
 
 // CreateVM is the handler for POST /nodes/{nodeid}/vms
 // Creates the VM
-func (api NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VMCreate
 
