@@ -39,6 +39,9 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 		}
 	}
 
+	// @TODO: This code was added to propagate specific errors from the jobs to the run instead of returning a generic
+	// 500. However, this code only takes into consideration the first job with an error and ignored the rest. We need
+	// to rethink this whole approach and possibly handle it at an earlier stage in aysclient.WaitRunDone.
 	var jobErr error
 	var job ays.Job
 	for _, step := range run.Steps {
