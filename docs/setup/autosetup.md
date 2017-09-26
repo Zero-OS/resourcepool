@@ -2,11 +2,11 @@
 
 ## Setup
 
-![](Images/setup.png)
+![](images/setup.png)
 
 ## ItsYou.online organizations:
 
-![](Images/organizations.png)
+![](images/organizations.png)
 
 ## Steps
 - [Get JumpScale9](#js9)
