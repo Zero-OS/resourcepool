@@ -17,7 +17,8 @@ def get_configuration(ays_repo):
 def refresh_jwt_token(token):
     import requests
     headers = {'Authorization': 'bearer %s' % token}
-    resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers)
+    params = {'validity': '3600'}
+    resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers, params=params)
     resp.raise_for_status()
     return resp.content.decode()
 
@@ -34,7 +35,7 @@ def get_jwt_token(ays_repo):
 
     try:
         token = jose.jwt.decode(jwt_token, jwt_key)
-        if token['exp'] < time.time() - 240:
+        if token['exp'] < time.time() + 1800:
             jwt_token = refresh_jwt_token(jwt_token)
 
     except jose.exceptions.ExpiredSignatureError:

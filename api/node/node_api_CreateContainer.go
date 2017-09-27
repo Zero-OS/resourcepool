@@ -24,7 +24,7 @@ func (api *NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
@@ -73,13 +73,6 @@ func (api *NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", storagepoolname, filesystemname)}
-	}
-
-	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
-			return
-		}
 	}
 
 	container := struct {

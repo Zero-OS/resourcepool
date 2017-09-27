@@ -134,6 +134,8 @@ configuration__main:
     value: 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'
   - key: '0-statscollector-flist'
     value: 'https://hub.gig.tech/gig-official-apps/0-statscollector-master.flist'
+  - key: '0-stor-flist'
+    value: 'https://hub.gig.tech/gig-official-apps/0-stor-master.flist'
   - key: 'jwt-token'
     value: '<The JWT generted at the previous step>'
   - key: 'jwt-key'
