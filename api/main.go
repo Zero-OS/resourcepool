@@ -90,7 +90,7 @@ func main() {
 		}
 
 		if organization != "" {
-			if _, err := tools.RefreshToken(applicationID, secret, organization); err != nil {
+			if _, err := tools.GetToken("", applicationID, secret, organization); err != nil {
 				log.Fatalln(err.Error())
 			}
 		}

@@ -75,6 +75,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	c.m.Lock()
 	defer c.m.Unlock()
 
+
 	// set auth token for ays to make call to get node info
 	aysAPI := api.AysAPIClient()
 	aysAPI.AuthHeader = token
@@ -87,7 +88,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 
 	poolID := nodeid
 
-	token = strings.Trim(token, "Bearer ")
+	token = strings.TrimSpace(strings.TrimPrefix(token, "Bearer"))
 	if token != "" {
 		poolID = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
 	}
@@ -105,6 +106,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	if err := json.Unmarshal(srv.Data, &info); err != nil {
 		return nil, err
 	}
+
 
 	pool := client.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
 	c.pools.Set(poolID, pool, cache.DefaultExpiration)
