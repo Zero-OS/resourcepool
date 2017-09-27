@@ -27,9 +27,8 @@ def drop(job):
 
 
 def monitor(job):
-    import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
-    asyncio.ensure_future(service.executeAction('start', context=job.context), loop=service._loop)
+    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))

@@ -44,7 +44,6 @@ def delete(job):
 
 
 def monitor(job):
-    import asyncio
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -60,4 +59,4 @@ def monitor(job):
         return
 
     job.context['token'] = token
-    asyncio.ensure_future(service.executeAction('install', context=job.context), loop=service._loop)
+    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
