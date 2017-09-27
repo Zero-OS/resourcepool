@@ -14,7 +14,6 @@ def input(job):
 
 def validate_configs(configs):
     import jose
-    import jose.jwt
     import requests
 
     configurations = {conf['key']: conf['value'] for conf in configs}

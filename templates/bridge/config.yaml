@@ -3,9 +3,4 @@ links:
     auto: false
     role: node
     optional: false
-    argname: node  
-
-recurring:
-  - action: monitor
-    log: true
-    period: 30m
+    argname: node
