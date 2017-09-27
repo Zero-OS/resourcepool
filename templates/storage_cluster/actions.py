@@ -91,7 +91,7 @@ def get_disks(job, nodes):
 
         for node, disks in value.items():
             if len(disks) < diskpernode:
-                raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+                raise j.exceptions.Input("Not enough available {} disks on node {}".format(key, node))
 
             # populate datadisks, metadisks based on their disk type
             if key == diskType:
