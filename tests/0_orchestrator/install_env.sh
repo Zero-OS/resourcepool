@@ -41,7 +41,7 @@ ZInstall_ays9
 
 ## start js9 docker
 echo "[#] Starting JS9 container ..."
-ZDockerActive
+ZDockerActive -b jumpscale/ays9 -i js9
 
 ## make local machine join zerotier network
 echo "[#] Joining zerotier network (local machine) ..."
@@ -68,19 +68,19 @@ sleep 5
 
 ## authorized js9 container as zerotier member
 echo "[#] Authorizing zerotier member ..."
-memberid=$( ZEXEC -c  "zerotier-cli info" | awk '{print $3}')
+memberid=$(docker exec js9  bash -c "zerotier-cli info" | awk '{print $3}')
 curl -H "Content-Type: application/json" -H "Authorization: Bearer ${zerotiertoken}" -X POST -d '{"config": {"authorized": true}}' https://my.zerotier.com/api/network/${zerotierid}/member/${memberid}
 sleep 5
 
 ## install orchestrator
 echo "[#] Installing orchestrator ..."
-ZSSH "export GIGDIR=~/gig; curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
+ssh -tA root@localhost -p 2222 "curl -sL https://raw.githubusercontent.com/zero-os/0-orchestrator/${TRAVIS_BRANCH}/scripts/install-orchestrator.sh | bash -s master ${zerotierid} ${zerotiertoken} ${itsyouonlineorg} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} --orchestrator ${TRAVIS_BRANCH} --core ${CORE_0_BRANCH}"
 
 #passing jwt
 echo "Enabling JWT..."
 cd tests/0_orchestrator/
 scp -P 2222 enable_jwt.sh root@localhost:
-ZSSH "bash enable_jwt.sh ${zerotierid} ${zerotiertoken} ${JS9_BRANCH} ${TRAVIS_BRANCH} ${CORE_0_BRANCH} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} ${ITSYOUONLINE_ORG} ${NAME_SPACE}"
+ssh -tA root@localhost -p 2222 "bash enable_jwt.sh ${zerotierid} ${zerotiertoken} ${JS9_BRANCH} ${TRAVIS_BRANCH} ${CORE_0_BRANCH} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} ${ITSYOUONLINE_ORG} ${NAME_SPACE}"
 
 # get orch-server ip
 orch_ip=$(ssh -At root@localhost -p 2222 "ip addr show zt0 | grep 'inet'")

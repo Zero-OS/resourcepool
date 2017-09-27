@@ -29,7 +29,7 @@ export_runnig_nodes(){
 }
 
 create_bootstrap_blueprint(){
-cat >  /optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
+cat >  /host/var/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp << EOL
 bootstrap.zero-os__grid1:
   zerotierNetID: '${zerotier_network}'
   zerotierToken: '${zerotier_token}'
@@ -40,11 +40,11 @@ EOL
 }
 
 create_packet_network_blueprint(){
- echo "network.publicstorage__storage:" >> /optvar/cockpit_repos/orchestrator-server/blueprints/network.bp
+ echo "network.publicstorage__storage:" >> /host/var/cockpit_repos/orchestrator-server/blueprints/network.bp
 }
 
 create_configration_blueprint(){
-cat >>  /optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
+cat >>  /host/var/cockpit_repos/orchestrator-server/blueprints/configuration.bp << EOL
 configuration__main:
   configurations:
   - key: '0-core-version'
@@ -73,17 +73,17 @@ EOL
 }
 
 create_etcd_cluster_blueprint(){
-cat > /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
+cat > /host/var/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 etcd_cluster__myetcd:
   nodes:
 EOL
 
 for node in ${1//,/ }
 do
-    echo "  - ${node}" >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp
+    echo "  - ${node}" >> /host/var/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp
 done
 
-cat >> /optvar/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
+cat >> /host/var/cockpit_repos/orchestrator-server/blueprints/etcd_cluster.bp << EOL
 actions:
   - action: install
     actor: etcd_cluster
@@ -108,7 +108,7 @@ create_configration_blueprint
 create_packet_network_blueprint
 create_bootstrap_blueprint
 
-cd /optvar/cockpit_repos/orchestrator-server
+cd /host/var/cockpit_repos/orchestrator-server
 
 ays blueprint configuration.bp
 ays blueprint network.bp
