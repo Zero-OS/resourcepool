@@ -23,7 +23,7 @@ func (api *NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
@@ -70,7 +70,7 @@ func (api *NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+	if _, err := tools.WaitOnRun(api, w, r, run.Key); err != nil {
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", nodeid, reqBody.Id))

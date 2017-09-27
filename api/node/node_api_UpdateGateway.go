@@ -27,7 +27,7 @@ func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}

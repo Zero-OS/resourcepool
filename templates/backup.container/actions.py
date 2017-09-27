@@ -4,6 +4,7 @@ from js9 import j
 def install(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
+    import time
 
     service = job.service
 
@@ -30,6 +31,7 @@ def install(job):
         'privileged': container.privileged,
     }
 
+    service.model.data.timestamp = int(time.time())
     service.model.data.meta = j.data.serializer.json.dumps(meta)
     service.model.data.snapshot = r.get()
     service.saveAll()

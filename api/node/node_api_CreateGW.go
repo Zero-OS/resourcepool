@@ -35,7 +35,7 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
@@ -49,13 +49,6 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 	if exists {
 		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A gateway with name %s already exists", reqBody.Name), "")
 		return
-	}
-
-	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
-			return
-		}
 	}
 
 	gateway := CreateGWBP{
