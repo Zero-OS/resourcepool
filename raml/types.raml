@@ -1091,35 +1091,15 @@ VdiskCreate:
         | cache | no | yes | no | no | yes |
         | tmp | no | no | no | no | yes |
       required: true
-    templatevdisk:
-      type: string
-      description: |
-        Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
-        You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename
-
-        This property can only be used when the disk is of type boot.
-      required: false
     readOnly:
       type: boolean
       required: false
       default: false
-    blockStoragecluster:
-      type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-      required: true
-    objectStoragecluster:
+    imageId:
       type: string
       description: |
-        the objectStoragecluster used for this vdisk's transaction logs
-
-        This property can only be used when the disk is of type boot or db.
-      required: false
-    backupStoragecluster:
-      type: string
-      description: |
-        the storagecluster used for this vdisk's main storage.
-
-        This property can only be used when the disk is of type boot or db.
+        ID of the image to use in case you create a boot disk. The image need to be imported in the VdiskStorage where this vdisk is created
+        See `/vdiskstorage/{vdiskstorageid}/images` to list all available images.
       required: false
 
 VdiskStorage:
