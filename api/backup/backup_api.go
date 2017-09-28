@@ -2,7 +2,7 @@ package backup
 
 import (
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
-	"github.com/zero-os/0-orchestrator/api/tools"
+	tools "github.com/zero-os/0-orchestrator/api/tools"
 	_ "github.com/zero-os/0-orchestrator/api/validators"
 )
 
@@ -10,19 +10,14 @@ import (
 type BackupAPI struct {
 	AysRepo       string
 	AysUrl        string
-	ApplicationID string
-	Secret        string
-	Token         string
-	Org           string
+	JWTProvider   *tools.JWTProvider
 }
 
-func NewBackupAPI(repo string, aysurl string, applicationID string, secret string, org string) *BackupAPI {
+func NewBackupAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *BackupAPI {
 	return &BackupAPI{
 		AysRepo:       repo,
 		AysUrl:        aysurl,
-		ApplicationID: applicationID,
-		Secret:        secret,
-		Org:           org,
+		JWTProvider:   jwtProvider,
 	}
 }
 
@@ -36,11 +31,7 @@ func (api *BackupAPI) AysRepoName() string {
 	return api.AysRepo
 }
 
-func (api *BackupAPI) GetAysToken() (string, error) {
-	token, err := tools.GetToken(api.Token, api.ApplicationID, api.Secret, api.Org)
-	if err != nil {
-		return "", err
-	}
-	api.Token = token
-	return token, nil
+func (api *BackupAPI) GetJWT() (string, error) {
+        return api.JWTProvider.GetToken()
 }
+

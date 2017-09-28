@@ -29,13 +29,13 @@ type NAPI interface {
 	ContainerCache() *cache.Cache
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
-	GetAysToken() (string, error)
+	GetJWT() (string, error)
 }
 
 type API interface {
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
-	GetAysToken() (string, error)
+	GetJWT() (string, error)
 }
 
 type redisInfo struct {
@@ -142,14 +142,11 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 func GetAysConnection(r *http.Request, api API) AYStool {
 	aysAPI := api.AysAPIClient()
 
-	token, err := api.GetAysToken()
+	token, err := api.GetJWT()
 	if err != nil {
-		if r.Header.Get("Authorization") != "" {
-			log.Error(err.Error())
-		}
-		aysAPI.AuthHeader = r.Header.Get("Authorization")
+		log.Error(err.Error())
 	} else {
-		aysAPI.AuthHeader = token
+		aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
 	}
 	return GetAYSClient(aysAPI)
 }
@@ -176,11 +173,9 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	vars := mux.Vars(r)
 	token := ""
 	var err error
-	if r.Header.Get("Authorization") != "" {
-		token, err = api.GetAysToken()
-		if err != nil {
-			return nil, err
-		}
+	token, err = api.GetJWT()
+	if err != nil {
+		return nil, err
 	}
 
 	nodeid := vars["nodeid"]
