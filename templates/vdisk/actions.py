@@ -1,6 +1,15 @@
 from js9 import j
 
 
+def input(job):
+    service = job.service
+    args = job.model.args
+    if args.get('type') != 'boot' and args.get('imageId'):
+        raise j.exceptions.Input("Only boot vdisks can have an image")
+    if args.get('type') == 'boot' and not args.get('imageId'):
+        raise j.exceptions.Input("imageId is a required field for boot vdisks")
+
+
 def install(job):
     import random
     from urllib.parse import urlparse
@@ -14,15 +23,17 @@ def install(job):
     if service.model.data.size > 2048:
         raise j.exceptions.Input("Maximum disk size is 2TB")
 
+    # Create the vdisk in etcd
     save_config(job)
-    if service.model.data.templateVdisk:
-        template = urlparse(service.model.data.templateVdisk)
+
+    if service.model.data.imageId:
+        # Clone the image to the new vdisk
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
         vdiskstore = service.parent
         blockStoragecluster = vdiskstore.model.data.blockCluster
         vdiskType = service.model.data.type
-        objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
+        objectStoragecluster = vdiskstore.model.data.objectCluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
@@ -38,17 +49,13 @@ def install(job):
             etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
             cmd = CMD.format(etcd=etcd_cluster.dialstrings,
                              dst_name=service.name,
-                             src_name=template.path.lstrip('/'),
+                             src_name=service.model.data.imageId,
                              tgtcluster=blockStoragecluster)
 
             job.logger.info(cmd)
             job_id = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
 
-            try:
-                volume_container.waitOnJob(job_id)
-            except Exception as e:
-                strerror = e.args[0]
-                raise RuntimeError("Failed to create vdisk %s: %s", (service.name, strerror))
+            volume_container.waitOnJob(job_id)
         finally:
             volume_container.stop()
 
@@ -89,8 +96,6 @@ def save_config(job):
 
     service = job.service
 
-    templateStorageclusterId = ""
-
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
@@ -128,7 +133,6 @@ def save_config(job):
         etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
 
     # Save base config
-    template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
     base_config = {
         "blockSize": service.model.data.blocksize,
         "readOnly": service.model.data.readOnly,
@@ -153,8 +157,7 @@ def save_config(job):
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": vdiskstore.model.data.blockCluster,
-        "templateStorageClusterID": templateStorageclusterId,
+        "storageClusterID": vdiskstore.model.data.blockCluster
     }
     if vdiskstore.model.data.objectCluster:
         config["tlogServerClusterID"] = "temp"
@@ -211,30 +214,6 @@ def start(job):
 def pause(job):
     service = job.service
     service.model.data.status = 'halted'
-
-
-def get_templatecluster(job):
-    from urllib.parse import urlparse
-    from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    service = job.service
-
-    template = urlparse(service.model.data.templateVdisk)
-
-    if template.scheme == 'ardb' and template.netloc:
-        return template.netloc
-
-    node_srv = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
-    if len(node_srv):
-        node_srv = node_srv[0]
-    else:
-        raise RuntimeError("No running nodes found")
-
-    node = Node.from_ays(node_srv, password=job.context['token'])
-    conf = node.client.config.get()
-    return urlparse(conf['globals']['storage']).netloc
 
 
 def get_srcstorageEngine(container, template):
