@@ -10,7 +10,7 @@ import (
 
 // GetNodeMounts is the handler for GET /nodes/{nodeid}/mounts
 // Get detailed information of the mountpoints of the node
-func (api NodeAPI) GetNodeMounts(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetNodeMounts(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to node")

@@ -10,6 +10,7 @@ import (
 
 	"encoding/json"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -28,11 +29,13 @@ type NAPI interface {
 	ContainerCache() *cache.Cache
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
+	GetJWT() (string, error)
 }
 
 type API interface {
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
+	GetJWT() (string, error)
 }
 
 type redisInfo struct {
@@ -72,9 +75,10 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	c.m.Lock()
 	defer c.m.Unlock()
 
+
 	// set auth token for ays to make call to get node info
 	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	aysAPI.AuthHeader = token
 	ays := GetAYSClient(aysAPI)
 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
@@ -82,13 +86,15 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 		return nil, err
 	}
 
-	poolId := nodeid
+	poolID := nodeid
+
+	token = strings.TrimSpace(strings.TrimPrefix(token, "Bearer"))
 	if token != "" {
-		poolId = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
+		poolID = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
 	}
 
-	if pool, ok := c.pools.Get(poolId); ok {
-		c.pools.Set(poolId, pool, cache.DefaultExpiration)
+	if pool, ok := c.pools.Get(poolID); ok {
+		c.pools.Set(poolID, pool, cache.DefaultExpiration)
 		return client.NewClientWithPool(pool.(*redis.Pool)), nil
 	}
 
@@ -101,8 +107,9 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 		return nil, err
 	}
 
+
 	pool := client.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
-	c.pools.Set(poolId, pool, cache.DefaultExpiration)
+	c.pools.Set(poolID, pool, cache.DefaultExpiration)
 	return client.NewClientWithPool(pool), nil
 }
 
@@ -131,9 +138,16 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 	}
 }
 
+// GetAysConnection get connection For ays access
 func GetAysConnection(r *http.Request, api API) AYStool {
 	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = r.Header.Get("Authorization")
+
+	token, err := api.GetJWT()
+	if err != nil {
+		log.Error(err.Error())
+	} else {
+		aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	}
 	return GetAYSClient(aysAPI)
 }
 
@@ -149,6 +163,7 @@ func extractToken(token string) (string, error) {
 	return parts[1], nil
 }
 
+// GetConnection get connection For direct access
 func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	p := r.Context().Value(connectionPoolMiddlewareKey)
 	if p == nil {
@@ -156,7 +171,9 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	}
 
 	vars := mux.Vars(r)
-	token, err := extractToken(r.Header.Get("Authorization"))
+	token := ""
+	var err error
+	token, err = api.GetJWT()
 	if err != nil {
 		return nil, err
 	}

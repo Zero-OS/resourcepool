@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	
+
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateContainer is the handler for POST /nodes/{nodeid}/containers
 // Create a new Container
-func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody CreateContainer
 
@@ -24,7 +24,7 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
@@ -75,13 +75,6 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 		mounts[idx] = mount{Filesystem: parts[1], Target: fmt.Sprintf("/fs/%s/%s", storagepoolname, filesystemname)}
 	}
 
-	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
-			return
-		}
-	}
-
 	container := struct {
 		Nics           []ContainerNIC `json:"nics" yaml:"nics"`
 		Mounts         []mount        `json:"mounts" yaml:"mounts"`
@@ -114,11 +107,10 @@ func (api NodeAPI) CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Name))
-   w.WriteHeader(http.StatusCreated)
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/containers/%s", nodeID, reqBody.Name))
+	w.WriteHeader(http.StatusCreated)
 
 }

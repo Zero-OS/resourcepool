@@ -12,7 +12,7 @@ import (
 
 // ListFilesystems is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // List filesystems
-func (api NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	storagepool := vars["storagepoolname"]

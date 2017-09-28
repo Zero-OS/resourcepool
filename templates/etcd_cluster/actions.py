@@ -11,6 +11,9 @@ def input(job):
 
 
 def init(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction("configure", context=job.context))
 
@@ -139,6 +142,10 @@ def check_container_etcd_status(job, etcd):
 
 def check_node_container_status(job, container):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     try:
         container_client = Container.from_ays(container, password=job.context['token'], logger=job.service.logger)
         if container_client.id:
@@ -292,3 +299,7 @@ def watchdog_handler(job):
             if not etcd_status:
                 j.tools.async.wrappers.sync(etcd_service.parent.delete())
     service.logger.info("etcd_cluster  %s respawned" % service.name)
+
+
+def monitor(job):
+    pass

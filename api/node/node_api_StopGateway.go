@@ -11,7 +11,7 @@ import (
 
 // StopGateway is the handler for POST /nodes/{nodeid}/gws/{gwname}/stop
 // Stop gateway instance
-func (api NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]

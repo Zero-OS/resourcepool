@@ -78,7 +78,7 @@ class Container:
         if not arguments['tags']:
             # we don't deal with tagless containers
             raise ValueError("Could not load containerinfo withouth tags")
-        return cls(arguments['tags'][0],
+        return cls(arguments['name'],
                    node,
                    arguments['root'],
                    arguments['hostname'],
@@ -176,6 +176,7 @@ class Container:
             nics=self.nics,
             port=self.ports,
             tags=tags,
+            name=self.name,
             hostname=self.hostname,
             storage=self.storage,
             privileged=self.privileged,
@@ -239,6 +240,21 @@ class Container:
             from JumpScale.sal.g8os.atyourservice.StorageCluster import ContainerAYS
             self._ays = ContainerAYS(self)
         return self._ays
+
+    def waitOnJob(self, job):
+        MAX_LOG = 15
+        logs = []
+
+        def callback(lvl, message, flag):
+            if len(logs) == MAX_LOG:
+                logs.pop(0)
+            logs.append(message)
+
+            if flag & 0x4 != 0:
+                erroMessage = " ".join(logs)
+                raise RuntimeError(erroMessage)
+        resp = self.client.subscribe(job.id)
+        resp.stream(callback)
 
     def __str__(self):
         return "Container <{}>".format(self.name)

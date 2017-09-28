@@ -12,7 +12,7 @@ import (
 
 // GetVM is the handler for GET /nodes/{nodeid}/vms/{vmid}
 // Get detailed virtual machine object
-func (api NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetVM(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]

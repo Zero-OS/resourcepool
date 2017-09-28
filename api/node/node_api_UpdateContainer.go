@@ -11,7 +11,7 @@ import (
 
 // UpdateContainer is the handler for PUT /nodes/{nodeid}/containers/{containername}
 // Update a new Container
-func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	var reqBody ContainerUpdate
 	aysClient := tools.GetAysConnection(r, api)
 
@@ -22,7 +22,7 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
@@ -40,13 +40,6 @@ func (api NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 		err = fmt.Errorf("Container with name %s does not exists", containerName)
 		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
-	}
-
-	for _, nic := range reqBody.Nics {
-		if err = nic.ValidateServices(aysClient, api.AysRepo); err != nil {
-			tools.WriteError(w, http.StatusBadRequest, err, "")
-			return
-		}
 	}
 
 	obj := make(map[string]interface{})

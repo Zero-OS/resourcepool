@@ -3,6 +3,7 @@ package node
 import (
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type CreateContainer struct {
@@ -17,9 +18,9 @@ type CreateContainer struct {
 	Storage        string         `json:"storage"`
 }
 
-func (s CreateContainer) Validate() error {
+func (s CreateContainer) Validate(aysClient tools.AYStool, repoName string) error {
 	for _, nic := range s.Nics {
-		if err := nic.Validate(); err != nil {
+		if err := nic.Validate(aysClient, repoName); err != nil {
 			return err
 		}
 	}

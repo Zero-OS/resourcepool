@@ -16,6 +16,9 @@ def input(job):
 
 def get_filesystem(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     nodeservice = job.service.parent.parent.parent
     poolname = job.service.parent.parent.name
     fsname = str(job.service.parent.model.data.name)
@@ -47,3 +50,7 @@ def rollback(job):
     fs = get_filesystem(job)
     snapshot = fs.get(name)
     snapshot.rollback()
+
+
+def monitor(job):
+    pass

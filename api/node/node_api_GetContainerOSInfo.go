@@ -10,7 +10,7 @@ import (
 
 // GetContainerOSInfo is the handler for GET /nodes/{nodeid}/container/{containername}/info
 // Get detailed information of the container os
-func (api NodeAPI) GetContainerOSInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainerOSInfo(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")

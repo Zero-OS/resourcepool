@@ -31,11 +31,19 @@ def input(job):
             raise j.exceptions.Input("dataShards and parityShards should be larger than 0")
         if (data_shards + parity_shards) > nrserver:
             raise j.exceptions.Input("dataShards and parityShards should be greater than or equal to number of servers")
+
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        raise j.exceptions.Input('No etcd cluster service found.')
+
     return job.model.args
 
 
 def get_cluster(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     return StorageCluster.from_ays(job.service, job.context['token'])
 
 
@@ -83,7 +91,7 @@ def get_disks(job, nodes):
 
         for node, disks in value.items():
             if len(disks) < diskpernode:
-                raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+                raise j.exceptions.Input("Not enough available {} disks on node {}".format(key, node))
 
             # populate datadisks, metadisks based on their disk type
             if key == diskType:
@@ -100,6 +108,9 @@ def get_disks(job, nodes):
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     nodes = set()
@@ -244,15 +255,21 @@ def init(job):
 
 def save_config(job):
     import yaml
-    import requests
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.core0.client import Client
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
-    etcd_cluster = service.producers['etcd_cluster'][0]
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        j.exceptions.RuntimeError('No etcd cluster found')
+
+    etcd_cluster = etcd_clusters[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
@@ -347,6 +364,9 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     dashboardsrv = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
     if dashboardsrv:
         cluster = get_cluster(job)
@@ -376,6 +396,9 @@ def stop(job):
 
 
 def delete(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
     pools = service.producers.get('storagepool', [])
@@ -405,6 +428,9 @@ def list_vdisks(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
 
@@ -425,8 +451,6 @@ def list_vdisks(job):
         cluster = StorageCluster.from_ays(service, job.context['token'])
         clusterconfig = cluster.get_config()
 
-        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
@@ -439,8 +463,10 @@ def list_vdisks(job):
 
 def monitor(job):
     import time
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
-    job.context['token'] = get_jwt_token_from_job(job)
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
 
     if service.model.actionsState['install'] != 'ok':
@@ -448,6 +474,10 @@ def monitor(job):
 
     if service.model.data.clusterType == "object":
         return
+
+    cluster = StorageCluster.from_ays(service, job.context['token'])
+    if service.model.data.status == 'ready' and not cluster.is_running():
+        cluster.start()
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:
