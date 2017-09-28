@@ -117,8 +117,7 @@ def save_config(job):
         # Save root cluster
         templatestorageEngine = get_templatecluster(job)
         templateclusterconfig = {
-            'dataStorage': [{'address': templatestorageEngine}],
-            'metadataStorage': {'address': templatestorageEngine}
+            'servers': [{'address': templatestorageEngine}],
         }
         yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
         templateclusterkey = hashlib.md5(templatestorageEngine.encode("utf-8")).hexdigest()
