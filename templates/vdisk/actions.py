@@ -20,7 +20,7 @@ def install(job):
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
-        vdiskstore = service.producers['vdiskstorage'][0]
+        vdiskstore = service.parent
         blockStoragecluster = vdiskstore.model.data.blockCluster
         vdiskType = service.model.data.type
         objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
@@ -86,7 +86,7 @@ def save_config(job):
     service = job.service
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    vdiskstore = service.producers['vdiskstorage'][0]
+    vdiskstore = service.parent
 
     service = job.service
 
@@ -171,7 +171,7 @@ def get_cluster_config(job, type="block"):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    vdiskstore = service.producers['vdiskstorage'][0]
+    vdiskstore = service.parent
 
     cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
 

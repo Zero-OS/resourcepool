@@ -48,7 +48,7 @@ def save_config(job, vdisks=None):
     etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
 
     for vdisk in vdisks:
-        vdiskstore = vdisk.producers['vdiskstorage'][0]
+        vdiskstore = vdisk.parent
         config = {
             "storageClusterID": vdiskstore.model.data.blockCluster,
             "templateStorageClusterID": vdisk.model.data.templateStorageCluster or "",
@@ -81,7 +81,7 @@ def install(job):
 
     backup = False
     for vdiskservice in vdisks:
-        vdiskstore = vdiskservice.producers['vdiskstorage'][0]
+        vdiskstore = vdiskservice.parent
         objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
             _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
