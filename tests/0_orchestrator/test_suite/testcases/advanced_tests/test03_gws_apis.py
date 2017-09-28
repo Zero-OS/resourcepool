@@ -57,7 +57,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.status_code, 201)
         return data
 
-    def test001_create_gateway_with_vxlan_vxlan_container(self):
+    def test001_create_gateway_with_xlan_xlan_container(self):
         """ GAT-123
         **Test Scenario:**
 
@@ -132,7 +132,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.core0_client.client.container.terminate(int(uid))
 
     @unittest.skip('ssh to vm issue')
-    def test003_create_gateway_with_vlan_vlan_vm(self):
+    def test003_create_gateway_with_xlan_xlan_vm(self):
         """ GAT-125
         **Test Scenario:**
 
@@ -151,7 +151,7 @@ class TestGatewayAPICreation(TestcasesBase):
 
         },
             {
-                'type': 'vlan',
+                'type': random.choice(['vlan', 'vxlan']),
                 'gateway': False,
                 'dhcp': True,
                 'bridge_name': '',
@@ -159,7 +159,7 @@ class TestGatewayAPICreation(TestcasesBase):
 
             },
             {
-                'type': 'vlan',
+                'type': random.choice(['vlan', 'vxlan']),
                 'gateway': False,
                 'dhcp': True,
                 'bridge_name': '',
@@ -181,21 +181,18 @@ class TestGatewayAPICreation(TestcasesBase):
         "ssh_pwauth":true, "users": 
         [{"plain_text_passwd": "GB389z2wZ", "lock-passwd": false,"name": "gig", "shell": "/bin/bash", "sudo": "ALL=(ALL) ALL"}]}
 
-
-
-
         self.response, self.data = self.gateways_api.post_nodes_gateway(self.nodeid, nics=nics)
         self.assertEqual(self.response.status_code, 201)
 
-        nics = [{'id': nics[1]['id'], 'type': 'vlan', 'macaddress': vm1_mac_addr}]
+        nics = [{'id': nics[1]['id'], 'type': nics[1]['type'], 'macaddress': vm1_mac_addr}]
         self.create_vm(nics=nics)
 
-        nics = [{'id': nics[2]['id'], 'type': 'vlan', 'macaddress': vm2_mac_addr}]
+        nics = [{'id': nics[2]['id'], 'type': nics[2]['type'], 'macaddress': vm2_mac_addr}]
         self.create_vm(nics=nics)
 
         self.lg.info(' [*] create test container')
-        nics = [{'type': 'vlan', 'id': nics[1]['id'], 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr},
-                {'type': 'vlan', 'id': nics[2]['id'], 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr}]
+        nics = [{'type': nics[1]['type'], 'id': nics[1]['id'], 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr},
+                {'type': nics[2]['type'], 'id': nics[2]['id'], 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr}]
 
         uid = self.core0_client.client.container.create(self.flist, nics=nics).get()
         test_container = self.core0_client.client.container.client(uid)
@@ -211,7 +208,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.state, 'SUCCESS', response.stderr)
 
 
-    def test005_create_gateway_with_bridge_vxlan_container(self):
+    def test005_create_gateway_with_bridge_xlan_container(self):
         """ GAT-127
         **Test Scenario:**
 
@@ -268,7 +265,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertNotIn("unreachable", response.stdout)
 
     @unittest.skip('ssh to vm issue')
-    def test007_create_gateway_with_bridge_vlan_vm(self):
+    def test007_create_gateway_with_bridge_xlan_vm(self):
         """ GAT-129
         **Test Scenario:**
 
@@ -308,11 +305,11 @@ class TestGatewayAPICreation(TestcasesBase):
         vm1_ip_addr = nics_type[1]['dhcpserver']['hosts'][0]['ipaddress']
         test_container_mac_addr = nics_type[1]['dhcpserver']['hosts'][1]['macaddress']
 
-        nics = [{'id': '1', 'type': 'vlan', 'macaddress': vm1_mac_addr}]
+        nics = [{'id': nics[1]['id'], 'type': nics[1]['type'], 'macaddress': vm1_mac_addr}]
         self.create_vm(nics=nics)
 
         self.lg.info(' [*] create test container')
-        nics = [{'type': 'vlan', 'id': "1", 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr}]
+        nics = [{'type': nics[1]['type'], 'id': nics[1]['id'], 'config': {'dhcp': True}, 'hwaddr': test_container_mac_addr}]
         uid = self.core0_client.client.container.create(self.flist, nics=nics).get()
         test_container = self.core0_client.client.container.client(uid)
 
