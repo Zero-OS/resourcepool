@@ -101,6 +101,14 @@ OSInfo:
     virtualizationRole: string
     virtualizationSystem: string
 
+NodeReboot:
+  type: object
+  properties:
+    force:
+       type: boolean
+       default: false
+       description: If true, vms will be shutdown before reboot, otherwise, reboot will fail if there are any running
+
 NicInfo:
   type: object
   description: Information about network interface
@@ -576,6 +584,15 @@ Backup:
     url:
       type: string
       description: restic url
+    type:
+      type: string
+      description: backup type
+    timestamp:
+      type: int64
+      description: unix timestamp of creation
+    meta:
+      type: object
+      description: meta data object
 
 BackupContainer:
   type: object

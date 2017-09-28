@@ -70,3 +70,38 @@ cd 0-orchestrator/tests/Grid_API_Testing/
 export PYTHONPATH=./
 nosetests -s -v api_testing/testcases --tc-file api_testing/config.ini
 ```
+### 3- Running in be-scale-2
+
+- Update booting image with zero-os ipxi url  in the following file : 
+```/opt/g8-pxeboot/pxeboot/tftpboot/pxelinux.cfg/911boot```
+Example :
+```
+    DEFAULT G8OS-lkrn
+    TIMEOUT 100
+    PROMPT  1
+    IPAPPEND 2
+    label G8OS-lkrn
+            kernel ipxe.lkrn
+            append dhcp && chain https://bootstrap.gig.tech/ipxe/zero-os-master/{zerotiernetwork_id}/organization={organization_name}%20pcie_aspm=off
+```
+- boot Cpu nodes with Zero-os ipxi using IPMI tool : 
+  - get IMPI ips for cpus from ```/opt/g8-pxeboot/pxeboot/conf/hosts ```
+  - Use IPMI tool to boot node like this :
+  ```ipmitool -I lanplus -H "cpu_ipmi_ip" -U ADMIN -P ADMIN chassis bootdev pxe```
+  -  Use IPMI tool to restart node like this :
+  ```ipmitool -I lanplus -H "cpu_ipmi_ip" -U ADMIN -P ADMIN chassis power cycle```
+
+***note: you can install orchestrator server in js9 docker in controller***
+
+### Setup the backplane network in be-scale-2
+
+##### G8 setup
+
+```
+network.zero-os-bond__storage:
+  vlanTag: 2313
+  cidr: "10.105.3.0/24"
+  driver: ixgbe
+```
+
+

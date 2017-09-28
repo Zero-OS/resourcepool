@@ -11,6 +11,9 @@ def apply_config(job, gwdata=None):
     import ipaddress
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.dhcp import DHCP
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
 
@@ -44,3 +47,7 @@ def watchdog_handler(job):
     gateway = job.service.parent.consumers['gateway'][0]
     if gateway.model.data.status == 'running':
         asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+
+
+def monitor(job):
+    pass

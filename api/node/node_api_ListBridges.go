@@ -12,7 +12,7 @@ import (
 
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
 // List bridges
-func (api NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]

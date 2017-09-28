@@ -12,7 +12,7 @@ import (
 
 // GetDashboard is the handler for GET /graph/{graphid}/dashboards/{dashboardname}
 // Get Dashboard
-func (api GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
+func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	graphId := vars["graphid"]

@@ -11,7 +11,7 @@ import (
 
 // DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
 // Remove bridge
-func (api NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]

@@ -150,6 +150,15 @@ class Node:
                 break
         return fscache_sp
 
+    def is_configured(self, name=None):
+        if not name:
+            name = self.name
+        poolname = '{}_fscache'.format(name)
+        fscache_sp = self.find_persistance(poolname)
+        if fscache_sp is None:
+            return False
+        return bool(fscache_sp.mountpoint)
+
     def ensure_persistance(self, name='fscache'):
         """
         look for a disk not used,

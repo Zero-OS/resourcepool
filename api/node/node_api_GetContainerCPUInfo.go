@@ -10,7 +10,7 @@ import (
 
 // GetContainerCPUInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/cpus
 // Get detailed information of all CPUs in the container
-func (api NodeAPI) GetContainerCPUInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetContainerCPUInfo(w http.ResponseWriter, r *http.Request) {
 	cl, err := tools.GetContainerConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")

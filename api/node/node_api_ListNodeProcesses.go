@@ -10,7 +10,7 @@ import (
 
 // ListNodeProcesses is the handler for GET /nodes/{nodeid}/processes
 // Get Processes
-func (api NodeAPI) ListNodeProcesses(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListNodeProcesses(w http.ResponseWriter, r *http.Request) {
 	var respBody []Process
 
 	conn, err := tools.GetConnection(r, api)

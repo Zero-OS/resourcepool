@@ -11,7 +11,7 @@ import (
 
 // GetGateway is the handler for GET /nodes/{nodeid}/gws/{gwname}
 // Get gateway
-func (api NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var gateway GetGW
 
