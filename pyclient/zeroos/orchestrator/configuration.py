@@ -40,8 +40,6 @@ def get_jwt_token(ays_repo):
 
     except jose.exceptions.ExpiredSignatureError:
         jwt_token = refresh_jwt_token(jwt_token)
-    except Exception:
-        raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
     for config in service.model.data.configurations:
         if config.key == 'jwt-token':

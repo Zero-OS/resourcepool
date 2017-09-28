@@ -101,6 +101,14 @@ OSInfo:
     virtualizationRole: string
     virtualizationSystem: string
 
+NodeReboot:
+  type: object
+  properties:
+    force:
+       type: boolean
+       default: false
+       description: If true, vms will be shutdown before reboot, otherwise, reboot will fail if there are any running
+
 NicInfo:
   type: object
   description: Information about network interface

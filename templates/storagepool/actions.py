@@ -140,10 +140,15 @@ def monitor(job):
     service = job.service
     if service.model.actionsState['install'] == 'ok':
         pservice = service.parent
-        node = Node.from_ays(pservice, get_jwt_token(job.service.aysrepo))
+        token = get_jwt_token(job.service.aysrepo)
+        node = Node.from_ays(pservice, token)
 
         try:
             pool = node.storagepools.get(service.name)
+            if not pool.mountpoint:
+                job.context['token'] = token
+                install(job)
+
             devices, status = pool.get_devices_and_status()
 
             service.model.data.init('devices', len(devices))
