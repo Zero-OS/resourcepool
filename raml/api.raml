@@ -1364,6 +1364,13 @@ types:
         204:
           description: Storage cluster destroyed successfully
 /vdiskstorage:
+  description: |
+    A VdiskStorage is a logical object that include 3 storage clusters. It's used to hold VM images and Vdisks.
+    a VdiskStorage can be composed of:
+      - Master block storage cluster
+      - Slave block storage cluster
+      - Object storage cluster
+
   get:
     (AYSBased):
     securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
@@ -1378,7 +1385,7 @@ types:
     (AYSBased):
     securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
     displayName: CreateNewVdiskStorage
-    description: Create a new vdisk storage, can be a copy from an existing vdisk
+    description: Create a new vdisk storage
     body:
       application/json:
         type: VdiskStorage
@@ -1404,87 +1411,118 @@ types:
               type: VdiskStorage
         404:
           description: The vdisk storage does not exist
-/vdisks:
-  get:
-    (AYSBased):
-    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-    displayName: ListVdisks
-    description: List vdisks
-    responses:
-      200:
-        body:
-          application/json:
-            type: VdiskListItem[]
-  post:
-    (AYSBased):
-    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-    displayName: CreateNewVdisk
-    description: Create a new vdisk, can be a copy from an existing vdisk
-    body:
-      application/json:
-        type: VdiskCreate
-    responses:
-      202:
-        body:
-          application/json:
-            type: Run
-        headers:
-          Location:
-            description: URL to the created vdisk resource
-      400:
-        description: The storagecluster does not exist
-      409:
-        description: A vdisk with this ID already exists
-  /{vdiskid}:
-    get:
-      (AYSBased):
-      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-      displayName: GetVdiskInfo
-      description: Get vdisk information
-      responses:
-        200:
-          body:
-            application/json:
-              type: Vdisk
-        404:
-          description: The vdisk does not exist
-    delete:
-      (AYSBased):
-      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-      displayName: DeleteVdisk
-      description: Delete Vdisk
-      responses:
-        204:
-          description: Deleted
-        404:
-          description: The vdisk does not exist
-    /resize:
-      post:
+    /images:
+      get:
         (AYSBased):
         securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-        displayName: ResizeVdisk
-        description: Resize vdisk
-        body:
-          application/json:
-            type: VdiskResize
+        displayName: ListImages
+        description: List all vdisk images installed in this VdiskStroage
         responses:
-          204:
-            description: Vdisk resized
-    /rollback:
+          200:
+            body:
+              application/json:
+                type: Image[]
+          404:
+          description: The vdisk storage does not exist
       post:
         (AYSBased):
         securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-        displayName: RollbackVdisk
-        description: Rollback a vdisk to a previous state
+        displayName: ImportImage
+        description: Import an image from an FTP server into the VdiskStorage
         body:
           application/json:
-            type: VdiskRollback
+            type: ImageImport
         responses:
           202:
             body:
               application/json:
-              type: Run
-            description: Rollback started successfully
+                type: Image
+            headers:
+              Location:
+                description: URL to the created image
+          404:
+            description: The vdisk storage does not exist or the image id doesn't exist on the specified FTP
+    /vdisks:
+      get:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        displayName: ListVdisks
+        description: List vdisks
+        responses:
+          200:
+            body:
+              application/json:
+                type: VdiskListItem[]
+      post:
+        (AYSBased):
+        securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+        displayName: CreateNewVdisk
+        description: Create a new vdisk, can be a copy from an existing vdisk
+        body:
+          application/json:
+            type: VdiskCreate
+        responses:
+          202:
+            body:
+              application/json:
+                type: Run
+            headers:
+              Location:
+                description: URL to the created vdisk resource
+          400:
+            description: The storagecluster does not exist
+          409:
+            description: A vdisk with this ID already exists
+      /{vdiskid}:
+        get:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: GetVdiskInfo
+          description: Get vdisk information
+          responses:
+            200:
+              body:
+                application/json:
+                  type: Vdisk
+            404:
+              description: The vdisk does not exist
+        delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: DeleteVdisk
+          description: Delete Vdisk
+          responses:
+            204:
+              description: Deleted
+            404:
+              description: The vdisk does not exist
+        /resize:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: ResizeVdisk
+            description: Resize vdisk
+            body:
+              application/json:
+                type: VdiskResize
+            responses:
+              204:
+                description: Vdisk resized
+        /rollback:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: RollbackVdisk
+            description: Rollback a vdisk to a previous state
+            body:
+              application/json:
+                type: VdiskRollback
+            responses:
+              202:
+                body:
+                  application/json:
+                  type: Run
+                description: Rollback started successfully
 /graphs:
   get:
     (AYSBased):
