@@ -42,7 +42,7 @@ func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			image.Id = serviceData.Name
+			image.Name = serviceData.Name
 			images[i] = image
 
 		}(i, &serviceData)

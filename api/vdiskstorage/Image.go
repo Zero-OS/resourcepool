@@ -6,8 +6,8 @@ import (
 
 // Vdisk image used as template for boot vdisks
 type Image struct {
+	Name      string `json:"name" validate:"nonzero"`
 	Blocksize uint64 `json:"blocksize" validate:"nonzero"`
-	Id        string `json:"id" validate:"nonzero"`
 	Size      uint64 `json:"size" validate:"nonzero"`
 }
 

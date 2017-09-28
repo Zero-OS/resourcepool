@@ -51416,11 +51416,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>slaveCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>slave cluster to assign to vdisk store</p>
 
 
   
@@ -51440,11 +51439,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>objectCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>object cluster to assign to vdisk store</p>
 
 
   
@@ -51742,11 +51740,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>slaveCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>slave cluster to assign to vdisk store</p>
 
 
   
@@ -51766,11 +51763,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>objectCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>object cluster to assign to vdisk store</p>
 
 
   
@@ -52199,11 +52195,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>slaveCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>slave cluster to assign to vdisk store</p>
 
 
   
@@ -52223,11 +52218,10 @@ details in a user&#39;s account without getting their password.</p>
   <strong>objectCluster</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>object cluster to assign to vdisk store</p>
 
 
   
@@ -52575,37 +52569,13 @@ details in a user&#39;s account without getting their password.</p>
                                     <ul>
                                       
                                         <li>
-  <strong>id</strong>:
+  <strong>name</strong>:
 
   
-    <em>required (string)
+    <em>required (type:string pattern)
     </em>
   
 
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the vdisk in GiB</p>
 
 
   
@@ -52913,14 +52883,63 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>id</strong>:
+  <strong>image_name</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+<p>Name to give to the image you are importing</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>export_name</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>ID of the image you want to import</p>
+<p>Name of the exported image on the ftp server</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>export_snapshot</strong>:
+
+  
+    <em>(string - default: default)
+    </em>
+  
+
+<p>Name of the snapshot of the exported image on the ftp server
+If not specified, defaults to &#39;default&#39;</p>
 
 
   
@@ -53134,37 +53153,13 @@ You need to specify the encryption key to be able to import it</p>
                             <ul>
                               
                                 <li>
-  <strong>id</strong>:
+  <strong>name</strong>:
 
   
-    <em>required (string)
+    <em>required (type:string pattern)
     </em>
   
 
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                              
-                                <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the vdisk in GiB</p>
 
 
   
@@ -53563,37 +53558,13 @@ details in a user&#39;s account without getting their password.</p>
                             <ul>
                               
                                 <li>
-  <strong>id</strong>:
+  <strong>name</strong>:
 
   
-    <em>required (string)
+    <em>required (type:string pattern)
     </em>
   
 
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                              
-                                <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the vdisk in GiB</p>
 
 
   

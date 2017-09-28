@@ -1185,7 +1185,7 @@ Image:
   description: |
     Vdisk image used as template for boot vdisks
   properties:
-    id:
+    name:
       type:string
       pattern: ^\w+$
     size:
@@ -1201,11 +1201,23 @@ ImageImport:
   description: |
     Import an image into a vdiskstorage
   properties:
-    id:
+    image_name:
       type: string
-      description: ID of the image you want to import
+      description: Name to give to the image you are importing
       required: true
       pattern: ^\w+$
+    export_name:
+      type: string
+      required: true
+      description: |
+        Name of the exported image on the ftp server
+    export_snapshot:
+      type: string
+      required: false
+      description: |
+        Name of the snapshot of the exported image on the ftp server
+        If not specified, defaults to 'default'
+      default: default
     size:
       type: integer
       description: Size of the vdisk in GiB

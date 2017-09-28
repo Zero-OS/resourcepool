@@ -5,4 +5,6 @@ struct Schema {
     size @1 :UInt64;
     blocksize @2 :UInt32;
     vdiskstorage @3 :Text; # parent
+    exportName @4 :String
+    exportSnapshot @5 :String
 }

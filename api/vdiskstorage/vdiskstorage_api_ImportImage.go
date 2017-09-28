@@ -37,32 +37,34 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check for duplicate
-	exists, err = aysClient.ServiceExists("vdisk_image", imageImport.ID, api.AysRepo)
+	exists, err = aysClient.ServiceExists("vdisk_image", imageImport.Name, api.AysRepo)
 	if err != nil {
-		errmsg := fmt.Sprintf("error getting image service by name %s ", imageImport.ID)
+		errmsg := fmt.Sprintf("error getting image service by name %s ", imageImport.Name)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", imageImport.ID), "")
+		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", imageImport.Name), "")
 		return
 	}
 
 	// execute blueprint
 	bp := make(map[string]interface{})
-	bp[fmt.Sprintf("vdisk_image__%s", imageImport.ID)] = map[string]interface{}{
-		"ftpURL":       imageImport.URL,
-		"size":         imageImport.Size,
-		"blocksize":    imageImport.BlockSize,
-		"vdiskstorage": vdiskStorageID,
+	bp[fmt.Sprintf("vdisk_image__%s", imageImport.Name)] = map[string]interface{}{
+		"ftpURL":         imageImport.URL,
+		"size":           imageImport.Size,
+		"blocksize":      imageImport.BlockSize,
+		"vdiskstorage":   vdiskStorageID,
+		"exportName":     imageImport.ExportName,
+		"exportSnapshot": imageImport.ExportSnapshot,
 	}
 	bp["action"] = tools.ActionBlock{
 		Action:  "install",
 		Actor:   "vdisk_image",
-		Service: imageImport.ID,
+		Service: imageImport.Name,
 	}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk_image", imageImport.ID, "install", bp)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk_image", imageImport.Name, "install", bp)
 	if !tools.HandleExecuteBlueprintResponse(err, w, fmt.Sprintf("error executing blueprint for image import")) {
 		return
 	}
@@ -71,11 +73,11 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("/vdiskstorage/%s/images/%s", vdiskStorageID, imageImport.ID))
+	w.Header().Set("Location", fmt.Sprintf("/vdiskstorage/%s/images/%s", vdiskStorageID, imageImport.Name))
 	w.WriteHeader(http.StatusCreated)
 	image := Image{
 		Blocksize: imageImport.BlockSize,
-		Id:        imageImport.ID,
+		Name:      imageImport.Name,
 		Size:      imageImport.Size,
 	}
 	json.NewEncoder(w).Encode(&image)

@@ -15,7 +15,9 @@ def install(job):
     metadata = os.path.basename(parsed_url.path)
     url = parsed_url.geturl().split(metadata)[0]
 
-    snapshotID = "{}_default".format(service.name) # all images use default as snapshot ID
+    snapshotID = "{}_{}".format(
+        service.model.data.exportName,
+        service.model.data.exportSnapshot)
 
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
@@ -33,7 +35,7 @@ def install(job):
                                           snapshotID=snapshotID,
                                           ftpurl=url)
 
-        job.logger.info("import image {} from {}".format(service.name, url))
+        job.logger.info("import image {} from {} as {}".format(snapshotID, url, service.name))
         job.logger.info(cmd)
 
         container_job = container.client.system(cmd, id="vdisk.import.%s" % service.name)
