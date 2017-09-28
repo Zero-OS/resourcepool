@@ -15,7 +15,7 @@ def install(job):
     metadata = os.path.basename(parsed_url.path)
     url = parsed_url.geturl().split(metadata)[0]
 
-    snapshotID = "default" # all images use default as snapshot ID
+    snapshotID = "{}_default".format(service.name) # all images use default as snapshot ID
 
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
