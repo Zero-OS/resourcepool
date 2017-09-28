@@ -15,7 +15,7 @@ func (api *VdiskstorageAPI) DeleteImage(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	imageID := vars["imageid"]
 
-	exists, err := aysClient.ServiceExists("image", imageID, api.AysRepo)
+	exists, err := aysClient.ServiceExists("vdisk_image", imageID, api.AysRepo)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the image")
 		return
