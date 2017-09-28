@@ -58,11 +58,11 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		"exportName":     imageImport.ExportName,
 		"exportSnapshot": imageImport.ExportSnapshot,
 	}
-	bp["action"] = tools.ActionBlock{
+	bp["actions"] = []tools.ActionBlock{{
 		Action:  "install",
 		Actor:   "vdisk_image",
 		Service: imageImport.Name,
-	}
+	}}
 
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vdisk_image", imageImport.Name, "install", bp)
 	if !tools.HandleExecuteBlueprintResponse(err, w, fmt.Sprintf("error executing blueprint for image import")) {
