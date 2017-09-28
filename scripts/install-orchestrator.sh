@@ -102,10 +102,7 @@ echo "[+] development mode: ${DEVELOPMENT}"
 echo "[+] 0-core branch: ${CORE_BRANCH}"
 echo "[+] 0-orchestrator branch: ${ORCHESTRATOR_BRANCH}"
 
-CODEDIR="/root/gig/code"
-if [ "$GIGDIR" != "" ]; then
-    CODEDIR="$GIGDIR/code"
-fi
+CODEDIR="/opt/code"
 
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
