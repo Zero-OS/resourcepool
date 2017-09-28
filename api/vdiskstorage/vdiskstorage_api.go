@@ -8,21 +8,16 @@ import (
 
 // VdiskstorageAPI is API implementation of /vdiskstorage root endpoint
 type VdiskstorageAPI struct {
-	AysRepo       string
-	AysUrl        string
-	ApplicationID string
-	Secret        string
-	Token         string
-	Org           string
+	AysRepo     string
+	AysUrl      string
+	JWTProvider *tools.JWTProvider
 }
 
-func NewVdiskStorageAPI(repo string, aysurl string, applicationID string, secret string, org string) *VdiskstorageAPI {
+func NewVdiskStorageAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *VdiskstorageAPI {
 	return &VdiskstorageAPI{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		ApplicationID: applicationID,
-		Secret:        secret,
-		Org:           org,
+		AysRepo:     repo,
+		AysUrl:      aysurl,
+		JWTProvider: jwtProvider,
 	}
 }
 func (api VdiskstorageAPI) AysAPIClient() *ays.AtYourServiceAPI {
@@ -35,11 +30,6 @@ func (api VdiskstorageAPI) AysRepoName() string {
 	return api.AysRepo
 }
 
-func (api *VdiskstorageAPI) GetAysToken() (string, error) {
-	token, err := tools.GetToken(api.Token, api.ApplicationID, api.Secret, api.Org)
-	if err != nil {
-		return "", err
-	}
-	api.Token = token
-	return token, nil
+func (api *VdiskstorageAPI) GetJWT() (string, error) {
+	return api.JWTProvider.GetJWT()
 }
