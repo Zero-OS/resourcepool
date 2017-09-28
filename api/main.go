@@ -26,12 +26,12 @@ func main() {
 		aysURL        string
 		aysRepo       string
 		organization  string
-		applicationID string
-		secret        string
+		jwt           string
+		jwtProvider   *tools.JWTProvider
 	)
 	app := cli.NewApp()
-	app.Version = "0.2.0"
-	app.Name = "G8OS Stateless GRID API"
+	app.Version = "1.1.0-beta-1"
+	app.Name = "Zero-os Stateless GRID API"
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -62,14 +62,9 @@ func main() {
 			Destination: &organization,
 		},
 		cli.StringFlag{
-			Name:        "application-id",
-			Usage:       "Itsyouonline applicationID",
-			Destination: &applicationID,
-		},
-		cli.StringFlag{
-			Name:        "secret",
-			Usage:       "Itsyouonline secret",
-			Destination: &secret,
+			Name:        "jwt",
+			Usage:       "Refreshable Itsyouonline jwt to access AYS server and zero-os nodes",
+			Destination: &jwt,
 		},
 	}
 
@@ -85,14 +80,12 @@ func main() {
 			time.Sleep(time.Second)
 		}
 
-		if err := ensureAYSRepo(aysURL, aysRepo); err != nil {
+		if err = ensureAYSRepo(aysURL, aysRepo); err != nil {
 			log.Fatalln(err.Error())
 		}
 
-		if organization != "" {
-			if _, err := tools.GetToken("", applicationID, secret, organization); err != nil {
-				log.Fatalln(err.Error())
-			}
+		if jwtProvider, err = tools.NewJWTProvider(jwt); err != nil {
+			log.Fatalln(err.Error())
 		}
 
 		return nil
@@ -100,7 +93,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
-		r := router.GetRouter(aysURL, aysRepo, organization, applicationID, secret)
+		r := router.GetRouter(aysURL, aysRepo, organization, jwtProvider)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)

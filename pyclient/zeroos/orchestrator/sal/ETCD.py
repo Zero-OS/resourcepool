@@ -126,6 +126,14 @@ class ETCD:
 
         raise RuntimeError('failed to stop etcd.')
 
+    def is_running(self):
+        jobID = "etcd.{}".format(self.name)
+        try:
+            self.container.client.job.list(jobID)
+        except RuntimeError:
+            return False
+        return True
+
     def put(self, key, value):
         if value.startswith("-"):
             value = "-- %s" % value
