@@ -30,5 +30,8 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
+    if service.model.data.status != "opened":
+        return
+
     job.context['token'] = get_jwt_token(service.aysrepo)
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    install(job)

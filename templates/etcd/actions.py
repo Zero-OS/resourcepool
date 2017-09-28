@@ -54,4 +54,4 @@ def monitor(job):
     etcd = ETCD.from_ays(service, token)
     if service.model.data.status == 'running' and not etcd.is_running():
         job.context['token'] = token
-        j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+        start(job)

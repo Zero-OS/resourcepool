@@ -454,8 +454,10 @@ def setup_zerotierbridges(job):
 def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
+    if job.service.model.data.status != 'running':
+        return
+
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    if job.service.model.data.status == 'running':
-        j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    start(job)
 
 

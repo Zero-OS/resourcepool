@@ -69,6 +69,7 @@ def wait_for_interface(container):
         time.sleep(0.5)
     raise j.exceptions.RuntimeError("Could not find zerotier network interface")
 
+
 def zerotier_nic_config(service, logger, container, nic):
     from zerotier import client
     wait_for_interface(container)

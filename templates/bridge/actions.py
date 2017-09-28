@@ -59,4 +59,4 @@ def monitor(job):
         return
 
     job.context['token'] = token
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    install(job)
