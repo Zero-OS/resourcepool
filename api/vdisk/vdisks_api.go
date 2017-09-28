@@ -32,6 +32,6 @@ func (api *VdisksAPI) AysRepoName() string {
 }
 
 func (api *VdisksAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetToken()
+        return api.JWTProvider.GetJWT()
 }
 

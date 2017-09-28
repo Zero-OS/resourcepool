@@ -32,5 +32,5 @@ func (api *StorageclustersAPI) AysRepoName() string {
 }
 
 func (api *StorageclustersAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetToken()
+        return api.JWTProvider.GetJWT()
 }

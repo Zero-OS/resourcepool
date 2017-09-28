@@ -31,5 +31,5 @@ func NewHealthcheckAPI(repo string, aysurl string, jwtProvider *tools.JWTProvide
 }
 
 func (api *HealthCheckApi) GetJWT() (string, error) {
-        return api.JWTProvider.GetToken()
+        return api.JWTProvider.GetJWT()
 }

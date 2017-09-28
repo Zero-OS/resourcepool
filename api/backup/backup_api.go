@@ -32,6 +32,6 @@ func (api *BackupAPI) AysRepoName() string {
 }
 
 func (api *BackupAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetToken()
+        return api.JWTProvider.GetJWT()
 }
 

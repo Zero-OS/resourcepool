@@ -40,5 +40,5 @@ func (api *NodeAPI) ContainerCache() *cache.Cache {
 }
 
 func (api *NodeAPI) GetJWT() (string, error) {
-	return api.JWTProvider.GetToken()
+	return api.JWTProvider.GetJWT()
 }

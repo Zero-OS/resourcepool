@@ -78,7 +78,7 @@ func (jp *JWTProvider) refreshToken() (string, error) {
 	return jp.jwt, nil
 }
 
-func (jp *JWTProvider) GetToken() (string, error) {
+func (jp *JWTProvider) GetJWT() (string, error) {
 	now := time.Now().Unix()
 	if rem := jp.expires - now; rem < 300{
 		return jp.refreshToken()

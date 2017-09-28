@@ -39,5 +39,5 @@ func (api *GraphAPI) ContainerCache() *cache.Cache {
 }
 
 func (api *GraphAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetToken()
+        return api.JWTProvider.GetJWT()
 }
