@@ -1203,6 +1203,13 @@ ImageImport:
       type: string
       description: ID of the image you want to import
       required: true
+    size:
+      type: integer
+      description: Size of the vdisk in GiB
+    blocksize:
+      type: integer
+      description: blocksize in bytes
+      default: 4096
     url:
       type: string
       required: true

@@ -4,7 +4,7 @@
     <title>Zero-OS Orchestrator RESTful API API documentation</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="generator" content="https://github.com/raml2html/raml2html 6.4.0">
+    <meta name="generator" content="https://github.com/raml2html/raml2html 6.4.1">
 
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/styles/default.min.css">
@@ -52597,6 +52597,54 @@ details in a user&#39;s account without getting their password.</p>
 </li>
 
                                       
+                                        <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
                                     </ul>
                                   
 
@@ -52617,13 +52665,7 @@ details in a user&#39;s account without getting their password.</p>
                       
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
-
-
-                      
-
-                      
-                    
-                      <h2>HTTP status code <a href="http://httpstatus.es/description" target="_blank">description</a></h2>
+<p>The vdisk storage does not exist</p>
 
 
                       
@@ -52895,6 +52937,54 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>url</strong>:
 
   
@@ -52954,7 +53044,7 @@ You need to specify the encryption key to be able to import it</p>
   <strong>overwrite</strong>:
 
   
-    <em>(bool)
+    <em>(boolean)
     </em>
   
 
@@ -53051,6 +53141,54 @@ You need to specify the encryption key to be able to import it</p>
     </em>
   
 
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
 
 
   
@@ -53257,8 +53395,19 @@ the "Authorization" header</p>
                     <div class="alert alert-warning">
                       
                       <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
-                      Secured by <b></b>
+                      Secured by <b>itsyouonline</b>
                       
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
                       
                     </div>
                   
@@ -53387,21 +53536,114 @@ the "Authorization" header</p>
                   <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+<p>Image found</p>
 
 
                       
 
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: object</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+                            <strong>Properties</strong>
+                            <ul>
+                              
+                                <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                            </ul>
+                          
+
+                          
+                          
+                          
+                        
                       
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
 <p>Image with this id not found</p>
-
-
-                      
-
-                      
-                    
-                      <h2>HTTP status code <a href="http://httpstatus.es/description" target="_blank">description</a></h2>
 
 
                       
@@ -53415,10 +53657,70 @@ the "Authorization" header</p>
                   <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_securedby">
                     
                       
-                      <h1>Secured by </h1>
+                      <h1>Secured by itsyouonline</h1>
 
                       
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
 
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
                       
 
                       
@@ -53457,8 +53759,19 @@ the "Authorization" header</p>
                     <div class="alert alert-warning">
                       
                       <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
-                      Secured by <b></b>
+                      Secured by <b>itsyouonline</b>
                       
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
                       
                     </div>
                   
@@ -53601,10 +53914,70 @@ the "Authorization" header</p>
                   <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__delete_securedby">
                     
                       
-                      <h1>Secured by </h1>
+                      <h1>Secured by itsyouonline</h1>
 
                       
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
 
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
                       
 
                       
