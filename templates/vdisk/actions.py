@@ -15,7 +15,6 @@ def input(job):
 
 def install(job):
     import random
-    import time
     from urllib.parse import urlparse
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -118,8 +117,7 @@ def save_config(job):
         # Save root cluster
         templatestorageEngine = get_templatecluster(job)
         templateclusterconfig = {
-            'dataStorage': [{'address': templatestorageEngine}],
-            'metadataStorage': {'address': templatestorageEngine}
+            'servers': [{'address': templatestorageEngine}],
         }
         yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
         templateclusterkey = hashlib.md5(templatestorageEngine.encode("utf-8")).hexdigest()
@@ -323,8 +321,9 @@ def export(job):
     try:
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
-        cmd = "/bin/zeroctl export vdisk {vdiskid} {cryptoKey} {snapshotID} \
+        cmd = "/bin/zeroctl export vdisk {vdiskid} {snapshotID} \
                --config {dialstrings} \
+               --key {cryptoKey} \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
@@ -345,7 +344,6 @@ def export(job):
 def import_vdisk(job):
     import random
     import os
-    import time
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from urllib.parse import urlparse
 
@@ -367,8 +365,9 @@ def import_vdisk(job):
     try:
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {cryptoKey} {snapshotID} \
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
                --config {dialstrings} \
+               --key {cryptoKey} \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,

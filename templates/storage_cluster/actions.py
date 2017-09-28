@@ -283,6 +283,10 @@ def save_config(job):
             return
         config = cluster.get_config()
 
+        config = {
+            "servers": config["dataStorage"],
+        }
+
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
 
         etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
