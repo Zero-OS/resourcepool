@@ -1423,7 +1423,7 @@ types:
               application/json:
                 type: Image[]
           404:
-          description: The vdisk storage does not exist
+            description: The vdisk storage does not exist
       post:
         (AYSBased):
         securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
@@ -1447,20 +1447,20 @@ types:
       /{imageid}:
         get:
           (AYSBased):
-          securedBy: securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: GetImage
           description: Get detail about a vdisk image
           responses:
-              200:
+            200:
               description: Image found
+              body:
                 application/json:
-                  body:
                     type: Image
-              404:
-                description: Image with this id not found
+            404:
+              description: Image with this id not found
         delete:
           (AYSBased):
-          securedBy: securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
           displayName: DeleteImage
           description: Delete an vdisk image from the VdiskStorage
           responses:
