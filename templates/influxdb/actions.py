@@ -40,6 +40,7 @@ def start(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    service.model.data.status = 'running'
     container = get_container(service)
     j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
@@ -47,7 +48,7 @@ def start(job):
         container_ays, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
     influx.start()
-    service.model.data.status = 'running'
+
     influx.create_databases(service.model.data.databases)
     service.saveAll()
 
@@ -60,6 +61,7 @@ def stop(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    service.model.data.status = 'halted'
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
 
@@ -69,7 +71,7 @@ def stop(job):
             service.model.data.rpcport)
         influx.stop()
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-    service.model.data.status = 'halted'
+
     service.saveAll()
 
 
@@ -103,14 +105,12 @@ def processChange(job):
         container, service.parent.model.data.redisAddr, service.model.data.port,
         service.model.data.rpcport)
 
-    if args.get('port'):
+    if 'port' in args:
+        service.model.data.port = args['port']
         if container.is_running() and influx.is_running()[0]:
             influx.stop()
-            service.model.data.status = 'halted'
             influx.port = args['port']
             influx.start()
-            service.model.data.status = 'running'
-        service.model.data.port = args['port']
 
     if args.get('databases'):
         if container.is_running() and influx.is_running()[0]:
@@ -121,6 +121,10 @@ def processChange(job):
         service.model.data.databases = args['databases']
 
     service.saveAll()
+
+
+def monitor(job):
+    pass
 
 
 def init_actions_(service, args):

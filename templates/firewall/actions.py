@@ -31,3 +31,7 @@ def apply_rules(job, gwdata=None):
 
 def update(job):
     apply_rules(job, job.model.args)
+
+
+def monitor(job):
+    pass

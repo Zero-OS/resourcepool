@@ -195,6 +195,9 @@ types:
         securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
         displayName: RebootNode
         description: Immediately reboot the machine
+        body:
+          application/json:
+            type: NodeReboot
         responses:
           204:
             description: Machine reboot signal sent successfully

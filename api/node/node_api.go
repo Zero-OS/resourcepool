@@ -13,20 +13,15 @@ type NodeAPI struct {
 	AysRepo       string
 	AysURL        string
 	Cache         *cache.Cache
-	ApplicationID string
-	Secret        string
-	Org           string
-	Token         string
+	JWTProvider   *tools.JWTProvider
 }
 
-func NewNodeAPI(repo string, aysurl string, applicationID string, secret string, org string, c *cache.Cache) *NodeAPI {
+func NewNodeAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider, c *cache.Cache) *NodeAPI {
 	return &NodeAPI{
 		AysRepo:       repo,
 		AysURL:        aysurl,
 		Cache:         c,
-		ApplicationID: applicationID,
-		Secret:        secret,
-		Org:           org,
+		JWTProvider:   jwtProvider,
 	}
 }
 
@@ -40,15 +35,10 @@ func (api *NodeAPI) AysRepoName() string {
 	return api.AysRepo
 }
 
-func (api *NodeAPI) GetAysToken() (string, error) {
-	token, err := tools.GetToken(api.Token, api.ApplicationID, api.Secret, api.Org)
-	if err != nil {
-		return "", err
-	}
-	api.Token = token
-	return token, nil
-}
-
 func (api *NodeAPI) ContainerCache() *cache.Cache {
 	return api.Cache
+}
+
+func (api *NodeAPI) GetJWT() (string, error) {
+	return api.JWTProvider.GetJWT()
 }
