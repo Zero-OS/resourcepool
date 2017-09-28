@@ -10,7 +10,7 @@ import (
 
 // PingNode is the handler for POST /nodes/{nodeid}/ping
 // Ping this node
-func (api NodeAPI) PingNode(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) PingNode(w http.ResponseWriter, r *http.Request) {
 	var respBody bool
 	cl, err := tools.GetConnection(r, api)
 	if err != nil {

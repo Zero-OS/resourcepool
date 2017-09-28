@@ -29,7 +29,7 @@ func adapt(h http.Handler, adapters ...func(http.Handler) http.Handler) http.Han
 	return h
 }
 
-func GetRouter(aysURL, aysRepo, org string) http.Handler {
+func GetRouter(aysURL, aysRepo, org string, applicationID string, secret string) http.Handler {
 	r := mux.NewRouter()
 	api := mux.NewRouter()
 
@@ -52,12 +52,11 @@ func GetRouter(aysURL, aysRepo, org string) http.Handler {
 	r.PathPrefix("/storageclusters").Handler(apihandler)
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
-
-	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
-	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, cache.New(5*time.Minute, 1*time.Minute)), org)
-	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL), org)
-	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL), org)
-	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL), org)
-	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL), org)
+	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
+	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, applicationID, secret, org, cache.New(5*time.Minute, 1*time.Minute)), org)
+	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, applicationID, secret, org), org)
+	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, applicationID, secret, org), org)
+	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, applicationID, secret, org), org)
+	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, applicationID, secret, org), org)
 	return r
 }

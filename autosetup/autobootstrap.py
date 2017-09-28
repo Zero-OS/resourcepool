@@ -429,7 +429,7 @@ class OrchestratorInstaller:
 
         return True
 
-    def starter(self, email, domain=None, organization=None):
+    def starter(self, email, domain=None, organization=None, appID=None, secret=None):
         jobs = {}
         cn = self.node.containers.get(self.ctname)
 
@@ -445,7 +445,8 @@ class OrchestratorInstaller:
         if 'orchestrator' not in running:
             print("[+] starting 0-orchestrator")
             if organization:
-                jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org "%s"' % organization)
+                # TODO: Add secret and application-id to args when updating the flist to master or beta-1
+                jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org "%s"' % (organization))
 
             else:
                 jobs['orchestrator'] = cn.client.system('/usr/local/bin/orchestratorapiserver --bind localhost:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server')
@@ -674,7 +675,7 @@ if __name__ == "__main__":
     installer.pre_starter()
 
     print("[+] hook: starter")
-    installer.starter(args.email, args.domain, args.organization)
+    installer.starter(args.email, args.domain, args.organization, args.client_id, args.client_secret)
     installer.deploy(token)
 
     print("[+] hook: post-starter")

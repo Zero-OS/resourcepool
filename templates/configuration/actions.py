@@ -14,6 +14,7 @@ def input(job):
 
 def validate_configs(configs):
     import jose
+    import requests
 
     configurations = {conf['key']: conf['value'] for conf in configs}
     js_version = configurations.get('js-version')
@@ -39,6 +40,34 @@ def validate_configs(configs):
             pass
         except Exception:
             raise j.exceptions.Input('Invalid jwt-token and jwt-key combination')
+
+    # validate 0-stor configurations
+    zstor_organization = configurations.get("0-stor-organization")
+    zstor_namespace = configurations.get("0-stor-namespace")
+    zstor_clientid = configurations.get("0-stor-clientid")
+    zstor_clientsecret = configurations.get("0-stor-clientsecret")
+    if not (zstor_organization and zstor_namespace and zstor_clientid and zstor_clientsecret):
+        return
+
+    # The conactenation here because ays parsing can't handle the string in one line
+    # original commit 0bdf5f5f2bb7bf266ac37a148096e5af1342784b
+
+    url = "https://itsyou.online/v1/oauth/access_token"
+    scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
+    scope = scope.format(
+        org=zstor_organization,
+        namespace=zstor_namespace
+    )
+    params = {
+        "client_id": zstor_clientid,
+        "client_secret": zstor_clientsecret,
+        "grant_type": "client_credentials",
+        "response_type": "id_token",
+        "scope": scope,
+    }
+    res = requests.post(url, params=params)
+    if res.status_code != 200:
+        raise RuntimeError("Invalid itsyouonline configuration")
 
 
 def processChange(job):

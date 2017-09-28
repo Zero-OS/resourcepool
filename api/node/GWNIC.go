@@ -5,6 +5,7 @@ import (
 
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type ZerotierBridge struct {
@@ -23,8 +24,8 @@ type GWNIC struct {
 	ZerotierBridge *ZerotierBridge `json:"zerotierbridge,omitempty" yaml:"zerotierbridge,omitempty"`
 }
 
-func (s GWNIC) Validate() error {
-	if err := s.BaseNic.Validate(); err != nil {
+func (s GWNIC) Validate(aysClient tools.AYStool, repoName string) error {
+	if err := s.BaseNic.Validate(aysClient, repoName); err != nil {
 		return err
 	}
 	if s.Config != nil {

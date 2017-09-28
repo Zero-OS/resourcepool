@@ -22,8 +22,8 @@
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.0",
-			"Rev": "346938d642f2ec3594ed81d874461961cd0faa76"
+			"Comment": "v1.1.0-6-gadab964",
+			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
 		},
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
@@ -65,9 +65,13 @@
 			"Rev": "4c1c3952b7d9d0a061a3fa7b36fd373ba0398ebc"
 		},
 		{
+			"ImportPath": "github.com/jlaffaye/ftp",
+			"Rev": "769512c448b98e9efa243279a7e281248332aa98"
+		},
+		{
 			"ImportPath": "github.com/justinas/alice",
-			"Comment": "1.0.0-16-g1051eaf",
-			"Rev": "1051eaf52fcafdd87ead59d28b065f1fcb8274ec"
+			"Comment": "1.0.0",
+			"Rev": "052b8b6c18edb9db317af86806d8e00ebaa94160"
 		},
 		{
 			"ImportPath": "github.com/patrickmn/go-cache",
@@ -125,8 +129,7 @@
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.1.4-66-gf6abca5",
-			"Rev": "f6abca593680b2315d2075e0f5e2a9751e3f431a"
+			"Rev": "3b361f7ebbeff8f74ac0af5b9751f01b32cd74e5"
 		},
 		{
 			"ImportPath": "github.com/zero-os/0-core/client/go-client",

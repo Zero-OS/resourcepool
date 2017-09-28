@@ -8,19 +8,24 @@ def start(job):
 def apply_rules(job, httpproxies=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.http import HTTPServer
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
 
     httpproxies = [] if httpproxies is None else httpproxies
 
     # for cloud init we we add some proxies specially for cloud-init
+    # this will only take effect with the (http) type
     httpproxies.append({
         'host': '169.254.169.254',
         'destinations': ['http://127.0.0.1:8080'],
         'types': ['http']}
     )
 
-    http = HTTPServer(container, httpproxies)
+    service = job.service
+    http = HTTPServer(container, service, httpproxies)
     http.apply_rules()
 
 

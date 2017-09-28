@@ -2,6 +2,7 @@ from js9 import j
 
 
 def input(job):
+    from zeroos.orchestrator.configuration import get_configuration
     for arg in ['filesystems', 'arbds']:
         if job.model.args.get(arg, []) != []:
             raise j.exceptions.Input("{} should not be set as input".format(arg))
@@ -16,17 +17,33 @@ def input(job):
     cluster_type = job.model.args.get("clusterType")
 
     if cluster_type == "object":
+        aysconfig = get_configuration(job.service.aysrepo)
+        zstor_organization = aysconfig.get("0-stor-organization")
+        zstor_namespace = aysconfig.get("0-stor-namespace")
+        zstor_clientid = aysconfig.get("0-stor-clientid")
+        zstor_clientsecret = aysconfig.get("0-stor-clientsecret")
+        if not (zstor_organization and zstor_namespace and zstor_clientid and zstor_clientsecret):
+            raise RuntimeError('Missing 0-stor configuration, please fix configuration blueprint and try again.')
+
         data_shards = job.model.args.get("dataShards", 0)
         parity_shards = job.model.args.get("parityShards", 0)
         if not data_shards or not parity_shards:
             raise j.exceptions.Input("dataShards and parityShards should be larger than 0")
         if (data_shards + parity_shards) > nrserver:
             raise j.exceptions.Input("dataShards and parityShards should be greater than or equal to number of servers")
+
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        raise j.exceptions.Input('No etcd cluster service found.')
+
     return job.model.args
 
 
 def get_cluster(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     return StorageCluster.from_ays(job.service, job.context['token'])
 
 
@@ -74,14 +91,14 @@ def get_disks(job, nodes):
 
         for node, disks in value.items():
             if len(disks) < diskpernode:
-                raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+                raise j.exceptions.Input("Not enough available {} disks on node {}".format(key, node))
 
             # populate datadisks, metadisks based on their disk type
             if key == diskType:
                 datadisks[node] = disks[:serverpernode]
+                disks = disks[serverpernode:]
 
             if service.model.data.clusterType == "object":
-                disks = disks[serverpernode:]
                 if key == metadiskType:
                     metadisks[node] = disks[:serverpernode]
 
@@ -91,6 +108,9 @@ def get_disks(job, nodes):
 def init(job):
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     nodes = set()
@@ -235,15 +255,21 @@ def init(job):
 
 def save_config(job):
     import yaml
-    import requests
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.core0.client import Client
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
-    etcd_cluster = service.producers['etcd_cluster'][0]
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        j.exceptions.RuntimeError('No etcd cluster found')
+
+    etcd_cluster = etcd_clusters[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
@@ -268,24 +294,6 @@ def save_config(job):
     zstor_namespace = aysconfig["0-stor-namespace"]
     zstor_clientid = aysconfig["0-stor-clientid"]
     zstor_clientsecret = aysconfig["0-stor-clientsecret"]
-
-    # The conactenation here because ays parsing can't handle the string in one line
-    url = "https://itsyou.online/v1/oauth/access_token"
-    scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
-    scope = scope.format(
-        org=zstor_organization,
-        namespace=zstor_namespace
-    )
-    params = {
-        "client_id": zstor_clientid,
-        "client_secret": zstor_clientsecret,
-        "grant_type": "client_credentials",
-        "response_type": "id_token",
-        "scope": scope,
-    }
-    res = requests.post(url, params=params)
-    if res.status_code != 200:
-        raise RuntimeError("Invalid itsyouonline configuration")
 
     zerostor_config = {
         "iyo": {
@@ -356,6 +364,9 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     dashboardsrv = job.service.aysrepo.serviceGet(role='dashboard', instance=job.service.name, die=False)
     if dashboardsrv:
         cluster = get_cluster(job)
@@ -385,6 +396,9 @@ def stop(job):
 
 
 def delete(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
     pools = service.producers.get('storagepool', [])
@@ -414,6 +428,9 @@ def list_vdisks(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
 
@@ -448,8 +465,9 @@ def list_vdisks(job):
 
 def monitor(job):
     import time
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
-    job.context['token'] = get_jwt_token_from_job(job)
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
 
     if service.model.actionsState['install'] != 'ok':

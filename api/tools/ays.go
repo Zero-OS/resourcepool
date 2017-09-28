@@ -89,20 +89,19 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	run, err := aystool.getRun(runid, repoName)
-
-	if err != nil {
+	if err != nil  && run.State != "error"{
 		return run, err
 	}
 
-	for run.State == "new" || run.State == "running" {
+	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6){
 		time.Sleep(time.Second)
 
 		run, err = aystool.getRun(run.Key, repoName)
-		if err != nil {
+		if err != nil && run.State != "error" {
 			return run, err
 		}
 	}
-	return run, nil
+	return run, err
 }
 
 func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
@@ -119,24 +118,36 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 			return job, err
 		}
 	}
+	return aystool.ParseJobError(job.Key, repoName)
+}
 
-	if job.State == "error" {
-		err := AYSError{}
-		if err := json.Unmarshal([]byte(job.Result), &err); err != nil {
-			return job, err
-		}
+// I dont pass the job struct becasue ays does not pass the result even when in error unless a getjob api call is made on it.
+// this will be fixed in ays 9.1.3 ?
+func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, error) {
 
-		err.err = fmt.Errorf(err.Message)
-		errResp := http.Response{
-			StatusCode: err.Code,
-		}
-		httperror := HTTPError{
-			Resp: &errResp,
-			err:  err.err,
-		}
-		return job, httperror
+	job, _, ayserr := aystool.Ays.GetJob(jobKey, repoName, nil, nil)
+	if ayserr != nil {
+		return job, ayserr
 	}
-	return job, nil
+
+	if job.Result == "" {
+		return job, nil
+	}
+
+	err := AYSError{}
+	if jsonErr := json.Unmarshal([]byte(job.Result), &err); jsonErr != nil {
+		return job, jsonErr
+	}
+
+	err.err = fmt.Errorf(err.Message)
+	errResp := http.Response{
+		StatusCode: err.Code,
+	}
+	httperror := HTTPError{
+		Resp: &errResp,
+		err:  err.err,
+	}
+	return job, httperror
 }
 
 // ServiceExists check if an atyourserivce exists
@@ -227,16 +238,16 @@ func (aystool AYStool) archiveBlueprint(blueprintName string, repoName string) e
 func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	run, resp, err := aystool.Ays.GetRun(runid, repoName, nil, nil)
 	if err != nil {
-		return nil, NewHTTPError(resp, err.Error())
+		return &run, NewHTTPError(resp, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewHTTPError(resp, resp.Status)
+		return &run, NewHTTPError(resp, resp.Status)
 	}
 
 	if err = aystool.checkRun(run); err != nil {
-		resp.StatusCode = http.StatusInternalServerError
-		return nil, NewHTTPError(resp, err.Error())
+		//resp.StatusCode = http.StatusInternalServerError
+		return &run, NewHTTPError(resp, err.Error())
 	}
 	return &run, nil
 }

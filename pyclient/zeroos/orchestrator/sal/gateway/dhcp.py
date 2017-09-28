@@ -24,7 +24,7 @@ class DHCP:
                 self.container.client.process.kill(process['pid'], signal.SIGTERM)
                 start = time.time()
                 while start + 10 > time.time():
-                    if not self.is_running():
+                    if not self.container.client.process.list(process['pid']):
                         break
                     time.sleep(0.2)
                 break

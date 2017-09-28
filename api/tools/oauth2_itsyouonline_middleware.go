@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"encoding/json"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	jwt "github.com/dgrijalva/jwt-go"
-	"time"
 )
 
 // Oauth2itsyouonlineMiddleware is oauth2 middleware for itsyouonline
@@ -97,7 +98,12 @@ func (om *Oauth2itsyouonlineMiddleware) Handler(next http.Handler) http.Handler 
 
 		var claim jwt.MapClaims
 		if len(oauth2ServerPublicKey) > 0 {
-			claim, err = om.getJWTClaim(accessToken)
+			claim, err = GetJWTClaim(accessToken)
+
+			if err == nil {
+				err = om.validExpiration(claim)
+			}
+
 			if err != nil {
 				validationerror, ok := err.(*jwt.ValidationError)
 				if ok {
@@ -152,7 +158,7 @@ func (om *Oauth2itsyouonlineMiddleware) validExpiration(claims jwt.MapClaims) er
 }
 
 // gets a valid jwt claims, otherwise return an error
-func (om *Oauth2itsyouonlineMiddleware) getJWTClaim(tokenStr string) (jwt.MapClaims, error) {
+func GetJWTClaim(tokenStr string) (jwt.MapClaims, error) {
 	jwtStr := strings.TrimSpace(strings.TrimPrefix(tokenStr, "Bearer"))
 	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.SigningMethodES384 {
@@ -168,10 +174,6 @@ func (om *Oauth2itsyouonlineMiddleware) getJWTClaim(tokenStr string) (jwt.MapCla
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, fmt.Errorf("Invalid claims")
-	}
-
-	if err := om.validExpiration(claims); err != nil {
-		return nil, err
 	}
 
 	return claims, nil

@@ -1,7 +1,10 @@
 
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
     service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
 
     # Get g8core client
     node = Node.from_ays(service.parent, job.context['token'])
@@ -24,7 +27,10 @@ def install(job):
 
 def delete(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
     service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
 
     # Get node client
     node = Node.from_ays(service.parent, job.context['token'])

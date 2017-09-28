@@ -80,6 +80,8 @@ def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
 
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
@@ -108,7 +110,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
-    import math
     import redis
 
     service = job.service
@@ -174,26 +175,7 @@ def monitor(job):
             update_healthcheck(job, healthcheck_service, node.healthcheck.powersupply(cont))
             update_healthcheck(job, healthcheck_service, node.healthcheck.fan(cont))
 
-        # check each node with the rest of the nodes
-        relatives = list()
-        nodes = list(service.aysrepo.servicesFind(role='node.zero-os'))
-        nodes.sort(key=lambda n: hash(n.model.data.redisAddr))
-        count = min(len(nodes) - 1, int(math.log(len(nodes)) + 1))
-        for i, n in enumerate(nodes + nodes):
-            if n.model.key == service.model.key and n.model.data.status == 'running':
-                for n in (nodes + nodes)[i+1:i+1+count]:
-                    if n.model.data.status == 'running':
-                        try:
-                            node_sal = Node.from_ays(n, token, timeout=15)
-                        except (RuntimeError, ConnectionError, redis.TimeoutError):
-                            n.model.data.status = 'halted'
-                            n.saveAll()
-                            continue
-                        relatives.append(node_sal)
-                break
-        else:
-            raise RuntimeError('Cannot find node {} in nodes'.format(service.name))
-        update_healthcheck(job, healthcheck_service, node.healthcheck.network_stability(relatives))
+        # check network stability of  node with the rest of the nodes ! TODO
     else:
         service.model.data.status = 'halted'
         nodestatus.add_message('node', 'ERROR', 'Node is halted')
@@ -237,6 +219,9 @@ def update_healthcheck(job, health_service, healthchecks):
 
 def reboot(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
 
     # Check if statsdb is installed on this node and stop it
@@ -257,6 +242,10 @@ def reboot(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
@@ -279,6 +268,7 @@ def watchdog(job):
     from asyncio import sleep
     import asyncio
     import re
+    import traceback
 
     service = job.service
     watched_roles = {
@@ -363,14 +353,22 @@ def watchdog(job):
             handler = watched_roles[role].get('handler', 'watchdog_handler')
             await srv.executeAction(handler, context=job.context, args=args)
 
+    async def check_node(job):
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        try:
+            cl = Pubsub(service._loop, service.model.data.redisAddr, password=job.context['token'], callback=callback)
+            await cl.ping()
+            service.model.data.status = 'running'
+        except (RuntimeError, OSError) as e:
+            service.model.data.status = 'halted'
+
     async def streaming(job):
-        from zeroos.core0.client import Client
         # Check if the node is runing
         while service.model.actionsState['install'] != 'ok':
-            await sleep(1)
+            await sleep(5)
 
         while str(service.model.data.status) != 'running':
-            await sleep(1)
+            await sleep(5)
 
         # Add the looping here instead of the pubsub sal
         cl = None
@@ -378,7 +376,7 @@ def watchdog(job):
 
         while True:
             if str(service.model.data.status) != 'running':
-                await sleep(1)
+                await sleep(5)
                 continue
             if cl is None:
                 job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -391,17 +389,22 @@ def watchdog(job):
                 await cl.global_stream(queue)
             except asyncio.TimeoutError as e:
                 job.logger.error(e)
-                monitor(job)
+                await check_node(job)
                 cl = None
                 subscribed = None
             except OSError as e:
                 job.logger.error(e)
-                monitor(job)
+                await check_node(job)
                 cl = None
                 subscribed = None
             except RuntimeError as e:
                 job.logger.error(e)
-                monitor(job)
+                await check_node(job)
+                cl = None
+                subscribed = None
+            except Exception as e:
+                job.logger.error(traceback.format_exc())
+                await check_node(job)
                 cl = None
                 subscribed = None
 
@@ -450,6 +453,10 @@ def ork_handler(job):
 
 def start_vm(job, vm):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     if vm.model.data.status == 'running':
         asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=service._loop)
@@ -457,6 +464,10 @@ def start_vm(job, vm):
 
 def shutdown_vm(job, vm):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     if vm.model.data.status == 'running':
         asyncio.ensure_future(vm.executeAction('shutdown', context=job.context), loop=service._loop)
