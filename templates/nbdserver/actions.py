@@ -149,14 +149,22 @@ def monitor(job):
             j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
 
 
+def handle_messages(message):
+    pass
+
+
 def watchdog_handler(job):
     import asyncio
     loop = j.atyourservice.server.loop
     service = job.service
     if str(service.model.data.status) != 'running':
         return
+
     eof = job.model.args['eof']
     service = job.service
+    message = job.model.args.get('message')
+    job.logger.info('message: %s', message)
+
     if eof:
         vm_service = service.consumers['vm'][0]
         asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)

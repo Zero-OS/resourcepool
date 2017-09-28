@@ -10,10 +10,11 @@ struct Schema {
 
     container @3 :Text; # pointer to the parent service
     status @4: Status;
+    enabled @5: Bool;
 
     enum Status{
-        halted @0;
-        running @1;
-        unhealthy @2;
+        halted @0; # halted can be changed to running, or broken
+        running @1; # running can be changed to halted or broken
+        broken @2; # once the engine is in broken state, there is no going back
     }
 }
