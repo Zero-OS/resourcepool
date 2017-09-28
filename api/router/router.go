@@ -15,8 +15,8 @@ import (
 	"github.com/zero-os/0-orchestrator/api/node"
 	"github.com/zero-os/0-orchestrator/api/storagecluster"
 	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/zero-os/0-orchestrator/api/vdisk"
 	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
+	"github.com/zero-os/0-orchestrator/api/vdiskstorage/vdisk"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
