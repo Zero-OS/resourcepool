@@ -53,7 +53,7 @@ def save_config(job, vdisks=None):
             "storageClusterID": vdiskstore.model.data.blockCluster,
             "templateStorageClusterID": vdisk.model.data.templateStorageCluster or "",
             "tlogServerClusterID": service.name,
-            "slaveStorageClusterID": vdiskstore.model.data.slaveluster or "",
+            "slaveStorageClusterID": vdiskstore.model.data.slaveCluster or "",
         }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
