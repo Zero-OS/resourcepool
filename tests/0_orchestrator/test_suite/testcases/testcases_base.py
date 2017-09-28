@@ -123,7 +123,7 @@ class TestcasesBase(TestCase):
     def get_gateway_nic(self, nics_types):
         nics = []
         for nic in nics_types:
-            ip = '192.168.%i.1/24' % random.randint(1, 254)
+            ip = '192.168.%i.2/24' % random.randint(1, 254)
             if nic['type'] == 'vlan':
                 nic_data = {
                     "name": 'nic' + self.random_string(),
@@ -144,6 +144,10 @@ class TestcasesBase(TestCase):
                     "type": 'bridge',
                     "id": nic['bridge_name'],
                     "config": {"cidr": ip}
+                }
+            elif nic['type'] == 'default':
+                nic_data = {
+                    "type": "default"
                 }
 
             if nic['gateway']:

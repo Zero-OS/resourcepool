@@ -2,7 +2,6 @@ import random, time
 from testcases.testcases_base import TestcasesBase
 import unittest
 
-# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestGatewayAPICreation(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -221,7 +220,7 @@ class TestGatewayAPICreation(TestcasesBase):
         #. Bind a new container to vlan(1).
         #. Verify that this container has public access.
         """
-        bridge_name = self.random_string()
+        bridge_name = 'b' + self.random_string()
 
         nics_type = [{
             'type': 'bridge',
@@ -380,6 +379,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(nics[1]['dhcpserver']['hosts'][0]['macaddress'], interface[0]['hardwareaddr'])
         self.core0_client.client.container.terminate(int(uid))
 
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1102')
     def test010_create_gateway_httpproxy(self):
         """ GAT-132
         **Test Scenario:**
@@ -473,18 +473,15 @@ class TestGatewayAPICreation(TestcasesBase):
         #. Using core0_client try to request this service and make sure that u can reach the container
 
         """
-        self.lg.info(' [*] Create bridge (B1) on node (N0), should succeed with 201')
-        response, self.bridge_data = self.bridges_api.post_nodes_bridges(self.nodeid, networkMode='static', nat=True)
-        self.assertEqual(response.status_code, 201, response.content)
-        time.sleep(3)
+        
+        bridge_name = 'b' + self.random_string()
 
         self.lg.info(" [*] Create gateway with bridge and vlan as nics should succeed.")
-        
         nics_type = [{
             'type': 'bridge',
             'gateway': True,
             'dhcp': False,
-            'bridge_name': self.bridge_data['name'],
+            'bridge_name': bridge_name,
             'zerotierbridge': ''
 
         },
@@ -497,8 +494,14 @@ class TestGatewayAPICreation(TestcasesBase):
 
             }
         ]
+
         nics = self.get_gateway_nic(nics_types=nics_type)
-        
+
+        self.lg.info(' [*] Create bridge (B1) on node (N0), should succeed with 201')
+        setting = {"cidr": nics[0]['config']['gateway'] + '/24'}
+        response, self.bridge_data = self.bridges_api.post_nodes_bridges(self.nodeid, name=bridge_name, networkMode='static', nat=True, setting=setting)
+        self.assertEqual(response.status_code, 201, response.content)
+
         portforwards = [
             {
                 "srcport": 5000,
@@ -531,24 +534,25 @@ class TestGatewayAPICreation(TestcasesBase):
         container = self.core0_client.get_container_client(self.container_data['name'])
         self.assertTrue(container)
 
-        import ipdb ; ipdb.set_trace()
+        file_name = self.random_string()
 
         self.lg.info(" [*] Start any service in this container")
-        response = container.bash("echo test > test.txt").get()
-        self.assertEqual(response.state, "SUCCESS")
+        response = container.bash("echo test > {}.txt".format(file_name)).get()
+        self.assertEqual(response.state, "SUCCESS", response.stderr)
 
         container.bash("python3 -m http.server 5000")
-        time.sleep(3)
+        
+        time.sleep(5)
 
-        url = 'http://{}:5000/test.txt'.format(nics[0]['config']['cidr'][:-3])
+        url = 'http://{}:5000/{}.txt'.format(nics[0]['config']['cidr'][:-3], file_name)
 
         response = self.core0_client.client.bash('wget %s' % url).get()
-        self.assertEqual(response.state, "SUCCESS")
+        self.assertEqual(response.state, "SUCCESS", response.stderr)
 
-        response = self.core0_client.client.bash('ls | grep test.txt').get()
-        self.assertEqual(response.state, "SUCCESS")
+        response = self.core0_client.client.bash('ls | grep {}.txt'.format(file_name)).get()
+        self.assertEqual(response.state, "SUCCESS", response.stderr)
 
-
+    @unittest.skip('issue')
     def test012_create_two_gateways_zerotierbridge(self):
         """ GAT-134
         **Test Scenario:**
@@ -569,9 +573,9 @@ class TestGatewayAPICreation(TestcasesBase):
         self.lg.info(" [*] Create zerotier network.")
         nwid = self.create_zerotier_network()
 
-        self.lg.info(" [*] Create two Gws and link them with zerotier bridge.")
-        vlan1_id, vlan2_id = random.sample(range(1, 4096), 2)
+        time.sleep(10)
 
+        self.lg.info(" [*] Create two Gws and link them with zerotier bridge.")
         nics_type = [
             {
                 'type': 'bridge',
@@ -586,7 +590,6 @@ class TestGatewayAPICreation(TestcasesBase):
                 'dhcp': True,
                 'bridge_name': '',
                 'zerotierbridge': nwid
-
             }
         ]
 
@@ -636,6 +639,7 @@ class TestGatewayAPICreation(TestcasesBase):
                     'id': nics[1]['id'],
                     "hwaddr": nics[1]["dhcpserver"]["hosts"][0]["macaddress"],
                     'config': {"dhcp": True}}]
+
         response, self.container_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=c2_nics)
 
         self.assertEqual(response.status_code, 201)
@@ -650,7 +654,7 @@ class TestGatewayAPICreation(TestcasesBase):
         self.assertEqual(response.state, 'SUCCESS')
         self.assertNotIn("unreachable", response.stdout)
 
-# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
+
 class TestGatewayAPIUpdate(TestcasesBase):
     def setUp(self):
         super().setUp()

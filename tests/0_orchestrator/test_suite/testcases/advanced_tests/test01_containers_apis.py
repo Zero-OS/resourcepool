@@ -4,7 +4,6 @@ from urllib.request import urlopen
 import requests
 import json
 
-# @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/892')
 class TestcontaineridAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -241,7 +240,8 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info("Create container (C2) with (B0) with gateway same ip of bridge.")
         nics = [{"type": "bridge", "id": data_bridge_1['name'],
-                 "config": {"cidr": "192.122.2.3/24", "gateway": data_bridge_1['setting']['cidr'][:-3]},
+                 "config": {"cidr": data_bridge_1['setting']['cidr'][:-4] + '2/24', 
+                 "gateway": data_bridge_1['setting']['cidr'][:-3]},
                  "status": "up"}]
 
         response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
@@ -255,11 +255,11 @@ class TestcontaineridAPI(TestcasesBase):
         time.sleep(5)
 
         self.lg.info("Check that C1 can connect to internet, should fail.")
-        response = c1_client.bash("ping -w 5  8.8.8.8").get()
+        response = c1_client.bash("ping -w5  8.8.8.8").get()
         self.assertEqual(response.state, "ERROR", response.stdout)
 
-        self.lg.info("Check that C2 can connect to internet, should fail.")
-        response = c2_client.bash("ping -w 5 8.8.8.8").get()
+        self.lg.info("Check that C2 can connect to internet, should succeed.")
+        response = c2_client.bash("ping -w5 8.8.8.8").get()
         self.assertEqual(response.state, "SUCCESS", response.stdout)
 
         self.lg.info("Delete created bridge ")
@@ -361,12 +361,9 @@ class TestcontaineridAPI(TestcasesBase):
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-    @unittest.skip("https://github.com/g8os/resourcepool/issues/297")
     def test007_post_new_job_to_container_with_specs(self):
         """ GAT-097
-
-        *Test case for test create containers with open ports*
-
+        *Test case for test create containers with open specs*
         **Test Scenario:**
 
         #. Create containers C1 , should succeed
@@ -377,15 +374,16 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info("Create container C1, should succeed.")
         flist = "https://hub.gig.tech/dina_magdy/initprocess.flist"
         ## flist which have script which print environment varaibles and print stdin
-        Environmentvaraible = "MYVAR=%s" % self.rand_str()
+        environmentvaraible = "MYVAR=%s" % self.rand_str()
         stdin = self.rand_str()
         job_body = {
             'name': 'sh',
             'pwd': '/',
             'args': ["sbin/process_init"],
-            "environment": [Environmentvaraible],
+            "environment": [environmentvaraible],
             "stdin": stdin
         }
+        
         self.lg.info(" [*] Create container C1 with open port")
         response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, flist=flist)
         self.assertEqual(response_c1.status_code, 201)
@@ -393,19 +391,16 @@ class TestcontaineridAPI(TestcasesBase):
 
         c1_client = self.core0_client.get_container_client(data_c1['name'])
 
-        self.lg.info(' [*] Send post  nodes/{nodeid}/containers/containerid/jobs api request.')
-        response = self.containers_api.post_containers_containerid_jobs(self.nodeid, data_c1['name'],
-                                                                        job_body)
+        self.lg.info(' [*] post job to container')
+        response = self.containers_api.post_containers_containerid_jobs(self.nodeid, data_c1['name'], job_body)
         self.assertEqual(response.status_code, 202)
-        job_id = response.headers['Location'].split('/')[6]
-        self.assertTrue(self.core0_client.wait_on_container_job_update(data_c1['name'], job_id, 15, False))
-
+        
         self.lg.info("check that job created successfully with it's specs.")
         response = c1_client.bash("ls |grep  out.text").get()
         self.assertEqual(response.state, "SUCCESS")
         response = c1_client.bash("cat out.text | grep %s" % stdin).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get stdin correctly")
-        response = c1_client.bash("cat out.text | grep %s" % Environmentvaraible).get()
+        response = c1_client.bash("cat out.text | grep %s" % environmentvaraible).get()
         self.assertEqual(response.state, "SUCCESS", "job didn't get Env varaible  correctly")
 
     def test008_Create_containers_with_common_vlan(self):
