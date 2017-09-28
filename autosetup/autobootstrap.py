@@ -578,7 +578,7 @@ class OrchestratorInstaller:
 
         return True
 
-    def starter(self, email, organization):
+    def starter(self, email, organization, orchjwt):
         jobs = {}
         cn = self.node.containers.get(self.ctname)
 
@@ -605,7 +605,8 @@ class OrchestratorInstaller:
                 '--bind localhost:8080',
                 '--ays-url http://127.0.0.1:5000',
                 '--ays-repo orchestrator-server',
-                '--org "%s"' % organization
+                '--org "%s"' % organization,
+                '--jwt "%s"' % orchjwt
             ]
             jobs['orchestrator'] = cn.client.system(" ".join(arguments))
 
@@ -1006,7 +1007,11 @@ if __name__ == "__main__":
     installer.pre_starter()
 
     print("[+] hook: starter")
-    installer.starter(args.orchestrator_git_email, args.orchestrator_iyo_organization)
+    installer.starter(
+        args.orchestrator_git_email,
+        args.orchestrator_iyo_organization,
+        args.cluster_jwt
+    )
     installer.deploy(args.cluster_jwt)
 
     print("[+] hook: post-starter")
