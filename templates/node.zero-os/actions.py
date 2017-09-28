@@ -68,14 +68,6 @@ def getAddresses(job):
     return networkmap
 
 
-def isConfigured(node, name):
-    poolname = '{}_fscache'.format(name)
-    fscache_sp = node.find_persistance(poolname)
-    if fscache_sp is None:
-        return False
-    return bool(fscache_sp.mountpoint)
-
-
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -111,11 +103,16 @@ def monitor(job):
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
+    import asyncio
+    import time
 
     service = job.service
     config = get_configuration(service.aysrepo)
     token = get_jwt_token(job.service.aysrepo)
-    if service.model.actionsState['install'] != 'ok':
+    job.context['token'] = token
+
+    install_action = service.model.actionsState['install']
+    if install_action != 'ok' and install_action != 'error':
         return
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
@@ -124,22 +121,31 @@ def monitor(job):
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
         service.consume(healthcheck_service)
 
-    try:
-        node = Node.from_ays(service, token, timeout=15)
-        node.client.testConnectionAttempts = 0
-        state = node.client.ping()
-    except (RuntimeError, ConnectionError, redis.TimeoutError):
-        state = False
+    start = time.time()
+    while time.time() < start + 30:
+        try:
+            node = Node.from_ays(service, token, timeout=5)
+            node.client.testConnectionAttempts = 0
+            state = node.client.ping()
+        except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
+            err = error
+            state = False
+        if state:
+            break
+        time.sleep(1)
+    else:
+        print("Could not ping %s within 30 seconds due to %s" % (service.name, err))
+
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
 
     if state:
         service.model.data.status = 'running'
-        configured = isConfigured(node, service.name)
+        configured = node.is_configured(service.name)
         if not configured:
             job = service.getJob('install', args={})
             j.tools.async.wrappers.sync(job.execute())
-
-        job.context['token'] = token
+            for consumer in service.getConsumersRecursive():
+                consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
         statsdb_service = get_statsdb(service)
 
@@ -177,8 +183,9 @@ def monitor(job):
 
         # check network stability of  node with the rest of the nodes ! TODO
     else:
-        service.model.data.status = 'halted'
-        nodestatus.add_message('node', 'ERROR', 'Node is halted')
+        if service.model.data.status != 'rebooting':
+            service.model.data.status = 'halted'
+            nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
 
     service.saveAll()
@@ -218,27 +225,53 @@ def update_healthcheck(job, health_service, healthchecks):
 
 
 def reboot(job):
+    import time
+    import redis
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    token = get_jwt_token(job.service.aysrepo)
+    job.context['token'] = token
     service = job.service
+    service._recurring_tasks['monitor'].stop()
+    try:
+        start = time.time()
+        # Make sure any running monitor action finishes before we reboot
+        while time.time() < start + 60:
+            if not j.core.jobcontroller.db.jobs.list(
+                    actor='node.zero-os', action='monitor', state='running', service=service.name):
+                break
+            time.sleep(1)
+        else:
+            raise j.exceptions.RuntimeError('Failed to reboot node. Waiting for monitoring action for too long')
 
-    # Check if statsdb is installed on this node and stop it
-    statsdb_service = get_statsdb(service)
-    if statsdb_service and str(statsdb_service.parent) == str(job.service):
-        j.tools.async.wrappers.sync(statsdb_service.executeAction(
-            'stop', context=job.context))
-
-    # Chceck if stats_collector is installed on this node and stop it
-    stats_collector_service = get_stats_collector(service)
-    if stats_collector_service and stats_collector_service.model.data.status == 'running':
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'stop', context=job.context))
-
-    job.logger.info('reboot node {}'.format(service))
-    node = Node.from_ays(service, job.context['token'])
-    node.client.raw('core.reboot', {})
+        force_reboot = service.model.data.forceReboot
+        vms = service.consumers.get('vm') or []
+        for vm in vms:
+            if vm.model.data.status != 'halted':
+                if not force_reboot:
+                    raise j.exceptions.RuntimeError(
+                        'Failed to reboot node. Force reboot is not enabled and some vms are not halted')
+                else:
+                    j.tools.async.wrappers.sync(vm.executeAction(
+                        'shutdown', context=job.context))
+        service.model.data.status = 'rebooting'
+        job.logger.info('reboot node {}'.format(service))
+        node = Node.from_ays(service, job.context['token'])
+        node.client.raw('core.reboot', {})
+    finally:
+        start = time.time()
+        while time.time() < start + 10:
+            try:
+                node = Node.from_ays(service, token, timeout=5)
+                node.client.testConnectionAttempts = 0
+                state = node.client.ping()
+            except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError):
+                break
+            time.sleep(1)
+        else:
+             print("Could not wait within 10 seconds for node to reboot")
+        service._recurring_tasks['monitor'].start()
 
 
 def uninstall(job):
@@ -490,3 +523,13 @@ def vm_handler(job):
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
         shutdown_vm(job, vm)
+
+
+def processChange(job):
+    service = job.service
+    args = job.model.args
+    node_data = service.model.data.to_dict()
+    if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
+        service.model.data.forceReboot = args['forceReboot']
+        service.saveAll()
+

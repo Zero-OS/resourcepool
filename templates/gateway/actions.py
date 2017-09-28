@@ -331,8 +331,7 @@ def start(job):
 
     service = job.service
     container = service.producers.get('container')[0]
-    if str(container.model.data.status) == 'halted':
-        j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
 
     containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # setup resolv.conf
@@ -450,3 +449,15 @@ def setup_zerotierbridges(job):
 
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
+
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    if job.service.model.data.status != 'running':
+        return
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    start(job)
+
+

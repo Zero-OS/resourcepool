@@ -91,7 +91,7 @@ def get_disks(job, nodes):
 
         for node, disks in value.items():
             if len(disks) < diskpernode:
-                raise j.exceptions.Input("Not enough available disks on node {}".format(node))
+                raise j.exceptions.Input("Not enough available {} disks on node {}".format(key, node))
 
             # populate datadisks, metadisks based on their disk type
             if key == diskType:
@@ -451,8 +451,6 @@ def list_vdisks(job):
         cluster = StorageCluster.from_ays(service, job.context['token'])
         clusterconfig = cluster.get_config()
 
-        etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
-        etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
         cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
@@ -465,6 +463,7 @@ def list_vdisks(job):
 
 def monitor(job):
     import time
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -475,6 +474,10 @@ def monitor(job):
 
     if service.model.data.clusterType == "object":
         return
+
+    cluster = StorageCluster.from_ays(service, job.context['token'])
+    if service.model.data.status == 'ready' and not cluster.is_running():
+        cluster.start()
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:
