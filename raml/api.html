@@ -53075,8 +53075,16 @@ You need to specify the encryption key to be able to import it</p>
                         
                       
                     
+                      <h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2>
+<p>The vdisk storage does not exist</p>
+
+
+                      
+
+                      
+                    
                       <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
-<p>The vdisk storage does not exist or the image id doesn&#39;t exist on the specified FTP</p>
+<p>The image id doesn&#39;t exist on the specified FTP</p>
 
 
                       
@@ -53168,6 +53176,451 @@ the "Authorization" header</p>
       </div>
     
   </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__images__imageid_">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+        </a>
+
+        <span class="methods">
+          
+            <a href="#vdiskstorage__vdiskstorageid__images__imageid__get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_vdiskstorage__vdiskstorageid__images__imageid_" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images__imageid__get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Get detail about a vdisk image</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images__imageid__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete an vdisk image from the VdiskStorage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images__imageid__get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Get detail about a vdisk image</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b></b>
+                      
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images__imageid__get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>imageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Image with this id not found</p>
+
+
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/description" target="_blank">description</a></h2>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_securedby">
+                    
+                      
+                      <h1>Secured by </h1>
+
+                      
+
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images__imageid__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete an vdisk image from the VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b></b>
+                      
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images__imageid__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>imageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>Image has been deleted succefully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__delete_securedby">
+                    
+                      
+                      <h1>Secured by </h1>
+
+                      
+
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
 
 
 
@@ -53754,15 +54207,62 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>backupStoragecluster</strong>:
+  <strong>id</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
+<p>name of the vdisk. need to be unique</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
 
 
   
@@ -53848,79 +54348,6 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the vdisk in GiB</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>blocksize</strong>:
-
-  
-    <em>required (integer - default: 4096)
-    </em>
-  
-
-<p>blocksize in bytes</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>objectStoragecluster</strong>:
-
-  
-    <em>(string)
-    </em>
-  
-
-<p>the objectStoragecluster used for this vdisk&#39;s transaction logs</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>readOnly</strong>:
 
   
@@ -53944,64 +54371,15 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>id</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>name of the vdisk. need to be unique</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>templatevdisk</strong>:
+  <strong>imageId</strong>:
 
   
     <em>(string)
     </em>
   
 
-<p>Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
-You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename</p>
-<p>This property can only be used when the disk is of type boot.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>blockStoragecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
+<p>ID of the image to use in case you create a boot disk. The image need to be imported in the VdiskStorage where this vdisk is created
+See <code>/vdiskstorage/{vdiskstorageid}/images</code> to list all available images.</p>
 
 
   
@@ -54092,6 +54470,14 @@ You can ommit the netlocation to use storage server defined in the g8os eg. ardb
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2>
 <p>The storagecluster does not exist</p>
+
+
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Image not found</p>
 
 
                       
