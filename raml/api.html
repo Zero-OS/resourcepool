@@ -52883,55 +52883,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>export_name</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Name of the exported image on the ftp server</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>export_snapshot</strong>:
-
-  
-    <em>(string - default: default)
-    </em>
-  
-
-<p>Name of the snapshot of the exported image on the ftp server
-If not specified, defaults to &#39;default&#39;</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>encryptionKey</strong>:
 
   
@@ -52964,7 +52915,31 @@ You need to specify the encryption key to be able to import it</p>
     </em>
   
 
-<p>blocksize in bytes of the exported image. It can be different from the diskBlocksize</p>
+<p>block size in bytes of the exported image. It can be different from the disk block size</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportName</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Name of the exported image on the ftp server</p>
 
 
   
@@ -53029,30 +53004,6 @@ You need to specify the encryption key to be able to import it</p>
 
                             
                               <li>
-  <strong>image_name</strong>:
-
-  
-    <em>required (string - pattern: ^\w+$)
-    </em>
-  
-
-<p>Name to give to the image you are importing</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>url</strong>:
 
   
@@ -53084,14 +53035,63 @@ You need to specify the encryption key to be able to import it</p>
 
                             
                               <li>
-  <strong>diskBlocksize</strong>:
+  <strong>imageName</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+<p>Name to give to the image you are importing</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportSnapshot</strong>:
+
+  
+    <em>(string - default: default)
+    </em>
+  
+
+<p>Name of the snapshot of the exported image on the ftp server
+If not specified, defaults to &#39;default&#39;</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>diskBlockSize</strong>:
 
   
     <em>required (integer - default: 4096)
     </em>
   
 
-<p>blocksize in bytes of the image created in the local cluster</p>
+<p>block size in bytes of the image created in the local cluster</p>
 
 
   
