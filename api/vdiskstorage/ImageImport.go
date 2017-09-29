@@ -6,9 +6,9 @@ import (
 
 // Import an image into a vdiskstorage
 type ImageImport struct {
-	Name            string `json:"image_name" validate:"nonzero"`
-	ExportName      string `json:"export_name" validate:"nonzero"`
-	ExportSnapshot  string `json:"export_snapshot,omitempty"`
+	Name            string `json:"imageName" validate:"nonzero"`
+	ExportName      string `json:"exportName" validate:"nonzero"`
+	ExportSnapshot  string `json:"exportSnapshot,omitempty"`
 	Size            uint64 `json:"size" validate:"nonzero"`
 	DiskBlockSize   uint64 `json:"diskBlockSize" validate:"nonzero"`
 	ExportBlockSize uint64 `json:"exportBlockSize" validate:"nonzero"`
