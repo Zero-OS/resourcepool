@@ -6,14 +6,15 @@ import (
 
 // Import an image into a vdiskstorage
 type ImageImport struct {
-	Name           string `json:"image_name" validate:"nonzero"`
-	ExportName     string `json:"export_name" validate:"nonzero"`
-	ExportSnapshot string `json:"export_snapshot,omitempty"`
-	Size           uint64 `json:"size" validate:"nonzero"`
-	BlockSize      uint64 `json:"blockSize" validate:"nonzero"`
-	URL            string `json:"url" validate:"nonzero"`
-	EncryptionKey  string `json:"encryptionKey,omitempty"`
-	Overwrite      bool   `json:"overwrite,omitempty"`
+	Name            string `json:"image_name" validate:"nonzero"`
+	ExportName      string `json:"export_name" validate:"nonzero"`
+	ExportSnapshot  string `json:"export_snapshot,omitempty"`
+	Size            uint64 `json:"size" validate:"nonzero"`
+	DiskBlockSize   uint64 `json:"diskBlockSize" validate:"nonzero"`
+	ExportBlockSize uint64 `json:"exportBlockSize" validate:"nonzero"`
+	URL             string `json:"url" validate:"nonzero"`
+	EncryptionKey   string `json:"encryptionKey,omitempty"`
+	Overwrite       bool   `json:"overwrite,omitempty"`
 }
 
 func (s ImageImport) Validate() error {

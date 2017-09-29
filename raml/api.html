@@ -52883,30 +52883,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>image_name</strong>:
-
-  
-    <em>required (string - pattern: ^\w+$)
-    </em>
-  
-
-<p>Name to give to the image you are importing</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>export_name</strong>:
 
   
@@ -52956,6 +52932,55 @@ If not specified, defaults to &#39;default&#39;</p>
 
                             
                               <li>
+  <strong>encryptionKey</strong>:
+
+  
+    <em>(string)
+    </em>
+  
+
+<p>In case the image has been encrypted during upload.
+You need to specify the encryption key to be able to import it</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportBlockSize</strong>:
+
+  
+    <em>required (integer - default: 131072)
+    </em>
+  
+
+<p>blocksize in bytes of the exported image. It can be different from the diskBlocksize</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>size</strong>:
 
   
@@ -52980,14 +53005,38 @@ If not specified, defaults to &#39;default&#39;</p>
 
                             
                               <li>
-  <strong>blocksize</strong>:
+  <strong>overwrite</strong>:
 
   
-    <em>required (integer - default: 4096)
+    <em>(boolean)
     </em>
   
 
-<p>blocksize in bytes</p>
+<p>overwrite an images if it already exist in the vdisk storage</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>image_name</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+<p>Name to give to the image you are importing</p>
 
 
   
@@ -53035,39 +53084,14 @@ If not specified, defaults to &#39;default&#39;</p>
 
                             
                               <li>
-  <strong>encryptionKey</strong>:
+  <strong>diskBlocksize</strong>:
 
   
-    <em>(string)
+    <em>required (integer - default: 4096)
     </em>
   
 
-<p>In case the image has been encrypted during upload.
-You need to specify the encryption key to be able to import it</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>overwrite</strong>:
-
-  
-    <em>(boolean)
-    </em>
-  
-
-<p>overwrite an images if it already exist in the vdisk storage</p>
+<p>blocksize in bytes of the image created in the local cluster</p>
 
 
   

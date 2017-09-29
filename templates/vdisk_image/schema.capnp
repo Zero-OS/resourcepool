@@ -1,10 +1,12 @@
-@0xaaa9694b64fdd6fa;
+@0xf355af400c5e02c5;
 
 struct Schema {
     ftpURL @0 :Text; # FTP server url of the image you want to import
     size @1 :UInt64;
-    blocksize @2 :UInt32=131072;
-    vdiskstorage @3 :Text; # parent
-    exportName @4 :Text;
-    exportSnapshot @5 :Text;
+    imageBlockSize @2 :UInt32=131072;
+    diskBlockSize @3 :UInt32=4096;
+    vdiskstorage @4 :Text; # parent
+    exportName @5 :Text;
+    exportSnapshot @6 :Text;
+    encryptionKey @7 :Text;
 }

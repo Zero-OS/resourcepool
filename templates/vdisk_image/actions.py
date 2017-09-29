@@ -10,10 +10,7 @@ def install(job):
 
     save_config(job)
 
-    url = service.model.data.ftpURL.split("#")[0]
-    parsed_url = urlparse(url)
-    metadata = os.path.basename(parsed_url.path)
-    url = parsed_url.geturl().split(metadata)[0]
+    url = service.model.data.ftpURL
 
     snapshotID = "{}_{}".format(
         service.model.data.exportName,
@@ -30,10 +27,15 @@ def install(job):
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
                --config {dialstrings} \
+               --blocksize {blocksize} \
                --storage {ftpurl}".format(vdiskid=service.name,
-                                          dialstrings=etcd_cluster.dialstrings,
                                           snapshotID=snapshotID,
+                                          blocksize=service.model.data.imageBlocksize,
+                                          dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
+
+        if service.model.data.encryptionKey:
+            cmd += ' --key {}'.format(service.model.data.encryptionKey)
 
         job.logger.info("import image {} from {} as {}".format(snapshotID, url, service.name))
         job.logger.info(cmd)
@@ -104,9 +106,8 @@ def save_config(job):
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     # Save base config
-    template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
     base_config = {
-        "blockSize": service.model.data.blocksize,
+        "blockSize": service.model.data.diskBlocksize,
         "readOnly": True,
         "size": service.model.data.size,
         "type": "boot",
@@ -130,9 +131,13 @@ def save_config(job):
     # push nbd config to etcd
     config = {
         "storageClusterID": vdiskstore.model.data.blockCluster,
+        "templateStorageClusterID": vdiskstore.model.data.blockCluster
     }
     if vdiskstore.model.data.objectCluster:
-        config["tlogServerClusterID"] = "temp"
+        config["tlogServerClusterID"] = vdiskstore.model.data.objectCluster
+        if vdiskstore.model.data.slaveCluster:
+            config['slaveStorageClusterID'] = vdiskstore.model.data.slaveCluster
+
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 

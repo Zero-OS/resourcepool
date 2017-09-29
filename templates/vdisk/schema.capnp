@@ -1,4 +1,4 @@
-@0xb238d2ae3aa01ee0;
+@0xe3c0cb7ad515908e;
 
 struct Schema {
     size @0 :UInt64;
@@ -10,7 +10,7 @@ struct Schema {
     vdiskstorage @6 :Text;
     timestamp @7: UInt64;
     backupUrl @8 :Text;
-    
+
     enum Status {
         halted @0;
         running @1;

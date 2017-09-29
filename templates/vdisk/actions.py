@@ -99,39 +99,6 @@ def save_config(job):
     etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    if service.model.data.templateVdisk:
-        template = urlparse(service.model.data.templateVdisk).path.lstrip('/')
-        base_config = {
-            "blockSize": service.model.data.blocksize,
-            "readOnly": service.model.data.readOnly,
-            "size": service.model.data.size,
-            "type": "cache" if service.model.data.type == "tmp" else str(service.model.data.type),
-        }
-        yamlconfig = yaml.safe_dump(base_config, default_flow_style=False)
-
-        etcd.put(key="%s:vdisk:conf:static" % template, value=yamlconfig)
-
-        # Save root cluster
-        templatestorageEngine = get_templatecluster(job)
-        templateclusterconfig = {
-            'servers': [{'address': templatestorageEngine}],
-        }
-        yamlconfig = yaml.safe_dump(templateclusterconfig, default_flow_style=False)
-        templateclusterkey = hashlib.md5(templatestorageEngine.encode("utf-8")).hexdigest()
-
-        templateStorageclusterId = str(templateclusterkey)
-        service.model.data.templateStorageCluster = templateStorageclusterId
-        service.saveAll()
-
-        etcd.put(key="%s:cluster:conf:storage" % templateclusterkey, value=yamlconfig)
-
-        #  Save nbd template config
-        config = {
-            "storageClusterID": templateStorageclusterId,
-        }
-        yamlconfig = yaml.safe_dump(config, default_flow_style=False)
-        etcd.put(key="%s:vdisk:conf:storage:nbd" % template, value=yamlconfig)
-
     # Save base config
     base_config = {
         "blockSize": service.model.data.blocksize,
@@ -157,10 +124,14 @@ def save_config(job):
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": vdiskstore.model.data.blockCluster
+        "storageClusterID": vdiskstore.model.data.blockCluster,
+        "templateStorageClusterID": vdiskstore.model.data.blockCluster
     }
     if vdiskstore.model.data.objectCluster:
-        config["tlogServerClusterID"] = "temp"
+        config["tlogServerClusterID"] = vdiskstore.model.data.objectCluster
+        if vdiskstore.model.data.slaveCluster:
+            config['slaveStorageClusterID'] = vdiskstore.model.data.slaveCluster
+
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 

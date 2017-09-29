@@ -51,12 +51,14 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	// execute blueprint
 	bp := make(map[string]interface{})
 	bp[fmt.Sprintf("vdisk_image__%s", imageImport.Name)] = map[string]interface{}{
-		"ftpURL":         imageImport.URL,
-		"size":           imageImport.Size,
-		"blocksize":      imageImport.BlockSize,
-		"vdiskstorage":   vdiskStorageID,
-		"exportName":     imageImport.ExportName,
-		"exportSnapshot": imageImport.ExportSnapshot,
+		"ftpURL":          imageImport.URL,
+		"size":            imageImport.Size,
+		"diskBlockSize":   imageImport.DiskBlockSize,
+		"exportBlockSize": imageImport.ExportBlockSize,
+		"vdiskstorage":    vdiskStorageID,
+		"exportName":      imageImport.ExportName,
+		"exportSnapshot":  imageImport.ExportSnapshot,
+		"encryptionKey":   imageImport.EncryptionKey,
 	}
 	bp["actions"] = []tools.ActionBlock{{
 		Action:  "install",
@@ -76,7 +78,7 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Location", fmt.Sprintf("/vdiskstorage/%s/images/%s", vdiskStorageID, imageImport.Name))
 	w.WriteHeader(http.StatusCreated)
 	image := Image{
-		Blocksize: imageImport.BlockSize,
+		Blocksize: imageImport.DiskBlockSize,
 		Name:      imageImport.Name,
 		Size:      imageImport.Size,
 	}
