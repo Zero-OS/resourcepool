@@ -21,13 +21,14 @@ import (
 
 func main() {
 	var (
-		debugLogging  bool
-		bindAddr      string
-		aysURL        string
-		aysRepo       string
-		organization  string
-		jwt           string
-		jwtProvider   *tools.JWTProvider
+		debugLogging bool
+		bindAddr     string
+		aysURL       string
+		aysRepo      string
+		organization string
+		jwt          string
+		jwtProvider  *tools.JWTProvider
+		development  bool
 	)
 	app := cli.NewApp()
 	app.Version = "1.1.0-beta-1"
@@ -66,6 +67,11 @@ func main() {
 			Usage:       "Refreshable Itsyouonline jwt to access AYS server and zero-os nodes",
 			Destination: &jwt,
 		},
+		cli.BoolFlag{
+			Name:        "dev",
+			Usage:       "Enable development mode",
+			Destination: &development,
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -84,8 +90,12 @@ func main() {
 			log.Fatalln(err.Error())
 		}
 
-		if jwtProvider, err = tools.NewJWTProvider(jwt); err != nil {
-			log.Fatalln(err.Error())
+		if development {
+			jwtProvider = tools.NewDevelopmentJWTProvider()
+		} else {
+			if jwtProvider, err = tools.NewJWTProvider(jwt); err != nil {
+				log.Fatalln(err.Error())
+			}
 		}
 
 		return nil
