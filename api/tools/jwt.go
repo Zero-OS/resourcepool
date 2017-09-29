@@ -5,25 +5,34 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 	"sync"
+	"time"
 )
 
 type JWTProvider struct {
-	jwt		string
-	updateLock	*sync.Mutex
-	expires		int64
+	jwt        string
+	updateLock *sync.Mutex
+	expires    int64
 }
 
 func NewJWTProvider(jwt string) (*JWTProvider, error) {
 	jp := new(JWTProvider)
 	jp.jwt = jwt
 	jp.expires = 0
-        jp.updateLock = new(sync.Mutex)
+	jp.updateLock = new(sync.Mutex)
+
 	if err := jp.doRefreshToken(); err != nil {
 		return nil, err
 	}
 	return jp, nil
+}
+
+func NewDevelopmentJWTProvider() *JWTProvider {
+	jp := new(JWTProvider)
+	jp.expires = 0
+	jp.updateLock = new(sync.Mutex)
+
+	return jp
 }
 
 func (jp *JWTProvider) doRefreshToken() error {
@@ -80,7 +89,7 @@ func (jp *JWTProvider) refreshToken() (string, error) {
 
 func (jp *JWTProvider) GetJWT() (string, error) {
 	now := time.Now().Unix()
-	if rem := jp.expires - now; rem < 300{
+	if rem := jp.expires - now; rem < 300 {
 		return jp.refreshToken()
 	}
 	return jp.jwt, nil
