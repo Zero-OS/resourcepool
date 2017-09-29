@@ -1201,17 +1201,17 @@ ImageImport:
   description: |
     Import an image into a vdiskstorage
   properties:
-    image_name:
+    imageName:
       type: string
       description: Name to give to the image you are importing
       required: true
       pattern: ^\w+$
-    export_name:
+    exportName:
       type: string
       required: true
       description: |
         Name of the exported image on the ftp server
-    export_snapshot:
+    exportSnapshot:
       type: string
       required: false
       description: |
