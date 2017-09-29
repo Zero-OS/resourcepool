@@ -36,14 +36,21 @@ func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			var image Image
-			if err := json.Unmarshal(service.Data, &image); err != nil {
+			var tmp struct {
+				Name      string `json:"name" validate:"nonzero"`
+				Blocksize uint64 `json:"diskBlockSize" validate:"nonzero"`
+				Size      uint64 `json:"size" validate:"nonzero"`
+			}
+			if err := json.Unmarshal(service.Data, &tmp); err != nil {
 				errs[i] = err
 				return
 			}
 
-			image.Name = serviceData.Name
-			images[i] = image
+			images[i] = Image{
+				Name:      serviceData.Name,
+				Blocksize: tmp.Blocksize,
+				Size:      tmp.Size,
+			}
 
 		}(i, &serviceData)
 	}
