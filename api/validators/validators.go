@@ -177,19 +177,11 @@ func ValidateIpInRange(cidr string, ip string) error {
 	return fmt.Errorf("%v: ip is not in valid range for cidr %v ", ip, cidr)
 }
 
-func ValidateVdisk(vtype string, tlog string, template string, size int, backup string) error {
+func ValidateVdisk(vtype string, template string, size int) error {
 	if template != "" {
 		if vtype != "boot" {
 			return fmt.Errorf("Vdisks of type %v do not have template support", vtype)
 		}
-	}
-
-	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
-		return fmt.Errorf("Vdisks of type %v can't be redundant", vtype)
-	}
-
-	if backup != "" && tlog == "" {
-		return fmt.Errorf("Tlog storage cluster is required for vdisk backup")
 	}
 
 	if size < 512 {
@@ -201,6 +193,15 @@ func ValidateVdisk(vtype string, tlog string, template string, size int, backup 
 	}
 	return nil
 }
+
+func ValidateVdiskStorage(tlog string, backup string) error {
+	if backup != "" && tlog == "" {
+		return fmt.Errorf("Tlog storage cluster is required for vdisk backup")
+	}
+	return nil
+
+}
+
 
 func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	if cidr1 == "" || cidr2 == "" {

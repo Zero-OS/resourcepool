@@ -7,12 +7,10 @@ struct Schema {
     templateVdisk @3 :Text; # in case it's a copy of another vdisk
     readOnly @4 :Bool;
     status @5 :Status;
-    blockStoragecluster @6 :Text; # consume
-    backupStoragecluster @7 :Text; # consume
-    timestamp @8: UInt64;
-    templateStorageCluster @9 :Text;
-    objectStoragecluster @10 :Text; # consume
-    backupUrl @11 :Text;
+    vdiskstorage @6 :Text;
+    timestamp @7: UInt64;
+    templateStorageCluster @8 :Text;
+    backupUrl @9 :Text;
     enum Status {
         halted @0;
         running @1;

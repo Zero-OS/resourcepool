@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
+
 	"net/http"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -14,12 +16,15 @@ import (
 func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	var reqBody VdiskCreate
+	var vdiskstore vdiskstorage.VdiskStorage
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
+
+	// get vdiskstorage
 
 	// validate request
 	if err := reqBody.Validate(); err != nil {
@@ -38,36 +43,32 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err = aysClient.ServiceExists("storage_cluster", reqBody.BlockStoragecluster, api.AysRepo)
-	if err != nil {
-		errmsg := fmt.Sprintf("error getting storage cluster service by name %s", reqBody.BlockStoragecluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	// get vdisk service
+	service, resp, err := aysClient.Ays.GetServiceByName(reqBody.VdiskStorage, "vdiskstorage", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting vdiskstorage %s service", reqBody.VdiskStorage)) {
 		return
 	}
-	if !exists {
-		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("Storagecluster with name %s doesn't exists", reqBody.BlockStoragecluster), "")
+	// unmarshal service data
+	if err := json.Unmarshal(service.Data, &vdiskstore); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "error unmarshaling vdiskstorage service data")
 		return
 	}
 
 	// Create the blueprint
 	bp := struct {
-		Size                 int    `yaml:"size" json:"size"`
-		BlockSize            int    `yaml:"blocksize" json:"blocksize"`
-		TemplateVdisk        string `yaml:"templateVdisk" json:"templateVdisk"`
-		ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
-		Type                 string `yaml:"type" json:"type"`
-		BlockStoragecluster  string `yaml:"blockStoragecluster" json:"blockStoragecluster"`
-		ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
-		BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
+		Size          int    `yaml:"size" json:"size"`
+		BlockSize     int    `yaml:"blocksize" json:"blocksize"`
+		TemplateVdisk string `yaml:"templateVdisk" json:"templateVdisk"`
+		ReadOnly      bool   `yaml:"readOnly" json:"readOnly"`
+		Type          string `yaml:"type" json:"type"`
+		VdiskStorage  string `yaml:"vdiskstorage" json:"vdiskstorage"`
 	}{
-		Size:                 reqBody.Size,
-		BlockSize:            reqBody.Blocksize,
-		TemplateVdisk:        reqBody.Templatevdisk,
-		ReadOnly:             reqBody.ReadOnly,
-		Type:                 string(reqBody.Vdisktype),
-		BlockStoragecluster:  reqBody.BlockStoragecluster,
-		ObjectStoragecluster: reqBody.ObjectStoragecluster,
-		BackupStoragecluster: reqBody.BackupStoragecluster,
+		Size:          reqBody.Size,
+		BlockSize:     reqBody.Blocksize,
+		TemplateVdisk: reqBody.Templatevdisk,
+		ReadOnly:      reqBody.ReadOnly,
+		Type:          string(reqBody.Vdisktype),
+		VdiskStorage:  reqBody.VdiskStorage,
 	}
 
 	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)

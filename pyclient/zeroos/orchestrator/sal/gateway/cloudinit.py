@@ -32,7 +32,7 @@ class CloudInit:
                 id='cloudinit.{}'.format(self.container.name))
 
         start = time.time()
-        while time.time() + 10 > start:
+        while time.time() < start + 10:
             if self.is_running():
                 return
             time.sleep(0.5)

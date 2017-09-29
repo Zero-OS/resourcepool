@@ -31,7 +31,7 @@ type VdisksInterface interface { // ResizeVdisk is the handler for POST /vdisks/
 }
 
 // VdisksInterfaceRoutes is routing for /vdisks root endpoint
-func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface, org string) {
+func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface) {
 	r.HandleFunc("/vdisks/{vdiskid}/resize", i.ResizeVdisk).Methods("POST")
 	r.HandleFunc("/vdisks/{vdiskid}/rollback", i.RollbackVdisk).Methods("POST")
 	r.HandleFunc("/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
