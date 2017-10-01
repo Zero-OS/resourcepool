@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
+
 	"github.com/gorilla/mux"
 
 	"github.com/zero-os/0-orchestrator/api/tools"
@@ -17,8 +19,11 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	var reqBody VdiskRollback
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]
-	aysClient := tools.GetAysConnection(r, api)
-
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
@@ -42,8 +47,21 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
 		return
 	}
+
 	// Make sure the disk is attached to a tlogStoragecluster
-	if disk.ObjectStoragecluster == "" {
+	serv, resp, err = aysClient.Ays.GetServiceByName(disk.Vdiskstorage, "vdiskstorage", api.AysRepo, nil, nil)
+
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("rollback vdisk %s", vdiskID)) {
+		return
+	}
+
+	var vdiskstorage vdiskstorage.VdiskStorage
+	if err := json.Unmarshal(serv.Data, &vdiskstorage); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Vdisk")
+		return
+	}
+
+	if vdiskstorage.ObjectCluster == "" {
 		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a Object Cluster", vdiskID)
 		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
 		return

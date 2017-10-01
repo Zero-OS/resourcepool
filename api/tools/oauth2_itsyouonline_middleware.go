@@ -89,7 +89,7 @@ func (om *Oauth2itsyouonlineMiddleware) Handler(next http.Handler) http.Handler 
 		if om.describedBy == "queryParameters" {
 			accessToken = r.URL.Query().Get(om.field)
 		} else if om.describedBy == "headers" {
-			accessToken = r.Header.Get(om.field)
+			accessToken = strings.Trim(strings.TrimPrefix(strings.TrimPrefix(r.Header.Get(om.field), "bearer"), "Bearer"), " ")
 		}
 		if accessToken == "" {
 			w.WriteHeader(401)
@@ -159,8 +159,7 @@ func (om *Oauth2itsyouonlineMiddleware) validExpiration(claims jwt.MapClaims) er
 
 // gets a valid jwt claims, otherwise return an error
 func GetJWTClaim(tokenStr string) (jwt.MapClaims, error) {
-	jwtStr := strings.TrimSpace(strings.TrimPrefix(tokenStr, "Bearer"))
-	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.SigningMethodES384 {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}

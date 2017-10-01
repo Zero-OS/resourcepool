@@ -1,8 +1,8 @@
 package node
 
 import (
-	"gopkg.in/validator.v2"
 	"github.com/zero-os/0-orchestrator/api/tools"
+	"gopkg.in/validator.v2"
 )
 
 type GetGW struct {
@@ -21,7 +21,7 @@ type GW struct {
 	Portforwards []PortForward `json:"portforwards,omitempty" yaml:"portforwards,omitempty"`
 }
 
-func (s GW) Validate(aysClient tools.AYStool, repoName string) error {
+func (s GW) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, proxy := range s.Httpproxies {
 		if err := proxy.Validate(); err != nil {
 			return err

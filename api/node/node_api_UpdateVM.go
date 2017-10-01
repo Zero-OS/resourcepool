@@ -13,7 +13,11 @@ import (
 // UpdateVM is the handler for PUT /nodes/{nodeid}/vms/{vmid}
 // Updates the VM
 func (api *NodeAPI) UpdateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VMUpdate
 
 	// decode request

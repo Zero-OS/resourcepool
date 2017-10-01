@@ -48,11 +48,11 @@ def save_config(job, vdisks=None):
     etcd.put(key="%s:cluster:conf:tlog" % service.name, value=yamlconfig)
 
     for vdisk in vdisks:
+        vdiskstore = vdisk.parent
         config = {
-            "storageClusterID": vdisk.model.data.blockStoragecluster,
-            "templateStorageClusterID": vdisk.model.data.templateStorageCluster or "",
+            "storageClusterID": vdiskstore.model.data.blockCluster,
             "tlogServerClusterID": service.name,
-            "slaveStorageClusterID": vdisk.model.data.backupStoragecluster or "",
+            "slaveStorageClusterID": vdiskstore.model.data.slaveCluster or "",
         }
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
@@ -80,13 +80,14 @@ def install(job):
 
     backup = False
     for vdiskservice in vdisks:
-        objectcluster = vdiskservice.model.data.objectStoragecluster
+        vdiskstore = vdiskservice.parent
+        objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
             _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
             config['storageClusters'].add(objectcluster)
             config['data-shards'] += data_shards
             config['parity-shards'] += parity_shards
-            if vdiskservice.model.data.backupStoragecluster:
+            if vdiskstore.model.data.slaveCluster:
                 backup = True
 
     if not config['storageClusters']:

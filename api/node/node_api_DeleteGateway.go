@@ -10,7 +10,11 @@ import (
 // DeleteGateway is the handler for DELETE /nodes/{nodeid}/gws/{gwname}
 // Delete gateway instance
 func (api *NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
 

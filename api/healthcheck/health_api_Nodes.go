@@ -12,7 +12,11 @@ import (
 // ListNodesHealth is the handler for GET /health/nodes
 // List NodesHealth
 func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	queryParams := map[string]interface{}{
 		"fields": "hostname,id",
 	}

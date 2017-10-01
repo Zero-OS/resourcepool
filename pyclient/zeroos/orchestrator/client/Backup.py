@@ -11,17 +11,23 @@ class Backup(object):
     """
 
     @staticmethod
-    def create(name, snapshot, url):
+    def create(meta, name, snapshot, timestamp, type, url):
         """
+        :type meta: dict
         :type name: str
         :type snapshot: str
+        :type timestamp: int
+        :type type: str
         :type url: str
         :rtype: Backup
         """
 
         return Backup(
+            meta=meta,
             name=name,
             snapshot=snapshot,
+            timestamp=timestamp,
+            type=type,
             url=url,
         )
 
@@ -34,6 +40,17 @@ class Backup(object):
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
+
+        property_name = 'meta'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [dict]
+            try:
+                self.meta = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'name'
         val = data.get(property_name)
@@ -52,6 +69,28 @@ class Backup(object):
             datatypes = [str]
             try:
                 self.snapshot = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'timestamp'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.timestamp = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'type'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.type = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

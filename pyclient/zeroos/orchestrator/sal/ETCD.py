@@ -16,6 +16,23 @@ class EtcdCluster:
         self.mgmtdialstrings = mgmtdialstrings
         self._ays = None
         self.logger = logger if logger else default_logger
+        self._client = None
+        self._connect()
+
+    def _connect(self):
+        dialstrings = self.mgmtdialstrings.split(",")
+        for dialstring in dialstrings:
+            host, port = dialstring.split(":")
+            try:
+                self._client = etcd3.client(host=host, port=port, timeout=5)
+                self._client.status()
+                return # connection is valid
+            except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as err:
+                self._client = None
+                self.logger.error("Could not connect to etcd on %s:%s : %s" % (host, port, str(err)))
+
+        if self._client is None:
+            raise RuntimeError("can't connect to etcd on %s" % self.mgmtdialstrings)
 
     @classmethod
     def from_ays(cls, service, password=None, logger=None):
@@ -39,19 +56,21 @@ class EtcdCluster:
             logger=logger
         )
 
-    def put(self, key, value):
-        dialstrings = self.mgmtdialstrings.split(",")
-        for dialstring in dialstrings:
-            host, port = dialstring.split(":")
-            try:
-                etcd = etcd3.client(host=host, port=port)
-                etcd.put(key, value)
-                break
-            except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as e:
-                self.logger.error("Could not connect to etcd on %s:%s" % (host, port))
-        else:
-            raise RuntimeError("etcd cluster %s has now running etcd servers" % self.name)
+    # TODO: replace code duplication with decorator ?
 
+    def put(self, key, value):
+        try:
+            self._client.put(key, value)
+        except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError):
+            self._connect()
+            self.put(key, value)
+
+    def delete(self, key):
+        try:
+            self._client.delete(key)
+        except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError):
+            self._connect()
+            self.delete(key)
 
 class ETCD:
     """etced server"""
@@ -125,6 +144,14 @@ class ETCD:
             continue
 
         raise RuntimeError('failed to stop etcd.')
+
+    def is_running(self):
+        jobID = "etcd.{}".format(self.name)
+        try:
+            self.container.client.job.list(jobID)
+        except RuntimeError:
+            return False
+        return True
 
     def put(self, key, value):
         if value.startswith("-"):

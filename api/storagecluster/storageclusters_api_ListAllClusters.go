@@ -11,7 +11,11 @@ import (
 // ListAllClusters is the handler for GET /storageclusters
 // List all running clusters
 func (api *StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	respBody := []string{}
 	type data struct {
 		Label string `json:"label"`
