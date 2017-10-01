@@ -1,84 +1,120 @@
 """
-Auto-generated class for VdiskCreate
+Auto-generated class for ImageImport
 """
-from .EnumVdiskCreateType import EnumVdiskCreateType
 
 from . import client_support
 
 
-class VdiskCreate(object):
+class ImageImport(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(blocksize, id, size, type, imageId=None, readOnly=None):
+    def create(diskBlockSize, exportBlockSize, exportName, imageName, size, url, encryptionKey=None, exportSnapshot=None, overwrite=None):
         """
-        :type blocksize: int
-        :type id: str
-        :type imageId: str
-        :type readOnly: bool
+        :type diskBlockSize: int
+        :type encryptionKey: str
+        :type exportBlockSize: int
+        :type exportName: str
+        :type exportSnapshot: str
+        :type imageName: str
+        :type overwrite: bool
         :type size: int
-        :type type: EnumVdiskCreateType
-        :rtype: VdiskCreate
+        :type url: str
+        :rtype: ImageImport
         """
 
-        return VdiskCreate(
-            blocksize=blocksize,
-            id=id,
-            imageId=imageId,
-            readOnly=readOnly,
+        return ImageImport(
+            diskBlockSize=diskBlockSize,
+            encryptionKey=encryptionKey,
+            exportBlockSize=exportBlockSize,
+            exportName=exportName,
+            exportSnapshot=exportSnapshot,
+            imageName=imageName,
+            overwrite=overwrite,
             size=size,
-            type=type,
+            url=url,
         )
 
     def __init__(self, json=None, **kwargs):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'VdiskCreate'
+        class_name = 'ImageImport'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'blocksize'
+        property_name = 'diskBlockSize'
         val = data.get(property_name)
         if val is not None:
             datatypes = [int]
             try:
-                self.blocksize = client_support.val_factory(val, datatypes)
+                self.diskBlockSize = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'id'
+        property_name = 'encryptionKey'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.id = client_support.val_factory(val, datatypes)
+                self.encryptionKey = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+
+        property_name = 'exportBlockSize'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.exportBlockSize = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'imageId'
+        property_name = 'exportName'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.imageId = client_support.val_factory(val, datatypes)
+                self.exportName = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'exportSnapshot'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.exportSnapshot = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
-        property_name = 'readOnly'
+        property_name = 'imageName'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.imageName = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'overwrite'
         val = data.get(property_name)
         if val is not None:
             datatypes = [bool]
             try:
-                self.readOnly = client_support.val_factory(val, datatypes)
+                self.overwrite = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
@@ -93,12 +129,12 @@ class VdiskCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'type'
+        property_name = 'url'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [EnumVdiskCreateType]
+            datatypes = [str]
             try:
-                self.type = client_support.val_factory(val, datatypes)
+                self.url = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
