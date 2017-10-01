@@ -148,12 +148,24 @@ def monitor(job):
         else:
             j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
 
+def ardb_message(job, message):
+    status = message['status']
+    # do we need to check the status ?
 
-def handle_messages(message):
-    pass
+
+def handle_messages(job, message):
+    job.logger.info('processing nbdserver message "%s"', message)
+    switch = {
+        'ardb': ardb_message,
+    }
+
+    handler = switch.get(message['subject'])
+    if handler is not None:
+        return handler(job, message)
 
 
 def watchdog_handler(job):
+    """ {"status":422,"subject":"ardb","data":{"address":"172.17.0.255:2000","db":0,"type":"primary","vdiskID":"vd6"}}"""
     import asyncio
     loop = j.atyourservice.server.loop
     service = job.service
@@ -163,7 +175,12 @@ def watchdog_handler(job):
     eof = job.model.args['eof']
     service = job.service
     message = job.model.args.get('message')
+    level = job.model.args.get('level')
     job.logger.info('message: %s', message)
+    if level == 20: #json message
+        return handle_messages(job,
+            j.data.serializer.json.loads(message)
+        )
 
     if eof:
         vm_service = service.consumers['vm'][0]
