@@ -1,43 +1,52 @@
 """
-Auto-generated class for VdiskListItem
+Auto-generated class for VdiskStorage
 """
-from .EnumVdiskListItemStatus import EnumVdiskListItemStatus
-from .EnumVdiskListItemType import EnumVdiskListItemType
 
 from . import client_support
 
 
-class VdiskListItem(object):
+class VdiskStorage(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(id, status, type, vdiskstorage):
+    def create(blockCluster, id, objectCluster=None, slaveCluster=None):
         """
+        :type blockCluster: str
         :type id: str
-        :type status: EnumVdiskListItemStatus
-        :type type: EnumVdiskListItemType
-        :type vdiskstorage: str
-        :rtype: VdiskListItem
+        :type objectCluster: str
+        :type slaveCluster: str
+        :rtype: VdiskStorage
         """
 
-        return VdiskListItem(
+        return VdiskStorage(
+            blockCluster=blockCluster,
             id=id,
-            status=status,
-            type=type,
-            vdiskstorage=vdiskstorage,
+            objectCluster=objectCluster,
+            slaveCluster=slaveCluster,
         )
 
     def __init__(self, json=None, **kwargs):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'VdiskListItem'
+        class_name = 'VdiskStorage'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
+
+        property_name = 'blockCluster'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.blockCluster = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'id'
         val = data.get(property_name)
@@ -50,38 +59,23 @@ class VdiskListItem(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'status'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [EnumVdiskListItemStatus]
-            try:
-                self.status = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'type'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [EnumVdiskListItemType]
-            try:
-                self.type = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'vdiskstorage'
+        property_name = 'objectCluster'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.vdiskstorage = client_support.val_factory(val, datatypes)
+                self.objectCluster = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'slaveCluster'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.slaveCluster = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
     def __str__(self):
         return self.as_json(indent=4)
