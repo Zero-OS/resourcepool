@@ -121,6 +121,7 @@ from .ZerotierListItem import ZerotierListItem
 from .ZerotierRoute import ZerotierRoute
 
 from .client import Client as APIClient
+from .refreshablejwtclient import RefreshingJWTClient as RefreshingJWTAPIClient
 
 from .oauth2_client_itsyouonline import Oauth2ClientItsyouonline
 
