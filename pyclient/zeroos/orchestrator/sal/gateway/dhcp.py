@@ -39,10 +39,4 @@ class DHCP:
     def stop(self):
         for process in self.container.client.process.list():
             if 'dnsmasq' in process['cmdline']:
-                self.container.client.process.kill(process['pid'], signal.SIGTERM)
-                start = time.time()
-                while start + 10 > time.time():
-                    if not self.container.client.process.list(process['pid']):
-                        break
-                    time.sleep(0.2)
-                break
+                self.container.client.process.kill(process['pid'], signal.SIGKILL)
