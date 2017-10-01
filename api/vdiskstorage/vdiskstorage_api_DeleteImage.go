@@ -22,8 +22,8 @@ func (api *VdiskstorageAPI) DeleteImage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if !exists {
-		err = fmt.Errorf("image %s doesn't exist", imageID)
-		tools.WriteError(w, http.StatusNotFound, err, err.Error())
+		// doesn't exist, nothing to delete. all good.
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

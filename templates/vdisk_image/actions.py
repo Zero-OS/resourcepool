@@ -51,12 +51,8 @@ def install(job):
         job.logger.info(cmd)
 
         container_job = container.client.system(cmd, id="vdisk.import.%s" % service.name)
+        container.waitOnJob(container_job)
 
-        try:
-            container.waitOnJob(container_job)
-        except Exception as e:
-            strerror = e.args[0]
-            raise RuntimeError("Failed to import vdisk %s: %s", (service.name, strerror))
     finally:
         container.stop()
 

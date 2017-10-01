@@ -13,7 +13,6 @@ import (
 // List all vdisk images installed in this VdiskStroage
 func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
-	// vdiskstorageID := mux.Vars(r)["vdiskstorageid"]
 
 	services, res, err := aysClient.Ays.ListServicesByRole("vdisk_image", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "listing vdisk_images") {

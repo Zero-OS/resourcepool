@@ -259,7 +259,7 @@ def install(job):
 
         # wait for max 60 seconds for vm to be running
         start = time.time()
-        while start + 600 > time.time():
+        while start + 60 > time.time():
             kvm = get_domain(job)
             if kvm:
                 service.model.data.vnc = kvm['vnc']
