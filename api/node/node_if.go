@@ -336,7 +336,7 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 }
 
 // NodesInterfaceRoutes is routing for /nodes root endpoint
-func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
+func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/bridges/{bridgeid}", i.DeleteBridge).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/bridges/{bridgeid}", i.GetBridge).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/bridges", i.ListBridges).Methods("GET")
