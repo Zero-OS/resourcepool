@@ -37,15 +37,17 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check for duplicate
-	exists, err = aysClient.ServiceExists("vdisk_image", imageImport.Name, api.AysRepo)
-	if err != nil {
-		errmsg := fmt.Sprintf("error getting image service by name %s ", imageImport.Name)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", imageImport.Name), "")
-		return
+	if !imageImport.Overwrite {
+		exists, err = aysClient.ServiceExists("vdisk_image", imageImport.Name, api.AysRepo)
+		if err != nil {
+			errmsg := fmt.Sprintf("error getting image service by name %s ", imageImport.Name)
+			tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+			return
+		}
+		if exists {
+			tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk with ID %s already exists", imageImport.Name), "")
+			return
+		}
 	}
 
 	// execute blueprint
