@@ -1,4 +1,4 @@
-@0xbfd0ff049546be86;
+@0xbebd22ef3f7d4cc9;
 
 struct Schema {
     ftpURL @0 :Text; # FTP server url of the image you want to import
@@ -9,4 +9,5 @@ struct Schema {
     exportName @5 :Text;
     exportSnapshot @6 :Text;
     encryptionKey @7 :Text;
+    overwrite @8 :Bool;
 }
