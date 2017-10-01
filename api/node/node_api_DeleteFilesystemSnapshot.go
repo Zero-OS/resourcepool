@@ -11,7 +11,11 @@ import (
 // DeleteFilesystemSnapshot is the handler for DELETE /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
 // Delete snapshot
 func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	name := vars["snapshotname"]
 

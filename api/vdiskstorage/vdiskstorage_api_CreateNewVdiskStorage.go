@@ -10,7 +10,11 @@ import (
 
 // Creates the VM
 func (api *VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VdiskStorage
 
 	// decode request

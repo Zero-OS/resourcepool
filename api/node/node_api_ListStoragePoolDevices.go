@@ -43,7 +43,11 @@ type DeviceInfo struct {
 
 // Get storagepool devices
 func (api *NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return []DeviceInfo{}, true
+	}
 	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
 	service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)

@@ -13,7 +13,11 @@ import (
 // ListZerotier is the handler for GET /nodes/{nodeid}/zerotiers
 // List running Zerotier networks
 func (api *NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	nodeID := mux.Vars(r)["nodeid"]
 	// Only zerotiers with the node from the request as parent
 	queryParams := map[string]interface{}{

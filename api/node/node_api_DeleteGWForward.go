@@ -12,7 +12,11 @@ import (
 // DeleteGWForward is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/firewall/forwards/{forwardid}
 // Delete portforward, forwardid = srcip:srcport
 func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]

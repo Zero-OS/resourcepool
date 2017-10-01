@@ -56,7 +56,11 @@ const clusterInfoCacheKey = "clusterInfoCacheKey"
 // GetClusterInfo is the handler for GET /storageclusters/{label}
 // Get full Information about specific cluster
 func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var metadata []StorageServer
 	var data []StorageServer
 	vars := mux.Vars(r)

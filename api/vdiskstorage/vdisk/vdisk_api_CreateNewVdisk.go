@@ -12,7 +12,11 @@ import (
 // CreateNewVdisk is the handler for POST /vdisks
 // Create a new vdisk, can be a copy from an existing vdisk
 func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VdiskCreate
 	vars := mux.Vars(r)
 	vdiskStoreID := vars["vdiskstorageid"]

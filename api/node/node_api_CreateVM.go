@@ -13,7 +13,11 @@ import (
 // CreateVM is the handler for POST /nodes/{nodeid}/vms
 // Creates the VM
 func (api *NodeAPI) CreateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VMCreate
 
 	// decode request

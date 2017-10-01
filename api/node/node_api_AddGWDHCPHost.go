@@ -13,7 +13,11 @@ import (
 // AddGWDHCPHost is the handler for POST /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts
 // Add a dhcp host to a specified interface
 func (api *NodeAPI) AddGWDHCPHost(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody GWHost
 
 	// decode request

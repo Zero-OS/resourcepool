@@ -14,7 +14,11 @@ import (
 // DeleteVM is the handler for DELETE /nodes/{nodeid}/vms/{vmid}
 // Deletes the VM
 func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	vmId := vars["vmid"]
 

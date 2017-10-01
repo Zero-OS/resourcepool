@@ -14,7 +14,11 @@ import (
 // ListVMs is the handler for GET /node/{nodeid}/vm
 // List VMs
 func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 
 	queryParams := map[string]interface{}{

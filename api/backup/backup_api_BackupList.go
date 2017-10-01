@@ -19,7 +19,12 @@ type Backup struct {
 // List is the handler for GET /backup
 // List backups
 func (api *BackupAPI) List(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
+
 	services, res, err := aysClient.Ays.ListServicesByRole("backup", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "listing container_backup") {
 		return

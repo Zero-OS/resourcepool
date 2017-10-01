@@ -15,8 +15,11 @@ import (
 // ExportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/export
 // Creates the VM
 func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	vmID := vars["vmid"]
 

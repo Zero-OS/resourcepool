@@ -12,7 +12,11 @@ import (
 // StartContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/start
 // Start Container instance
 func (api *NodeAPI) StartContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	containername := vars["containername"]
 

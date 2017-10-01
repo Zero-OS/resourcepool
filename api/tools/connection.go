@@ -10,7 +10,6 @@ import (
 
 	"encoding/json"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -75,7 +74,6 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	c.m.Lock()
 	defer c.m.Unlock()
 
-
 	// set auth token for ays to make call to get node info
 	aysAPI := api.AysAPIClient()
 	aysAPI.AuthHeader = token
@@ -106,7 +104,6 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	if err := json.Unmarshal(srv.Data, &info); err != nil {
 		return nil, err
 	}
-
 
 	pool := client.NewPool(fmt.Sprintf("%s:%d", info.RedisAddr, int(info.RedisPort)), token)
 	c.pools.Set(poolID, pool, cache.DefaultExpiration)
@@ -139,16 +136,16 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 }
 
 // GetAysConnection get connection For ays access
-func GetAysConnection(r *http.Request, api API) AYStool {
+func GetAysConnection(r *http.Request, api API) (AYStool, error) {
 	aysAPI := api.AysAPIClient()
 
 	token, err := api.GetJWT()
 	if err != nil {
-		log.Error(err.Error())
-	} else {
-		aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+		return GetAYSClient(aysAPI), err
 	}
-	return GetAYSClient(aysAPI)
+
+	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	return GetAYSClient(aysAPI), nil
 }
 
 func extractToken(token string) (string, error) {

@@ -11,7 +11,11 @@ import (
 // ListNodes is the handler for GET /nodes
 // List Nodes
 func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	queryParams := map[string]interface{}{
 		"fields": "hostname,status,id,redisAddr",
 	}

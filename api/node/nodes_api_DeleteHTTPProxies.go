@@ -13,7 +13,11 @@ import (
 // DeleteHTTPProxies is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Delete HTTP proxy
 func (api *NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]

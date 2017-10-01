@@ -14,10 +14,14 @@ import (
 // CreateBridge is the handler for POST /node/{nodeid}/bridge
 // Creates a new bridge
 func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody BridgeCreate
 	vars := mux.Vars(r)
-	nodeId := vars["nodeid"]
+	nodeID := vars["nodeid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
@@ -31,7 +35,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "setting",
 	}
 	services, resp, err := aysClient.Ays.ListServicesByRole("bridge", api.AysRepo, nil, queryParams)
@@ -79,7 +83,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 		Nat:         reqBody.Nat,
 		NetworkMode: reqBody.NetworkMode,
 		Setting:     reqBody.Setting,
-		Node:        nodeId,
+		Node:        nodeID,
 	}
 
 	obj := make(map[string]interface{})
@@ -98,7 +102,7 @@ func (api *NodeAPI) CreateBridge(w http.ResponseWriter, r *http.Request) {
 	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
 		return
 	}
-	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeId, reqBody.Name))
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/bridge/%s", nodeID, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 
 }

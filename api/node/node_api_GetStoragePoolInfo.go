@@ -51,7 +51,10 @@ type storagePoolSchema struct {
 }
 
 func (api *NodeAPI) getStoragepoolDetail(name string, r *http.Request) (*storagePoolSchema, error) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		return nil, err
+	}
 	log.Debugf("Get schema detail for storagepool %s\n", name)
 
 	service, resp, err := aysClient.Ays.GetServiceByName(name, "storagepool", api.AysRepo, nil, nil)

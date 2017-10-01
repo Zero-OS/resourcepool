@@ -19,8 +19,11 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 	var reqBody VdiskRollback
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]
-	aysClient := tools.GetAysConnection(r, api)
-
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")

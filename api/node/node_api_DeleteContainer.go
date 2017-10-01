@@ -10,7 +10,11 @@ import (
 // DeleteContainer is the handler for DELETE /nodes/{nodeid}/containers/{containername}
 // Delete Container instance
 func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)

@@ -22,7 +22,11 @@ type CreateGWBP struct {
 // CreateGW is the handler for POST /nodes/{nodeid}/gws
 // Create a new gateway
 func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody GWCreate
 
 	vars := mux.Vars(r)
@@ -71,11 +75,10 @@ func (api *NodeAPI) CreateGW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-   if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil{
-       return
-   }
-   w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", nodeID, reqBody.Name))
-   w.WriteHeader(http.StatusCreated)
-
+	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", nodeID, reqBody.Name))
+	w.WriteHeader(http.StatusCreated)
 
 }

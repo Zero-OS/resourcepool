@@ -32,7 +32,7 @@ func main() {
 	)
 	app := cli.NewApp()
 	app.Version = "1.1.0-beta-1"
-	app.Name = "Zero-os Stateless GRID API"
+	app.Name = "Zero-os Stateless Orchestrator API"
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{

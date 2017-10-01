@@ -14,7 +14,11 @@ import (
 // SetGWFWConfig is the handler for POST /nodes/{nodeid}/gws/{gwname}/advanced/firewall
 // Set FW config
 func (api *NodeAPI) SetGWFWConfig(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var gatewayBase GW
 	vars := mux.Vars(r)
 	gwname := vars["gwname"]

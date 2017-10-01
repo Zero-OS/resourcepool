@@ -14,7 +14,11 @@ import (
 // ListHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Get list for HTTP proxies
 func (api *NodeAPI) ListHTTPProxies(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]

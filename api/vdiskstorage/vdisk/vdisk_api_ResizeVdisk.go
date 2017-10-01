@@ -13,7 +13,11 @@ import (
 // ResizeVdisk is the handler for POST /vdisks/{vdiskid}/resize
 // Resize Vdisk
 func (api *VdisksAPI) ResizeVdisk(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VdiskResize
 
 	vdiskID := mux.Vars(r)["vdiskid"]

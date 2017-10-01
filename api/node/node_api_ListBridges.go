@@ -13,7 +13,11 @@ import (
 // ListBridges is the handler for GET /nodes/{nodeid}/bridges
 // List bridges
 func (api *NodeAPI) ListBridges(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
 

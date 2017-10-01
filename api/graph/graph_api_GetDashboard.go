@@ -13,13 +13,17 @@ import (
 // GetDashboard is the handler for GET /graph/{graphid}/dashboards/{dashboardname}
 // Get Dashboard
 func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(r, api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
-	graphId := vars["graphid"]
+	graphID := vars["graphid"]
 	name := vars["dashboardname"]
 
 	query := map[string]interface{}{
-		"parent": fmt.Sprintf("grafana!%s", graphId),
+		"parent": fmt.Sprintf("grafana!%s", graphID),
 		"fields": "dashboard,slug,grafana",
 	}
 	service, res, err := aysClient.Ays.GetServiceByName(name, "dashboard", api.AysRepo, nil, query)
