@@ -12,7 +12,11 @@ import (
 // ListImages is the handler for GET /vdiskstorage/{vdiskstorageid}/images
 // List all vdisk images installed in this VdiskStroage
 func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 
 	services, res, err := aysClient.Ays.ListServicesByRole("vdisk_image", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "listing vdisk_images") {

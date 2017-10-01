@@ -11,7 +11,12 @@ import (
 // Create is the handler for POST /backup
 // Create a backup
 func (api *BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
+
 	var reqBody BackupContainer
 
 	// decode request

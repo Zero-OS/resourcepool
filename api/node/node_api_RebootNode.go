@@ -5,6 +5,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -16,7 +17,11 @@ type RebootBP struct {
 // RebootNode is the handler for POST /nodes/{nodeid}/reboot
 // Immediately reboot the machine.
 func (api *NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	tools.DeleteConnection(r)
 	vars := mux.Vars(r)
 	nodeId := vars["nodeid"]
@@ -35,7 +40,7 @@ func (api *NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	blueprint := make(map[string]interface{})
-	blueprint[fmt.Sprintf("node.zero-os__%s", nodeId)] =  RebootBP{
+	blueprint[fmt.Sprintf("node.zero-os__%s", nodeId)] = RebootBP{
 		ForceReboot: reqBody.Force,
 	}
 	blueprint["actions"] = []tools.ActionBlock{{

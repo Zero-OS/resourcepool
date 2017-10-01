@@ -20,7 +20,7 @@ type BaseNic struct {
 	Token string               `json:"token,omitempty" yaml:"token,omitempty"`
 }
 
-func (s BaseNic) Validate(aysClient tools.AYStool, repoName string) error {
+func (s BaseNic) Validate(aysClient *tools.AYStool, repoName string) error {
 	typeEnums := map[interface{}]struct{}{
 		EnumContainerNICTypezerotier: struct{}{},
 		EnumContainerNICTypevxlan:    struct{}{},

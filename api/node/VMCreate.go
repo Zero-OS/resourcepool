@@ -13,7 +13,7 @@ type VMCreate struct {
 	Nics   []NicLink   `json:"nics"`
 }
 
-func (s VMCreate) Validate(aysClient tools.AYStool, repoName string) error {
+func (s VMCreate) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, nic := range s.Nics {
 		if err := nic.Validate(aysClient, repoName); err != nil {
 			return err

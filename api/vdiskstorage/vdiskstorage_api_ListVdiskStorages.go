@@ -8,7 +8,11 @@ import (
 )
 
 func (api *VdiskstorageAPI) ListVdiskStorages(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vdiskstorages := []VdiskStorage{}
 
 	queryParams := map[string]interface{}{"fields": "blockCluster,slaveCluster,objectCluster"}

@@ -9,6 +9,10 @@ import (
 // ResumeVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/resume
 // Resumes the VM
 func (api *NodeAPI) ResumeVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	tools.ExecuteVMAction(aysClient, w, r, api.AysRepo, "resume")
 }
