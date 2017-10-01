@@ -55,20 +55,20 @@ func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWrite
 }
 
 func HandleExecuteBlueprintResponse(err error, w http.ResponseWriter, errmsg string) bool {
-	if err != nil {
-		httpErr, ok := err.(HTTPError)
-		if !ok {
-			WriteError(w, http.StatusInternalServerError, err, err.Error())
-			return false
-		}
-		if httpErr.Resp != nil {
-			if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
-				WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
-				return false
-			}
-			WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
-			return false
-		}
+	if err == nil {
+		return true
 	}
-	return true
+
+	httpErr, ok := err.(HTTPError)
+	if ok && httpErr.Resp != nil {
+		if httpErr.Resp.StatusCode >= 400 && httpErr.Resp.StatusCode <= 499 {
+			WriteError(w, httpErr.Resp.StatusCode, err, err.Error())
+			return false
+		}
+		WriteError(w, httpErr.Resp.StatusCode, err, errmsg)
+		return false
+	}
+
+	WriteError(w, http.StatusInternalServerError, err, errmsg)
+	return false
 }
