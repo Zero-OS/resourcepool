@@ -67,18 +67,6 @@ func (api *VdisksAPI) RollbackVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Make sure  this disk is attached to a vm
-	var vmFound bool = false
-	for _, service := range serv.Consumers {
-		if service.Role == "vm" {
-			vmFound = true
-			break
-		}
-	}
-	if !vmFound {
-		err = fmt.Errorf("Failed to rollback %s, vdisk needs to be attached to a machine", vdiskID)
-		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
-		return
-	}
 	if string(disk.Status) != "halted" {
 		err = fmt.Errorf("Failed to rollback %s, vdisk should be halted", vdiskID)
 		tools.WriteError(w, http.StatusBadRequest, err, err.Error())
