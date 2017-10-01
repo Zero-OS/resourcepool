@@ -13,13 +13,17 @@ import (
 // GetGraph is the handler for GET /graphs/{graphid}
 // Get Graph
 func (api *GraphAPI) GetGraph(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
-	graphId := vars["graphid"]
+	graphID := vars["graphid"]
 	queryParams := map[string]interface{}{
 		"fields": "node,port",
 	}
-	service, res, err := aysClient.Ays.GetServiceByName(graphId, "grafana", api.AysRepo, nil, queryParams)
+	service, res, err := aysClient.Ays.GetServiceByName(graphID, "grafana", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "get graph") {
 		return
 	}

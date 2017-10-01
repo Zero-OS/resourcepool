@@ -14,7 +14,11 @@ import (
 // CreateStoragePool is the handler for POST /nodes/{nodeid}/storagepools
 // Create a new storage pool
 func (api *NodeAPI) CreateStoragePool(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody StoragePoolCreate
 	node := mux.Vars(r)["nodeid"]
 

@@ -10,18 +10,18 @@ import (
 
 // NodeAPI is API implementation of /node root endpoint
 type NodeAPI struct {
-	AysRepo       string
-	AysURL        string
-	Cache         *cache.Cache
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysURL      string
+	Cache       *cache.Cache
+	JWTProvider *tools.JWTProvider
 }
 
 func NewNodeAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider, c *cache.Cache) *NodeAPI {
 	return &NodeAPI{
-		AysRepo:       repo,
-		AysURL:        aysurl,
-		Cache:         c,
-		JWTProvider:   jwtProvider,
+		AysRepo:     repo,
+		AysURL:      aysurl,
+		Cache:       c,
+		JWTProvider: jwtProvider,
 	}
 }
 

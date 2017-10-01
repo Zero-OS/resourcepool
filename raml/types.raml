@@ -1091,35 +1091,15 @@ VdiskCreate:
         | cache | no | yes | no | no | yes |
         | tmp | no | no | no | no | yes |
       required: true
-    templatevdisk:
-      type: string
-      description: |
-        Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
-        You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename
-
-        This property can only be used when the disk is of type boot.
-      required: false
     readOnly:
       type: boolean
       required: false
       default: false
-    blockStoragecluster:
-      type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-      required: true
-    objectStoragecluster:
+    imageId:
       type: string
       description: |
-        the objectStoragecluster used for this vdisk's transaction logs
-
-        This property can only be used when the disk is of type boot or db.
-      required: false
-    backupStoragecluster:
-      type: string
-      description: |
-        the storagecluster used for this vdisk's main storage.
-
-        This property can only be used when the disk is of type boot or db.
+        ID of the image to use in case you create a boot disk. The image need to be imported in the VdiskStorage where this vdisk is created
+        See `/vdiskstorage/{vdiskstorageid}/images` to list all available images.
       required: false
 
 VdiskStorage:
@@ -1129,6 +1109,14 @@ VdiskStorage:
       type: string
       description: block cluster to assign to vdisk store
       required: true
+    slaveCluster:
+      type: string
+      description: slave cluster to assign to vdisk store
+      required: false
+    objectCluster:
+      type: string
+      description: object cluster to assign to vdisk store
+      required: false
     slaveCluster:
       type: string
       description: slave cluster to assign to vdisk store
@@ -1191,6 +1179,76 @@ VdiskRollback:
     epoch:
       type: integer
       description: Epoch to which we want to rollback the vdisk
+
+Image:
+  type: object
+  description: |
+    Vdisk image used as template for boot vdisks
+  properties:
+    name:
+      type: string
+      pattern: ^\w+$
+    size:
+      type: integer
+      description: Size of the vdisk in GiB
+    blocksize:
+      type: integer
+      description: blocksize in bytes
+      default: 4096
+
+ImageImport:
+  type: object
+  description: |
+    Import an image into a vdiskstorage
+  properties:
+    imageName:
+      type: string
+      description: Name to give to the image you are importing
+      required: true
+      pattern: ^\w+$
+    exportName:
+      type: string
+      required: true
+      description: |
+        Name of the exported image on the ftp server
+    exportSnapshot:
+      type: string
+      required: false
+      description: |
+        Name of the snapshot of the exported image on the ftp server
+        If not specified, defaults to 'default'
+      default: default
+    size:
+      type: integer
+      description: Size of the vdisk in GiB
+    diskBlockSize:
+      type: integer
+      description: block size in bytes of the image created in the local cluster
+      default: 4096
+    exportBlockSize:
+      type: integer
+      description: block size in bytes of the exported image. It can be different from the disk block size
+      default: 131072
+    url:
+      type: string
+      required: true
+      description: |
+        FTP server url of the image you want to import
+        - localhost:22
+        - ftp://1.2.3.4:200
+        - ftp://user@127.0.0.1:200
+        - ftp://user:pass@12.30.120.200:3000
+        - ftp://user:pass@12.30.120.200:3000/root/dir
+    encryptionKey:
+      type: string
+      required: false
+      description: |
+        In case the image has been encrypted during upload.
+        You need to specify the encryption key to be able to import it
+    overwrite:
+      type: boolean
+      description: overwrite an images if it already exist in the vdisk storage
+      required: false
 
 # GWS objects
 IPProtocol:

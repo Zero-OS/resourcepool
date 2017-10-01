@@ -11,7 +11,11 @@ import (
 // DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
 // Delete the storage pool
 func (api *NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	name := vars["storagepoolname"]
 

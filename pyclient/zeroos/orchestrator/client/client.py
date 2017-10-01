@@ -5,7 +5,6 @@ from .graphs_service import GraphsService
 from .health_service import HealthService 
 from .nodes_service import NodesService 
 from .storageclusters_service import StorageclustersService 
-from .vdisks_service import VdisksService 
 from .vdiskstorage_service import VdiskstorageService 
 
 
@@ -19,7 +18,6 @@ class Client:
         self.health = HealthService(self)
         self.nodes = NodesService(self)
         self.storageclusters = StorageclustersService(self)
-        self.vdisks = VdisksService(self)
         self.vdiskstorage = VdiskstorageService(self)
 
     def is_goraml_class(self, data):

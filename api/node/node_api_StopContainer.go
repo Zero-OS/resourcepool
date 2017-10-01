@@ -12,7 +12,11 @@ import (
 // StopContainer is the handler for POST /nodes/{nodeid}/containers/{containername}/stop
 // Stop Container instance
 func (api *NodeAPI) StopContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	tools.DeleteContainerId(r, api)
 
 	vars := mux.Vars(r)

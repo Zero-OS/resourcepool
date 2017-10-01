@@ -9,6 +9,10 @@ import (
 // PauseVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/pause
 // Pauses the VM
 func (api *NodeAPI) PauseVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	tools.ExecuteVMAction(aysClient, w, r, api.AysRepo, "pause")
 }

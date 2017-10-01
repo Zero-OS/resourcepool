@@ -14,7 +14,11 @@ import (
 // CreateHTTPProxies is the handler for POST /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Create new HTTP proxies
 func (api *NodeAPI) CreateHTTPProxies(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody HTTPProxy
 
 	// decode request
