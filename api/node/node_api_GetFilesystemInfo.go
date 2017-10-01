@@ -54,7 +54,10 @@ type FilesystemSchema struct {
 }
 
 func (api *NodeAPI) getFilesystemDetail(name string, r *http.Request) (*FilesystemSchema, error) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		return nil, err
+	}
 	log.Debugf("Get schema detail for filesystem %s\n", name)
 
 	service, resp, err := aysClient.Ays.GetServiceByName(name, "filesystem", api.AysRepo, nil, nil)

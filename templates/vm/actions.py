@@ -256,6 +256,7 @@ def install(job):
             service.saveAll()
             raise j.exceptions.Input(str(e))
 
+
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():

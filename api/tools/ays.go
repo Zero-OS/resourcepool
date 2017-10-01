@@ -33,12 +33,6 @@ type ActionBlock struct {
 	Force   bool   `json:"force" validate:"omitempty"`
 }
 
-func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
-	return AYStool{
-		Ays: client.Ays,
-	}
-}
-
 //ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
 // create blueprint
 // execute blueprint
@@ -89,11 +83,11 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	run, err := aystool.getRun(runid, repoName)
-	if err != nil  && run.State != "error"{
+	if err != nil && run.State != "error" {
 		return run, err
 	}
 
-	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6){
+	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6) {
 		time.Sleep(time.Second)
 
 		run, err = aystool.getRun(run.Key, repoName)

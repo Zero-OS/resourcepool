@@ -14,7 +14,7 @@ type NicLink struct {
 	Type       EnumNicLinkType `json:"type" validate:"nonzero"`
 }
 
-func (s NicLink) Validate(aysClient tools.AYStool, repoName string) error {
+func (s NicLink) Validate(aysClient *tools.AYStool, repoName string) error {
 	typeEnums := map[interface{}]struct{}{
 		EnumNicLinkTypevlan:    struct{}{},
 		EnumNicLinkTypevxlan:   struct{}{},

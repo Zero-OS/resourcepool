@@ -24,7 +24,7 @@ type GWNIC struct {
 	ZerotierBridge *ZerotierBridge `json:"zerotierbridge,omitempty" yaml:"zerotierbridge,omitempty"`
 }
 
-func (s GWNIC) Validate(aysClient tools.AYStool, repoName string) error {
+func (s GWNIC) Validate(aysClient *tools.AYStool, repoName string) error {
 	if err := s.BaseNic.Validate(aysClient, repoName); err != nil {
 		return err
 	}
