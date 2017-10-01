@@ -7,6 +7,7 @@ def install(job):
     from urllib.parse import urlparse
 
     service = job.service
+    vdiskstore = service.parent
 
     save_config(job)
 
@@ -36,6 +37,15 @@ def install(job):
 
         if service.model.data.encryptionKey:
             cmd += ' --key {}'.format(service.model.data.encryptionKey)
+
+        if service.model.data.overwrite:
+            cmd += ' --force'
+
+        if vdiskstore.model.data.objectCluster:
+            storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+                                                               instance=vdiskstore.model.data.objectCluster)
+            cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
+                                                                 storageclusterservice.model.data.parityShards)
 
         job.logger.info("import image {} from {} as {}".format(snapshotID, url, service.name))
         job.logger.info(cmd)
@@ -129,8 +139,7 @@ def save_config(job):
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": vdiskstore.model.data.blockCluster,
-        "templateStorageClusterID": vdiskstore.model.data.blockCluster
+        "storageClusterID": vdiskstore.model.data.blockCluster
     }
     if vdiskstore.model.data.objectCluster:
         config["tlogServerClusterID"] = vdiskstore.model.data.objectCluster

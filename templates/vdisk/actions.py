@@ -124,8 +124,7 @@ def save_config(job):
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": vdiskstore.model.data.blockCluster,
-        "templateStorageClusterID": vdiskstore.model.data.blockCluster
+        "storageClusterID": vdiskstore.model.data.blockCluster
     }
     if vdiskstore.model.data.objectCluster:
         config["tlogServerClusterID"] = vdiskstore.model.data.objectCluster
