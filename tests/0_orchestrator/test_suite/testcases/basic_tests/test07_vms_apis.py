@@ -3,22 +3,25 @@ from testcases.testcases_base import TestcasesBase
 import unittest
 from testcases.core0_client import Client
 
-
 class TestVmsAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
+        nodes = [self.nodeid]
+        number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
-            self.lg.info(' [*] Create new storagecluster.')
-            
-            free_disks = self.core0_client.getFreeDisks()
-            if free_disks == []:
+            if number_of_free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
-
-            numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
-            response, body = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=1)
+    
+            self.lg.info(' [*] Deploy new storage cluster (SC0)')            
+            response, data = self.storageclusters_api.post_storageclusters(
+                nodes=nodes, 
+                driveType=disk_type, 
+                servers=random.randint(1, number_of_free_disks)
+            )
             self.assertEqual(response.status_code, 201)
-            self.storagecluster = body['label']
+            self.storagecluster = data['label']
+
         else:
             self.storagecluster = storageclusters.json()[0]
 
