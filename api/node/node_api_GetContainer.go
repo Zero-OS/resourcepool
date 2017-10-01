@@ -12,7 +12,11 @@ import (
 // GetContainer is the handler for GET /nodes/{nodeid}/containers/{containername}
 // Get Container
 func (api *NodeAPI) GetContainer(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	nodeClient, err := tools.GetConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to get node connection")

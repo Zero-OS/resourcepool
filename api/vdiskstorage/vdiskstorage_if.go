@@ -10,19 +10,35 @@ import (
 )
 
 // VdiskstorageInterface is interface for /vdiskstorage root endpoint
-type VdiskstorageInterface interface { // GetVdiskStorageInfo is the handler for GET /vdiskstorage/{vdiskstorageid}
+type VdiskstorageInterface interface { // DeleteImage is the handler for DELETE /vdiskstorage/{vdiskstorageid}/images/{imageid}
+	// Delete an vdisk image from the VdiskStorage
+	DeleteImage(http.ResponseWriter, *http.Request)
+	// GetImage is the handler for GET /vdiskstorage/{vdiskstorageid}/images/{imageid}
+	// Get detail about a vdisk image
+	GetImage(http.ResponseWriter, *http.Request)
+	// ListImages is the handler for GET /vdiskstorage/{vdiskstorageid}/images
+	// List all vdisk images installed in this VdiskStroage
+	ListImages(http.ResponseWriter, *http.Request)
+	// ImportImage is the handler for POST /vdiskstorage/{vdiskstorageid}/images
+	// Import an image from an FTP server into the VdiskStorage
+	ImportImage(http.ResponseWriter, *http.Request)
+	// GetVdiskStorageInfo is the handler for GET /vdiskstorage/{vdiskstorageid}
 	// Get vdisk storage information
 	GetVdiskStorageInfo(http.ResponseWriter, *http.Request)
 	// ListVdiskStorages is the handler for GET /vdiskstorage
 	// List vdisks storages
 	ListVdiskStorages(http.ResponseWriter, *http.Request)
 	// CreateNewVdiskStorage is the handler for POST /vdiskstorage
-	// Create a new vdisk storage, can be a copy from an existing vdisk
+	// Create a new vdisk storage
 	CreateNewVdiskStorage(http.ResponseWriter, *http.Request)
 }
 
 // VdiskstorageInterfaceRoutes is routing for /vdiskstorage root endpoint
 func VdiskstorageInterfaceRoutes(r *mux.Router, i VdiskstorageInterface) {
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images/{imageid}", i.DeleteImage).Methods("DELETE")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images/{imageid}", i.GetImage).Methods("GET")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images", i.ListImages).Methods("GET")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images", i.ImportImage).Methods("POST")
 	r.HandleFunc("/vdiskstorage/{vdiskstorageid}", i.GetVdiskStorageInfo).Methods("GET")
 	r.HandleFunc("/vdiskstorage", i.ListVdiskStorages).Methods("GET")
 	r.HandleFunc("/vdiskstorage", i.CreateNewVdiskStorage).Methods("POST")

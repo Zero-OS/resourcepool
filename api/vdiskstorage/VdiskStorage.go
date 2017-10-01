@@ -15,7 +15,7 @@ type VdiskStorage struct {
 	SlaveCluster  string `json:"slaveCluster" yaml:"slaveCluster"`
 }
 
-func (s VdiskStorage) Validate(aysClient tools.AYStool, api *VdiskstorageAPI) error {
+func (s VdiskStorage) Validate(aysClient *tools.AYStool, api *VdiskstorageAPI) error {
 	// validate vdiskstorage name
 
 	// validate block cluster name

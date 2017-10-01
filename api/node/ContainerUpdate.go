@@ -11,7 +11,7 @@ type ContainerUpdate struct {
 }
 
 // Validate method to validate the nics passed for the update
-func (s ContainerUpdate) Validate(aysClient tools.AYStool, repoName string) error {
+func (s ContainerUpdate) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, nic := range s.Nics {
 		if err := nic.Validate(aysClient, repoName); err != nil {
 			return err

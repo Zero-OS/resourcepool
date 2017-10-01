@@ -24,7 +24,7 @@ type GWCreate struct {
 	Portforwards []PortForward `json:"portforwards,omitempty" yaml:"portforwards,omitempty"`
 }
 
-func (s GWCreate) Validate(aysClient tools.AYStool, repoName string) error {
+func (s GWCreate) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, proxy := range s.Httpproxies {
 		if err := proxy.Validate(); err != nil {
 			return err
