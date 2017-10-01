@@ -13,7 +13,7 @@ import (
 // GetDashboard is the handler for GET /graph/{graphid}/dashboards/{dashboardname}
 // Get Dashboard
 func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

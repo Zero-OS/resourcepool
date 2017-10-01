@@ -27,7 +27,7 @@ const (
 // ExecuteVMAction executes an action on a vm
 func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (Run, error) {
 	aysRepo := api.AysRepoName()
-	aysClient, err := GetAysConnection(r, api)
+	aysClient, err := GetAysConnection(api)
 	if err != nil {
 		return Run{}, err
 	}
@@ -79,7 +79,7 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 }
 
 func GetRunState(api API, w http.ResponseWriter, r *http.Request, runid string) (EnumRunState, error) {
-	aysClient, err := GetAysConnection(r, api)
+	aysClient, err := GetAysConnection(api)
 	if err != nil {
 		return "", err
 	}

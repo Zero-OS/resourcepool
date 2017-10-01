@@ -13,7 +13,7 @@ import (
 // ListFilesystems is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // List filesystems
 func (api *NodeAPI) ListFilesystems(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

@@ -12,7 +12,7 @@ type VMUpdate struct {
 	Nics   []NicLink   `json:"nics"`
 }
 
-func (s VMUpdate) Validate(aysClient tools.AYStool, repoName string) error {
+func (s VMUpdate) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, nic := range s.Nics {
 		if err := nic.Validate(aysClient, repoName); err != nil {
 			return err

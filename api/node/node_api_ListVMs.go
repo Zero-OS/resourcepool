@@ -14,7 +14,7 @@ import (
 // ListVMs is the handler for GET /node/{nodeid}/vm
 // List VMs
 func (api *NodeAPI) ListVMs(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

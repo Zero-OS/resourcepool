@@ -88,7 +88,7 @@ func (jp *JWTProvider) refreshToken() (string, error) {
 
 func (jp *JWTProvider) GetJWT() (string, error) {
 	if jp.development {
-		return jp.jwt, nil
+		return "", nil
 	}
 
 	now := time.Now().Unix()

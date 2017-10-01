@@ -18,7 +18,7 @@ type StorageEngine struct {
 	Container string `json:"container" validate:"nonzero"`
 }
 
-func getStorageEngine(aysClient tools.AYStool, name string, api *StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
+func getStorageEngine(aysClient *tools.AYStool, name string, api *StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
 	var state EnumStorageServerStatus
 	service, res, err := aysClient.Ays.GetServiceByName(name, "storage_engine", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
@@ -56,7 +56,7 @@ const clusterInfoCacheKey = "clusterInfoCacheKey"
 // GetClusterInfo is the handler for GET /storageclusters/{label}
 // Get full Information about specific cluster
 func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

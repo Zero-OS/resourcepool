@@ -11,7 +11,11 @@ import (
 // DeleteImage is the handler for DELETE /vdiskstorage/{vdiskstorageid}/images/{imageid}
 // Delete an vdisk image from the VdiskStorage
 func (api *VdiskstorageAPI) DeleteImage(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	imageID := vars["imageid"]
 

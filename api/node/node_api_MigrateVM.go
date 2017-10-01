@@ -13,7 +13,7 @@ import (
 // MigrateVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/migrate
 // Migrate the VM to another host
 func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

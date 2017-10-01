@@ -12,7 +12,11 @@ import (
 // ImportImage is the handler for POST /vdiskstorage/{vdiskstorageid}/images
 // Import an image from an FTP server into the VdiskStorage
 func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var imageImport ImageImport
 	vdiskStorageID := mux.Vars(r)["vdiskstorageid"]
 
@@ -61,7 +65,7 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		"exportName":      imageImport.ExportName,
 		"exportSnapshot":  imageImport.ExportSnapshot,
 		"encryptionKey":   imageImport.EncryptionKey,
-                "overwrite":       imageImport.Overwrite,
+		"overwrite":       imageImport.Overwrite,
 	}
 	bp["actions"] = []tools.ActionBlock{{
 		Action:  "install",

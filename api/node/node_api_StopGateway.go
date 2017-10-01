@@ -12,7 +12,7 @@ import (
 // StopGateway is the handler for POST /nodes/{nodeid}/gws/{gwname}/stop
 // Stop gateway instance
 func (api *NodeAPI) StopGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

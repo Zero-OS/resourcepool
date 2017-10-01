@@ -14,7 +14,7 @@ import (
 // ListHTTPProxies is the handler for GET /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Get list for HTTP proxies
 func (api *NodeAPI) ListHTTPProxies(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

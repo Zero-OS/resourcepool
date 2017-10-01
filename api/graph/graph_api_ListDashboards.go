@@ -13,7 +13,7 @@ import (
 // ListDashboards is the handler for GET /nodes/{nodeid}/dashboards
 // List running Dashboards
 func (api *GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

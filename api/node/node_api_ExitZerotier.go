@@ -12,7 +12,7 @@ import (
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
 // Exit the Zerotier network
 func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

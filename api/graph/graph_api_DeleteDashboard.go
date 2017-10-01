@@ -12,7 +12,7 @@ import (
 // DeleteDashboard is the handler for DELETE /graph/{graphid}/dashboard/{dashboardname}
 // Remove dashboard
 func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

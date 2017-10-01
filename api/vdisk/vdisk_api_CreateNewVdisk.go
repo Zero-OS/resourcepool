@@ -3,10 +3,12 @@ package vdisk
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
+
 	"net/http"
 
-	"github.com/gorilla/mux"
-	tools "github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // CreateNewVdisk is the handler for POST /vdisks
@@ -18,8 +20,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var reqBody VdiskCreate
-	vars := mux.Vars(r)
-	vdiskStoreID := vars["vdiskstorageid"]
+	var vdiskstore vdiskstorage.VdiskStorage
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -46,21 +47,32 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get vdisk service
+	service, resp, err := aysClient.Ays.GetServiceByName(reqBody.VdiskStorage, "vdiskstorage", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, resp, w, fmt.Sprintf("getting vdiskstorage %s service", reqBody.VdiskStorage)) {
+		return
+	}
+	// unmarshal service data
+	if err := json.Unmarshal(service.Data, &vdiskstore); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "error unmarshaling vdiskstorage service data")
+		return
+	}
+
 	// Create the blueprint
 	bp := struct {
-		Size         int    `yaml:"size" json:"size"`
-		BlockSize    int    `yaml:"blocksize" json:"blocksize"`
-		ImageID      string `yaml:"imageId" json:"imageId"`
-		ReadOnly     bool   `yaml:"readOnly" json:"readOnly"`
-		Type         string `yaml:"type" json:"type"`
-		VdiskStorage string `yaml:"vdiskstorage" json:"vdiskstorage"`
+		Size          int    `yaml:"size" json:"size"`
+		BlockSize     int    `yaml:"blocksize" json:"blocksize"`
+		TemplateVdisk string `yaml:"templateVdisk" json:"templateVdisk"`
+		ReadOnly      bool   `yaml:"readOnly" json:"readOnly"`
+		Type          string `yaml:"type" json:"type"`
+		VdiskStorage  string `yaml:"vdiskstorage" json:"vdiskstorage"`
 	}{
-		Size:         reqBody.Size,
-		BlockSize:    reqBody.Blocksize,
-		ImageID:      reqBody.ImageID,
-		ReadOnly:     reqBody.ReadOnly,
-		Type:         string(reqBody.Vdisktype),
-		VdiskStorage: vdiskStoreID,
+		Size:          reqBody.Size,
+		BlockSize:     reqBody.Blocksize,
+		TemplateVdisk: reqBody.Templatevdisk,
+		ReadOnly:      reqBody.ReadOnly,
+		Type:          string(reqBody.Vdisktype),
+		VdiskStorage:  reqBody.VdiskStorage,
 	}
 
 	bpName := fmt.Sprintf("vdisk__%s", reqBody.ID)

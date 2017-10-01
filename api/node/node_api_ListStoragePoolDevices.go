@@ -43,7 +43,7 @@ type DeviceInfo struct {
 
 // Get storagepool devices
 func (api *NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return []DeviceInfo{}, true

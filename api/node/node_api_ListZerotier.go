@@ -13,7 +13,7 @@ import (
 // ListZerotier is the handler for GET /nodes/{nodeid}/zerotiers
 // List running Zerotier networks
 func (api *NodeAPI) ListZerotier(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

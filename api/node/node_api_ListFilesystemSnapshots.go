@@ -13,7 +13,7 @@ import (
 // ListFilesystemSnapshots is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot
 // List snapshots of this filesystem
 func (api *NodeAPI) ListFilesystemSnapshots(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

@@ -11,7 +11,11 @@ import (
 // GetImage is the handler for GET /vdiskstorage/{vdiskstorageid}/images/{imageid}
 // Get detail about a vdisk image
 func (api *VdiskstorageAPI) GetImage(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	imageID := mux.Vars(r)["imageid"]
 	var image Image
 

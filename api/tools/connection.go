@@ -75,9 +75,11 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	defer c.m.Unlock()
 
 	// set auth token for ays to make call to get node info
-	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = token
-	ays := GetAYSClient(aysAPI)
+	ays, err := GetAysConnection(api)
+	if err != nil {
+		return nil, err
+	}
+
 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
 	if err != nil {
@@ -136,16 +138,18 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 }
 
 // GetAysConnection get connection For ays access
-func GetAysConnection(r *http.Request, api API) (AYStool, error) {
+func GetAysConnection(api API) (*AYStool, error) {
 	aysAPI := api.AysAPIClient()
 
 	token, err := api.GetJWT()
 	if err != nil {
-		return GetAYSClient(aysAPI), err
+		return nil, err
 	}
 
 	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
-	return GetAYSClient(aysAPI), nil
+	return &AYStool{
+		Ays: aysAPI.Ays,
+	}, nil
 }
 
 func extractToken(token string) (string, error) {

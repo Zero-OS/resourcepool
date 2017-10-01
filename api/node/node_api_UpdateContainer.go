@@ -13,7 +13,7 @@ import (
 // Update a new Container
 func (api *NodeAPI) UpdateContainer(w http.ResponseWriter, r *http.Request) {
 	var reqBody ContainerUpdate
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

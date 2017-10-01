@@ -54,7 +54,7 @@ type FilesystemSchema struct {
 }
 
 func (api *NodeAPI) getFilesystemDetail(name string, r *http.Request) (*FilesystemSchema, error) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		return nil, err
 	}

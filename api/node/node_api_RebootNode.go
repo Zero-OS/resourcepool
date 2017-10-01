@@ -17,7 +17,7 @@ type RebootBP struct {
 // RebootNode is the handler for POST /nodes/{nodeid}/reboot
 // Immediately reboot the machine.
 func (api *NodeAPI) RebootNode(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

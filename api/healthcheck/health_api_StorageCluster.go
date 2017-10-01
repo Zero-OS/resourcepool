@@ -12,7 +12,7 @@ import (
 // ListStorageClusterHealth is the handler for GET /health/storageclusters/{storageclusterid}
 // List NodeHealth
 func (api *HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

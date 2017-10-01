@@ -15,7 +15,7 @@ import (
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
 // Update Gateway
 func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return

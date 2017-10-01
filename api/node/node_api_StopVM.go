@@ -9,7 +9,7 @@ import (
 // StopVM is the handler for POST /node/{nodeid}/vm/{vmid}/stop
 // Stops the VM
 func (api *NodeAPI) StopVM(w http.ResponseWriter, r *http.Request) {
-	aysClient, err := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {
 		tools.WriteError(w, http.StatusUnauthorized, err, "")
 		return
