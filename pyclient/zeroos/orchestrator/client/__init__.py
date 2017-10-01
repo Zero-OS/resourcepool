@@ -75,6 +75,8 @@ from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .HealthCheck import HealthCheck
 from .IPProtocol import IPProtocol
+from .Image import Image
+from .ImageImport import ImageImport
 from .ImportVM import ImportVM
 from .Job import Job
 from .JobListItem import JobListItem
@@ -87,6 +89,7 @@ from .NicLink import NicLink
 from .Node import Node
 from .NodeHealthCheck import NodeHealthCheck
 from .NodeMount import NodeMount
+from .NodeReboot import NodeReboot
 from .OSInfo import OSInfo
 from .PortForward import PortForward
 from .Process import Process
