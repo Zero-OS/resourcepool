@@ -273,14 +273,7 @@ def save_config(job):
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
     if service.model.data.clusterType == "block":
-        try:
-            cluster = StorageCluster.from_ays(service, job.context['token'])
-        except ConnectionError as e:
-            if e.args:
-                job.logger.error(e.args[0])
-            else:
-                job.logger.error('could connect to storage cluster %s' % service.name)
-            return
+        cluster = StorageCluster.from_ays(service, job.context['token'])
         config = cluster.get_config()
 
         config = {
