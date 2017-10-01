@@ -42,17 +42,6 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err = aysClient.ServiceExists("vdisk_image", reqBody.ImageID, api.AysRepo)
-	if err != nil {
-		errmsg := fmt.Sprintf("error getting vdisk_image service by name %s ", reqBody.ImageID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-	if exists {
-		tools.WriteError(w, http.StatusConflict, fmt.Errorf("A vdisk_image with ID %s already exists", reqBody.ID), "")
-		return
-	}
-
 	// Create the blueprint
 	bp := struct {
 		Size         int    `yaml:"size" json:"size"`

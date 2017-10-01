@@ -61,6 +61,7 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		"exportName":      imageImport.ExportName,
 		"exportSnapshot":  imageImport.ExportSnapshot,
 		"encryptionKey":   imageImport.EncryptionKey,
+                "overwrite":       imageImport.Overwrite,
 	}
 	bp["actions"] = []tools.ActionBlock{{
 		Action:  "install",
