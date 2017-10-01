@@ -15,7 +15,7 @@ type BackupInterface interface {
 }
 
 // BackupInterfaceRoutesis routing for /backup root endpoint
-func BackupInterfaceRoutes(r *mux.Router, i BackupInterface, org string) {
+func BackupInterfaceRoutes(r *mux.Router, i BackupInterface) {
 	r.HandleFunc("/backup", i.Create).Methods("POST")
 	r.HandleFunc("/backup", i.List).Methods("GET")
 }

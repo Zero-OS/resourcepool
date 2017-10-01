@@ -34,7 +34,7 @@ type GraphsInterface interface { // DeleteDashboard is the handler for DELETE /g
 }
 
 // GraphsInterfaceRoutes is routing for /graphs root endpoint
-func GraphsInterfaceRoutes(r *mux.Router, i GraphsInterface, org string) {
+func GraphsInterfaceRoutes(r *mux.Router, i GraphsInterface) {
 	r.HandleFunc("/graphs/{graphid}/dashboards/{dashboardname}", i.DeleteDashboard).Methods("DELETE")
 	r.HandleFunc("/graphs/{graphid}/dashboards/{dashboardname}", i.GetDashboard).Methods("GET")
 	r.HandleFunc("/graphs/{graphid}/dashboards", i.CreateDashboard).Methods("POST")

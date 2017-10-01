@@ -1,18 +1,6 @@
 from js9 import j
 
 
-def input(job):
-    service = job.service
-    blockStoragecluster = job.model.args.get('blockStoragecluster', None)
-    objectStoragecluster = job.model.args.get('objectStoragecluster', None)
-
-    if objectStoragecluster:
-        block_st = service.aysrepo.serviceGet(role='storage_cluster', instance=blockStoragecluster)
-        object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
-        if block_st.model.data.nrServer < object_st.model.data.nrServer:
-            raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
-
-
 def install(job):
     import random
     from urllib.parse import urlparse
@@ -31,8 +19,10 @@ def install(job):
         template = urlparse(service.model.data.templateVdisk)
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
-        blockStoragecluster = service.model.data.blockStoragecluster
-        objectStoragecluster = service.model.data.objectStoragecluster
+        vdiskstore = service.parent
+        blockStoragecluster = vdiskstore.model.data.blockCluster
+        vdiskType = service.model.data.type
+        objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
@@ -92,8 +82,10 @@ def save_config(job):
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
+    vdiskstore = service.parent
 
     service = job.service
 
@@ -147,22 +139,24 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
-    if service.model.data.objectStoragecluster:
+    vdiskType = service.model.data.type
+    objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
+    if objectStoragecluster:
         config = {
-            "zeroStorClusterID": service.model.data.objectStoragecluster,
+            "zeroStorClusterID": objectStoragecluster,
         }
-        if service.model.data.backupStoragecluster:
-                config["slaveStorageClusterID"] = service.model.data.backupStoragecluster or ""
+        if vdiskstore.model.data.slaveCluster:
+                config["slaveStorageClusterID"] = vdiskstore.model.data.slaveCluster or ""
 
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:tlog" % service.name, value=yamlconfig)
 
     # push nbd config to etcd
     config = {
-        "storageClusterID": service.model.data.blockStoragecluster,
+        "storageClusterID": vdiskstore.model.data.blockCluster,
         "templateStorageClusterID": templateStorageclusterId,
     }
-    if service.model.data.objectStoragecluster:
+    if vdiskstore.model.data.objectCluster:
         config["tlogServerClusterID"] = "temp"
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
@@ -175,8 +169,9 @@ def get_cluster_config(job, type="block"):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    vdiskstore = service.parent
 
-    cluster = service.model.data.blockStoragecluster if type == "block" else service.model.data.objectStoragecluster
+    cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
 
     storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
                                                        instance=cluster)

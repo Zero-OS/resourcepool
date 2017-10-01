@@ -16,7 +16,7 @@ func (api *VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
 	aysClient := tools.GetAysConnection(r, api)
 	vdiskID := mux.Vars(r)["vdiskid"]
 	queryParams := map[string]interface{}{
-		"fields": "blockStoragecluster,objectStoragecluster,backupStoragecluster,type",
+		"fields": "vdiskstorage,type",
 	}
 
 	services, resp, err := aysClient.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, queryParams)
