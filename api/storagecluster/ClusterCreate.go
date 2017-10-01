@@ -44,7 +44,7 @@ func (s ClusterCreate) Validate() error {
 		return err
 	}
 
-	if err := validators.ValidateCluster(string(s.ClusterType), s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType)); err != nil {
+	if err := validators.ValidateCluster(string(s.ClusterType), s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType), s.ServersPerMetaDrive); err != nil {
 		return err
 	}
 
