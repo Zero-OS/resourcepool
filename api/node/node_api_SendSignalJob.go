@@ -14,7 +14,7 @@ import (
 
 // SendSignalJob is the handler for POST /nodes/{nodeid}/containers/{containername}/job
 // Send signal to the job
-func (api NodeAPI) SendSignalJob(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) SendSignalJob(w http.ResponseWriter, r *http.Request) {
 	var reqBody ProcessSignal
 
 	// decode request

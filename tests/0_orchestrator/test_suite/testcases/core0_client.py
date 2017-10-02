@@ -142,8 +142,24 @@ class Client(TestCase):
         disks = self.client.disk.list()['blockdevices']
         for disk in disks:
             if 'children' not in disk.keys():
-                freeDisks.append('/dev/{}'.format(disk['kname']))
 
+                disktype = None
+                diskSize = int(disk['size']) / (1024 * 1024 * 1024)
+
+                if disk['rota'] == '1':
+                    if int(diskSize) > (1024 * 7):
+                       disktype = 'archive'
+                    else:
+                        disktype = 'hdd'
+                else:
+                    if 'nvme' in disk['kname']:
+                        disktype = 'nvme'
+                    else:
+                        disktype = 'ssd'
+
+                current_disk = {'type':disktype, 'name':'/dev/{}'.format(disk['kname'])}
+                freeDisks.append(current_disk)
+            
         return freeDisks
 
     def get_processes_list(self):

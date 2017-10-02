@@ -31,11 +31,11 @@ type VdisksInterface interface { // ResizeVdisk is the handler for POST /vdisks/
 }
 
 // VdisksInterfaceRoutes is routing for /vdisks root endpoint
-func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface, org string) {
-	r.HandleFunc("/vdisks/{vdiskid}/resize", i.ResizeVdisk).Methods("POST")
-	r.HandleFunc("/vdisks/{vdiskid}/rollback", i.RollbackVdisk).Methods("POST")
-	r.HandleFunc("/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
-	r.HandleFunc("/vdisks/{vdiskid}", i.GetVdiskInfo).Methods("GET")
-	r.HandleFunc("/vdisks", i.ListVdisks).Methods("GET")
-	r.HandleFunc("/vdisks", i.CreateNewVdisk).Methods("POST")
+func VdisksInterfaceRoutes(r *mux.Router, i VdisksInterface) {
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}/resize", i.ResizeVdisk).Methods("POST")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}/rollback", i.RollbackVdisk).Methods("POST")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}", i.DeleteVdisk).Methods("DELETE")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}", i.GetVdiskInfo).Methods("GET")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks", i.ListVdisks).Methods("GET")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/vdisks", i.CreateNewVdisk).Methods("POST")
 }

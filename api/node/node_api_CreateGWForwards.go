@@ -12,8 +12,12 @@ import (
 
 // CreateGWForwards is the handler for POST /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Create a new Portforwarding
-func (api NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) CreateGWForwards(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody PortForward
 
 	// decode request

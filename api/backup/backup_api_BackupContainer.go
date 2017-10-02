@@ -3,14 +3,20 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zero-os/0-orchestrator/api/tools"
 	"net/http"
+
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 // Create is the handler for POST /backup
 // Create a backup
-func (api BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *BackupAPI) Create(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
+
 	var reqBody BackupContainer
 
 	// decode request

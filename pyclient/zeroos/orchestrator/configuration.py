@@ -16,7 +16,6 @@ def get_configuration(ays_repo):
 
 def refresh_jwt_token(token):
     import requests
-    import time
     headers = {'Authorization': 'bearer %s' % token}
     params = {'validity': '3600'}
     resp = requests.get('https://itsyou.online/v1/oauth/jwt/refresh', headers=headers, params=params)
@@ -27,7 +26,6 @@ def refresh_jwt_token(token):
 def get_jwt_token(ays_repo):
     import jose
     import jose.jwt
-    import requests
     import time
     configs, service = get_configuration_and_service(ays_repo)
     jwt_token = configs.get('jwt-token', '')
@@ -37,16 +35,11 @@ def get_jwt_token(ays_repo):
 
     try:
         token = jose.jwt.decode(jwt_token, jwt_key)
-        if token['exp'] < time.time() - 240:
+        if token['exp'] < time.time() + 1800:
             jwt_token = refresh_jwt_token(jwt_token)
-
-        if token['exp'] > time.time() + 3600:
-            raise RuntimeError('Invalid jwt-token expiration time is too long should be less than 3600 sec')
 
     except jose.exceptions.ExpiredSignatureError:
         jwt_token = refresh_jwt_token(jwt_token)
-    except Exception:
-        raise RuntimeError('Invalid jwt-token and jwt-key combination')
 
     for config in service.model.data.configurations:
         if config.key == 'jwt-token':
@@ -58,7 +51,4 @@ def get_jwt_token(ays_repo):
 
 
 def get_jwt_token_from_job(job):
-    if 'token' in job.context:
-        return job.context['token']
-
     return get_jwt_token(job.service.aysrepo)

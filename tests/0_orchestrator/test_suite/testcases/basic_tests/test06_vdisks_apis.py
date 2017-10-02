@@ -6,17 +6,22 @@ import unittest
 class TestVdisks(TestcasesBase):
     def setUp(self):
         super().setUp()
-        free_disks = self.core0_client.getFreeDisks()
+        nodes = [self.nodeid]
+        number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
-            if free_disks == []:
+            if number_of_free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
 
-            self.lg.info(' [*] Deploy new storage cluster (SC0)')
-            response, data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid,
-                                                                           servers=random.randint(1, len(free_disks)))
+            self.lg.info(' [*] Deploy new storage cluster (SC0)')            
+            response, data = self.storageclusters_api.post_storageclusters(
+                nodes=nodes, 
+                driveType=disk_type, 
+                servers=random.randint(1, number_of_free_disks)
+            )
             self.assertEqual(response.status_code, 201)
             self.storagecluster = data['label']
+
         else:
             self.storagecluster = storageclusters.json()[0]
 

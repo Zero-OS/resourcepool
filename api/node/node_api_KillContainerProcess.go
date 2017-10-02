@@ -9,7 +9,7 @@ import (
 
 // KillContainerProcess is the handler for DELETE /nodes/{nodeid}/containers/{containername}/processes/{processid}
 // Kill Process
-func (api NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) KillContainerProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	cl, err := tools.GetContainerConnection(r, api)

@@ -11,7 +11,7 @@ import (
 
 // ListStoragePoolDevices is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/devices
 // Lists the devices in the storage pool
-func (api NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListStoragePoolDevices(w http.ResponseWriter, r *http.Request) {
 	var respBody []StoragePoolDevice
 
 	vars := mux.Vars(r)
@@ -42,8 +42,12 @@ type DeviceInfo struct {
 }
 
 // Get storagepool devices
-func (api NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) getStoragePoolDevices(node, storagePool string, w http.ResponseWriter, r *http.Request) ([]DeviceInfo, bool) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return []DeviceInfo{}, true
+	}
 	queryParams := map[string]interface{}{"parent": fmt.Sprintf("node.zero-os!%s", node)}
 
 	service, res, err := aysClient.Ays.GetServiceByName(storagePool, "storagepool", api.AysRepo, nil, queryParams)

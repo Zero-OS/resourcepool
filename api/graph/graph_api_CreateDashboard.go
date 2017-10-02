@@ -12,11 +12,15 @@ import (
 
 // CreateDashboard is the handler for POST /graph/{graphid}/dashboards
 // Creates a new dashboard
-func (api GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody Dashboard
 	vars := mux.Vars(r)
-	graphId := vars["graphid"]
+	graphID := vars["graphid"]
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
@@ -47,7 +51,7 @@ func (api GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 		Grafana   string `json:"grafana" yaml:"grafana"`
 	}{
 		Dashboard: reqBody.Dashboard,
-		Grafana:   graphId,
+		Grafana:   graphID,
 	}
 
 	obj := make(map[string]interface{})
@@ -66,7 +70,7 @@ func (api GraphAPI) CreateDashboard(w http.ResponseWriter, r *http.Request) {
 	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
 		return
 	}
-	w.Header().Set("Location", fmt.Sprintf("/graphs/%s/dashboards/%s", graphId, reqBody.Name))
+	w.Header().Set("Location", fmt.Sprintf("/graphs/%s/dashboards/%s", graphID, reqBody.Name))
 	w.WriteHeader(http.StatusCreated)
 
 }

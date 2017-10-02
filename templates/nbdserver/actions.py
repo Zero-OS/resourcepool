@@ -29,6 +29,9 @@ def is_socket_listening(container, socketpath):
 
 def install(job):
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     import time
     service = job.service
@@ -74,12 +77,18 @@ def install(job):
 
 
 def start(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
 def get_storagecluster_config(job, storagecluster):
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
                                                            instance=storagecluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
@@ -87,7 +96,10 @@ def get_storagecluster_config(job, storagecluster):
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
     import time
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = get_container(service, job.context['token'])
 

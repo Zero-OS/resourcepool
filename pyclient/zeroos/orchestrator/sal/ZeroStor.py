@@ -59,10 +59,14 @@ class ZeroStor:
             --bind {bind} \
             --data "{datadir}" \
             --meta "{metadir}" \
-            --interface grpc \
             '.format(bind=self.bind, datadir=self.data_dir, metadir=self.meta_dir)
         self.container.client.system(cmd, id="zerostor.{}".format(self.name))
-        if not self.container.is_port_listening(int(self.bind.split(":")[1])):
+        start = time.time()
+        while start + 15 > time.time():
+            if self.container.is_port_listening(int(self.bind.split(":")[1])):
+                break
+            time.sleep(1)
+        else:
             raise RuntimeError('Failed to start zerostor server: {}'.format(self.name))
 
     def is_running(self):

@@ -106,6 +106,9 @@ def init(job):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
 
@@ -202,8 +205,10 @@ def get_zerotier_nic(zerotierid, containerobj):
 
 
 def processChange(job):
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
@@ -294,7 +299,7 @@ def processChange(job):
         for type in ['http', 'https']:
             httpServ = service.aysrepo.serviceGet(role='http', instance='%s-%s' % (service.name, type))
             http_args = {'httpproxies': httpproxies}
-            job.context['token'] = get_jwt_token_from_job(job)
+            job.context['token'] = get_jwt_token(job.service.aysrepo)
             j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
         service.model.data.httpproxies = httpproxies
 
@@ -308,6 +313,9 @@ def processChange(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = service.producers.get('container')[0]
     if container:
@@ -317,11 +325,13 @@ def uninstall(job):
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = service.producers.get('container')[0]
-    if str(container.model.data.status) == 'halted':
-        j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
 
     containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # setup resolv.conf
@@ -355,6 +365,10 @@ def start(job):
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     container = service.producers.get('container')[0]
     if container:
@@ -364,8 +378,11 @@ def stop(job):
 
 def setup_zerotierbridges(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zerotier import client
     import time
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = service.producers.get('container')[0]
@@ -432,3 +449,15 @@ def setup_zerotierbridges(job):
 
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
+
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    if job.service.model.data.status != 'running':
+        return
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    start(job)
+
+

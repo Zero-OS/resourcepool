@@ -10,8 +10,12 @@ import (
 
 // DeleteVdisk is the handler for DELETE /vdisks/{vdiskid}
 // Delete Vdisk
-func (api VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	vdiskID := vars["vdiskid"]
 

@@ -75,14 +75,18 @@ class TestcasesBase(TestCase):
     def random_item(self, array):
         return array[random.randint(0, len(array) - 1)]
 
-    def create_zerotier_network(self, private=False):
+    def create_zerotier_network(self, default_config=True, private=False):
         url = 'https://my.zerotier.com/api/network'
-        data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
-                                                  'ipRangeStart': '10.147.17.1'}],
-                           'private': private,
-                           'routes': [{'target': '10.147.17.0/24', 'via': None}],
-                           'v4AssignMode': {'zt': True}}}
-
+        
+        if default_config:
+            data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
+                                                    'ipRangeStart': '10.147.17.1'}],
+                            'private': private,
+                            'routes': [{'target': '10.147.17.0/24', 'via': None}],
+                            'v4AssignMode': {'zt': True}}}
+        else:
+            data = {}
+        
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']
@@ -126,24 +130,28 @@ class TestcasesBase(TestCase):
             ip = '192.168.%i.2/24' % random.randint(1, 254)
             if nic['type'] == 'vlan':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'vlan',
                     "id": str(random.randint(1, 4094)),
                     "config": {"cidr": ip}
                 }
             elif nic['type'] == 'vxlan':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'vxlan',
                     "id": str(random.randint(1, 100000)),
                     "config": {"cidr": ip}
                 }
             elif nic['type'] == 'bridge':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'bridge',
                     "id": nic['bridge_name'],
                     "config": {"cidr": ip}
+                }
+            elif nic['type'] == 'default':
+                nic_data = {
+                    "type": "default"
                 }
 
             if nic['gateway']:
@@ -180,6 +188,19 @@ class TestcasesBase(TestCase):
                       random.randint(0x00, 0xff)]
         mac_address = ':'.join(map(lambda x: "%02x" % x, random_mac))
         return mac_address
+
+
+    def get_max_available_free_disks(self, nodes):
+        disk_types = ['ssd', 'hdd', 'nvme']
+        free_disks = []
+        for nodeid in nodes:
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            free_disks.extend(node_client.getFreeDisks())
+    
+        return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
+
+
 
 class Utiles:
     def __init__(self):

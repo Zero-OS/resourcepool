@@ -608,7 +608,6 @@ class OrchestratorInstaller:
                 '--org "%s"' % organization,
                 '--jwt "%s"' % orchjwt
             ]
-            jobs['orchestrator'] = cn.client.system(" ".join(arguments))
 
         if 'caddy' not in running:
             caddyfile = """

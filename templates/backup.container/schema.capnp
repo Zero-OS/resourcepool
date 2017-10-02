@@ -6,4 +6,5 @@ struct Schema {
     url @2 :Text;
     type @3 :Text;
     meta @4 :Text;
+    timestamp @5 :Int64;
 }

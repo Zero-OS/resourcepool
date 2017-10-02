@@ -27,6 +27,9 @@ def input(job):
 
 def get_node(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     return Node.from_ays(job.service.parent, job.context['token'])
 
 
@@ -37,6 +40,9 @@ def create_zerodisk_container(job, parent):
     return the container service
     """
     from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     config = get_configuration(service.aysrepo)
     actor = service.aysrepo.actorGet("container")
@@ -98,6 +104,9 @@ def _init_zerodisk_services(job, nbd_container, tlog_container=None):
 
 def _nbd_url(job, container, nbdserver, vdisk):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     container_root = container.info['container']['root']
     node = Node.from_ays(nbdserver.parent.parent, password=job.context['token']).client
@@ -120,6 +129,9 @@ def init(job):
 def start_dependent_services(job):
     import random
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
 
@@ -142,6 +154,9 @@ def start_dependent_services(job):
 
 def _start_nbd(job, nbdname=None):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     # get all path to the vdisks serve by the nbdservers
     medias = []
@@ -169,6 +184,9 @@ def _start_nbd(job, nbdname=None):
 
 def start_tlog(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     tlogservers = job.service.producers.get('tlogserver', None)
     if not tlogservers:
@@ -238,6 +256,7 @@ def install(job):
             service.saveAll()
             raise j.exceptions.Input(str(e))
 
+
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
@@ -260,6 +279,9 @@ def install(job):
 
 
 def start(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     service.model.data.status = 'starting'
     service.saveAll()
@@ -294,6 +316,9 @@ def reset(job):
 
 
 def destroy(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     j.tools.async.wrappers.sync(job.service.executeAction('stop', context=job.context))
     service = job.service
     tlogservers = service.producers.get('tlogserver', [])
@@ -318,7 +343,10 @@ def destroy(job):
 
 
 def cleanupzerodisk(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.Node import Node
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     node = Node.from_ays(service.parent, password=job.context['token'])
     for nbdserver in service.producers.get('nbdserver', []):
@@ -412,6 +440,9 @@ def ssh_deamon_running(node, port):
 def start_migartion_channel(job, old_service, new_service):
     import time
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     old_node = Node.from_ays(old_service, job.context['token'])
     node = Node.from_ays(new_service, job.context['token'])
@@ -551,6 +582,9 @@ def get_baseports(job, node, baseport, nrports, name=None):
 def save_config(job, vdisks=None):
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     config = {"vdisks": list(service.model.data.vdisks)}
@@ -563,8 +597,11 @@ def save_config(job, vdisks=None):
 
 
 def migrate(job):
-    from zeroos.orchestrator.sal.Node import Node
     import time
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
 
@@ -673,6 +710,9 @@ def updateDisks(job, client, args):
     if args.get('disks') is None:
         return
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     uuid = None
     if service.model.data.status == 'running':
@@ -763,6 +803,9 @@ def monitor(job):
 
 
 def update_data(job, args):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
 
     # mean we want to migrate vm from a node to another
@@ -856,14 +899,15 @@ def export(job):
 
 
 def processChange(job):
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
     if category == "dataschema" and service.model.actionsState['install'] == 'ok':
         try:
-            job.context['token'] = get_jwt_token_from_job(job)
             if args.get('backupUrl', None):
                 export(job)
                 return

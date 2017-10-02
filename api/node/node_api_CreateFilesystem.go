@@ -12,8 +12,12 @@ import (
 
 // CreateFilesystem is the handler for POST /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem
 // Create a new filesystem
-func (api NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) CreateFilesystem(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody FilesystemCreate
 	nodeid := mux.Vars(r)["nodeid"]
 	storagepool := mux.Vars(r)["storagepoolname"]

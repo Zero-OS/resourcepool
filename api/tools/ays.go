@@ -33,12 +33,6 @@ type ActionBlock struct {
 	Force   bool   `json:"force" validate:"omitempty"`
 }
 
-func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
-	return AYStool{
-		Ays: client.Ays,
-	}
-}
-
 //ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
 // create blueprint
 // execute blueprint
@@ -89,20 +83,19 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	run, err := aystool.getRun(runid, repoName)
-
-	if err != nil {
+	if err != nil && run.State != "error" {
 		return run, err
 	}
 
-	for run.State == "new" || run.State == "running" {
+	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6) {
 		time.Sleep(time.Second)
 
 		run, err = aystool.getRun(run.Key, repoName)
-		if err != nil {
+		if err != nil && run.State != "error" {
 			return run, err
 		}
 	}
-	return run, nil
+	return run, err
 }
 
 func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
@@ -247,7 +240,7 @@ func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	}
 
 	if err = aystool.checkRun(run); err != nil {
-		resp.StatusCode = http.StatusInternalServerError
+		//resp.StatusCode = http.StatusInternalServerError
 		return &run, NewHTTPError(resp, err.Error())
 	}
 	return &run, nil

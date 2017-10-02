@@ -13,8 +13,12 @@ import (
 
 // GetFilesystemSnapshotInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}/snapshot/{snapshotname}
 // Get detailed information on the snapshot
-func (api NodeAPI) GetFilesystemSnapshotInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) GetFilesystemSnapshotInfo(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	snapshotname := mux.Vars(r)["snapshotname"]
 
 	service, resp, err := aysClient.Ays.GetServiceByName(snapshotname, "fssnapshot", api.AysRepo, nil, nil)

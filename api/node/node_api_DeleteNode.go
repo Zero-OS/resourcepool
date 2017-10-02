@@ -9,8 +9,12 @@ import (
 
 // DeleteNode is the handler for DELETE /nodes/{nodeid}
 // Delete Node
-func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 

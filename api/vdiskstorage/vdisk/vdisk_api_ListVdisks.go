@@ -12,11 +12,15 @@ import (
 
 // ListVdisks is the handler for GET /vdisks
 // Get vdisk information
-func (api VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *VdisksAPI) ListVdisks(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vdiskID := mux.Vars(r)["vdiskid"]
 	queryParams := map[string]interface{}{
-		"fields": "blockStoragecluster,objectStoragecluster,backupStoragecluster,type",
+		"fields": "vdiskstorage,type",
 	}
 
 	services, resp, err := aysClient.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, queryParams)

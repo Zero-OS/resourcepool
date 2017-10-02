@@ -10,7 +10,7 @@ import (
 
 // ListContainerJobs is the handler for GET /nodes/{nodeid}/container/{containername}/job
 // List running jobs on the container
-func (api NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) ListContainerJobs(w http.ResponseWriter, r *http.Request) {
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to establish connection to container")

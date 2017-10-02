@@ -12,6 +12,7 @@ import (
 	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/zero-os/0-orchestrator/api/goraml"
 	"github.com/zero-os/0-orchestrator/api/router"
+	"github.com/zero-os/0-orchestrator/api/tools"
 
 	"fmt"
 
@@ -25,10 +26,13 @@ func main() {
 		aysURL       string
 		aysRepo      string
 		organization string
+		jwt          string
+		jwtProvider  *tools.JWTProvider
+		development  bool
 	)
 	app := cli.NewApp()
-	app.Version = "0.2.0"
-	app.Name = "G8OS Stateless GRID API"
+	app.Version = "1.1.0-beta-1"
+	app.Name = "Zero-os Stateless Orchestrator API"
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -58,6 +62,16 @@ func main() {
 			Usage:       "Itsyouonline organization to authenticate against",
 			Destination: &organization,
 		},
+		cli.StringFlag{
+			Name:        "jwt",
+			Usage:       "Refreshable Itsyouonline jwt to access AYS server and zero-os nodes",
+			Destination: &jwt,
+		},
+		cli.BoolFlag{
+			Name:        "dev",
+			Usage:       "Enable development mode",
+			Destination: &development,
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -72,8 +86,16 @@ func main() {
 			time.Sleep(time.Second)
 		}
 
-		if err := ensureAYSRepo(aysURL, aysRepo); err != nil {
+		if err = ensureAYSRepo(aysURL, aysRepo); err != nil {
 			log.Fatalln(err.Error())
+		}
+
+		if development {
+			jwtProvider = tools.NewDevelopmentJWTProvider()
+		} else {
+			if jwtProvider, err = tools.NewJWTProvider(jwt); err != nil {
+				log.Fatalln(err.Error())
+			}
 		}
 
 		return nil
@@ -81,8 +103,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
-
-		r := router.GetRouter(aysURL, aysRepo, organization)
+		r := router.GetRouter(aysURL, aysRepo, organization, jwtProvider)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)

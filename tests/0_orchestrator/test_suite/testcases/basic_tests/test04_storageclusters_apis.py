@@ -7,19 +7,27 @@ import time
 class TestStorageclustersAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
-        self.lg.info(' [*] Deploy new storage cluster (SC0)')
-        free_disks = self.core0_client.getFreeDisks()
-        if free_disks == []:
-            self.skipTest(' [*] No free disks to create storagecluster')
-        else:
-            self.response, self.data = self.storageclusters_api.post_storageclusters(node_id=self.nodeid,
-                                                                                     servers=randint(1, len(free_disks)))
-        self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s."%self.response.content)
+    
+        if self._testID != 'test003_deploy_new_storagecluster':
+
+            nodes = [self.nodeid]
+            number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
+
+            if number_of_free_disks == []:
+                self.skipTest(' [*] No free disks to create storagecluster')
+
+            self.response, self.data = self.storageclusters_api.post_storageclusters(
+                nodes=nodes, 
+                driveType=disk_type, 
+                servers=randint(1, number_of_free_disks)
+            )
+            self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s." % self.response.content)
 
     def tearDown(self):
-        self.lg.info(' [*] Kill storage cluster (SC0)')
-        self.storageclusters_api.delete_storageclusters_label(self.data['label'])
-        super(TestStorageclustersAPI, self).tearDown()
+        if self._testID != 'test003_deploy_new_storagecluster':
+            self.lg.info(' [*] Kill storage cluster (SC0)')
+            self.storageclusters_api.delete_storageclusters_label(self.data['label'])
+            super(TestStorageclustersAPI, self).tearDown()
 
     def test001_get_storageclusters_label(self):
         """ GAT-041
@@ -57,17 +65,28 @@ class TestStorageclustersAPI(TestcasesBase):
         #. List storage clusters, (SC1) should be listed
         #. Kill storage cluster (SC0), should succeed with 204
         """
-        self.lg.info(' [*] List storage clusters, (SC1) should be listed')
-        response = self.storageclusters_api.get_storageclusters()
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(self.data['label'], response.json())
+        nodes = [x['id'] for x in self.nodes_info]
+        number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
 
-        response = self.storageclusters_api.get_storageclusters_label(self.data['label'])
+        if not number_of_free_disks:
+            self.skipTest('[*] No free disks to create storage cluster')
+
+        if number_of_free_disks < len(nodes):
+            servers = number_of_free_disks
+            nodes = nodes[:servers]
+        else:
+            servers = number_of_free_disks - (number_of_free_disks % len(nodes))
+
+        self.lg.info(' [*] Deploy storagecluster with {} servers on {} nodes'.format(servers, len(nodes)))
+        response, data = self.storageclusters_api.post_storageclusters(nodes=nodes, driveType=disk_type, servers=servers)
+        self.assertEqual(response.status_code, 201)
+    
+        response = self.storageclusters_api.get_storageclusters_label(data['label'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'ready')
 
         self.lg.info(' [*] Kill storage cluster (SC1), should succeed with 204')
-        response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
+        response = self.storageclusters_api.delete_storageclusters_label(data['label'])
         self.assertEqual(response.status_code, 204)
 
     def test004_kill_storagecluster_label(self):

@@ -12,8 +12,12 @@ import (
 
 // GetVdiskInfo is the handler for GET /vdisks/{vdiskid}
 // Get vdisk information
-func (api VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *VdisksAPI) GetVdiskInfo(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vdiskID := mux.Vars(r)["vdiskid"]
 
 	serv, resp, err := aysClient.Ays.GetServiceByName(vdiskID, "vdisk", api.AysRepo, nil, nil)

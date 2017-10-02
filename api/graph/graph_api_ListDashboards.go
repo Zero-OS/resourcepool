@@ -12,13 +12,17 @@ import (
 
 // ListDashboards is the handler for GET /nodes/{nodeid}/dashboards
 // List running Dashboards
-func (api GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
-	graphId := vars["graphid"]
+	graphID := vars["graphid"]
 
 	query := map[string]interface{}{
-		"parent": fmt.Sprintf("grafana!%s", graphId),
+		"parent": fmt.Sprintf("grafana!%s", graphID),
 		"fields": "slug",
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("dashboard", api.AysRepo, nil, query)

@@ -11,8 +11,12 @@ import (
 
 // GetGateway is the handler for GET /nodes/{nodeid}/gws/{gwname}
 // Get gateway
-func (api NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) GetGateway(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var gateway GetGW
 
 	vars := mux.Vars(r)
