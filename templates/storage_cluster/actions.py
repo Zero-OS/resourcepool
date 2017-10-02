@@ -19,14 +19,14 @@ def input(job):
     if cluster_type == "object":
         servers_per_meta = job.model.args.get("serversPerMetaDrive", 0)
         if not servers_per_meta:
-            raise RuntimeError('serversPerMetaDrive should be larger than 0')
+            raise ValueError('serversPerMetaDrive should be larger than 0')
 
         if servers_per_meta < len(nodes):
-            raise RuntimeError('Invalid amount of serversPerMetaDrive, can not evenly spread servers over amount of nodes')
+            raise ValueError('Invalid amount of serversPerMetaDrive, can not evenly spread servers over amount of nodes')
 
         serverpernode = nrserver // len(nodes)
         if servers_per_meta > serverpernode:
-            raise RuntimeError('Invalid amount of serversPerMetaDrive, should be less or equal to the number of servers per node')
+            raise ValueError('Invalid amount of serversPerMetaDrive, should be less or equal to the number of servers per node')
 
         aysconfig = get_configuration(job.service.aysrepo)
         zstor_organization = aysconfig.get("0-stor-organization")
@@ -34,7 +34,7 @@ def input(job):
         zstor_clientid = aysconfig.get("0-stor-clientid")
         zstor_clientsecret = aysconfig.get("0-stor-clientsecret")
         if not (zstor_organization and zstor_namespace and zstor_clientid and zstor_clientsecret):
-            raise RuntimeError('Missing 0-stor configuration, please fix configuration blueprint and try again.')
+            raise ValueError('Missing 0-stor configuration, please fix configuration blueprint and try again.')
 
         data_shards = job.model.args.get("dataShards", 0)
         parity_shards = job.model.args.get("parityShards", 0)
