@@ -8,13 +8,13 @@ class Storageclusters(OrchestratorBase):
         self.orchestrator_client = self.orchestrator_driver.orchestrator_client
 
     @catch_exception_decoration_return
-    def post_storageclusters(self, node_id, **kwargs):
+    def post_storageclusters(self, nodes, **kwargs):
         data = {
             "label": self.random_string(),
             "servers": 1,
             "driveType": 'ssd',
             "clusterType": "block",
-            "nodes": [node_id]
+            "nodes": nodes
         }
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.storageclusters.DeployNewCluster(data=data)
