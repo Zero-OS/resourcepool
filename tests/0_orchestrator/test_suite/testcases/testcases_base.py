@@ -189,6 +189,19 @@ class TestcasesBase(TestCase):
         mac_address = ':'.join(map(lambda x: "%02x" % x, random_mac))
         return mac_address
 
+
+    def get_max_available_free_disks(self, nodes):
+        disk_types = ['ssd', 'hdd', 'nvme']
+        free_disks = []
+        for nodeid in nodes:
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            free_disks.extend(node_client.getFreeDisks())
+    
+        return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
+
+
+
 class Utiles:
     def __init__(self):
         self.config = {}

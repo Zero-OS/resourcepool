@@ -1,4 +1,4 @@
-@0x935023b5e21bf041;
+@0x80bf2ccb5d7de793;
 
 struct Schema {
     homeDir @0 :Text; # directory where the storageEngine db will be stored
@@ -13,7 +13,8 @@ struct Schema {
 
     enum Status{
         halted @0;
-        running @1;
-        unhealthy @2;
+        halting @1;
+        running @2;
+        unhealthy @3;
     }
 }
