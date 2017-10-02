@@ -42,22 +42,28 @@ class TestcontaineridAPI(TestcasesBase):
         **Test Scenario:**
 
         #. Create new container (setup method)
-        #. Delete ctreated container,should succeed
+        #. Delete created container,should succeed.
+        #. Create container with same name of C1, should fail
         #. make sure that it deleted .
         """
-
         self.lg.info('Make sure it created with required values, should succeed.')
-        self.assertEqual(self.response.headers['Location'],
-                         "/nodes/%s/containers/%s" % (self.nodeid, self.data['name']))
+        self.assertEqual(self.response.headers['Location'], "/nodes/{}/containers/{}".format(self.nodeid, self.data['name']))
+
         response = self.containers_api.get_containers_containerid(self.nodeid, self.data['name'])
         self.assertEqual(response.status_code, 200)
+
         response_data = response.json()
         for key in response_data.keys():
             if key == 'initprocesses':
                 self.assertEqual(response_data[key], self.data['initProcesses'])
                 continue
+
             if key in self.data.keys():
                 self.assertEqual(response_data[key], self.data[key])
+
+        self.lg.info('Create container with same name of C1, should fail')
+        response, data = self.containers_api.post_containers(nodeid=self.nodeid, name=self.data['name'])
+        self.assertEqual(response.status_code, 409)
 
         self.lg.info('delete created container')
         response = self.containers_api.delete_containers_containerid(self.nodeid, self.data['name'])
@@ -65,10 +71,9 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info('Make sure that it deleted ')
         response = self.containers_api.get_containers(self.nodeid)
-        containers_list = response.json()
-        self.assertNotIn(self.data['name'], [container['name'] for container in containers_list])
-        self.assertFalse(self.core0_client.client.container.find(self.data['name']),
-                         'container %s still exist in g8os ' % self.data['name'])
+        self.assertNotIn(self.data['name'], [container['name'] for container in response.json()])
+        self.assertFalse(self.core0_client.client.container.find(self.data['name']), 'container {} still exist in node'.format(self.data['name']))
+
 
     def test003_get_container_details(self):
         """ GAT-024
