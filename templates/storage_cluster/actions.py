@@ -21,9 +21,6 @@ def input(job):
         if not servers_per_meta:
             raise ValueError('serversPerMetaDrive should be larger than 0')
 
-        if servers_per_meta < len(nodes):
-            raise ValueError('Invalid amount of serversPerMetaDrive, can not evenly spread servers over amount of nodes')
-
         serverpernode = nrserver // len(nodes)
         if servers_per_meta > serverpernode:
             raise ValueError('Invalid amount of serversPerMetaDrive, should be less or equal to the number of servers per node')
