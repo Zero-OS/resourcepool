@@ -9,7 +9,8 @@ def input(job):
     if args.get('type') == 'boot' and not args.get('imageId'):
         raise j.exceptions.Input("imageId is a required field for boot vdisks")
     if args.get('type') == 'boot':
-        images = service.aysrepo.servicesFind(name=args.get('imageId'), role='vdisk_image', parent="$vdiskstorage!$%s" % args.get('vdiskstorage'))
+        images = service.aysrepo.servicesFind(
+            name=args.get('imageId'), role='vdisk_image', parent="vdiskstorage!%s" % args.get('vdiskstorage'))
         if not images:
             raise j.exceptions.Input('image %s does not exist' % args.get('imageId'))
 
