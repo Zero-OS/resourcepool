@@ -372,15 +372,23 @@ def processChange(job):
 
     args = job.model.args
     category = args.pop('changeCategory')
-    if category == "dataschema" and service.model.actionsState['install'] == 'ok':
-        if args.get('size', None):
-            j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
-        if args.get('timestamp', None):
-            if str(service.model.data.status) != "halted":
-                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
-            if str(service.model.data.type) not in ["boot", "db"]:
-                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
-            args['timestamp'] = args['timestamp'] * 10**9
-            service.model.data.timestamp = -1
-            service.saveAll()
-            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))
+    if category != "dataschema" or service.model.actionsState['install'] != 'ok':
+        return
+
+    if args.get('size', None):
+        j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
+
+    if 'timestamp' in args:
+        timestamp = args['timestamp']
+        timestamp = timestamp* 10**9
+        if timestamp < 0:
+            return
+
+        if str(service.model.data.status) != "halted":
+            raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
+        if str(service.model.data.type) not in ["boot", "db"]:
+            raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
+
+        service.model.data.timestamp = -1
+        service.saveAll()
+        j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))

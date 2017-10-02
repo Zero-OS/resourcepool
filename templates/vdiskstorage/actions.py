@@ -18,3 +18,99 @@ def input(job):
                     raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
     elif args.get('slaveCluster'):
         raise RuntimeError("backup storage clusters cannot exist without an object cluster , please provide a storage cluster of type object.")
+
+def recover_full_once(job, cluster, engine):
+    import time
+    # the recovery action is granteed to run one time even if called many times (at the same time)
+    # it can only be executed again when it finishes executing, otherwise callers will just return (not blocked)
+    # this is to avoid executing the same recover scenario when the same error is reported via multiple nbdservers.
+
+    from zeroos.orchestrator.sal.StorageEngine import StorageEngine
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    token = get_jwt_token(job.service.aysrepo)
+    engine_sal = StorageEngine.from_ays(service, token)
+
+    broken = True
+    for i in range(3):
+        if engine.model.data.status == 'broken':
+            break
+        if engine_sal.is_running() and engine_sal.is_healthy():
+            broken = False
+            break
+        # we give it a chance to update the status
+        time.sleep(2)
+        engine.reload()
+
+    if not broken:
+        return
+
+    # this next part is synchronized.
+    # TODO: sync code goes here.
+
+    # force broken state and update cluster config
+    engine.model.data.status = 'broken'
+    engine.saveAll()
+
+    # rewrite cluster config to etcd
+    j.tools.async.wrappers.sync(cluster.executeAction('save_config', context=job.context))
+
+    # now time to stop all the machines that relies on this
+    halted = []
+    for vdisk in job.service.children:
+        for vm in vdisk.consumers.get('vm', []):
+            if vm.model.data.status != 'halted':
+                # sync or not sync, that is the question!
+                j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
+                halted.append(vm)
+            vdisk.executeAction('rollback', args={"timestamp": int(time.time())})
+
+    # We need to wait on ALL rollback jobs and start associated machines if they managed to rollback
+    # correctly (only if they were halted by the recovery process)
+    # no idea how to do this yet...
+
+
+def recover(job):
+    """
+    Called from nbdservers in case of ardb server failures
+
+    message formatted as
+
+    {
+        "status": 422,
+        "subject": "ardb",
+        "data": {
+            "address": "172.17.0.255:2000",
+            "db": 0,
+            "type": "primary",
+            "vdiskID": "vd6"
+        }
+    }
+
+    according to https://github.com/zero-os/0-Disk/blob/master/docs/log.md#ardb-storage-server-issues
+    """
+    service = job.service
+    message = job.model.args['message']
+
+    # so we received a recover call from one of the nbd servers due to an ardb server.
+    # let's find which one has failed ...
+    cluster = service.repo.servicesFind(role='storage_cluster', name=service.model.data.blockCluster, first=True)
+    engine = None
+    for storage_engine in cluster.producers.get('storage_engine', []):
+        if storage_engine.model.data.bind == message['data']['address']:
+            engine = storage_engine
+            break
+
+    if engine is None:
+        # we can not find the faulty engine under this vdisk storage setup.
+        # message should not be directed to this vdisk storage.
+        # NOTE: this can be part of the slave cluster (NotImplemented)
+        job.logger.error('can not find storage engine "%s" under vdisk storage""' % (message, service.name))
+        return
+
+    # now we found the faulty engine, let's see if this engine is recoverable. if so, we can simply ditch the process now
+    # and hope that nbd server will pick it up again and resume normal operation. Otherwise we need to start a full recovery
+    # NOTE: currently we only support full recovery
+    recover_full_once(job, cluster, engine)
+
+

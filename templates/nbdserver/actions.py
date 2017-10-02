@@ -148,12 +148,21 @@ def monitor(job):
         else:
             j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
 
+
 def ardb_message(job, message):
-    status = message['status']
+    # status = message['status']
     # do we need to check the status ?
+
+    service = job.service
+    vdisk_id = message['data']['vdiskID']
+    for vdisk in service.aysrepo.servicesFind(name=vdisk_id, role='vdisk'):
+        # NOTE: this should match 1 vdisk at max
+        vdisk_storage = vdisk.parent
+        vdisk_storage.executeAction('recover', args={'message': message}, context=job.context)
 
 
 def handle_messages(job, message):
+    """ message == {"status":422,"subject":"ardb","data":{"address":"172.17.0.255:2000","db":0,"type":"primary","vdiskID":"vd6"}}"""
     job.logger.info('processing nbdserver message "%s"', message)
     switch = {
         'ardb': ardb_message,
@@ -165,7 +174,6 @@ def handle_messages(job, message):
 
 
 def watchdog_handler(job):
-    """ {"status":422,"subject":"ardb","data":{"address":"172.17.0.255:2000","db":0,"type":"primary","vdiskID":"vd6"}}"""
     import asyncio
     loop = j.atyourservice.server.loop
     service = job.service

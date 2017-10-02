@@ -9,18 +9,28 @@ logger = logging.getLogger(__name__)
 class StorageEngine:
     """storageEngine server"""
 
-    def __init__(self, name, container, bind='0.0.0.0:16379', data_dir='/mnt/data', master=None):
+    def __init__(self, service, container, data_dir='/mnt/data', master=None):
         """
         TODO: write doc string
         """
-        self.name = name
+        self.service = service
         self.master = master
         self.container = container
-        self.bind = bind
-        self.port = int(bind.split(':')[1])
         self.data_dir = data_dir
         self.master = master
         self._ays = None
+
+    @property
+    def name(self):
+        return self.service.name
+
+    @property
+    def bind(self):
+        return self.service.model.data.bind
+
+    @property
+    def port(self):
+        return int(self.bind.split(':')[1])
 
     @classmethod
     def from_ays(cls, service, password=None):
@@ -35,9 +45,8 @@ class StorageEngine:
             master = None
 
         return cls(
-            name=service.name,
+            service=service,
             container=container,
-            bind=service.model.data.bind,
             data_dir=service.model.data.homeDir,
             master=master,
         )
