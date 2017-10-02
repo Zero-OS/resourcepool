@@ -80,7 +80,7 @@ class Node:
     def _eligible_fscache_disk(self, disks):
         """
         return the first disk that is eligible to be used as filesystem cache
-        First try to find a SSH disk, otherwise return a HDD
+        First try to find a ssd disk, otherwise return a HDD
         """
         priorities = [DiskType.ssd, DiskType.hdd, DiskType.nvme]
         eligible = {t: [] for t in priorities}
