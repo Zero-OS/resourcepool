@@ -250,6 +250,20 @@ def save_config(job):
     etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
 
 
+def delete_config(job):
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+
+    service = job.service
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        j.exceptions.RuntimeError('No etcd cluster found')
+
+    etcd_cluster = etcd_clusters[0]
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
+    etcd.delete(key="%s:cluster:conf:zerostor" % service.name)
+
+
 def get_availabledisks(job, disktype):
     from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
 
@@ -356,6 +370,7 @@ def delete(job):
         j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
         j.tools.async.wrappers.sync(pool.delete())
 
+    delete_config(job)
     job.logger.info("stop cluster {}".format(service.name))
     job.service.model.data.status = 'empty'
 

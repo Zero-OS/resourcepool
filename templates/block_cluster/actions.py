@@ -158,6 +158,23 @@ def save_config(job):
     etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
 
 
+def delete_config(job):
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+    service = job.service
+    etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
+    if not etcd_clusters:
+        j.exceptions.RuntimeError('No etcd cluster found')
+
+    etcd_cluster = etcd_clusters[0]
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
+    etcd.delete(key="%s:cluster:conf:storage" % service.name)
+
+
 def get_availabledisks(job):
     from zeroos.orchestrator.sal.StorageCluster import BlockCluster
 
@@ -264,6 +281,7 @@ def delete(job):
         j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
         j.tools.async.wrappers.sync(pool.delete())
 
+    delete_config(job)
     job.logger.info("stop cluster {}".format(service.name))
     job.service.model.data.status = 'empty'
 
