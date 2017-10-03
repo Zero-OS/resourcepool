@@ -309,7 +309,7 @@ def list_vdisks(job):
 
 def monitor(job):
     import time
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -321,7 +321,7 @@ def monitor(job):
     if service.model.data.clusterType == "object":
         return
 
-    cluster = StorageCluster.from_ays(service, job.context['token'])
+    cluster = BlockCluster.from_ays(service, job.context['token'])
     if service.model.data.status == 'ready' and not cluster.is_running():
         cluster.start()
 
