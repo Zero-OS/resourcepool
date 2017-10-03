@@ -20,7 +20,7 @@ func (api *HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *ht
 	vars := mux.Vars(r)
 	storageClusterID := vars["storageclusterid"]
 
-	serviceName := fmt.Sprintf("storage_cluster_%s", storageClusterID)
+	serviceName := fmt.Sprintf("block_cluster_%s", storageClusterID)
 	service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "listing storage cluster health checks") {
