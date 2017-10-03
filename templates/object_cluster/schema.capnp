@@ -1,25 +1,24 @@
-@0xd2006eaa1b96f733;
+@0x8ebb5df427f8e71c;
 
 struct Schema {
     label @0 :Text;
     status @1 :Status = empty;
     nrServer @2 :UInt32 = 256;
-    diskType @3:DiskClass = ssd;
-    metadiskType @4:DiskClass = ssd;
+    dataDiskType @3:DiskClass = hdd;
+    metaDiskType @4:DiskClass = ssd;
     serversPerMetaDrive @5:UInt32;
     filesystems @6:List(Text);
-    storageEngines @7 :List(Text);
+    zerostors @7 :List(Text);
 
     nodes @8 :List(Text); # list of node where we can deploy storage server
 
-    clusterType @9 :Type = block;
-    dataShards @10: UInt32;
-    parityShards @11: UInt32;
+    dataShards @9:UInt32;
+    parityShards @10:UInt32;
 
-    enum Type {
-        block @0;
-        object @1;
-    }
+    zerostorOrganization @11:Text;
+    zerostorNamespace @12:Text;
+    zerostorClientID @13:Text;
+    zerostorSecret @14:Text;
 
     enum Status{
         empty @0;

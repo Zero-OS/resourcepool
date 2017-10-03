@@ -1,0 +1,19 @@
+links:
+  consume:
+    - auto: false
+      min: 1
+      max: 9999
+      role: node
+      argname: nodes
+
+    - auto: false
+      min: 0
+      max: 257
+      role: zerostor
+      argname: zerostors
+
+    - auto: false
+      min: 0
+      max: 257
+      role: filesystem
+      argname: filesystems

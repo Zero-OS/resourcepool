@@ -1021,7 +1021,7 @@ ClusterCreate:
       required: false
     serversPerMetaDrive:
       type: integer
-      description: Number of servers per metaDriveType to deploy in this cluster
+      description: Number of servers per metaDriveType to deploy in this cluster, required for object clusters
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
@@ -1037,6 +1037,18 @@ ClusterCreate:
       type: integer
       description: parityShards variable of the erasure encoding, required for object clusters
       required: false
+    zerostorOrganization:
+      type: string
+      description: zerostor organization, required for object clusters
+    zerostorNamespace:
+      type: string
+      description: zerostor namespace, required for object clusters
+    zerostorClientID:
+      type: string
+      description: zerostor client ID, required for object clusters
+    zerostorSecret:
+      type: string
+      description: zerostor secret, required for object clusters
   example:
     label: cluster1
     servers: 256
