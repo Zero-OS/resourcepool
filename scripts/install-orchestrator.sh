@@ -193,7 +193,8 @@ if [ ! -d $ays_repos_dir/orchestrator-server ]; then
 fi
 
 bash $aysinit >> ${logfile} 2>&1
-
+tmp=`ays generatetoken --clientid  $ITSYOUONLINEAPPID --clientsecret $ITSYOUONLINESECRET --validity 3600 --organization $ITSYOUONLINEORG`
+JWT=${tmp/export JWT=/}
 echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
@@ -233,7 +234,7 @@ echo '#!/bin/bash -x' > ${orchinit}
 if [ -z "${ITSYOUONLINEORG}" ]; then
     echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server\"" >> ${orchinit}
 else
-    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}' --application-id '${ITSYOUONLINEAPPID}' --secret '${ITSYOUONLINESECRET}'\"" >> ${orchinit}
+    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}' --jwt '${JWT}' \"" >> ${orchinit}
 fi
 
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
