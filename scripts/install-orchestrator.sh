@@ -193,7 +193,8 @@ if [ ! -d $ays_repos_dir/orchestrator-server ]; then
 fi
 
 bash $aysinit >> ${logfile} 2>&1
-JWT=`ays generatetoken --clientid  $ITSYOUONLINEAPPID --clientsecret $ITSYOUONLINESECRET --validity 3600 --organization $ITSYOUONLINEORG`"
+tmp=`ays generatetoken --clientid  $ITSYOUONLINEAPPID --clientsecret $ITSYOUONLINESECRET --validity 3600 --organization $ITSYOUONLINEORG`
+JWT=${tmp/export JWT=/}
 echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
