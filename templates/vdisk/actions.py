@@ -315,6 +315,7 @@ def import_vdisk(job):
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
+               --flush-size 8192 \
                --config {dialstrings} \
                --key {cryptoKey} \
                --storage {ftpurl}".format(vdiskid=service.name,
