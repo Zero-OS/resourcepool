@@ -32,7 +32,14 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
+	role := ""
+	if reqBody.ClusterType == EnumClusterTypeBlock {
+		role = "block_cluster"
+	} else {
+		role = "object_cluster"
+	}
+
+	exists, err := aysClient.ServiceExists(role, reqBody.Label, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting storage cluster service by name %s ", reqBody.Label)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
