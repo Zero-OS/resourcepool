@@ -44,12 +44,11 @@ class StoragePools:
     def list(self):
         storagepools = []
         btrfs_list = self._client.btrfs.list()
-        if btrfs_list:
-            for btrfs in self._client.btrfs.list():
-                if btrfs['label'].startswith('sp_'):
-                    name = btrfs['label'].split('_', 1)[1]
-                    devicenames = [device['path'] for device in btrfs['devices']]
-                    storagepools.append(StoragePool(self.node, name, devicenames))
+        for btrfs in btrfs_list:
+            if btrfs['label'].startswith('sp_'):
+                name = btrfs['label'].split('_', 1)[1]
+                devicenames = [device['path'] for device in btrfs['devices']]
+                storagepools.append(StoragePool(self.node, name, devicenames))
         return storagepools
 
     def get(self, name):
