@@ -209,7 +209,7 @@ def rollback(job):
     if 'vm' not in service.consumers:
         raise j.exceptions.Input('Can not rollback a disk that is not attached to a vm')
     service.model.data.status = 'rollingback'
-    ts = job.model.args['timestamp']
+    ts = int(job.model.args['timestamp']) * 10**9
 
     clusterconfig = get_cluster_config(job, type="object")
     node = random.choice(clusterconfig['nodes'])
@@ -380,7 +380,6 @@ def processChange(job):
 
     if 'timestamp' in args:
         timestamp = args['timestamp']
-        timestamp = timestamp* 10**9
         if timestamp < 0:
             return
 

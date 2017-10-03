@@ -70,7 +70,6 @@ def monitor(job):
 
 
 def watchdog_handler(job):
-    return #debug
     import asyncio
     service = job.service
     if not service.model.data.enabled:

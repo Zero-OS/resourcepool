@@ -124,7 +124,7 @@ def stop(job):
             if is_job_running(container, socket=service.model.data.socketPath):
                 continue
             return
-        raise j.exceptions.RuntimeError("nbdserver didn't stopped")
+        raise j.exceptions.RuntimeError("nbdserver didn't stop")
     service.model.data.status = 'halted'
     service.saveAll()
 
@@ -203,15 +203,20 @@ def watchdog_handler(job):
 
     eof = job.model.args['eof']
     service = job.service
+    if eof:
+        job.logger.warning("##### nbdserver exited (got eof)")
+        vm_service = service.consumers['vm'][0]
+        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
+        #TODO: starting the machine on eof is not a good idea because it can conflict with a running recovery
+        #TODO: process. Since each message runns the watchdog_handler in a separate concurrent job we can not depend
+        #TODO: on the messages order.
+        #TODO: may be report this to the user somehow so he can start it again if he wants.
+        return
+
     message = job.model.args.get('message')
     level = job.model.args.get('level')
-    job.logger.info('message: %s', message)
+    job.logger.info('level: %d message: %s' % (level, message))
     if level == 20: #json message
         return handle_messages(job,
             j.data.serializer.json.loads(message)
         )
-
-    if eof:
-        vm_service = service.consumers['vm'][0]
-        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
-        asyncio.ensure_future(vm_service.executeAction('start', context=job.context), loop=loop)

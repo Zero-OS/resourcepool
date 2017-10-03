@@ -34,18 +34,20 @@ def recover_full_once(job, cluster, engine):
     engine_sal = StorageEngine.from_ays(engine, token)
 
     broken = True
-    for i in range(3):
+    for _ in range(3):
         if engine.model.data.status == 'broken':
             break
-        if engine_sal.is_running() and engine_sal.is_healthy():
-            broken = False
-            break
+        try:
+            running, _ = engine_sal.is_running()
+            if running and engine_sal.is_healthy():
+                broken = False
+                break
+        except Exception as e:
+            job.logger.error("got error while checking on storage engine status: %s" % e)
+            pass
         # we give it a chance to update the status
         time.sleep(2)
         engine.reload()
-
-    # DEBUG CODE
-    broken = True
 
     if not broken:
         return
