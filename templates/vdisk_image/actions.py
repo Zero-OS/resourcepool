@@ -35,6 +35,7 @@ def install(job):
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
                --config {dialstrings} \
                --blocksize {blocksize} \
+               --flush-size 8192 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
                                           blocksize=service.model.data.exportBlockSize,
