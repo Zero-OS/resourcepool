@@ -375,6 +375,21 @@ def delete(job):
     job.service.model.data.status = 'empty'
 
 
+def monitor(job):
+    from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    service = job.service
+
+    if service.model.actionsState['install'] != 'ok':
+        return
+
+    cluster = ObjectCluster.from_ays(service, job.context['token'])
+    if service.model.data.status == 'ready' and not cluster.is_running():
+        cluster.start()
+
+
 def addStorageServer(job):
     raise NotImplementedError()
 

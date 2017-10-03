@@ -336,12 +336,12 @@ def monitor(job):
     if service.model.actionsState['install'] != 'ok':
         return
 
-    if service.model.data.clusterType == "object":
-        return
-
     cluster = BlockCluster.from_ays(service, job.context['token'])
     if service.model.data.status == 'ready' and not cluster.is_running():
         cluster.start()
+
+    if service.model.data.clusterType == "object":
+        return
 
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:
