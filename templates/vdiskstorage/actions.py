@@ -19,7 +19,8 @@ def input(job):
     elif args.get('slaveCluster'):
         raise RuntimeError("backup storage clusters cannot exist without an object cluster , please provide a storage cluster of type object.")
 
-def recover_full_once(job, cluster, engine):
+
+def recover_full_once(job, cluster, engine, vdisk):
     import time
     import asyncio
     loop = j.atyourservice.server.loop
@@ -50,7 +51,16 @@ def recover_full_once(job, cluster, engine):
         engine.reload()
 
     if not broken:
-        return
+        #restart of the vm should fix it
+        vms = vdisk.consumers.get('vm', [])
+        if len(vms) == 0:
+            return
+        vm = vms[0]
+        j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
+        return asyncio.ensure_future(
+            vm.executeAction('start', context=job.context),
+            loop=loop
+        )
 
     # this next part is synchronized.
     # TODO: sync code goes here.
@@ -64,20 +74,23 @@ def recover_full_once(job, cluster, engine):
 
     # now time to stop all the machines that relies on this
     halted = []
+    rollbacks = []
     for vdisk in job.service.children:
         for vm in vdisk.consumers.get('vm', []):
             if vm.model.data.status != 'halted':
                 # sync or not sync, that is the question!
                 j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
                 halted.append(vm)
-            asyncio.ensure_future(
-                vdisk.executeAction('rollback', args={"timestamp": int(time.time())}),
-                loop=loop
-            )
+            action = vdisk.executeAction('rollback', args={"timestamp": int(time.time())})
+            rollbacks.append(action)
 
-    # We need to wait on ALL rollback jobs and start associated machines if they managed to rollback
-    # correctly (only if they were halted by the recovery process)
-    # no idea how to do this yet...
+
+    j.tools.async.wrappers.sync(asyncio.gather(*rollbacks, loop=loop))
+    job.logger.info("all rollback processes has been completed")
+
+    #TODO: We need to wait on ALL rollback jobs and start associated machines if they managed to rollback
+    #TODO: correctly (only if they were halted by the recovery process)
+    #TODO: no idea how to do this yet...
 
 
 def recover(job):
@@ -118,9 +131,11 @@ def recover(job):
         job.logger.error('can not find storage engine "%s" under vdisk storage""' % (message, service.name))
         return
 
+    vdisk_id = message['data']['vdiskID']
+    vdisk = job.service.aysrepo.servicesFind(name=vdisk_id, role='vdisk', first=True)
     # now we found the faulty engine, let's see if this engine is recoverable. if so, we can simply ditch the process now
     # and hope that nbd server will pick it up again and resume normal operation. Otherwise we need to start a full recovery
     # NOTE: currently we only support full recovery
-    recover_full_once(job, cluster, engine)
+    recover_full_once(job, cluster, engine, vdisk)
 
 

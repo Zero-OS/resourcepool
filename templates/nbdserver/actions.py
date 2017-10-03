@@ -195,28 +195,10 @@ def debug_failure(job):
 
 
 def watchdog_handler(job):
-    import asyncio
-    loop = j.atyourservice.server.loop
-    service = job.service
-    if str(service.model.data.status) != 'running':
-        return
-
-    eof = job.model.args['eof']
-    service = job.service
-    if eof:
-        job.logger.warning("##### nbdserver exited (got eof)")
-        vm_service = service.consumers['vm'][0]
-        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
-        #TODO: starting the machine on eof is not a good idea because it can conflict with a running recovery
-        #TODO: process. Since each message runns the watchdog_handler in a separate concurrent job we can not depend
-        #TODO: on the messages order.
-        #TODO: may be report this to the user somehow so he can start it again if he wants.
-        return
-
     message = job.model.args.get('message')
     level = job.model.args.get('level')
+
     job.logger.info('level: %d message: %s' % (level, message))
-    if level == 20: #json message
-        return handle_messages(job,
-            j.data.serializer.json.loads(message)
-        )
+    if level == 20:
+        return handle_messages(job, j.data.serializer.json.loads(message))
+
