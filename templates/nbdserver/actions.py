@@ -84,17 +84,6 @@ def start(job):
     j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
 
 
-def get_storagecluster_config(job, storagecluster):
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
-                                                           instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config()
-
-
 def stop(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import time

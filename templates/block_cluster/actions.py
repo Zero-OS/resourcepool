@@ -343,10 +343,10 @@ def monitor(job):
     if service.model.data.clusterType == "object":
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storage_cluster_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='block_cluster_%s' % service.name, die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
-        healthcheck_service = healthcheck_actor.serviceCreate(instance='storage_cluster_%s' % service.name)
+        healthcheck_service = healthcheck_actor.serviceCreate(instance='block_cluster_%s' % service.name)
         service.consume(healthcheck_service)
 
     # Get orphans

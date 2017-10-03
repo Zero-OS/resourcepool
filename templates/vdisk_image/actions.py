@@ -1,10 +1,9 @@
 from js9 import j
 
+
 def install(job):
     import random
-    import os
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
-    from urllib.parse import urlparse
 
     service = job.service
     vdiskstore = service.parent
@@ -17,8 +16,7 @@ def install(job):
         service.model.data.exportName,
         service.model.data.exportSnapshot)
 
-    clusterconfig = get_cluster_config(job)
-    node = random.choice(clusterconfig["nodes"])
+    node = random.choice(get_cluster_nodes(job))
     container = create_from_template_container(job, node)
     try:
         find_resp = service.aysrepo.servicesFind(role="etcd_cluster")
@@ -42,7 +40,7 @@ def install(job):
             cmd += ' --force'
 
         if vdiskstore.model.data.objectCluster:
-            storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+            storageclusterservice = service.aysrepo.serviceGet(role='object_cluster',
                                                                instance=vdiskstore.model.data.objectCluster)
             cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
                                                                  storageclusterservice.model.data.parityShards)
@@ -146,7 +144,7 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 
 
-def get_cluster_config(job, type="block"):
+def get_cluster_nodes(job):
     from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -155,13 +153,13 @@ def get_cluster_config(job, type="block"):
     service = job.service
     vdiskstore = service.parent
 
-    cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
+    cluster = vdiskstore.model.data.blockCluster
 
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+    storageclusterservice = service.aysrepo.serviceGet(role='block_cluster',
                                                        instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     nodes = list(set(storageclusterservice.producers["node"]))
-    return {"config": cluster.get_config(), "nodes": nodes, 'dataShards': cluster.data_shards, 'parityShards': cluster.parity_shards}
+    return nodes
 
 
 def create_from_template_container(job, parent):

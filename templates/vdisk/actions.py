@@ -17,7 +17,6 @@ def input(job):
 
 def install(job):
     import random
-    from urllib.parse import urlparse
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -37,7 +36,6 @@ def install(job):
         target_node = random.choice(targetconfig['nodes'])
         vdiskstore = service.parent
         blockStoragecluster = vdiskstore.model.data.blockCluster
-        vdiskType = service.model.data.type
         objectStoragecluster = vdiskstore.model.data.objectCluster
 
         volume_container = create_from_template_container(job, target_node)
@@ -45,7 +43,7 @@ def install(job):
             CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
 
             if objectStoragecluster:
-                object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
+                object_st = service.aysrepo.serviceGet(role='object_cluster', instance=objectStoragecluster)
                 dataShards = object_st.model.data.dataShards
                 parityShards = object_st.model.data.parityShards
                 CMD += ' --data-shards %s --parity-shards %s' % (dataShards, parityShards)
@@ -150,8 +148,9 @@ def get_cluster_config(job, type="block"):
     vdiskstore = service.parent
 
     cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
+    role = "block_cluster" if type == "block" else "object_cluster"
 
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+    storageclusterservice = service.aysrepo.serviceGet(role=role,
                                                        instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     nodes = list(set(storageclusterservice.producers["node"]))
@@ -204,7 +203,6 @@ def get_srcstorageEngine(container, template):
 
 def rollback(job):
     import random
-    import time
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
