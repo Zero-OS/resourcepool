@@ -1,9 +1,9 @@
-@0xdeaf0f1201836a1f;
+@0xc883e8e93f03f45d;
 
 struct Schema {
     dataDir @0 :Text; # directory where the storageEngine db will be stored
     metaDir @1 :Text; # directory where the storageEngine db will be stored
-    maxSizeMsg @2 :Uint8 = 64; # size of the message zerostor can accept, in Mib
+    maxSizeMsg @2 :UInt8 = 64; # size of the message zerostor can accept, in Mib
 
     bind @3: Text; # listen bind address.
 
