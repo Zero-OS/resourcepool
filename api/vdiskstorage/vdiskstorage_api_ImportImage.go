@@ -83,6 +83,7 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Location", fmt.Sprintf("/vdiskstorage/%s/images/%s", vdiskStorageID, imageImport.Name))
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	image := Image{
 		Blocksize: imageImport.DiskBlockSize,
