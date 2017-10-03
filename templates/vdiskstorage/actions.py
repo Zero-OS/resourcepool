@@ -21,6 +21,8 @@ def input(job):
 
 def recover_full_once(job, cluster, engine):
     import time
+    import asyncio
+    loop = j.atyourservice.server.loop
     # the recovery action is granteed to run one time even if called many times (at the same time)
     # it can only be executed again when it finishes executing, otherwise callers will just return (not blocked)
     # this is to avoid executing the same recover scenario when the same error is reported via multiple nbdservers.
@@ -29,7 +31,7 @@ def recover_full_once(job, cluster, engine):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     token = get_jwt_token(job.service.aysrepo)
-    engine_sal = StorageEngine.from_ays(service, token)
+    engine_sal = StorageEngine.from_ays(engine, token)
 
     broken = True
     for i in range(3):
@@ -41,6 +43,9 @@ def recover_full_once(job, cluster, engine):
         # we give it a chance to update the status
         time.sleep(2)
         engine.reload()
+
+    # DEBUG CODE
+    broken = True
 
     if not broken:
         return
@@ -63,7 +68,10 @@ def recover_full_once(job, cluster, engine):
                 # sync or not sync, that is the question!
                 j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
                 halted.append(vm)
-            vdisk.executeAction('rollback', args={"timestamp": int(time.time())})
+            asyncio.ensure_future(
+                vdisk.executeAction('rollback', args={"timestamp": int(time.time())}),
+                loop=loop
+            )
 
     # We need to wait on ALL rollback jobs and start associated machines if they managed to rollback
     # correctly (only if they were halted by the recovery process)
@@ -94,7 +102,7 @@ def recover(job):
 
     # so we received a recover call from one of the nbd servers due to an ardb server.
     # let's find which one has failed ...
-    cluster = service.repo.servicesFind(role='storage_cluster', name=service.model.data.blockCluster, first=True)
+    cluster = service.aysrepo.servicesFind(role='storage_cluster', name=service.model.data.blockCluster, first=True)
     engine = None
     for storage_engine in cluster.producers.get('storage_engine', []):
         if storage_engine.model.data.bind == message['data']['address']:
