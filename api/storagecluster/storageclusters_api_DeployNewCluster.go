@@ -49,23 +49,25 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 	}
 
 	blueprint := struct {
-		Label        string          `yaml:"label" json:"label"`
-		NrServer     int             `yaml:"nrServer" json:"nrServer"`
-		DiskType     string          `yaml:"diskType" json:"diskType"`
-		MetaDiskType string          `yaml:"metadiskType" json:"metadiskType"`
-		Nodes        []string        `yaml:"nodes" json:"nodes"`
-		ClusterType  EnumClusterType `yaml:"clusterType" json:"clusterType"`
-		DataShards   int             `yaml:"dataShards" json:"dataShards"`
-		ParityShards int             `yaml:"parityShards" json:"parityShards"`
+		Label               string          `yaml:"label" json:"label"`
+		NrServer            int             `yaml:"nrServer" json:"nrServer"`
+		DiskType            string          `yaml:"diskType" json:"diskType"`
+		MetaDiskType        string          `yaml:"metadiskType" json:"metadiskType"`
+		Nodes               []string        `yaml:"nodes" json:"nodes"`
+		ClusterType         EnumClusterType `yaml:"clusterType" json:"clusterType"`
+		DataShards          int             `yaml:"dataShards" json:"dataShards"`
+		ParityShards        int             `yaml:"parityShards" json:"parityShards"`
+		ServersPerMetaDrive int             `yaml:"serversPerMetaDrive" json:"serversPerMetaDrive"`
 	}{
-		Label:        reqBody.Label,
-		NrServer:     reqBody.Servers,
-		DiskType:     string(reqBody.DriveType),
-		MetaDiskType: string(reqBody.MetaDriveType),
-		Nodes:        reqBody.Nodes,
-		ClusterType:  reqBody.ClusterType,
-		DataShards:   reqBody.DataShards,
-		ParityShards: reqBody.ParityShards,
+		Label:               reqBody.Label,
+		NrServer:            reqBody.Servers,
+		DiskType:            string(reqBody.DriveType),
+		MetaDiskType:        string(reqBody.MetaDriveType),
+		Nodes:               reqBody.Nodes,
+		ClusterType:         reqBody.ClusterType,
+		DataShards:          reqBody.DataShards,
+		ParityShards:        reqBody.ParityShards,
+		ServersPerMetaDrive: reqBody.ServersPerMetaDrive,
 	}
 
 	if string(blueprint.MetaDiskType) == "" {

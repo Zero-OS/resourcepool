@@ -14,7 +14,7 @@ class ClusterCreate(object):
     """
 
     @staticmethod
-    def create(clusterType, driveType, label, nodes, servers, dataShards=None, metaDriveType=None, parityShards=None):
+    def create(clusterType, driveType, label, nodes, servers, serversPerMetaDrive, dataShards=None, metaDriveType=None, parityShards=None):
         """
         :type clusterType: EnumClusterCreateClusterType
         :type dataShards: int
@@ -24,6 +24,7 @@ class ClusterCreate(object):
         :type nodes: list[str]
         :type parityShards: int
         :type servers: int
+        :type serversPerMetaDrive: int
         :rtype: ClusterCreate
         """
 
@@ -36,6 +37,7 @@ class ClusterCreate(object):
             nodes=nodes,
             parityShards=parityShards,
             servers=servers,
+            serversPerMetaDrive=serversPerMetaDrive,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -125,6 +127,17 @@ class ClusterCreate(object):
             datatypes = [int]
             try:
                 self.servers = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'serversPerMetaDrive'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [int]
+            try:
+                self.serversPerMetaDrive = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
