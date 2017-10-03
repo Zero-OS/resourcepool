@@ -536,19 +536,16 @@ class TestcontaineridAPI(TestcasesBase):
 
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1140")
     def test010_create_containers_with_bridge_with_hwaddr(self):
-        """ GAT-090
+        """ GAT-142
 
         *Test case for test creation of containers with vlan network*
 
         **Test Scenario:**
 
-        #. Create two containers with same vlan tag, should succeed.
-        #. Check that two containers get correct vlan ip, should succeed.
-        #. First container C1 ping second container C2 ,should succeed.
-        #. Second container C2 ping first container C1 ,should succeed.
-        #. Create C3 with different vlan tag , should succeed.
-        #. Check if third container (c3) can ping first container (c1), should fail.
-
+        #. Create bridge B1, should succeed
+        #. Create container C1, attach bridge B1 to it, and set its hardwareaddr to HA1.
+        #. Check container C1 hardwareaddr should be equal to hardware address HA1
+        #. Create container C2 with invalid hardwareaddr, should fail
         """
         self.lg.info("[*] Create bridge B1, should succeed")
         resposne, bridge_data = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq')
@@ -571,7 +568,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertNotEqual(target_nic, [])
         self.assertEqual(target_nic[0]['hardwareaddr'], hardwareaddr)
 
-        self.lg.info("[*] Check container C2 with invalid hardwareaddr, should fail")
+        self.lg.info("[*] Create container C2 with invalid hardwareaddr, should fail")
         nics = [{"name": nic_name, "type": "bridge", "id": bridge_data['name'], "hwaddr": self.random_string()}]
         response, container_2_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(resposne.status_code, 400)
