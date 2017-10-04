@@ -87,7 +87,7 @@ def recover_full_once(job, cluster, engine, vdisk):
             )
             rollbacks.append(action)
 
-    j.tools.async.wrappers.sync(asyncio.gather(*rollbacks, loop=loop, return_exceptions=True))
+    loop.run_until_complete(asyncio.gather(*rollbacks, loop=loop, return_exceptions=True))
     job.logger.info("all rollback processes has been completed")
 
     for vm in halted:
