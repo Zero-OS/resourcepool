@@ -356,6 +356,10 @@ def watchdog(job):
     }
 
     async def callback(jobid, level, message, flag):
+        if "nbd" in jobid:
+            print("****** nbd: %s" % message)
+        if "tlog" in jobid:
+            print("****** tlog: %s" % message)
         if '.' not in jobid:
             return
 

@@ -30,7 +30,7 @@ class ZeroStor:
             bind=service.model.data.bind,
             data_dir=service.model.data.dataDir,
             meta_dir=service.model.data.metaDir,
-            max_size_msg=service.model.maxSizeMsg,
+            max_size_msg=service.model.data.maxSizeMsg,
         )
 
     def stop(self, timeout=30):
