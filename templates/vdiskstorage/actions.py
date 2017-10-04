@@ -81,10 +81,13 @@ def recover_full_once(job, cluster, engine, vdisk):
                 # sync or not sync, that is the question!
                 j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
                 halted.append(vm)
-            action = vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context)
+            action = asyncio.ensure_future(
+                vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context),
+                loop=loop
+            )
             rollbacks.append(action)
 
-    j.tools.async.wrappers.sync(asyncio.gather(*rollbacks, loop=loop))
+    j.tools.async.wrappers.sync(asyncio.gather(*rollbacks, loop=loop, return_exceptions=True))
     job.logger.info("all rollback processes has been completed")
 
     for vm in halted:
@@ -138,5 +141,3 @@ def recover(job):
     # and hope that nbd server will pick it up again and resume normal operation. Otherwise we need to start a full recovery
     # NOTE: currently we only support full recovery
     recover_full_once(job, cluster, engine, vdisk)
-
-
