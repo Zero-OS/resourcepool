@@ -256,7 +256,6 @@ def install(job):
             service.saveAll()
             raise j.exceptions.Input(str(e))
 
-
         # wait for max 60 seconds for vm to be running
         start = time.time()
         while start + 60 > time.time():
@@ -437,6 +436,7 @@ def ssh_deamon_running(node, port):
             return True
     return False
 
+
 def start_migartion_channel(job, old_service, new_service):
     import time
     from zeroos.orchestrator.sal.Node import Node
@@ -475,7 +475,7 @@ def start_migartion_channel(job, old_service, new_service):
         res = node.client.system(command.format(config=ssh_config))
         if not res.running:
             raise j.exceptions.RuntimeError("Failed to run sshd instance to migrate vm from%s_%s" % (old_node.name,
-                                                                                                    node.name))
+                                                                                                     node.name))
         # wait for max 5 seconds until the ssh deamon starts listening
         start = time.time()
         while time.time() < start + 5:
@@ -548,6 +548,12 @@ def start_migartion_channel(job, old_service, new_service):
 
 
 def get_baseports(job, node, baseport, nrports, name=None):
+    """
+    look for nrports free ports on node, starting from baseport
+    it retuns 2 lists,
+    - list of selected port, [int]
+    - list of tcp ays services, [Service]
+    """
     service = job.service
     tcps = service.aysrepo.servicesFind(role='tcp', parent='node.zero-os!%s' % node.name)
 
@@ -598,7 +604,9 @@ def save_config(job, vdisks=None):
 
 def migrate(job):
     import time
+    import random
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -619,6 +627,38 @@ def migrate(job):
     # start migration channel to copy keys and start ssh deamon
     ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
 
+    #start tlog server on target node
+    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
+    if len(services) < 2:
+        raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
+
+    services.pop(old_node) # source node
+
+    if len(services) == 1:
+        # if we only have one node available, no other choice to deploy on the same node as the vm
+        tlog_target_node = services[0]
+    else:
+        services.pop(target_node) # make sure we don't deploy on the same node as the vm
+        tlog_target_node = random.choice(services)
+
+    tlog_container = Container.from_ays(create_zerodisk_container(job, tlog_target_node),
+                                        job.context['token'],
+                                        logger=service.logger)
+
+    # find some fee ports for the tlog servers on the target node
+    ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 1)
+    # open the ports
+    for tcp_service in tcp_services:
+        j.tools.async.wrappers.sync(tcp_service.executeAction('install', context=job.context))
+
+    # Create tlogserver service
+    bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
+    tlogserver_service = create_service(service, tlog_container, role='tlogserver', bind=bind)
+    tlogserver_service.consume(tcp_services[0])
+    job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
+    service.consume(tlogserver_service)
+    start_tlog(job)
+
     # start new nbdserver on target node
     nbd_container = create_zerodisk_container(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
@@ -628,7 +668,10 @@ def migrate(job):
         'container': nbd_container.name,
     }
     nbdserver = nbd_actor.serviceCreate(instance='nbdserver_%s_%s' % (service.name, target_node.name), args=args)
+
     nbdserver.consume(nbd_container)
+    nbdserver.consume(tlogserver_service)
+
     service.consume(nbdserver)
     service.consume(nbd_container)
     target_node_client = Node.from_ays(target_node, job.context['token']).client
@@ -680,8 +723,6 @@ def migrate(job):
         raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
 
     service.model.data.status = 'running'
-
-
 
     # cleanup to remove ssh job and config file
     node.client.job.kill(job_id)
@@ -814,28 +855,50 @@ def update_data(job, args):
         container_name = 'vdisks_{}_{}'.format(service.name, old_node)
         old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
         old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance="nbdserver_%s_%s" % (service.name, old_node))
+        old_tlog_servers = old_nbd.producers['tlogserver']
+
         service.model.data.node = args['node']
         service.saveAll()
+
         if service.model.data.status == 'halted':
             # move stopped vm
             node = service.aysrepo.serviceGet('node', args['node'])
             service.model.changeParent(node)
             service.saveAll()
+
+            for tlog_server in old_tlog_servers:
+                j.tools.async.wrappers.sync(tlog_server.executeAction('stop', context=job.context))
+                j.tools.async.wrappers.sync(tlog_server.delete())
+
             j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(old_nbd.delete())
+
             start_dependent_services(job)
+
         elif service.model.data.status == 'running':
             # do live migration
             migrate(job)
+
+            for tlog_server in old_tlog_servers:
+                j.tools.async.wrappers.sync(tlog_server.executeAction('stop', context=job.context))
+                j.tools.async.wrappers.sync(tlog_server.delete())
+
             j.tools.async.wrappers.sync(old_nbd.executeAction('stop', context=job.context))
             j.tools.async.wrappers.sync(old_nbd.delete())
+
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')
 
-        # delete current nbd services and vdisk container(this has to be before the start_nbd method)
-        job.logger.info("delete current nbd services and vdisk container")
+        # delete old nbd services and tlog and vdisk container(this has to be before the start_nbd method)
+        job.logger.info("delete old tlog container")
+        for tlog_server in old_tlog_servers:
+            j.tools.async.wrappers.sync(tlog_server.parent.executeAction('stop', context=job.context))
+            j.tools.async.wrappers.sync(tlog_server.parent.delete())
+
+        job.logger.info("delete old nbd services and vdisk container")
         j.tools.async.wrappers.sync(old_vdisk_container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(old_vdisk_container.delete())
+
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
