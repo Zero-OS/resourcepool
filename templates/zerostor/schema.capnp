@@ -1,4 +1,4 @@
-@0xc883e8e93f03f45d;
+@0xb7b94de8a5f8b089;
 
 struct Schema {
     dataDir @0 :Text; # directory where the storageEngine db will be stored

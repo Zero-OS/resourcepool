@@ -42,7 +42,7 @@ def install(job):
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster} --flush-size 786'
 
             if objectStoragecluster:
                 object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
@@ -173,8 +173,12 @@ def create_from_template_container(job, parent):
     container_name = 'vdisk_{}_{}'.format(job.service.name, parent.name)
     node = Node.from_ays(parent, job.context['token'])
     config = get_configuration(job.service.aysrepo)
+    flist = config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist')
+
+    print("Creating container for flist: %s" % flist)
+
     container = Container(name=container_name,
-                          flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
+                          flist=flist,
                           host_network=True,
                           node=node)
     container.start()
@@ -315,7 +319,7 @@ def import_vdisk(job):
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
-               --flush-size 8192 \
+               --flush-size 786 \
                --config {dialstrings} \
                --key {cryptoKey} \
                --storage {ftpurl}".format(vdiskid=service.name,
