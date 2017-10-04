@@ -1019,6 +1019,9 @@ ClusterCreate:
       enum: [nvme, ssd, hdd, archive]
       description: Required only for storage clusters of type object
       required: false
+    serversPerMetaDrive:
+      type: integer
+      description: Number of servers per metaDriveType to deploy in this cluster
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
@@ -1186,7 +1189,7 @@ Image:
     Vdisk image used as template for boot vdisks
   properties:
     name:
-      type:string
+      type: string
       pattern: ^\w+$
     size:
       type: integer

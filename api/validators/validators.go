@@ -202,7 +202,6 @@ func ValidateVdiskStorage(tlog string, backup string) error {
 
 }
 
-
 func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	if cidr1 == "" || cidr2 == "" {
 		return false, nil
@@ -225,13 +224,16 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	return false, nil
 }
 
-func ValidateCluster(ctype string, k int, m int, nrServers int, metaDisk string) error {
+func ValidateCluster(ctype string, k int, m int, nrServers int, metaDisk string, perMeta int) error {
 	if ctype == "object" {
 		if k == 0 || m == 0 {
 			return fmt.Errorf("K and M values required for object clusters")
 		}
 		if metaDisk == "" {
 			return fmt.Errorf("MetaDriveType is required for object clusters")
+		}
+		if perMeta == 0 {
+			return fmt.Errorf("serversPerMetaDrive is required for object clusters")
 		}
 	}
 	if (k + m) > nrServers {

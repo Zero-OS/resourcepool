@@ -49694,57 +49694,82 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
+  <strong>parityShards</strong>:
+
+  
+    <em>(integer)
+    </em>
+  
+
+<p>parityShards variable of the erasure encoding, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>nodes</strong>:
+
+  
+    <em>required (array of )
+    </em>
+  
+
+<p>List of node ID on which we can deploy storage server</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>dataShards</strong>:
+
+  
+    <em>(integer)
+    </em>
+  
+
+<p>dataShards variable of the erasure encoding, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
   <strong>label</strong>:
 
   
     <em>required (string)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>servers</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Number of storage servers to deploy in this cluster</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>driveType</strong>:
-
-  
-    <em>required (one of nvme, ssd, hdd, archive)
     </em>
   
 
@@ -49788,14 +49813,61 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>nodes</strong>:
+  <strong>servers</strong>:
 
   
-    <em>required (array of )
+    <em>required (integer)
     </em>
   
 
-<p>List of node ID on which we can deploy storage server</p>
+<p>Number of storage servers to deploy in this cluster</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>serversPerMetaDrive</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Number of servers per metaDriveType to deploy in this cluster</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>driveType</strong>:
+
+  
+    <em>required (one of nvme, ssd, hdd, archive)
+    </em>
+  
+
 
 
   
@@ -49820,54 +49892,6 @@ details in a user&#39;s account without getting their password.</p>
   
 
 <p>cluster type</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>dataShards</strong>:
-
-  
-    <em>(integer)
-    </em>
-  
-
-<p>dataShards variable of the erasure encoding, required for object clusters</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>parityShards</strong>:
-
-  
-    <em>(integer)
-    </em>
-  
-
-<p>parityShards variable of the erasure encoding, required for object clusters</p>
 
 
   
@@ -52572,10 +52596,34 @@ details in a user&#39;s account without getting their password.</p>
   <strong>name</strong>:
 
   
-    <em>required (type:string pattern)
+    <em>required (string - pattern: ^\w+$)
     </em>
   
 
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
 
 
   
@@ -53180,10 +53228,34 @@ If not specified, defaults to &#39;default&#39;</p>
   <strong>name</strong>:
 
   
-    <em>required (type:string pattern)
+    <em>required (string - pattern: ^\w+$)
     </em>
   
 
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
 
 
   
@@ -53585,10 +53657,34 @@ details in a user&#39;s account without getting their password.</p>
   <strong>name</strong>:
 
   
-    <em>required (type:string pattern)
+    <em>required (string - pattern: ^\w+$)
     </em>
   
 
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
 
 
   
