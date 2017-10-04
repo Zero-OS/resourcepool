@@ -95,7 +95,7 @@ class StoragePool(Mountable):
         Destroy storage pool
         param zero: write zeros (nulls) to the first 500MB of each disk in this storagepool
         """
-        if self.mountpoint:
+        while self.mountpoint:
             self.umount()
         partitionmap = {}
         for disk in self.node.disks.list():
