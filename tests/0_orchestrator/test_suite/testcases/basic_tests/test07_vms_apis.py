@@ -10,13 +10,12 @@ class TestVmsAPI(TestcasesBase):
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
             self.lg.info(' [*] Create new storagecluster.')
-
             free_disks = self.core0_client.getFreeDisks()
             if free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
-
+            nodes = [self.nodeid]
             numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
-            response, body = self.storageclusters_api.post_storageclusters(node_id=self.nodeid, driveType=diskType, servers=1)
+            response, body = self.storageclusters_api.post_storageclusters(nodes=nodes, driveType=diskType, servers=1)
             self.assertEqual(response.status_code, 201)
             self.storagecluster = body['label']
         else:
@@ -361,7 +360,6 @@ class TestVmsAPI(TestcasesBase):
         vms = self.core0_client.client.kvm.list()
         vm0 = [x for x in vms if x['name'] == self.data['id']]
         self.assertEqual(vm0, [])
-
 
     def test011_post_nodes_vms_vmid_migrate(self):
         """ GAT-077
