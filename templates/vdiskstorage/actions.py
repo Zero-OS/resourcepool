@@ -51,7 +51,9 @@ def recover_full_once(job, cluster, engine, vdisk):
         engine.reload()
 
     if not broken:
-        #restart of the vm should fix it
+        #Note: the restart of the machine is due too nbdserver crash on losing a connection
+        #once nbdserver is fixed, there will be no need to restart the machine, and we can
+        #just return in case the storage engine is not broken.
         vms = vdisk.consumers.get('vm', [])
         if len(vms) == 0:
             return
@@ -62,8 +64,10 @@ def recover_full_once(job, cluster, engine, vdisk):
             loop=loop
         )
 
-    # this next part is synchronized.
     # TODO: sync code goes here.
+    # TODO: since this method will return before the recovery of all disks
+    # TODO: is not complete, there is no way to ensure the synchronization of
+    # TODO: it. Unless the last bit (to wait on the rollback actions is complete.
 
     # force broken state and update cluster config
     engine.model.data.status = 'broken'
@@ -87,14 +91,17 @@ def recover_full_once(job, cluster, engine, vdisk):
             )
             rollbacks.append(action)
 
-    loop.run_until_complete(asyncio.gather(*rollbacks, loop=loop, return_exceptions=True))
-    job.logger.info("all rollback processes has been completed")
-
-    for vm in halted:
-        asyncio.ensure_future(
-            vm.executeAction('start', context=job.context),
-            loop=loop,
-        )
+    #TODO: We need to start the halted machine. Using the loop.run_until_coplete or the j.tools.async.wrapper.sync
+    #TODO: gives an error (different ones)
+    #
+    # loop.run_until_complete(asyncio.gather(*rollbacks, loop=loop, return_exceptions=True))
+    # job.logger.info("all rollback processes has been completed")
+    #
+    # for vm in halted:
+    #     asyncio.ensure_future(
+    #         vm.executeAction('start', context=job.context),
+    #         loop=loop,
+    #     )
 
 
 def recover(job):
