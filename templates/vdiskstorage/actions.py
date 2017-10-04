@@ -81,16 +81,17 @@ def recover_full_once(job, cluster, engine, vdisk):
                 # sync or not sync, that is the question!
                 j.tools.async.wrappers.sync(vm.executeAction('stop', args={"cleanup": False}, context=job.context))
                 halted.append(vm)
-            action = vdisk.executeAction('rollback', args={"timestamp": int(time.time())})
+            action = vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context)
             rollbacks.append(action)
-
 
     j.tools.async.wrappers.sync(asyncio.gather(*rollbacks, loop=loop))
     job.logger.info("all rollback processes has been completed")
 
-    #TODO: We need to wait on ALL rollback jobs and start associated machines if they managed to rollback
-    #TODO: correctly (only if they were halted by the recovery process)
-    #TODO: no idea how to do this yet...
+    for vm in halted:
+        asyncio.ensure_future(
+            vm.executeAction('start', context=job.context),
+            loop=loop,
+        )
 
 
 def recover(job):
