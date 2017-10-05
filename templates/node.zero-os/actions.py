@@ -275,11 +275,11 @@ def uninstall(job):
     service = job.service
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
-        stats_collector_service.executeAction('uninstall', context=job.context))
+        stats_collector_service.executeAction('uninstall', context=job.context)
 
     statsdb_service = get_statsdb(service)
     if statsdb_service and str(statsdb_service.parent) == str(service):
-        statsdb_service.executeAction'uninstall', context=job.context))
+        statsdb_service.executeAction'uninstall', context=job.context)
 
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
