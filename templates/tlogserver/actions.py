@@ -54,6 +54,8 @@ def save_config(job, vdisks=None):
             "tlogServerClusterID": service.name,
             "slaveStorageClusterID": vdiskstore.model.data.slaveCluster or "",
         }
+        job.logger.debug("tlogserver %s save config for vdisk %s", service, vdisk)
+        job.logger.debug(config)
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
 
@@ -101,7 +103,7 @@ def install(job):
     if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
         cmd = '/bin/tlogserver \
                 -id {id} \
-                -flush-size 786 \
+                -flush-size 8192 \
                 -address {bind} \
                 -data-shards {data_shards} \
                 -parity-shards {parity_shards} \
