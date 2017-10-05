@@ -882,7 +882,7 @@ def export(job):
         snapshotID = str(int(time.time() * 10**6))
         args["snapshotID"] = snapshotID
         vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
-        j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
+        vdisksrv.executeAction('export', context=job.context, args=args)
         metadata["snapshotIDs"].append(snapshotID)
         metadata["vdisks"].append({
             "blockSize": vdisksrv.model.data.blocksize,
