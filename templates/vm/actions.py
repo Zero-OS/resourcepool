@@ -33,7 +33,7 @@ def get_node(job):
     return Node.from_ays(job.service.parent, job.context['token'])
 
 
-def create_zerodisk_container(job, parent):
+def create_zerodisk_container_service(job, parent):
     """
     first check if the vdisks container for this vm exists.
     if not it creates it.
@@ -62,44 +62,50 @@ def create_zerodisk_container(job, parent):
 
 def create_service(service, container, role='nbdserver', bind=None):
     """
-    first check if the nbd server exists.'zerodisk'
+    first check if the service exists
     if not it creates it.
-    return the nbdserver service
+    return the created service
     """
-    service_name = '{}_{}_{}'.format(role, service.name, service.parent.name)
+    if role not in ('nbdserver', 'tlogserver'):
+        raise ValueError("role can only be nbdserver or tlogserver")
+
+    service_name = '{}_{}_{}'.format(role, service.name, container.parent.name)
 
     try:
-        nbdserver = service.aysrepo.serviceGet(role=role, instance=service_name)
+        created_service = service.aysrepo.serviceGet(role=role, instance=service_name)
     except j.exceptions.NotFound:
-        nbdserver = None
+        created_service = None
 
-    if nbdserver is None:
-        nbd_actor = service.aysrepo.actorGet(role)
+    if created_service is None:
+        actor = service.aysrepo.actorGet(role)
         args = {
             'container': container.name,
         }
         if bind:
             args["bind"] = bind
-        nbdserver = nbd_actor.serviceCreate(instance=service_name, args=args)
-    return nbdserver
+        created_service = actor.serviceCreate(instance=service_name, args=args)
+    return created_service
 
 
-def _init_zerodisk_services(job, nbd_container, tlog_container=None):
+def _init_zerodisk_services(job, nbd_container_service, tlog_container_service=None, tlog_container_sal=None):
     service = job.service
     # Create nbderver service
-    nbdserver = create_service(service, nbd_container)
+    nbdserver = create_service(service, nbd_container_service)
     job.logger.info("creates nbd server for vm {}".format(service.name))
     service.consume(nbdserver)
 
-    if tlog_container:
+    if tlog_container_service:
         # Create tlogserver service
-        ports, tcp = get_baseports(job, tlog_container.node, 11211, 1)
-        bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
-        tlogserver = create_service(service, tlog_container, role='tlogserver', bind=bind)
-        tlogserver.consume(tcp[0])
+        if not tlog_container_sal:
+            from zeroos.orchestrator.sal.Container import Container
+            tlog_container_sal = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
+        ports, tcp = get_baseports(job, tlog_container_sal.node, 11211, 1)
+        bind = "%s:%s" % (tlog_container_sal.node.storageAddr, ports[0])
+        tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind)
+        tlogserver_service.consume(tcp[0])
         job.logger.info("creates tlog server for vm {}".format(service.name))
-        service.consume(tlogserver)
-        nbdserver.consume(tlogserver)
+        service.consume(tlogserver_service)
+        nbdserver.consume(tlogserver_service)
 
 
 def _nbd_url(job, container, nbdserver, vdisk):
@@ -145,11 +151,11 @@ def start_dependent_services(job):
         services.pop(node)
         node = random.choice(services)
 
-    tlog_container = create_zerodisk_container(job, node)
-    tlog_container = Container.from_ays(tlog_container, job.context['token'], logger=service.logger)
+    tlog_container_service = create_zerodisk_container_service(job, node)
+    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
 
-    nbd_container = create_zerodisk_container(job, service.parent)
-    _init_zerodisk_services(job, nbd_container, tlog_container)
+    nbd_container_service = create_zerodisk_container_service(job, service.parent)
+    _init_zerodisk_services(job, nbd_container_service, tlog_container_service)
 
 
 def _start_nbd(job, nbdname=None):
@@ -632,18 +638,21 @@ def migrate(job):
     if len(services) < 2:
         raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
 
-    services.pop(old_node) # source node
+    services.remove(old_node) # source node
 
     if len(services) == 1:
         # if we only have one node available, no other choice to deploy on the same node as the vm
         tlog_target_node = services[0]
     else:
-        services.pop(target_node) # make sure we don't deploy on the same node as the vm
+        services.remove(target_node) # make sure we don't deploy on the same node as the vm
         tlog_target_node = random.choice(services)
 
-    tlog_container = Container.from_ays(create_zerodisk_container(job, tlog_target_node),
-                                        job.context['token'],
-                                        logger=service.logger)
+    job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node)
+    tlog_container_service = create_zerodisk_container_service(job, tlog_target_node)
+    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
+    # make sure container is up
+    if not tlog_container.is_running():
+        j.tools.async.wrappers.sync(tlog_container.executeAction('start', context=job.context))
 
     # find some fee ports for the tlog servers on the target node
     ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 1)
@@ -653,14 +662,16 @@ def migrate(job):
 
     # Create tlogserver service
     bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
-    tlogserver_service = create_service(service, tlog_container, role='tlogserver', bind=bind)
+    tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind)
     tlogserver_service.consume(tcp_services[0])
     job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
     service.consume(tlogserver_service)
-    start_tlog(job)
+    
+    # make sure the tlogserver is started
+    j.tools.async.wrappers.sync(tlogserver_service.executeAction('start', context=job.context))
 
     # start new nbdserver on target node
-    nbd_container = create_zerodisk_container(job, target_node)
+    nbd_container = create_zerodisk_container_service(job, target_node)
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
     nbdserver = create_service(service, nbd_container)
     nbd_actor = service.aysrepo.actorGet('nbdserver')
@@ -770,8 +781,8 @@ def updateDisks(job, client, args):
 
     # Set model to new data
     service.model.data.disks = args['disks']
-    vdisk_container = create_zerodisk_container(job, service.parent)
-    container = Container.from_ays(vdisk_container, job.context['token'], logger=service.logger)
+    vdisk_container_service = create_zerodisk_container_service(job, service.parent)
+    container = Container.from_ays(vdisk_container_service, job.context['token'], logger=service.logger)
 
     # Detatching and Cleaning old disks
     if old_disks != []:
@@ -784,7 +795,7 @@ def updateDisks(job, client, args):
 
     # Attaching new disks
     if new_disks != []:
-        _init_zerodisk_services(job, vdisk_container)
+        _init_zerodisk_services(job, vdisk_container_service)
         for disk in new_disks:
             diskservice = service.aysrepo.serviceGet('vdisk', disk['vdiskid'])
             service.consume(diskservice)

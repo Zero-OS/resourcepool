@@ -34,11 +34,9 @@ def install(job):
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
                --config {dialstrings} \
-               --blocksize {blocksize} \
-               --flush-size 786 \
+               --flush-size 8192 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
-                                          blocksize=service.model.data.exportBlockSize,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
 
