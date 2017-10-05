@@ -9,24 +9,19 @@ logger = logging.getLogger(__name__)
 class StorageEngine:
     """storageEngine server"""
 
-    def __init__(self, service, container, data_dir='/mnt/data', master=None):
+    def __init__(self, name, container, enabled=True, status='running', bind='0.0.0.0:16379', data_dir='/mnt/data', master=None):
         """
         TODO: write doc string
         """
-        self.service = service
+        self.name = name
+        self.bind = bind
+        self.enabled = enabled
+        self.status = status
         self.master = master
         self.container = container
         self.data_dir = data_dir
         self.master = master
         self._ays = None
-
-    @property
-    def name(self):
-        return self.service.name
-
-    @property
-    def bind(self):
-        return self.service.model.data.bind
 
     @property
     def port(self):
@@ -45,8 +40,11 @@ class StorageEngine:
             master = None
 
         return cls(
-            service=service,
+            name=service.name,
             container=container,
+            enabled=service.model.data.enabled,
+            status=service.model.data.status,
+            bind=service.model.data.bind,
             data_dir=service.model.data.homeDir,
             master=master,
         )
