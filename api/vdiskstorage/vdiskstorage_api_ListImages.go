@@ -3,11 +3,10 @@ package vdiskstorage
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 
 	"fmt"
+
 	"github.com/gorilla/mux"
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -34,25 +33,16 @@ func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 	var (
 		images = make([]Image, len(services))
 		errs   = make([]error, len(services))
-		wg     = sync.WaitGroup{}
 	)
-	wg.Add(len(services))
 	for i, service := range services {
-		go func(i int, service ays.ServiceData) {
-			defer wg.Done()
-
-			var image Image
-			if err := json.Unmarshal(service.Data, &image); err != nil {
-				errs[i] = err
-				return
-			}
-			image.Name = service.Name
-			images[i] = image
-
-		}(i, service)
+		var image Image
+		if err := json.Unmarshal(service.Data, &image); err != nil {
+			errs[i] = err
+			continue
+		}
+		image.Name = service.Name
+		images[i] = image
 	}
-
-	wg.Wait()
 
 	// TODO: concatenate all  errors into one
 	for _, err := range errs {
