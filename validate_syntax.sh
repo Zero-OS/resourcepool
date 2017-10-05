@@ -1,5 +1,6 @@
 echo "Validate python3 syntax"
 for pyfile in $(find -name '*.py'); do
+    echo "Validating $pyfile"
     python3 -m py_compile $pyfile
 done
 
