@@ -30,26 +30,15 @@ func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var (
-		images = make([]Image, len(services))
-		errs   = make([]error, len(services))
-	)
+	images := make([]Image, len(services))
 	for i, service := range services {
 		var image Image
 		if err := json.Unmarshal(service.Data, &image); err != nil {
-			errs[i] = err
-			continue
-		}
-		image.Name = service.Name
-		images[i] = image
-	}
-
-	// TODO: concatenate all  errors into one
-	for _, err := range errs {
-		if err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting list of images")
 			return
 		}
+		image.Name = service.Name
+		images[i] = image
 	}
 
 	w.Header().Set("Content-Type", "application/json")
