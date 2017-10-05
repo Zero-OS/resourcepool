@@ -31,7 +31,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
 
         self.lg.info(' [*] Import Image')
-        response, self.imagedata = self.vdisks_api.post_Import_Image(vdiskstorageid=self.vdiskstoragedata["id"])
+        response, self.imagedata = self.vdisks_api.post_import_image(vdiskstorageid=self.vdiskstoragedata["id"])
         self.assertEqual(response.status_code, 201)
 
         self.lg.info(' [*] Create vdisk ')
@@ -49,7 +49,7 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] Delete virtual machine (VM0)')
         if self.id().split('.')[-1] != 'test003_post_node_vms':
             self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
-        self.vdisks_api.delete_vdisks_vdiskid(self.vdisk['id'])
+        self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.vdisk['id'])
         super(TestVmsAPI, self).tearDown()
 
     def test001_get_nodes_vms_vmid(self):
