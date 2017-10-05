@@ -172,7 +172,7 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(new_size, response.json()['size'])
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/808')
+    @unittest.skip('https://github.com/gig-projects/org_quality/issues/689')
     def test006_Rollback_vdisk(self):
         """ GAT-066
         *POST:/vdisks/{vdiskid}/rollback*
