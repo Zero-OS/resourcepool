@@ -25,23 +25,23 @@ class TestVdisks(TestcasesBase):
         else:
             self.storagecluster = storageclusters.json()[0]
         self.lg.info(' [*] Create vdiskstorage (VDS0)')
-        self.response, self.vdiskstoragedata = self.vdisks_api.post_vdiskstorage(storagecluster=self.storagecluster)
-        self.assertEqual(self.response.status_code, 201)
+        response, self.vdiskstoragedata = self.vdisks_api.post_vdiskstorage(storagecluster=self.storagecluster)
+        self.assertEqual(response.status_code, 201)
 
         self.lg.info(' [*] Import Image (IMG0) for (VDS0)')
-        self.response, self.imagedata = self.vdisks_api.post_Import_Image(vdiskstorageid=self.vdiskstoragedata["id"])
-        self.assertEqual(self.response.status_code, 201)
+        response, self.imagedata = self.vdisks_api.post_import_image(vdiskstorageid=self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 201)
 
         self.lg.info(' [*] Create vdisk (VD0)')
-        self.response, self.data = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"], imageid=self.imagedata["imageName"])
-        self.assertEqual(self.response.status_code, 201)
+        response, self.data = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"], imageid=self.imagedata["imageName"])
+        self.assertEqual(response.status_code, 201)
 
     def tearDown(self):
         self.lg.info(' [*] Delete vdisk (VD0)')
         self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
 
         self.lg.info(' [*] Delete Image (IMG0)')
-        self.vdisks_api.DeleteImage(self.vdiskstoragedata["id"], self.imagedata['imageName'])
+        self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
         super(TestVdisks, self).tearDown()
 
     def test001_get_vdisk_details(self):
@@ -241,7 +241,7 @@ class TestVdisks(TestcasesBase):
 
         """
         self.lg.info(' [*] List all vdiskstorage Images, should succeed with 200')
-        response = self.vdisks_api.get_Import_Images(self.vdiskstoragedata["id"])
+        response = self.vdisks_api.get_import_images(self.vdiskstoragedata["id"])
         self.assertEqual(response.status_code, 200)
         img0_data = {"name": self.imagedata["imageName"],
                      "size": self.imagedata['size'],
@@ -285,12 +285,13 @@ class TestVdisks(TestcasesBase):
         """
 
         self.lg.info('Get Imported Image(IMG0), should succeed with 200.')
-        response = self.vdisks_api.get_Image_info(self.vdiskstoragedata["id"], self.imagedata["imageName"])
+        response = self.vdisks_api.get_image_info(self.vdiskstoragedata["id"], self.imagedata["imageName"])
         self.assertEqual(response.status_code, 200)
         for key in self.imagedata.keys():
             if key in list(response.json().keys()):
                 self.assertEqual(self.imagedata[key], response.json()[key])
 
-        self.lg.info(' [*] Get nonexisting vdiskstorage, should fail with 404')
-        response = self.vdisks_api.get_Image_info(self.rand_str(self.vdiskstoragedata["id"]))
+        self.lg.info(' [*] Get nonexisting image, should fail with 404')
+        fake_image = self.rand_str()
+        response = self.vdisks_api.get_image_info(self.vdiskstoragedata["id"], fake_image)
         self.assertEqual(response.status_code, 404)

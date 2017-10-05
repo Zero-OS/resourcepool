@@ -7,17 +7,22 @@ from testcases.core0_client import Client
 class TestVmsAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
+        nodes = [self.nodeid]
+        number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
         if storageclusters.json() == []:
-            self.lg.info(' [*] Create new storagecluster.')
-            free_disks = self.core0_client.getFreeDisks()
-            if free_disks == []:
+            if number_of_free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
-            nodes = [self.nodeid]
-            numberOfDisks, diskType = max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in ['ssd', 'hdd', 'nvme']])
-            response, body = self.storageclusters_api.post_storageclusters(nodes=nodes, driveType=diskType, servers=1)
+
+            self.lg.info(' [*] Deploy new storage cluster (SC0)')
+            response, data = self.storageclusters_api.post_storageclusters(
+                nodes=nodes,
+                driveType=disk_type,
+                servers=random.randint(1, number_of_free_disks)
+            )
             self.assertEqual(response.status_code, 201)
-            self.storagecluster = body['label']
+            self.storagecluster = data['label']
+
         else:
             self.storagecluster = storageclusters.json()[0]
 
@@ -43,8 +48,8 @@ class TestVmsAPI(TestcasesBase):
     def tearDown(self):
         self.lg.info(' [*] Delete virtual machine (VM0)')
         if self.id().split('.')[-1] != 'test003_post_node_vms':
-            self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
-
+            self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.vdisks_api.delete_vdisks_vdiskid(self.vdisk['id'])
         super(TestVmsAPI, self).tearDown()
 
     def test001_get_nodes_vms_vmid(self):
@@ -360,6 +365,7 @@ class TestVmsAPI(TestcasesBase):
         vms = self.core0_client.client.kvm.list()
         vm0 = [x for x in vms if x['name'] == self.data['id']]
         self.assertEqual(vm0, [])
+
 
     def test011_post_nodes_vms_vmid_migrate(self):
         """ GAT-077
