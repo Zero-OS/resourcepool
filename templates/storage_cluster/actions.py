@@ -409,6 +409,7 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
+    zerostors = service.producers.get('zerostor', [])
     pools = service.producers.get('storagepool', [])
 
     for storageEngine in storageEngines:
@@ -418,6 +419,16 @@ def delete(job):
             j.tools.async.wrappers.sync(tcp.delete())
 
         container = storageEngine.parent
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
+
+    for zerostor in zerostors:
+        tcps = zerostor.producers.get('tcp', [])
+        for tcp in tcps:
+            j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
+            j.tools.async.wrappers.sync(tcp.delete())
+
+        container = zerostor.parent
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
@@ -435,7 +446,6 @@ def list_vdisks(job):
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
