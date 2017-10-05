@@ -12,6 +12,7 @@ class VDisksAPIs(OrchestratorBase):
     def get_vdiskstorage(self):
         return self.orchestrator_client.vdiskstorage.ListVdiskStorages()
 
+    @catch_exception_decoration_return
     def post_vdiskstorage(self, storagecluster, **kwargs):
         data = {
                 "id": self.random_string(),
@@ -26,11 +27,11 @@ class VDisksAPIs(OrchestratorBase):
         return self.orchestrator_client.vdiskstorage.GetVdiskStorageInfo(vdiskstorageid=vdiskstorageid)
 
     @catch_exception_decoration
-    def get_Import_Images(self, vdiskstorageid):
+    def get_import_images(self, vdiskstorageid):
         return self.orchestrator_client.vdiskstorage.ListImages(vdiskstorageid=vdiskstorageid)
 
     @catch_exception_decoration_return
-    def post_Import_Image(self, vdiskstorageid, **kwargs):
+    def post_import_image(self, vdiskstorageid, **kwargs):
         size = random.randint(1, 50)
         block_size = 2**random.randint(9, 15)
         export_block_size = 2**random.randint(15, 20)
@@ -49,11 +50,11 @@ class VDisksAPIs(OrchestratorBase):
         return response, data
 
     @catch_exception_decoration
-    def get_Image_info(self, vdiskstorageid, imageid):
+    def get_image_info(self, vdiskstorageid, imageid):
         return self.orchestrator_client.vdiskstorage.GetImage(vdiskstorageid=vdiskstorageid,imageid=imageid)
 
     @catch_exception_decoration
-    def DeleteImage(self, vdiskstorageid, imageid):
+    def delete_image(self, vdiskstorageid, imageid):
         return self.orchestrator_client.vdiskstorage.DeleteImage(vdiskstorageid=vdiskstorageid, imageid=imageid)
 
     @catch_exception_decoration
