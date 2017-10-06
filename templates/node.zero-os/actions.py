@@ -18,7 +18,7 @@ def get_version(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
-    service.model.data.version = node.client.ping().split('Version:')
+    service.model.data.version = node.client.ping().split('Version:')[1]
     service.saveAll()
 
 def input(job):
@@ -289,7 +289,7 @@ def uninstall(job):
 
     statsdb_service = get_statsdb(service)
     if statsdb_service and str(statsdb_service.parent) == str(service):
-        statsdb_service.executeAction'uninstall', context=job.context)
+        statsdb_service.executeAction('uninstall', context=job.context)
 
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
