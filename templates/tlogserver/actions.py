@@ -103,7 +103,7 @@ def install(job):
     if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
         cmd = '/bin/tlogserver \
                 -id {id} \
-                -flush-size 8192 \
+                -flush-size 128 \
                 -address {bind} \
                 -data-shards {data_shards} \
                 -parity-shards {parity_shards} \

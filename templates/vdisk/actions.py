@@ -42,7 +42,7 @@ def install(job):
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster} --flush-size 8192'
+            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster} --flush-size 128'
 
             if objectStoragecluster:
                 object_st = service.aysrepo.serviceGet(role='storage_cluster', instance=objectStoragecluster)
@@ -319,9 +319,11 @@ def import_vdisk(job):
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
-               --flush-size 8192 \
+               --flush-size 128 \
                --config {dialstrings} \
                --key {cryptoKey} \
+               --job 50 \
+               --flus-size 128 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
