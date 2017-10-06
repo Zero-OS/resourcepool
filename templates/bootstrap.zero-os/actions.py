@@ -106,6 +106,7 @@ def try_authorize(job, logger, netid, member, zerotier):
     # connection succeeded, set the hostname of the node to zerotier member
     member['name'] = node.name
     member['description'] = node.client.info.os().get('hostname', '')
+    member['config']['authorized'] = True # make sure we don't unauthorize
     zerotier.network.updateMember(member, member['nodeId'], netid)
 
     # create node.zero-os service
