@@ -13,6 +13,14 @@ def get_statsdb(service):
         return statsdb_services[0]
 
 
+def get_version(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    service.model.data.version = node.client.ping().split('Version:')
+    service.saveAll()
+
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
@@ -96,6 +104,8 @@ def install(job):
         j.tools.async.wrappers.sync(stats_collector_service.executeAction(
             'install', context=job.context))
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
+    get_version(job)
+
 
 
 def monitor(job):
@@ -187,7 +197,7 @@ def monitor(job):
             service.model.data.status = 'halted'
             nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
-
+    get_version(job)
     service.saveAll()
 
 
