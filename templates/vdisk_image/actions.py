@@ -26,9 +26,9 @@ def install(job):
             raise j.exceptions.RuntimeError("no etcd_cluster service found")
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
-               --flush-size 8192 \
+               --flush-size 128 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
                                           dialstrings=etcd_cluster.dialstrings,

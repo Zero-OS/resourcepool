@@ -62,6 +62,7 @@ class ZeroStor:
             --data "{datadir}" \
             --meta "{metadir}" \
             --max-msg-size {msgsize} \
+            --async-write \
             '.format(bind=self.bind, datadir=self.data_dir, metadir=self.meta_dir, msgsize=self.max_size_msg)
         self.container.client.system(cmd, id="zerostor.{}".format(self.name))
         start = time.time()
