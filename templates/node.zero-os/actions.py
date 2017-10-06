@@ -308,6 +308,7 @@ def watchdog(job):
     watched_roles = {
         'nbdserver': {
             # 'message': (re.compile('^storageengine-failure.*$')),  # TODO: Not implemented yet in 0-disk yet
+            'message': (re.compile('.*'),),
             'eof': True
         },
         'tlogserver': {

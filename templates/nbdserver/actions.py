@@ -124,7 +124,7 @@ def stop(job):
             if is_job_running(container, socket=service.model.data.socketPath):
                 continue
             return
-        raise j.exceptions.RuntimeError("nbdserver didn't stopped")
+        raise j.exceptions.RuntimeError("nbdserver didn't stop")
     service.model.data.status = 'halted'
     service.saveAll()
 
@@ -149,15 +149,50 @@ def monitor(job):
             vdisk.executeAction('pause')
 
 
+def ardb_message(job, message):
+    # status = message['status']
+    # do we need to check the status ?
+    service = job.service
+    vdisk_id = message['data']['vdiskID']
+    vdisks = service.aysrepo.servicesFind(name=vdisk_id, role='vdisk')
+    job.logger.info("found %d disks to recover", len(vdisks))
+    for vdisk in vdisks:
+        # NOTE: this should match 1 vdisk at max
+        job.logger.info("calling recover for disk %s" % vdisk_id)
+        vdisk_storage = vdisk.parent
+        vdisk_storage.executeAction('recover', args={'message': message}, context=job.context)
+
+
+def handle_messages(job, message):
+    """ message == {"status":422,"subject":"ardb","data":{"address":"172.17.0.255:2000","db":0,"type":"primary","vdiskID":"vd6"}}"""
+    job.logger.info('processing nbdserver message "%s"', message)
+    switch = {
+        'ardb': ardb_message,
+    }
+
+    handler = switch.get(message['subject'])
+    if handler is not None:
+        return handler(job, message)
+
+
+def debug_failure(job):
+    handle_messages(job, {
+        "status":422,
+        "subject":"ardb",
+        "data": {
+            "address":"172.17.0.255:2000",
+            "db":0,
+            "type":"primary",
+            "vdiskID":"vd0"
+        }
+    })
+
+
 def watchdog_handler(job):
-    import asyncio
-    loop = j.atyourservice.server.loop
-    service = job.service
-    if str(service.model.data.status) != 'running':
-        return
-    eof = job.model.args['eof']
-    service = job.service
-    if eof:
-        vm_service = service.consumers['vm'][0]
-        asyncio.ensure_future(vm_service.asyncExecuteAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
-        asyncio.ensure_future(vm_service.asyncExecuteAction('start', context=job.context), loop=loop)
+    message = job.model.args.get('message')
+    level = job.model.args.get('level')
+
+    job.logger.info('level: %d message: %s' % (level, message))
+    if level == 20:
+        return handle_messages(job, j.data.serializer.json.loads(message))
+

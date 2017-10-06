@@ -15,9 +15,23 @@ def start(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    if service.model.data.status == 'broken':
+        job.logger.error('storage_engine "%s" is marked as broken not starting' % service.name)
+        return
+
+    service.model.data.enabled = True
+    service.saveAll()
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.start()
-    service.model.data.status = 'running'
+
+    if not storageEngine.is_healthy():
+        service.model.data.status = 'broken'
+        service.saveAll()
+        raise RuntimeError('storage_engine "%s" is flagged as broken' % service.name)
+    else:
+        service.model.data.status = 'running'
+
+    service.saveAll()
 
 
 def stop(job):
@@ -27,10 +41,11 @@ def stop(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    service.model.data.status = 'halting'
+    service.model.data.enabled = False
     service.saveAll()
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
+
     service.model.data.status = 'halted'
 
 
@@ -39,25 +54,32 @@ def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     service = job.service
+    if service.model.actionsState['install'] != 'ok':
+        return
 
-    if service.model.actionsState['install'] == 'ok':
-        storageEngine = StorageEngine.from_ays(service, get_jwt_token(service.aysrepo))
-        running, process = storageEngine.is_running()
+    if service.model.data.status != 'running':
+        return
 
-        if running:
-            if not storageEngine.is_healthy():
-                service.model.data.status = "unhealthy"
-            else:
-                service.model.data.status = "running"
+    storageEngine = StorageEngine.from_ays(service, get_jwt_token(service.aysrepo))
+    running, process = storageEngine.is_running()
+    if not running:
+        service.model.data.status = 'halted'
+
+    if not storageEngine.is_healthy():
+        service.model.data.status = 'broken'
 
 
 def watchdog_handler(job):
     import asyncio
     service = job.service
-    if service.model.data.status != 'running':
+    if not service.model.data.enabled:
         return
 
-    loop = j.atyourservice.server.loop
-    eof = job.model.args['eof']
-    if eof:
-        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
+    # TODO: revert
+    # for now we don't try to restart so we can test selh-healing
+    service.model.data.status = 'broken'
+    return
+    # loop = j.atyourservice.server.loop
+    # eof = job.model.args['eof']
+    # if eof:
+    #     asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
