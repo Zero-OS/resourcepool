@@ -3,7 +3,8 @@
 struct Schema {
     dataDir @0 :Text; # directory where the storageEngine db will be stored
     metaDir @1 :Text; # directory where the storageEngine db will be stored
-    maxSizeMsg @2 :UInt8 = 64; # size of the message zerostor can accept, in MiB
+    maxSizeMsg @2 :UInt8 = 64; # size of the message zerostor can accept, in Mib
+
     bind @3: Text; # listen bind address.
 
     container @4 :Text; # pointer to the parent service

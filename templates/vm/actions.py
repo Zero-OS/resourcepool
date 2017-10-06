@@ -666,7 +666,7 @@ def migrate(job):
     tlogserver_service.consume(tcp_services[0])
     job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
     service.consume(tlogserver_service)
-    
+
     # make sure the tlogserver is started
     j.tools.async.wrappers.sync(tlogserver_service.executeAction('start', context=job.context))
 

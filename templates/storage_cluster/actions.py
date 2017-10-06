@@ -432,6 +432,16 @@ def delete(job):
         j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
         j.tools.async.wrappers.sync(container.delete())
 
+    for zerostor in zerostors:
+        tcps = zerostor.producers.get('tcp', [])
+        for tcp in tcps:
+            j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
+            j.tools.async.wrappers.sync(tcp.delete())
+
+        container = zerostor.parent
+        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        j.tools.async.wrappers.sync(container.delete())
+
     for pool in pools:
         pool.executeAction('delete', context=job.context)
         pool.delete()

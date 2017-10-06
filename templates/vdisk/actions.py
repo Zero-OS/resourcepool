@@ -322,8 +322,8 @@ def import_vdisk(job):
                --flush-size 128 \
                --config {dialstrings} \
                --key {cryptoKey} \
-               --job 50 \
                --flus-size 128 \
+               --job 100 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
