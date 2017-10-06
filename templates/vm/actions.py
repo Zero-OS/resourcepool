@@ -652,13 +652,13 @@ def migrate(job):
     tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
     # make sure container is up
     if not tlog_container.is_running():
-        j.tools.async.wrappers.sync(tlog_container.executeAction('start', context=job.context))
+        tlog_container.executeAction('start', context=job.context)
 
     # find some fee ports for the tlog servers on the target node
     ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 1)
     # open the ports
     for tcp_service in tcp_services:
-        j.tools.async.wrappers.sync(tcp_service.executeAction('install', context=job.context))
+        tcp_service.executeAction('install', context=job.context)
 
     # Create tlogserver service
     bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
@@ -668,7 +668,7 @@ def migrate(job):
     service.consume(tlogserver_service)
 
     # make sure the tlogserver is started
-    j.tools.async.wrappers.sync(tlogserver_service.executeAction('start', context=job.context))
+    tlogserver_service.executeAction('start', context=job.context)
 
     # start new nbdserver on target node
     nbd_container = create_zerodisk_container_service(job, target_node)
