@@ -12,6 +12,7 @@ struct Schema {
     redisPort @5 :UInt32 = 6379; # redis port for client
     redisPassword @6 :Text; # redis password for client
     forceReboot @7 :Bool=false;
+    version @8 :Text;
 
     enum NodeStatus {
         running @0;
