@@ -34,9 +34,9 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 
 	role := ""
 	if reqBody.ClusterType == EnumClusterTypeBlock {
-		role = "block_cluster"
+		role = "storagecluster.block"
 	} else {
-		role = "object_cluster"
+		role = "storagecluster.object"
 	}
 
 	exists, err := aysClient.ServiceExists(role, reqBody.Label, api.AysRepo)
@@ -63,7 +63,7 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		obj = deployObjectCluster(aysClient, reqBody)
 	}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "block_cluster", reqBody.Label, "install", obj)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagecluster.block", reqBody.Label, "install", obj)
 
 	errmsg := fmt.Sprintf("error executing blueprint for storage cluster %s creation", reqBody.Label)
 	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
@@ -111,10 +111,10 @@ func deployObjectCluster(aysClient *tools.AYStool, reqBody ClusterCreate) map[st
 	}
 
 	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("object_cluster__%s", reqBody.Label)] = blueprint
+	obj[fmt.Sprintf("storagecluster.object__%s", reqBody.Label)] = blueprint
 	obj["actions"] = []tools.ActionBlock{{
 		Action:  "install",
-		Actor:   "object_cluster",
+		Actor:   "storagecluster.object",
 		Service: reqBody.Label,
 	}}
 	return obj
@@ -134,10 +134,10 @@ func deployBlockCluster(aysClient *tools.AYStool, reqBody ClusterCreate) map[str
 	}
 
 	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("block_cluster__%s", reqBody.Label)] = blueprint
+	obj[fmt.Sprintf("storagecluster.block__%s", reqBody.Label)] = blueprint
 	obj["actions"] = []tools.ActionBlock{{
 		Action:  "install",
-		Actor:   "block_cluster",
+		Actor:   "storagecluster.block",
 		Service: reqBody.Label,
 	}}
 	return obj

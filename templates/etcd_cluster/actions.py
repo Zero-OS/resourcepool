@@ -280,13 +280,13 @@ def watchdog_handler(job):
             j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
 
         # save all storage cluster to new etcd cluster
-        block_clusters = service.aysrepo.servicesFind(role='block_cluster')
-        for block_cluster in block_clusters:
-            j.tools.async.wrappers.sync(block_cluster.executeAction('save_config', context=job.context))
+        storagecluster.blocks = service.aysrepo.servicesFind(role='storagecluster.block')
+        for storagecluster.block in storagecluster.blocks:
+            j.tools.async.wrappers.sync(storagecluster.block.executeAction('save_config', context=job.context))
 
-        object_clusters = service.aysrepo.servicesFind(role='object_cluster')
-        for object_cluster in object_clusters:
-            j.tools.async.wrappers.sync(object_cluster.executeAction('save_config', context=job.context))
+        storagecluster.objects = service.aysrepo.servicesFind(role='storagecluster.object')
+        for storagecluster.object in storagecluster.objects:
+            j.tools.async.wrappers.sync(storagecluster.object.executeAction('save_config', context=job.context))
 
         # restart all runnning vms
         vmachines = service.aysrepo.servicesFind(role='vm')

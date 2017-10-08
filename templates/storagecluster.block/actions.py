@@ -13,23 +13,6 @@ def input(job):
     if nrserver % len(nodes) != 0:
         raise j.exceptions.Input("Invalid spread provided can not evenly spread servers over amount of nodes")
 
-    servers_per_meta = job.model.args.get("serversPerMetaDrive", 0)
-    if not servers_per_meta:
-        raise ValueError('serversPerMetaDrive should be larger than 0')
-
-    serverpernode = nrserver // len(nodes)
-    if servers_per_meta > serverpernode:
-        raise ValueError('Invalid amount of serversPerMetaDrive, should be less or equal to the number of servers per node')
-
-    check_zerostor_config(job)
-
-    data_shards = job.model.args.get("dataShards", 0)
-    parity_shards = job.model.args.get("parityShards", 0)
-    if not data_shards or not parity_shards:
-        raise j.exceptions.Input("dataShards and parityShards should be larger than 0")
-    if (data_shards + parity_shards) > nrserver:
-        raise j.exceptions.Input("dataShards and parityShards should be greater than or equal to number of servers")
-
     etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
     if not etcd_clusters:
         raise j.exceptions.Input('No etcd cluster service found.')
@@ -37,78 +20,43 @@ def input(job):
     return job.model.args
 
 
-def check_zerostor_config(job):
-    import requests
-
-    zstor_organization = job.model.args.get('zerostorOrganization', None)
-    zstor_namespace = job.model.args.get('zerostorNamespace', None)
-    zstor_clientid = job.model.args.get('zerostorClientID', None)
-    zstor_clientsecret = job.model.args.get('zerostorSecret', None)
-
-    if not (zstor_organization and zstor_namespace and zstor_clientid and zstor_clientsecret):
-        raise ValueError('Missing 0-stor configuration')
-
-    url = "https://itsyou.online/v1/oauth/access_token"
-    scope = "user:memberof:{org}.0stor.{namespace}.read,user:memberof:{org}.0stor.{namespace}.write,user:memberof:{org}.0stor.{namespace}.delete"
-    scope = scope.format(
-        org=zstor_organization,
-        namespace=zstor_namespace
-    )
-    params = {
-        "client_id": zstor_clientid,
-        "client_secret": zstor_clientsecret,
-        "grant_type": "client_credentials",
-        "response_type": "id_token",
-        "scope": scope,
-    }
-    res = requests.post(url, params=params)
-    if res.status_code != 200:
-        raise ValueError("Invalid itsyouonline configuration")
-
-
 def get_cluster(job):
     from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    return StorageCluster.from_ays(job.service, job.context['token'])
+    return BlockCluster.from_ays(job.service, job.context['token'])
 
 
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context["token"] = get_jwt_token(job.service.aysrepo)
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     nodes = set()
-    for node_service in service.producers["node"]:
-        nodes.add(Node.from_ays(node_service, job.context["token"]))
+    for node_service in service.producers['node']:
+        nodes.add(Node.from_ays(node_service, job.context['token']))
     nodes = list(nodes)
     nodemap = {node.name: node for node in nodes}
 
-    data_available_disks = get_availabledisks(job, service.model.data.dataDiskType)
-
-    if service.model.data.dataDiskType == service.model.data.metaDiskType:
-        meta_available_disks = data_available_disks
-    else:
-        meta_available_disks = get_availabledisks(job, service.model.data.metaDiskType)
-
-    object_cluster = ObjectCluster.from_ays(service, job.context["token"])
-    datadisks, metadisks = object_cluster.get_disks(data_available_disks, meta_available_disks)
+    availabledisks = get_availabledisks(job)
+    blockcluster_sal = BlockCluster.from_ays(service, job.context['token'])
+    datadisks = blockcluster_sal.get_disks(availabledisks)
 
     # lets create some services
     spactor = service.aysrepo.actorGet("storagepool")
     fsactor = service.aysrepo.actorGet("filesystem")
     containeractor = service.aysrepo.actorGet("container")
-    zerostorActor = service.aysrepo.actorGet("zerostor")
+    storageEngineActor = service.aysrepo.actorGet("storage_engine")
 
     filesystems = []
-    zerostors = []
+    storageEngines = []
 
-    def create_server(node, datadisk, metadisk, baseport, tcp):
+    def create_server(node, disk, baseport, tcp):
         diskmap = [{'device': disk.devicename}]
         args = {
             'node': node.name,
@@ -129,71 +77,42 @@ def init(job):
         filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
         config = get_configuration(job.service.aysrepo)
 
-        metastoragepoolname = 'cluster_{}_{}_{}'.format(node.name, service.name, metadisk.name)
-        if not service.aysrepo.serviceGet(role='storagepool', instance=metastoragepoolname, die=False):
-            diskmap = [{'device': metadisk.devicename}]
-            args = {
-                'node': node.name,
-                'metadataProfile': 'single',
-                'dataProfile': 'single',
-                'devices': diskmap
-            }
-            metaspservice = spactor.serviceCreate(instance=metastoragepoolname, args=args)
-            service.consume(metaspservice)
-
-        metacontainername = '{}_{}_meta'.format(metastoragepoolname, baseport)
-        # adding filesystem
-        args = {
-            'storagePool': metastoragepoolname,
-            'name': metacontainername,
-        }
-        filesystems.append(fsactor.serviceCreate(instance=metacontainername, args=args))
-
         # create containers
         args = {
             'node': node.name,
-            'hostname': metacontainername,
-            'flist': config.get('0-stor-flist', 'https://hub.gig.tech/gig-official-apps/0-stor-master.flist'),
-            'mounts': [{'filesystem': containername, 'target': '/mnt/data'}, {'filesystem': metacontainername, 'target': '/mnt/metadata'}],
+            'hostname': containername,
+            'flist': config.get('storage-engine-flist', 'https://hub.gig.tech/gig-official-apps/ardb-rocksdb.flist'),
+            'mounts': [{'filesystem': containername, 'target': '/mnt/data'}],
             'hostNetworking': True
         }
         containeractor.serviceCreate(instance=containername, args=args)
-
-        # create zerostor
+        # create storageEngines
         args = {
-            'dataDir': '/mnt/data',
-            'metaDir': '/mnt/metadata',
+            'homeDir': '/mnt/data',
             'bind': '{}:{}'.format(node.storageAddr, baseport),
             'container': containername
         }
-        zerostorService = zerostorActor.serviceCreate(instance=containername, args=args)
-        zerostorService.consume(tcp)
-        service.consume(zerostorService)
-        zerostors.append(zerostorService)
+        storageEngine = storageEngineActor.serviceCreate(instance=containername, args=args)
+        storageEngine.consume(tcp)
+        storageEngines.append(storageEngine)
 
-    servers_per_meta = service.model.data.serversPerMetaDrive
     for nodename, disks in datadisks.items():
         node = nodemap[nodename]
         # making the storagepool
         nrports = len(disks)
         baseports, tcpservices = get_baseports(job, node, baseport=2000, nrports=nrports)
         for idx, disk in enumerate(disks):
-            metadisk = metadisks[nodename][idx // servers_per_meta]
-            create_server(node=node,
-                          datadisk=disk,
-                          metadisk=metadisk,
-                          baseport=baseports[idx],
-                          tcp=tcpservices[idx])
+            create_server(node, disk, baseports[idx], tcpservices[idx])
 
     service.model.data.init('filesystems', len(filesystems))
-    service.model.data.init('zerostors', len(zerostors))
+    service.model.data.init('storageServers', len(storageEngines))
 
     for index, fs in enumerate(filesystems):
         service.consume(fs)
         service.model.data.filesystems[index] = fs.name
-    for index, zerostor in enumerate(zerostors):
-        service.consume(zerostor)
-        service.model.data.zerostors[index] = zerostor.name
+    for index, storageEngine in enumerate(storageEngines):
+        service.consume(storageEngine)
+        service.model.data.storageServers[index] = storageEngine.name
 
     grafanasrv = service.aysrepo.serviceGet(role='grafana', instance='statsdb', die=False)
     if grafanasrv:
@@ -213,14 +132,12 @@ def init(job):
 
 def save_config(job):
     import yaml
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
-    from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
-    aysconfig = get_configuration(job.service.aysrepo)
-
     service = job.service
     etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
     if not etcd_clusters:
@@ -229,29 +146,23 @@ def save_config(job):
     etcd_cluster = etcd_clusters[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    # Push zerostorconfig to etcd
-    zerostor_services = service.producers["zerostor"]
-    zstor_organization = aysconfig["0-stor-organization"]
-    zstor_namespace = aysconfig["0-stor-namespace"]
-    zstor_clientid = aysconfig["0-stor-clientid"]
-    zstor_clientsecret = aysconfig["0-stor-clientsecret"]
+    cluster = BlockCluster.from_ays(service, job.context['token'])
+    config = cluster.get_config()
 
-    zerostor_config = {
-        "iyo": {
-            "org": zstor_organization,
-            "namespace": zstor_namespace,
-            "clientID": zstor_clientid,
-            "secret": zstor_clientsecret,
-        },
-        "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
-        "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
+    config = {
+        "servers": config["dataStorage"],
     }
-    yamlconfig = yaml.safe_dump(zerostor_config, default_flow_style=False)
-    etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
+
+    yamlconfig = yaml.safe_dump(config, default_flow_style=False)
+
+    etcd.put(key="%s:cluster:conf:storage" % service.name, value=yamlconfig)
 
 
 def delete_config(job):
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
@@ -261,11 +172,11 @@ def delete_config(job):
     etcd_cluster = etcd_clusters[0]
     etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
 
-    etcd.delete(key="%s:cluster:conf:zerostor" % service.name)
+    etcd.delete(key="%s:cluster:conf:storage" % service.name)
 
 
-def get_availabledisks(job, disktype):
-    from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+def get_availabledisks(job):
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
 
     service = job.service
 
@@ -278,8 +189,8 @@ def get_availabledisks(job, disktype):
             disks.update(devices)
         used_disks[node] = disks
 
-    cluster = ObjectCluster.from_ays(service, job.context['token'])
-    availabledisks = cluster.find_disks(disktype)
+    cluster = BlockCluster.from_ays(service, job.context['token'])
+    availabledisks = cluster.find_disks(service.model.data.diskType)
     freedisks = {}
     for node, disks in availabledisks.items():
         node_disks = []
@@ -353,10 +264,10 @@ def delete(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    zerostors = service.producers.get('zerostor', [])
+    storageEngines = service.producers.get('storage_engine', [])
     pools = service.producers.get('storagepool', [])
 
-    for storageEngine in zerostors:
+    for storageEngine in storageEngines:
         tcps = storageEngine.producers.get('tcp', [])
         for tcp in tcps:
             j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
@@ -375,8 +286,48 @@ def delete(job):
     job.service.model.data.status = 'empty'
 
 
+def list_vdisks(job):
+    import random
+    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.configuration import get_configuration
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+    service = job.service
+
+    nodes = [node for node in service.producers['node'] if node.model.data.status != "halted"]
+    node = random.choice(nodes)
+
+    # create temp container of 0-disk
+    container_name = 'vdisk_list_{}'.format(service.name)
+    node = Node.from_ays(node, job.context['token'])
+    config = get_configuration(job.service.aysrepo)
+
+    container = Container(name=container_name,
+                          flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
+                          host_network=True,
+                          node=node)
+    container.start()
+    try:
+        cluster = StorageCluster.from_ays(service, job.context['token'])
+        clusterconfig = cluster.get_config()
+
+        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
+        job.logger.debug(cmd)
+        result = container.client.system(cmd).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
+        return {vdisk.strip("lba:") for vdisk in result.stdout.splitlines()}
+    finally:
+        container.stop()
+
+
 def monitor(job):
-    from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+    import time
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -385,9 +336,93 @@ def monitor(job):
     if service.model.actionsState['install'] != 'ok':
         return
 
-    cluster = ObjectCluster.from_ays(service, job.context['token'])
+    cluster = BlockCluster.from_ays(service, job.context['token'])
     if service.model.data.status == 'ready' and not cluster.is_running():
         cluster.start()
+
+    if service.model.data.clusterType == "object":
+        return
+
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storagecluster.block_%s' % service.name, die=False)
+    if healthcheck_service is None:
+        healthcheck_actor = service.aysrepo.actorGet('healthcheck')
+        healthcheck_service = healthcheck_actor.serviceCreate(instance='storagecluster.block_%s' % service.name)
+        service.consume(healthcheck_service)
+
+    # Get orphans
+    total_disks = list_vdisks(job)
+    vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer="%s!%s" % (service.model.role, service.name))
+    nonorphans = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
+
+    old_orphans_services = {disk for disk in vdisk_services if disk.model.data.status == "orphan"}
+
+    old_orphans = set()
+    for orphan_service in old_orphans_services:
+        # Delete orphan vdisk if operator didn't act for 7 days
+        orphan_time = (int(time.time()) - orphan_service.model.data.timestamp) / (3600 * 24)
+        if orphan_time >= 7:
+            j.tools.async.wrappers.sync(orphan_service.executeAction('delete', context=job.context))
+            j.tools.async.wrappers.sync(orphan_service.delete())
+            continue
+        old_orphans.add(orphan_service.name)
+
+    new_orphans = total_disks - nonorphans
+    total_orphans = new_orphans | old_orphans
+
+    for orphan in new_orphans:
+        actor = service.aysrepo.actorGet('vdisk')
+        args = {
+            "status": "orphan",
+            "timestamp": int(time.time()),
+            "storageCluster": service.name,
+        }
+        actor.serviceCreate(instance=orphan, args=args)
+
+    healthcheck = {
+        "id": "storageclusters",
+        "name": "storagecluster orphan vdisk report",
+        "messages": [],
+    }
+    for orphan in total_orphans:
+        healthcheck["messages"].append({
+            "id": orphan,
+            "status": "WARNING",
+            "text": "Orphan vdisk %s is found" % orphan,
+        })
+    update_healthcheck(job, healthcheck_service, healthcheck)
+
+
+def update_healthcheck(job, health_service, healthchecks):
+    import time
+
+    service = job.service
+
+    interval = service.model.actionGet('monitor').period
+    new_healthchecks = list()
+    if not isinstance(healthchecks, list):
+        healthchecks = [healthchecks]
+    defaultresource = '/storageclusters/{}'.format(service.name)
+    for health_check in healthchecks:
+        for health in health_service.model.data.healthchecks:
+            # If this healthcheck already exists, update its attributes
+            if health.id == health_check['id']:
+                health.name = health_check.get('name', '')
+                health.resource = health_check.get('resource', defaultresource) or defaultresource
+                health.messages = health_check.get('messages', [])
+                health.category = health_check.get('category', '')
+                health.lasttime = time.time()
+                health.interval = interval
+                health.stacktrace = health_check.get('stacktrace', '')
+                break
+        else:
+            # healthcheck doesn't exist in the current list, add it to the list of new
+            health_check['lasttime'] = time.time()
+            health_check['interval'] = interval
+            new_healthchecks.append(health_check)
+
+    old_healthchecks = health_service.model.data.to_dict().get('healthchecks', [])
+    old_healthchecks.extend(new_healthchecks)
+    health_service.model.data.healthchecks = old_healthchecks
 
 
 def addStorageServer(job):

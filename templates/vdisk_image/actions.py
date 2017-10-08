@@ -45,7 +45,7 @@ def install(job):
             cmd += ' --force'
 
         if vdiskstore.model.data.objectCluster:
-            storageclusterservice = service.aysrepo.serviceGet(role='object_cluster',
+            storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.object',
                                                                instance=vdiskstore.model.data.objectCluster)
             cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
                                                                  storageclusterservice.model.data.parityShards)
@@ -160,7 +160,7 @@ def get_cluster_nodes(job):
 
     cluster = vdiskstore.model.data.blockCluster
 
-    storageclusterservice = service.aysrepo.serviceGet(role='block_cluster',
+    storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.block',
                                                        instance=cluster)
     cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
     nodes = list(set(storageclusterservice.producers["node"]))

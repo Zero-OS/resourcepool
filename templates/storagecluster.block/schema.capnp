@@ -1,4 +1,4 @@
-@0xf84fe31be47b65e2;
+@0xb09f7b68763082a3;
 
 struct Schema {
     label @0 :Text;
@@ -6,7 +6,7 @@ struct Schema {
     nrServer @2 :UInt32 = 256;
     diskType @3:DiskClass = ssd;
     filesystems @4:List(Text);
-    storageEngines @5 :List(Text);
+    storageServers @5 :List(Text);
 
     nodes @6 :List(Text);  # list of node where we can deploy storage server
 

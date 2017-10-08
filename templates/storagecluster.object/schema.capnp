@@ -1,4 +1,4 @@
-@0x8ebb5df427f8e71c;
+@0x801144c8c40798f6;
 
 struct Schema {
     label @0 :Text;
@@ -8,7 +8,7 @@ struct Schema {
     metaDiskType @4:DiskClass = ssd;
     serversPerMetaDrive @5:UInt32;
     filesystems @6:List(Text);
-    zerostors @7 :List(Text);
+    storageServers @7 :List(Text);
 
     nodes @8 :List(Text); # list of node where we can deploy storage server
 
@@ -25,6 +25,7 @@ struct Schema {
         deploying @1;
         ready @2;
         error @3;
+        halting @4;
     }
 
     enum DiskClass {

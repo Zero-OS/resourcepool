@@ -1,6 +1,7 @@
 package storagecluster
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"net/http"
@@ -22,7 +23,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 
 	// Prevent deletion of nonempty clusters
 	query := map[string]interface{}{
-		"consume": fmt.Sprintf("storage_cluster!%s", storageCluster),
+		"consume": fmt.Sprintf("storagecluster!%s", storageCluster),
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, query)
 	if !tools.HandleAYSResponse(err, res, w, "listing vdisks") {
@@ -35,16 +36,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// execute the delete action
-	blueprint := map[string]interface{}{
-		"actions": []tools.ActionBlock{{
-			Action:  "delete",
-			Actor:   "storage_cluster",
-			Service: storageCluster,
-		}},
-	}
-
-	_, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
+	service, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storagecluster", api.AysRepo, nil, nil)
 
 	if err != nil {
 		errmsg := fmt.Sprintf("error executing blueprint for Storage cluster %s deletion", storageCluster)
@@ -57,10 +49,33 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
+	data := struct {
+		MetaDriveType EnumClusterDriveType `yaml:"metaDiskType" json:"metaDiskType"`
+	}{}
+
+	if err := json.Unmarshal(service.Data, &data); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
+		return
+	}
+
+	actor := "storagecluster.block"
+	if data.MetaDriveType != "" {
+		actor = "storagecluster.object"
+	}
+
+	// execute the delete action
+	blueprint := map[string]interface{}{
+		"actions": []tools.ActionBlock{{
+			Action:  "delete",
+			Actor:   actor,
+			Service: storageCluster,
+		}},
+	}
+
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagecluster", storageCluster, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
-		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for storage_cluster deletion")
+		tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error executing blueprint for storagecluster deletion")
 		return
 	}
 
@@ -68,17 +83,17 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	if _, err = aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
 		httpErr, ok := err.(tools.HTTPError)
 		if ok {
-			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storage_cluster deletion")
+			tools.WriteError(w, httpErr.Resp.StatusCode, httpErr, "Error running blueprint for storagecluster deletion")
 		} else {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storage_cluster deletion")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error running blueprint for storagecluster deletion")
 		}
 		return
 	}
 
-	_, err = aysClient.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
+	_, err = aysClient.Ays.DeleteServiceByName(storageCluster, "storagecluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		errmsg := fmt.Sprintf("Error in deleting storage_cluster %s", storageCluster)
+		errmsg := fmt.Sprintf("Error in deleting storagecluster %s", storageCluster)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}

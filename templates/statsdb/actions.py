@@ -57,9 +57,9 @@ def init(job):
             stats_collector_service.consume(node_service)
 
     # Create storage cluster dashboards
-    block_cluster_services = job.service.aysrepo.servicesFind(actor='block_cluster')
-    object_cluster_services = job.service.aysrepo.servicesFind(actor='object_cluster')
-    cluster_services = block_cluster_services + object_cluster_services
+    storagecluster.block_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
+    storagecluster.object_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
+    cluster_services = storagecluster.block_services + storagecluster.object_services
 
     for clusterservice in cluster_services:
         cluster = StorageCluster.from_ays(clusterservice, get_jwt_token(service.aysrepo))
