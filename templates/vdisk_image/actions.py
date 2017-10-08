@@ -1,6 +1,11 @@
 from js9 import j
 
 
+def input(job):
+    if len(job.service.name) > 16:
+            raise j.exceptions.Input('Vdisk_image service name is longer than 16 characters.')
+
+
 def install(job):
     import random
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
