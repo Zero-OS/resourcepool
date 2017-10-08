@@ -62,7 +62,7 @@ class TestVdisks(TestcasesBase):
         response, data = self.vdisks_api.post_vdiskstorage(storagecluster=fake_storagecluster, id=vds1_name)
         self.assertEqual(response.status_code, 400)
 
-    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/808")
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1148")
     def test002_create_images(self):
         """ GAT-148
         **Test Scenario:**
