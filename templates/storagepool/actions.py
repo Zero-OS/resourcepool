@@ -68,7 +68,7 @@ def delete(job):
 
     try:
         pool = node.storagepools.get(name)
-        pool.delete()
+        pool.delete(zero=True)
     except ValueError:
         # pool does not exists, nothing to do
         pass
