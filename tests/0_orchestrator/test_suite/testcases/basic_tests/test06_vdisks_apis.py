@@ -172,44 +172,7 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(new_size, response.json()['size'])
 
-    @unittest.skip('https://github.com/gig-projects/org_quality/issues/689')
-    def test006_Rollback_vdisk(self):
-        """ GAT-066
-        *POST:/vdisks/{vdiskid}/rollback*
-
-        **Test Scenario:**
-
-        #. Create vdisk (VD0), should succeed.
-        #. Resize vdisk (VD0), should succeed.
-        #. Check that size of vdisk (VD0) changed, should succeed.
-        #. Rollback vdisk (VD0), should succeed.
-        #. Check that vdisk (VD0) size is changed to the initial size, should succeed.
-        """
-        epoch = int(time.time())
-
-        self.lg.info(' [*]  Resize  created volume.')
-        current_size = self.data['size']
-        new_size = current_size + random.randint(1, 10)
-        body = {"newSize": new_size}
-        response = self.vdisks_api.post_vdisks_vdiskid_resize(self.vdiskstoragedata["id"],self.data['id'], body)
-        self.assertEqual(response.status_code, 204)
-
-        self.lg.info(' [*] Check that size of volume changed, should succeed')
-        response = self.vdisks_api.get_vdisks_vdiskid(self.vdiskstoragedata["id"],self.data['id'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(new_size, response.json()['size'])
-
-        self.lg.info(' [*] Rollback vdisk (VD0), should succeed')
-        body = {"epoch": epoch}
-        response = self.vdisks_api.post_vdisks_vdiskid_rollback(self.vdiskstoragedata["id"],self.data['id'], body)
-        self.assertEqual(response.status_code, 204)
-
-        self.lg.info(' [*] Check that vdisk (VD0) size is changed to the initial size, should succeed')
-        response = self.vdisks_api.get_vdisks_vdiskid(self.vdiskstoragedata["id"],self.data['id'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(current_size, response.json()['size'])
-
-    def test007_list_vdiskstorage(self):
+    def test006_list_vdiskstorage(self):
         """ GAT-143
         *GET:/vdiskstorage*
 
@@ -229,7 +192,7 @@ class TestVdisks(TestcasesBase):
         self.assertIn(svd0_data, response.json())
 
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1148")
-    def test008_list_vdisk_images(self):
+    def test007_list_vdisk_images(self):
         """ GAT-144
         *GET:/vdisks_Images*
 
@@ -249,7 +212,7 @@ class TestVdisks(TestcasesBase):
                      }
         self.assertIn(img0_data, response.json())
 
-    def test009_get_vdiskstorage_details(self):
+    def test008_list_vdisk_images_get_vdiskstorage_details(self):
         """ GAT-145
         *GET:/vdiskstorage/{vdiskstorageid}*
 
@@ -270,8 +233,8 @@ class TestVdisks(TestcasesBase):
         response = self.vdisks_api.get_vdiskstorage_info(self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/808')
-    def test010_get_Imported_Image_details(self):
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1148')
+    def test009_get_Imported_Image_details(self):
         """ GAT-146
         *GET:/vdiskstorage/{vdiskstorageid}*
 
