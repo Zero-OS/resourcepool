@@ -288,7 +288,7 @@ def delete(job):
 
 def list_vdisks(job):
     import random
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
@@ -312,10 +312,10 @@ def list_vdisks(job):
                           node=node)
     container.start()
     try:
-        cluster = StorageCluster.from_ays(service, job.context['token'])
+        cluster = BlockCluster.from_ays(service, job.context['token'])
         clusterconfig = cluster.get_config()
 
-        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['metadataStorage']["address"])
+        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['dataStorage'][0]["address"])
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':

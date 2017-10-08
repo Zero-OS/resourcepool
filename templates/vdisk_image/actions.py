@@ -150,20 +150,13 @@ def save_config(job):
 
 
 def get_cluster_nodes(job):
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
     service = job.service
     vdiskstore = service.parent
 
     cluster = vdiskstore.model.data.blockCluster
 
-    storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.block',
-                                                       instance=cluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    nodes = list(set(storageclusterservice.producers["node"]))
+    blockcluster_service = service.aysrepo.serviceGet(role='storagecluster.block', instance=cluster)
+    nodes = list(set(blockcluster_service.producers["node"]))
     return nodes
 
 

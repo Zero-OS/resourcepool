@@ -139,7 +139,6 @@ def save_config(job):
 
 
 def get_cluster_config(job, type="block"):
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -148,13 +147,16 @@ def get_cluster_config(job, type="block"):
     vdiskstore = service.parent
 
     cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
-    role = "storagecluster.block" if type == "block" else "storagecluster.object"
+    role = "storagecluster.{type}".format(type=type)
 
-    storageclusterservice = service.aysrepo.serviceGet(role=role,
-                                                       instance=cluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    nodes = list(set(storageclusterservice.producers["node"]))
-    return {"config": cluster.get_config(), "nodes": nodes, 'dataShards': cluster.data_shards, 'parityShards': cluster.parity_shards}
+    storagecluster_service = service.aysrepo.serviceGet(role=role,
+                                                        instance=cluster)
+    storage_cluster_model = storagecluster_service.model.data.to_dict()
+
+    nodes = list(set(storagecluster_service.producers["node"]))
+    return {"nodes": nodes,
+            'dataShards': storage_cluster_model.get("dataShards"),
+            "parityShards": storage_cluster_model.get("dataShards")}
 
 
 def create_from_template_container(job, parent):

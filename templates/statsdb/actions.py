@@ -12,8 +12,9 @@ def input(job):
 def init(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.templates import render
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster, ObjectCluster
     service = job.service
+
     influxdb_actor = service.aysrepo.actorGet('influxdb')
 
     args = {
@@ -57,12 +58,23 @@ def init(job):
             stats_collector_service.consume(node_service)
 
     # Create storage cluster dashboards
-    storagecluster.block_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
-    storagecluster.object_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
-    cluster_services = storagecluster.block_services + storagecluster.object_services
+    blockcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
+    objectcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
 
-    for clusterservice in cluster_services:
-        cluster = StorageCluster.from_ays(clusterservice, get_jwt_token(service.aysrepo))
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    for clusterservice in blockcluster_services:
+        cluster = BlockCluster.from_ays(clusterservice, job.context['token'])
+        board = cluster.dashboard
+
+        args = {
+            'grafana': 'statsdb',
+            'dashboard': board
+        }
+        dashboard_actor.serviceCreate(instance=cluster.name, args=args)
+        stats_collector_service.consume(clusterservice)
+
+    for clusterservice in objectcluster_services:
+        cluster = ObjectCluster.from_ays(clusterservice, job.context['token'])
         board = cluster.dashboard
 
         args = {
