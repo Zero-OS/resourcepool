@@ -13,6 +13,19 @@ def get_statsdb(service):
         return statsdb_services[0]
 
 
+
+def get_version(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    pong = node.client.ping()
+    version = pong.split('Version:')[1] if pong else ''
+    service.model.data.version = version if version else service.model.data.version
+    service.saveAll()
+    return version
+
+
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
@@ -77,6 +90,7 @@ def install(job):
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    get_version(job)
     job.logger.info('mount storage pool for fuse cache')
     poolname = '{}_fscache'.format(service.name)
     node.ensure_persistance(poolname)
@@ -126,7 +140,7 @@ def monitor(job):
         try:
             node = Node.from_ays(service, token, timeout=5)
             node.client.testConnectionAttempts = 0
-            state = node.client.ping()
+            state = get_version(job)
         except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
             err = error
             state = False
@@ -187,7 +201,6 @@ def monitor(job):
             service.model.data.status = 'halted'
             nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
-
     service.saveAll()
 
 
