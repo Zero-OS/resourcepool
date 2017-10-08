@@ -32,6 +32,7 @@ def stop(job):
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
     service.model.data.status = 'halted'
+    service.saveAll()
 
 
 def monitor(job):
