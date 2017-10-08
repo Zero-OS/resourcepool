@@ -6,7 +6,7 @@ def install(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    service.executeAction('start', context=job.context)
 
 
 def start(job):
@@ -39,7 +39,7 @@ def watchdog_handler(job):
     loop = j.atyourservice.server.loop
     etcd_cluster = service.consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)
 
 
 def monitor(job):
@@ -54,4 +54,4 @@ def monitor(job):
     etcd = ETCD.from_ays(service, token)
     if service.model.data.status == 'running' and not etcd.is_running():
         job.context['token'] = token
-        start(job)
+        service.executeAction("start", context=job.context)

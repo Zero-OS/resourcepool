@@ -5,7 +5,7 @@ def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def start(job):
@@ -61,4 +61,4 @@ def watchdog_handler(job):
     loop = j.atyourservice.server.loop
     eof = job.model.args['eof']
     if eof:
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
