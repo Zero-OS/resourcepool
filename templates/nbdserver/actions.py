@@ -64,12 +64,29 @@ def install(job):
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
         # make sure nbd is still running
         running = is_job_running(container, socket=socketpath)
+        if not running:
+            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
+
+        vdisk_state = {}
         for vdisk in vdisks:
+            # warmming up nbdserver manually. we send a qemu-ing info so the nbdserver already start doing the requests task in order to be ready to
+            # serve the vdisks
+            #cmd = 'qemu-img info nbd:unix:/mnt/container-{container_id}{socket_path}:exportname={vdisk_id}'.format(container_id=container.id, socket_path=socketpath, vdisk_id=vdisk.name)
+            #job.logger.debug("Executing cmd '%s' to warm up nbdserver for '%s'.", cmd, service.name)
+            #resp = container.node.client.system(cmd).get()
+            #start = time.time()
+            #timeout = 300
+            #while resp.state != 'SUCCESS' or (time.time() - start) > timeout:
+            #    job.logger.debug("%s\n%s\n%s", cmd, resp.stdout, resp.stderr)
+            #    time.sleep(0.5)
+            #    resp = container.node.client.system(cmd).get()
+            #if resp.state != 'SUCCESS':
+            #    running = False
             if running:
                 vdisk.model.data.status = 'running'
                 vdisk.saveAll()
-        if not running:
-            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
+            else:
+                raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
 
         service.model.data.socketPath = socketpath
         service.model.data.status = 'running'

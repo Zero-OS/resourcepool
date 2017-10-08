@@ -51,6 +51,7 @@ def create_zerodisk_container_service(job, parent):
         'flist': config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
         'hostNetworking': True,
     }
+    job.logger.info("create zerodisk container from %s", args['flist'])
     container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
@@ -60,7 +61,7 @@ def create_zerodisk_container_service(job, parent):
     return containerservice
 
 
-def create_service(service, container, role='nbdserver', bind=None):
+def create_service(service, container, role='nbdserver', bind=None, waitListenBind=None, acceptAddress=None):
     """
     first check if the service exists
     if not it creates it.
@@ -83,6 +84,9 @@ def create_service(service, container, role='nbdserver', bind=None):
         }
         if bind:
             args["bind"] = bind
+            args["waitListenBind"] = waitListenBind
+        if acceptAddress:
+            args["acceptAddress"] = acceptAddress
         created_service = actor.serviceCreate(instance=service_name, args=args)
     return created_service
 
@@ -90,22 +94,24 @@ def create_service(service, container, role='nbdserver', bind=None):
 def _init_zerodisk_services(job, nbd_container_service, tlog_container_service=None, tlog_container_sal=None):
     service = job.service
     # Create nbderver service
-    nbdserver = create_service(service, nbd_container_service)
+    nbdserver_service = create_service(service, nbd_container_service)
     job.logger.info("creates nbd server for vm {}".format(service.name))
-    service.consume(nbdserver)
+    service.consume(nbdserver_service)
 
     if tlog_container_service:
         # Create tlogserver service
         if not tlog_container_sal:
             from zeroos.orchestrator.sal.Container import Container
             tlog_container_sal = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
-        ports, tcp = get_baseports(job, tlog_container_sal.node, 11211, 1)
+        ports, tcp = get_baseports(job, tlog_container_sal.node, 11211, 2)
         bind = "%s:%s" % (tlog_container_sal.node.storageAddr, ports[0])
-        tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind)
+        waitListenBind = "%s:%s" % (tlog_container_sal.node.storageAddr, ports[1])
+        tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind)
         tlogserver_service.consume(tcp[0])
+        tlogserver_service.consume(tcp[1])
         job.logger.info("creates tlog server for vm {}".format(service.name))
         service.consume(tlogserver_service)
-        nbdserver.consume(tlogserver_service)
+        nbdserver_service.consume(tlogserver_service)
 
 
 def _nbd_url(job, container, nbdserver, vdisk):
@@ -627,12 +633,14 @@ def migrate(job):
 
     # define node services
     target_node = service.aysrepo.serviceGet('node', node)
+    target_node_sal = Node.from_ays(target_node, job.context['token'])
+    
     old_node = service.parent
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     # start migration channel to copy keys and start ssh deamon
     ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
-
+    
     #start tlog server on target node
     services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
     if len(services) < 2:
@@ -655,15 +663,22 @@ def migrate(job):
         tlog_container.executeAction('start', context=job.context)
 
     # find some fee ports for the tlog servers on the target node
-    ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 1)
+    ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 2)
     # open the ports
     for tcp_service in tcp_services:
         tcp_service.executeAction('install', context=job.context)
 
     # Create tlogserver service
     bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
-    tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind)
+    waitListenBind = "%s:%s" % (tlog_container.node.storageAddr, ports[1])
+    tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind, acceptAddress=target_node_sal.storageAddr)
     tlogserver_service.consume(tcp_services[0])
+    tlogserver_service.consume(tcp_services[1])
+
+    # destination tlogserver consume source tlog server, so he can synchronise with it during migration
+    if 'tlogserver' in service.producers and len(service.producers['tlogserver']) > 0:
+        source_tlogserver_service = service.producers['tlogserver'][0]
+        tlogserver_service.consume(source_tlogserver_service)
     job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
     service.consume(tlogserver_service)
 
@@ -877,12 +892,12 @@ def update_data(job, args):
             service.model.changeParent(node)
             service.saveAll()
 
+            old_nbd.executeAction('stop', context=job.context)
+            old_nbd.delete()
+
             for tlog_server in old_tlog_servers:
                 tlog_server.executeAction('stop', context=job.context)
                 tlog_server.delete()
-
-            old_nbd.executeAction('stop', context=job.context)
-            old_nbd.delete()
 
             start_dependent_services(job)
 
@@ -890,12 +905,12 @@ def update_data(job, args):
             # do live migration
             migrate(job)
 
+            old_nbd.executeAction('stop', context=job.context)
+            old_nbd.delete()
+
             for tlog_server in old_tlog_servers:
                 tlog_server.executeAction('stop', context=job.context)
                 tlog_server.delete()
-
-            old_nbd.executeAction('stop', context=job.context)
-            old_nbd.delete()
 
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')

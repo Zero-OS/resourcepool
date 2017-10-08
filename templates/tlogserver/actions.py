@@ -99,12 +99,21 @@ def install(job):
     data_shards = config.pop('data-shards')
     parity_shards = config.pop('parity-shards')
 
+    # check if we consume another tlog on which we need to sync at startup
+    tlogWaitAddr = None
+    if 'tlogserver' in service.producers:
+        waitTlogServer_service = service.producers['tlogserver'][0]
+        tlogWaitAddr = waitTlogServer_service.model.data.waitListenBind
+
     bind = service.model.data.bind
+    waitListenBind = service.model.data.waitListenBind
+
     if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
         cmd = '/bin/tlogserver \
                 -id {id} \
                 -flush-size 128 \
                 -address {bind} \
+                -wait-listen-addr {waitListenBind} \
                 -data-shards {data_shards} \
                 -parity-shards {parity_shards} \
                 -config "{dialstrings}" \
@@ -112,9 +121,15 @@ def install(job):
                          bind=bind,
                          data_shards=data_shards,
                          parity_shards=parity_shards,
+                         waitListenBind=waitListenBind,
                          dialstrings=etcd_cluster.dialstrings)
         if backup:
-            cmd += '-with-slave-sync'
+            cmd += ' -with-slave-sync'
+        if tlogWaitAddr:
+            cmd += ' -wait-connect-addr {}'.format(tlogWaitAddr)
+        if service.model.data.acceptAddress:
+            cmd += ' -accept-address {}'.format(service.model.data.acceptAddress)
+
         job.logger.info("Starting tlog server: %s" % cmd)
         container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
         if not is_port_listening(container, int(bind.split(":")[1])):
@@ -172,6 +187,13 @@ def stop(job):
             if not is_port_listening(container, port):
                 break
             raise j.exceptions.RuntimeError("Failed to stop Tlog server")
+    
+    # after stop, in case this service was consume by another tlog server for synchronisation
+    # need to clean the consumer relation cause the sync is done just before stop.
+    # the relation doesn't need to exists anymore.
+    for consumer in service.consumers.get('tlogserver', []):
+        service.model.consumerRemove(consumer)
+
     service.model.data.status = 'halted'
     service.saveAll()
 
