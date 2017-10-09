@@ -19,7 +19,7 @@ func (api *VdiskstorageAPI) GetImage(w http.ResponseWriter, r *http.Request) {
 	imageID := mux.Vars(r)["imageid"]
 	var image Image
 
-	imageService, resp, err := aysClient.Ays.GetServiceByName(imageID, "image", api.AysRepo, nil, nil)
+	imageService, resp, err := aysClient.Ays.GetServiceByName(imageID, "vdisk_image", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, resp, w, "fail to get image service") {
 		return
 	}
@@ -28,6 +28,7 @@ func (api *VdiskstorageAPI) GetImage(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusInternalServerError, err, "fail to get image service")
 		return
 	}
+	image.Name = imageID
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

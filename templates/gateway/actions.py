@@ -110,7 +110,7 @@ def install(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    service.executeAction('start', context=job.context)
 
 def save_certificates(job, container, caddy_dir="/.caddy"):
     from io import  BytesIO
@@ -228,10 +228,10 @@ def processChange(job):
         nics_args = {'nics': args['nics']}
 
         cloudInitServ = service.aysrepo.serviceGet(role='cloudinit', instance=service.name)
-        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', context=job.context, args=nics_args))
+        cloudInitServ.executeAction('update', context=job.context, args=nics_args)
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
-        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', context=job.context, args=args))
+        dhcpServ.executeAction('update', context=job.context, args=args)
 
         ip = containerobj.client.ip
 
@@ -282,14 +282,14 @@ def processChange(job):
 
         # apply changes in container
         cont_service = service.aysrepo.serviceGet(role='container', instance=service.name)
-        j.tools.async.wrappers.sync(cont_service.executeAction('processChange', context=job.context, args=nics_args))
+        cont_service.executeAction('processChange', context=job.context, args=nics_args)
 
         # setup new zerotierbridges
         setup_zerotierbridges(job)
 
     if nicchanges or portforwardchanges:
         firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', context=job.context, args=args))
+        firewallServ.executeAction('update', context=job.context, args=args)
 
     if portforwardchanges:
         service.model.data.portforwards = args.get('portforwards', [])
@@ -300,7 +300,7 @@ def processChange(job):
             httpServ = service.aysrepo.serviceGet(role='http', instance='%s-%s' % (service.name, type))
             http_args = {'httpproxies': httpproxies}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
-            j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
+            httpServ.executeAction('update', context=job.context, args=http_args)
         service.model.data.httpproxies = httpproxies
 
     if args.get("domain", None):
@@ -319,8 +319,8 @@ def uninstall(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
+        container.executeAction('stop', context=job.context)
+        container.delete()
 
 
 def start(job):
@@ -331,7 +331,7 @@ def start(job):
 
     service = job.service
     container = service.producers.get('container')[0]
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
 
     containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # setup resolv.conf
@@ -354,12 +354,12 @@ def start(job):
     cloudinit = container.consumers.get('cloudinit')[0]
     firewall = container.consumers.get('firewall')[0]
 
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(dhcp.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
+    dhcp.executeAction('start', context=job.context)
     for i in http:
-        j.tools.async.wrappers.sync(i.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
+        i.executeAction('start', context=job.context)
+    firewall.executeAction('start', context=job.context)
+    cloudinit.executeAction('start', context=job.context)
     save_certificates(job, containerobj)
     service.model.data.status = "running"
 
@@ -372,7 +372,7 @@ def stop(job):
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        container.executeAction('stop', context=job.context)
         service.model.data.status = "halted"
 
 

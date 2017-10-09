@@ -5,7 +5,7 @@ import (
 )
 
 type VdiskRollback struct {
-	Epoch int `yaml:"epoch" json:"epoch" validate:"nonzero"`
+	Epoch int `yaml:"epoch" json:"epoch"`
 }
 
 func (s VdiskRollback) Validate() error {

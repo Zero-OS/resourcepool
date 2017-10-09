@@ -61,7 +61,13 @@ class StorageCluster:
             if 'metadata' in storageserver.name:
                 data['metadataStorage'] = {'address': storageserver.storageEngine.bind}
             else:
-                data['dataStorage'].append({'address': storageserver.storageEngine.bind})
+                disabled = not storageserver.storageEngine.enabled or \
+                        storageserver.storageEngine.status == 'broken'
+
+                data['dataStorage'].append({
+                    'address': storageserver.storageEngine.bind,
+                    'disabled': disabled
+                })
         return data
 
     @property

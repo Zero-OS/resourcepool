@@ -44,8 +44,7 @@ def install(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     job.service.model.data.status = "halted"
-
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def get_member(zerotier, zerotiernodeid, nicid):
@@ -270,4 +269,4 @@ def watchdog_handler(job):
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)

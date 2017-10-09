@@ -29,7 +29,7 @@ def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def start(job):
@@ -42,7 +42,7 @@ def start(job):
     service = job.service
     service.model.data.status = 'running'
     container = get_container(service)
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     influx = InfluxDB(
         container_ays, service.parent.model.data.redisAddr, service.model.data.port,
@@ -70,8 +70,8 @@ def stop(job):
             container_ays, service.parent.model.data.redisAddr, service.model.data.port,
             service.model.data.rpcport)
         influx.stop()
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-
+        container.executeAction('stop', context=job.context)
+    service.model.data.status = 'halted'
     service.saveAll()
 
 
@@ -83,9 +83,9 @@ def uninstall(job):
     container = get_container(service, False)
 
     if container:
-        j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
-    j.tools.async.wrappers.sync(service.delete())
+        service.executeAction('stop', context=job.context)
+        container.delete()
+    service.delete()
 
 
 def processChange(job):
