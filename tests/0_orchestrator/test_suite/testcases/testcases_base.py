@@ -35,7 +35,7 @@ class TestcasesBase(TestCase):
             raise TimeExpired('Timeout expired before end of test %s' % self._testID)
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(600)
+        signal.alarm(540)
 
         self.nodeid = self.get_random_node()
         self.lg.info('Get random nodeid : %s' % str(self.nodeid))
@@ -77,7 +77,6 @@ class TestcasesBase(TestCase):
 
     def create_zerotier_network(self, default_config=True, private=False):
         url = 'https://my.zerotier.com/api/network'
-        
         if default_config:
             data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
                                                     'ipRangeStart': '10.147.17.1'}],
@@ -86,7 +85,6 @@ class TestcasesBase(TestCase):
                             'v4AssignMode': {'zt': True}}}
         else:
             data = {}
-        
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']
@@ -121,7 +119,6 @@ class TestcasesBase(TestCase):
         self.createdcontainer.append({"node": node_id, "container": name})
         response = self.containers_api.get_containers_containerid(node_id, name)
         self.assertEqual(response.json()['status'], 'running')
-
         return name
 
     def get_gateway_nic(self, nics_types):
@@ -197,9 +194,7 @@ class TestcasesBase(TestCase):
             nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
             node_client = Client(ip=nodeip, password=self.jwt)
             free_disks.extend(node_client.getFreeDisks())
-    
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
-
 
 
 class Utiles:
