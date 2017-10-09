@@ -343,7 +343,9 @@ def monitor(job):
     if service.model.data.clusterType == "object":
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='storagecluster.block_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
+                                                         instance='storagecluster_block_%s' % service.name,
+                                                         die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
         healthcheck_service = healthcheck_actor.serviceCreate(instance='storagecluster.block_%s' % service.name)

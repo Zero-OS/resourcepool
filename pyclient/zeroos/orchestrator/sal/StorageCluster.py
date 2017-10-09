@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 default_logger = logging.getLogger(__name__)
 
 
-class StorageClusterBasic:
+class BaseStorageCluster:
     def __init__(self, label, nodes, nr_servers, storage_servers=None, logger=None):
         self.label = label
         self.name = label
@@ -87,7 +87,7 @@ class StorageClusterBasic:
         pass
 
 
-class ObjectCluster(StorageClusterBasic):
+class ObjectCluster(BaseStorageCluster):
     def __init__(self, label, nodes, nr_servers, data_disk_type, meta_disk_type, servers_per_meta_drive, storage_servers, logger=None):
         super().__init__(label, nodes, nr_servers, storage_servers)
         self.data_disk_type = data_disk_type
@@ -153,7 +153,7 @@ class ObjectCluster(StorageClusterBasic):
         return _disks
 
 
-class BlockCluster(StorageClusterBasic):
+class BlockCluster(BaseStorageCluster):
     """BlockCluster is a cluster of StorageEngine servers"""
 
     def __init__(self, label, nr_servers, disk_type, nodes=None, storage_servers=None, logger=None):
