@@ -76,14 +76,14 @@ def recover_full_once(job, cluster, engine, vdisk):
 
     # now time to stop all the machines that relies on this
     halted = []
-    for vdisk in job.service.children:
+    for vdisk in job.service.consumers.get('vdisk', []):
         for vm in vdisk.consumers.get('vm', []):
             if vm.model.data.status != 'halted':
                 vm.executeAction('stop', args={"cleanup": False}, context=job.context)
                 halted.append(vm)
 
     # TODO: find a way to do the rollback concurently, now it's sequential
-    for vdisk in job.service.children:
+    for vdisk in job.service.consumers.get('vdisk', []):
         vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context)
 
 
