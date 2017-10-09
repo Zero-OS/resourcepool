@@ -12,14 +12,17 @@ def get_statsdb(service):
     if statsdb_services:
         return statsdb_services[0]
 
-
 def get_version(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
-    service.model.data.version = node.client.ping().split('Version:')[1]
+
+    pong = node.client.ping()
+    version = pong.split('Version: ')[1] if pong else ''
+    service.model.data.version = version
     service.saveAll()
+    return version
 
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
@@ -84,6 +87,7 @@ def install(job):
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    get_version(job)
     job.logger.info('mount storage pool for fuse cache')
     poolname = '{}_fscache'.format(service.name)
     node.ensure_persistance(poolname)
@@ -101,7 +105,6 @@ def install(job):
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
         stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
-    get_version(job)
 
 
 

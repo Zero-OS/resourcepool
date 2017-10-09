@@ -44,7 +44,7 @@ func (api *NodeAPI) GetNode(w http.ResponseWriter, r *http.Request) {
 	node.Status = respBody.Status
 	node.Hostname = respBody.Hostname
 	node.Id = service.Name
-	node.version = respBody.version
+	node.Version = respBody.Version
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
