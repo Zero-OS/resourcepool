@@ -20,19 +20,6 @@ func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dashboard := vars["dashboardname"]
 
-	exists, err := aysClient.ServiceExists("dashboard", dashboard, api.AysRepo)
-
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the dashboard")
-		return
-	}
-
-	if !exists {
-		err = fmt.Errorf("Dashboard %s doesn't exist", dashboard)
-		tools.WriteError(w, http.StatusNotFound, err, err.Error())
-		return
-	}
-
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
