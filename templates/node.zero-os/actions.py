@@ -137,7 +137,6 @@ def monitor(job):
             node = Node.from_ays(service, token, timeout=5)
             node.client.testConnectionAttempts = 0
             state = node.client.ping()
-            get_version(job)
         except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
             err = error
             state = False
@@ -195,7 +194,7 @@ def monitor(job):
             service.model.data.status = 'halted'
             nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
-
+    get_version(job)
     service.saveAll()
 
 
