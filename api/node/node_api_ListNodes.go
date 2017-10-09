@@ -36,6 +36,7 @@ func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 		respBody[i].Status = node.Status
 		respBody[i].Hostname = node.Hostname
 		respBody[i].Id = service.Name
+		respBody[i].Version = node.Version
 	}
 
 	w.Header().Set("Content-Type", "application/json")

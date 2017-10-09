@@ -19,7 +19,7 @@ def get_version(job):
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
 
     pong = node.client.ping()
-    version = pong.split('Version:')[1] if pong else ''
+    version = pong.split('Version: ')[1] if pong else ''
     service.model.data.version = version
     service.saveAll()
     return version
@@ -136,7 +136,8 @@ def monitor(job):
         try:
             node = Node.from_ays(service, token, timeout=5)
             node.client.testConnectionAttempts = 0
-            state = get_version(job)
+            state = node.client.ping()
+            get_version(job)
         except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
             err = error
             state = False
@@ -194,7 +195,6 @@ def monitor(job):
             service.model.data.status = 'halted'
             nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
-    get_version(job)
 
     service.saveAll()
 
