@@ -20,7 +20,7 @@ def get_version(job):
 
     pong = node.client.ping()
     version = pong.split('Version:')[1] if pong else ''
-    service.model.data.version = version if version else service.model.data.version
+    service.model.data.version = version
     service.saveAll()
     return version
 
@@ -105,7 +105,6 @@ def install(job):
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
         stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
-    get_version(job)
 
 
 

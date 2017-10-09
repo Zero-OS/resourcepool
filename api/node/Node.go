@@ -10,7 +10,7 @@ type Node struct {
 	Id        string         `json:"id" validate:"nonzero"`
 	IPAddress string         `json:"ipaddress" validate:"nonzero"`
 	Status    EnumNodeStatus `json:"status" validate:"nonzero"`
-	version   string         `json:"version" validate:"version"`
+	Version   string         `json:"version" validate:"version"`
 }
 
 type NodeService struct {
