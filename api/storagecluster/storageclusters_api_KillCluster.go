@@ -44,19 +44,6 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		}},
 	}
 
-	_, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("error executing blueprint for Storage cluster %s deletion", storageCluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster), "")
-		return
-	}
-
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", storageCluster, "delete", blueprint)
 	if err != nil {
 		httpErr := err.(tools.HTTPError)
