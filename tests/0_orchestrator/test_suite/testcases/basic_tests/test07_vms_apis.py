@@ -3,6 +3,7 @@ from testcases.testcases_base import TestcasesBase
 import unittest
 from testcases.core0_client import Client
 
+
 class TestVmsAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
@@ -12,11 +13,11 @@ class TestVmsAPI(TestcasesBase):
         if storageclusters.json() == []:
             if number_of_free_disks == []:
                 self.skipTest(' [*] No free disks to create storagecluster')
-    
-            self.lg.info(' [*] Deploy new storage cluster (SC0)')            
+
+            self.lg.info(' [*] Deploy new storage cluster (SC0)')
             response, data = self.storageclusters_api.post_storageclusters(
-                nodes=nodes, 
-                driveType=disk_type, 
+                nodes=nodes,
+                driveType=disk_type,
                 servers=random.randint(1, number_of_free_disks)
             )
             self.assertEqual(response.status_code, 201)
@@ -25,12 +26,17 @@ class TestVmsAPI(TestcasesBase):
         else:
             self.storagecluster = storageclusters.json()[0]
 
-        self.lg.info(' [*] Create new vdisk.')
-        response, self.vdisk = self.vdisks_api.post_vdisks(size=15,
-                                                            blocksize=4096, type='boot',
-                                                            storagecluster=self.storagecluster,
-                                                            readOnly=False)
+        self.lg.info(' [*] Create vdiskstorage ')
+        response, self.vdiskstoragedata = self.vdisks_api.post_vdiskstorage(storagecluster=self.storagecluster)
+        self.assertEqual(response.status_code, 201)
 
+        self.lg.info(' [*] Import Image')
+        response, self.imagedata = self.vdisks_api.post_import_image(vdiskstorageid=self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info(' [*] Create vdisk ')
+        body = {"type":"boot", "blocksize":4096,"readOnly":False,"size":15}
+        response, self.vdisk = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"], imageid=self.imagedata["imageName"], **body)
         self.assertEqual(response.status_code, 201, " [*] Can't create vdisk.")
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
 
@@ -43,7 +49,7 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] Delete virtual machine (VM0)')
         if self.id().split('.')[-1] != 'test003_post_node_vms':
             self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
-        self.vdisks_api.delete_vdisks_vdiskid(self.vdisk['id'])
+        self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.vdisk['id'])
         super(TestVmsAPI, self).tearDown()
 
     def test001_get_nodes_vms_vmid(self):

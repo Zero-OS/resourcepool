@@ -47,6 +47,7 @@ def stop(job):
     storageEngine.stop()
 
     service.model.data.status = 'halted'
+    service.saveAll()
 
 
 def monitor(job):
