@@ -3,9 +3,10 @@ package vdiskstorage
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 
-	ays "github.com/zero-os/0-orchestrator/api/ays-client"
+	"fmt"
+
+	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
@@ -18,54 +19,26 @@ func (api *VdiskstorageAPI) ListImages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	services, res, err := aysClient.Ays.ListServicesByRole("vdisk_image", api.AysRepo, nil, nil)
+	vdiskstorageid := mux.Vars(r)["vdiskstorageid"]
+	query := map[string]interface{}{
+		"parent": fmt.Sprintf("vdiskstorage!%s", vdiskstorageid),
+		"fields": "diskBlockSize,size",
+	}
+
+	services, res, err := aysClient.Ays.ListServicesByRole("vdisk_image", api.AysRepo, nil, query)
 	if !tools.HandleAYSResponse(err, res, w, "listing vdisk_images") {
 		return
 	}
 
-	var (
-		images = make([]Image, len(services))
-		errs   = make([]error, len(services))
-		wg     = sync.WaitGroup{}
-	)
-	wg.Add(len(services))
-	for i, serviceData := range services {
-		go func(i int, serviceData *ays.ServiceData) {
-			defer wg.Done()
-
-			service, _, err := aysClient.Ays.GetServiceByName(serviceData.Name, serviceData.Role, api.AysRepo, nil, nil)
-			if err != nil {
-				errs[i] = err
-				return
-			}
-
-			var tmp struct {
-				Name      string `json:"name" validate:"nonzero"`
-				Blocksize uint64 `json:"diskBlockSize" validate:"nonzero"`
-				Size      uint64 `json:"size" validate:"nonzero"`
-			}
-			if err := json.Unmarshal(service.Data, &tmp); err != nil {
-				errs[i] = err
-				return
-			}
-
-			images[i] = Image{
-				Name:      serviceData.Name,
-				Blocksize: tmp.Blocksize,
-				Size:      tmp.Size,
-			}
-
-		}(i, &serviceData)
-	}
-
-	wg.Wait()
-
-	// TODO: concatenate all  errors into one
-	for _, err := range errs {
-		if err != nil {
+	images := make([]Image, len(services))
+	for i, service := range services {
+		var image Image
+		if err := json.Unmarshal(service.Data, &image); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting list of images")
 			return
 		}
+		image.Name = service.Name
+		images[i] = image
 	}
 
 	w.Header().Set("Content-Type", "application/json")

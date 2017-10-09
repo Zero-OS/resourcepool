@@ -6,7 +6,7 @@ import (
 
 // Import an image into a vdiskstorage
 type ImageImport struct {
-	Name            string `json:"imageName" validate:"nonzero"`
+	Name            string `json:"imageName" validate:"nonzero,max=16"`
 	ExportName      string `json:"exportName" validate:"nonzero"`
 	ExportSnapshot  string `json:"exportSnapshot,omitempty"`
 	Size            uint64 `json:"size" validate:"nonzero"`

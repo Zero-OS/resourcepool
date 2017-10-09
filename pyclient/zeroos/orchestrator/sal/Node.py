@@ -47,7 +47,7 @@ class Node:
                 if nic['name'] == name:
                     return nic['hardwareaddr']
 
-        defaultgwdev = self.client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
+        defaultgwdev = self.client.bash("ip route | grep default | awk '{print $5}'", max_time=60).get().stdout.strip()
         nics = self.client.info.nic()
         macgwdev = None
         if defaultgwdev:

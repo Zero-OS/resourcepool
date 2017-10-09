@@ -40,6 +40,12 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// validate request
+	if err := imageImport.Validate(); err != nil {
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
+	}
+
 	// check for duplicate
 	if !imageImport.Overwrite {
 		exists, err = aysClient.ServiceExists("vdisk_image", imageImport.Name, api.AysRepo)
