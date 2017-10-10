@@ -80,7 +80,7 @@ class TestStorageclustersAPI(TestcasesBase):
         self.lg.info(' [*] Deploy storagecluster with {} servers on {} nodes'.format(servers, len(nodes)))
         response, data = self.storageclusters_api.post_storageclusters(nodes=nodes, driveType=disk_type, servers=servers)
         self.assertEqual(response.status_code, 201)
-    
+
         response = self.storageclusters_api.get_storageclusters_label(data['label'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'ready')
@@ -131,5 +131,5 @@ class TestStorageclustersAPI(TestcasesBase):
         free_disks_num , disk_type = self.get_max_available_free_disks([self.nodeid])
         self.assertEqual(free_disks_num, self.number_of_free_disks)
         response = self.nodes_api.get_nodes_mounts(self.nodeid)
-        mounted_disks_num = sum(1 for x in response.json() if self.data['label'] in x['mountpoint']])
+        mounted_disks_num = sum([1 for x in response.json() if self.data['label'] in x['mountpoint']])
         self.assertEqual(mounted_disks_num, 0)
