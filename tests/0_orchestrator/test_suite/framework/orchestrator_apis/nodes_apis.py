@@ -23,6 +23,10 @@ class NodesAPI:
         return self.orchestrator_client.nodes.GetNodeJob(nodeid=node_id, jobid=job_id)
 
     @catch_exception_decoration
+    def get_nodes_mounts(self, node_id):
+        return self.orchestrator_client.nodes.GetNodeMounts(nodeid=node_id)
+
+    @catch_exception_decoration
     def delete_nodes_nodeid_jobs(self, node_id):
         return self.orchestrator_client.nodes.KillAllNodeJobs(nodeid=node_id)
 
