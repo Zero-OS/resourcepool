@@ -324,7 +324,7 @@ def install(job):
     if dashboardsrv:
         cluster = get_cluster(job)
         dashboardsrv.model.data.dashboard = cluster.dashboard
-        j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
+        dashboardsrv.executeAction('install', context=job.context)
 
     save_config(job)
     job.service.model.actions['start'].state = 'ok'
@@ -361,16 +361,16 @@ def delete(job):
     for storageEngine in zerostors:
         tcps = storageEngine.producers.get('tcp', [])
         for tcp in tcps:
-            j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
-            j.tools.async.wrappers.sync(tcp.delete())
+            tcp.executeAction('drop', context=job.context)
+            tcp.delete()
 
         container = storageEngine.parent
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
+        container.executeAction('stop', context=job.context)
+        container.delete()
 
     for pool in pools:
-        j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
-        j.tools.async.wrappers.sync(pool.delete())
+        pool.executeAction('delete', context=job.context)
+        pool.delete()
 
     delete_config(job)
     job.logger.info("stop cluster {}".format(service.name))

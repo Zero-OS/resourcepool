@@ -156,9 +156,7 @@ def delete_config(job):
     etcd.delete(key="%s:vdisk:conf:static" % service.name)
 
     # delete tlog config from etcd
-    vdiskType = service.model.data.type
-    objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
-    if objectStoragecluster:
+    if vdiskstore.model.data.objectCluster:
         etcd.delete(key="%s:vdisk:conf:storage:tlog" % service.name)
 
     # delete nbd config from etcd
