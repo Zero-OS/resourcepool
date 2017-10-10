@@ -270,16 +270,16 @@ def delete(job):
     for storageEngine in storageEngines:
         tcps = storageEngine.producers.get('tcp', [])
         for tcp in tcps:
-            j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
-            j.tools.async.wrappers.sync(tcp.delete())
+            tcp.executeAction('drop', context=job.context)
+            tcp.delete()
 
         container = storageEngine.parent
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
+        container.executeAction('stop', context=job.context)
+        container.delete()
 
     for pool in pools:
-        j.tools.async.wrappers.sync(pool.executeAction('delete', context=job.context))
-        j.tools.async.wrappers.sync(pool.delete())
+        pool.executeAction('delete', context=job.context)
+        pool.delete()
 
     delete_config(job)
     job.logger.info("stop cluster {}".format(service.name))
