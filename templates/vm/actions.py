@@ -33,7 +33,7 @@ def get_node(job):
     return Node.from_ays(job.service.parent, job.context['token'])
 
 
-def create_zerodisk_container_service(job, parent):
+def create_zerodisk_container_service(job, parent, service_kind):
     """
     first check if the vdisks container for this vm exists.
     if not it creates it.
@@ -41,6 +41,7 @@ def create_zerodisk_container_service(job, parent):
     """
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.configuration import get_jwt_token
+    import time
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
@@ -52,7 +53,7 @@ def create_zerodisk_container_service(job, parent):
         'hostNetworking': True,
     }
     job.logger.info("create zerodisk container from %s", args['flist'])
-    container_name = 'vdisks_{}_{}'.format(service.name, parent.name)
+    container_name = 'vdisks_{}_{}_{}_{}'.format(service.name, parent.name, service_kind, int(time.time()*1000000))
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
     containerservice.model.changeParent(parent)
@@ -67,10 +68,11 @@ def create_service(service, container, role='nbdserver', bind=None, waitListenBi
     if not it creates it.
     return the created service
     """
+    import time
     if role not in ('nbdserver', 'tlogserver'):
         raise ValueError("role can only be nbdserver or tlogserver")
 
-    service_name = '{}_{}_{}'.format(role, service.name, container.parent.name)
+    service_name = '{}_{}_{}_{}'.format(role, service.name, container.parent.name, int(time.time()*1000000))
 
     try:
         created_service = service.aysrepo.serviceGet(role=role, instance=service_name)
@@ -157,10 +159,10 @@ def start_dependent_services(job):
         services.pop(node)
         node = random.choice(services)
 
-    tlog_container_service = create_zerodisk_container_service(job, node)
+    tlog_container_service = create_zerodisk_container_service(job, node, "tlog")
     tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
 
-    nbd_container_service = create_zerodisk_container_service(job, service.parent)
+    nbd_container_service = create_zerodisk_container_service(job, service.parent, "nbd")
     _init_zerodisk_services(job, nbd_container_service, tlog_container_service)
 
 
@@ -305,7 +307,6 @@ def get_domain(job):
         if kvm['name'] == job.service.name:
             return kvm
 
-
 def stop(job):
     service = job.service
     job.logger.info("stop vm {}".format(service.name))
@@ -328,6 +329,7 @@ def reset(job):
 
 def destroy(job):
     from zeroos.orchestrator.configuration import get_jwt_token
+    from itertools import chain
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     job.service.executeAction('stop', context=job.context)
@@ -335,48 +337,32 @@ def destroy(job):
     tlogservers = service.producers.get('tlogserver', [])
     nbdservers = service.producers.get('nbdserver', [])
 
-    parentservices = {}
-
-    for tlogserver in tlogservers:
-        parent = tlogserver.parent
-        if parent.model.key not in parentservices:
-            parentservices[parent.model.key] = parent
-        tlogserver.delete()
-
-    for nbdserver in nbdservers:
-        parent = nbdserver.parent
-        if parent.model.key not in parentservices:
-            parentservices[parent.model.key] = parent
-        nbdserver.delete()
-
-    for parent in parentservices.values():
-        parent.delete()
+    for service in chain(nbdservers, tlogservers):
+        service.parent.delete()
 
 
 def cleanupzerodisk(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.core0.client import ResultError
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     node = Node.from_ays(service.parent, password=job.context['token'])
-    for nbdserver in service.producers.get('nbdserver', []):
+    for nbdserver_service in service.producers.get('nbdserver', []):
         job.logger.info("stop nbdserver for vm {}".format(service.name))
         # make sure the nbdserver is stopped
-        nbdserver.executeAction('stop', context=job.context)
+        nbdserver_service.executeAction('stop', context=job.context)
+        # make sure the container is stopped
+        nbdserver_service.parent.executeAction('stop', context=job.context)
+
 
     for tlogserver in service.producers.get('tlogserver', []):
         job.logger.info("stop tlogserver for vm {}".format(service.name))
         # make sure the tlogserver is stopped
         tlogserver.executeAction('stop', context=job.context)
-
-    job.logger.info("stop vdisks container for vm {}".format(service.name))
-    try:
-        container_name = 'vdisks_{}_{}'.format(service.name, service.parent.name)
-        container = service.aysrepo.serviceGet(role='container', instance=container_name)
-        container.executeAction('stop', context=job.context)
-    except j.exceptions.NotFound:
-        job.logger.info("container doesn't exists.")
+        # make sure the container is stopped
+        tlogserver.parent.executeAction('stop', context=job.context)
 
     service.model.data.status = 'halted'
 
@@ -384,7 +370,11 @@ def cleanupzerodisk(job):
 
     vnc = service.model.data.vnc
     if vnc != -1:
-        node.client.nft.drop_port(vnc)
+        try:
+            node.client.nft.drop_port(vnc)
+        except ResultError as e:
+            if e.message != '"rule does not exist"':
+                raise e
         service.model.data.vnc = -1
 
     service.saveAll()
@@ -625,6 +615,11 @@ def migrate(job):
 
     service = job.service
 
+    old_node_sal = Node.from_ays(service.parent, job.context['token'])
+    vm = next((kvm for kvm in old_node_sal.client.kvm.list() if kvm['name'] == service.name), None)
+    if not vm:
+        raise RuntimeError("vm is not running")
+
     service.model.data.status = 'migrating'
 
     node = service.model.data.node
@@ -634,15 +629,15 @@ def migrate(job):
     # define node services
     target_node = service.aysrepo.serviceGet('node', node)
     target_node_sal = Node.from_ays(target_node, job.context['token'])
-    
+
     old_node = service.parent
     job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
 
     # start migration channel to copy keys and start ssh deamon
     ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
-    
+
     #start tlog server on target node
-    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status != "halted"]
+    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]
     if len(services) < 2:
         raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
 
@@ -656,11 +651,9 @@ def migrate(job):
         tlog_target_node = random.choice(services)
 
     job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node)
-    tlog_container_service = create_zerodisk_container_service(job, tlog_target_node)
+    tlog_container_service = create_zerodisk_container_service(job, tlog_target_node, "tlog")
     tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
-    # make sure container is up
-    if not tlog_container.is_running():
-        tlog_container.executeAction('start', context=job.context)
+    tlog_container_service.executeAction('start', context=job.context)
 
     # find some fee ports for the tlog servers on the target node
     ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 2)
@@ -686,15 +679,10 @@ def migrate(job):
     tlogserver_service.executeAction('start', context=job.context)
 
     # start new nbdserver on target node
-    nbd_container = create_zerodisk_container_service(job, target_node)
+    nbd_container = create_zerodisk_container_service(job, target_node, "nbd")
     job.logger.info("start nbd server for migration of vm {}".format(service.name))
     nbdserver = create_service(service, nbd_container)
     nbd_actor = service.aysrepo.actorGet('nbdserver')
-    args = {
-        'container': nbd_container.name,
-    }
-    nbdserver = nbd_actor.serviceCreate(instance='nbdserver_%s_%s' % (service.name, target_node.name), args=args)
-
     nbdserver.consume(nbd_container)
     nbdserver.consume(tlogserver_service)
 
@@ -713,22 +701,26 @@ def migrate(job):
     medias = _start_nbd(job, nbdserver.name)
 
     # run the migrate command
-    for vm in node_client.kvm.list():
-        if vm["name"] == service.name:
-            uuid = vm["uuid"]
-            _, nics = format_media_nics(job, medias)
-            target_node_client.kvm.prepare_migration_target(
-                uuid=uuid,
-                nics=nics,
-            )
-            try:
-                node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
-                break
-            except Exception as e:
-                service.model.data.node = old_node.name
-                service.model.changeParent(old_node)
-                service.saveAll()
-                raise e
+    uuid = vm["uuid"]
+    _, nics = format_media_nics(job, medias)
+    target_node_client.kvm.prepare_migration_target(
+        uuid=uuid,
+        nics=nics,
+    )
+    try:
+        node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
+    except Exception as e:
+        service.model.data.node = old_node.name
+        service.model.changeParent(old_node)
+        service.model.data.status = 'running'
+        service.saveAll()
+
+        # Cleanup nbdserver & tlogserver we are not using anymore
+        job.logger.info("delete new nbd services and vdisk container created for life migration")
+        stop_and_delete(job, [nbdserver])
+        stop_and_delete(job, [tlogserver_service])
+
+        raise e
 
     # open vnc port
     node = Node.from_ays(target_node, job.context['token'])
@@ -796,7 +788,7 @@ def updateDisks(job, client, args):
 
     # Set model to new data
     service.model.data.disks = args['disks']
-    vdisk_container_service = create_zerodisk_container_service(job, service.parent)
+    vdisk_container_service = create_zerodisk_container_service(job, service.parent, "nbd")
     container = Container.from_ays(vdisk_container_service, job.context['token'], logger=service.logger)
 
     # Detatching and Cleaning old disks
@@ -863,12 +855,6 @@ def updateNics(job, client, args):
     service.model.data.nics = args['nics']
     service.saveAll()
 
-
-def monitor(job):
-    pass
-    # raise NotADirectoryError()
-
-
 def update_data(job, args):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -877,12 +863,8 @@ def update_data(job, args):
 
     # mean we want to migrate vm from a node to another
     if 'node' in args and args['node'] != service.model.data.node:
-        old_node = service.model.data.node
-        container_name = 'vdisks_{}_{}'.format(service.name, old_node)
-        old_vdisk_container = service.aysrepo.serviceGet('container', container_name)
-        old_nbd = service.aysrepo.serviceGet(role='nbdserver', instance="nbdserver_%s_%s" % (service.name, old_node))
-        old_tlog_servers = old_nbd.producers['tlogserver']
-
+        old_nbdservers = service.producers.get('nbdserver', [])
+        old_tlogservers = service.producers.get('tlogserver', [])
         service.model.data.node = args['node']
         service.saveAll()
 
@@ -892,12 +874,8 @@ def update_data(job, args):
             service.model.changeParent(node)
             service.saveAll()
 
-            old_nbd.executeAction('stop', context=job.context)
-            old_nbd.delete()
-
-            for tlog_server in old_tlog_servers:
-                tlog_server.executeAction('stop', context=job.context)
-                tlog_server.delete()
+            stop_and_delete(job, old_nbdservers)
+            stop_and_delete(job, old_tlogservers)
 
             start_dependent_services(job)
 
@@ -905,29 +883,27 @@ def update_data(job, args):
             # do live migration
             migrate(job)
 
-            old_nbd.executeAction('stop', context=job.context)
-            old_nbd.delete()
-
-            for tlog_server in old_tlog_servers:
-                tlog_server.executeAction('stop', context=job.context)
-                tlog_server.delete()
-
+            stop_and_delete(job, old_nbdservers)
+            stop_and_delete(job, old_tlogservers)
         else:
             raise j.exceptions.RuntimeError('cannot migrate vm if status is not runnning or halted ')
-
-        # delete old nbd services and tlog and vdisk container(this has to be before the start_nbd method)
-        job.logger.info("delete old tlog container")
-        for tlog_server in old_tlog_servers:
-            tlog_server.parent.executeAction('stop', context=job.context)
-            tlog_server.parent.delete()
-
-        job.logger.info("delete old nbd services and vdisk container")
-        old_vdisk_container.executeAction('stop', context=job.context)
-        old_vdisk_container.delete()
 
     service.model.data.memory = args.get('memory', service.model.data.memory)
     service.model.data.cpu = args.get('cpu', service.model.data.cpu)
     service.saveAll()
+
+
+def stop_and_delete(job, services):
+    """
+    stop a list of services and their parents
+    then delete the service and all its children
+    """
+    for service in list(services):
+        service.executeAction('stop', context=job.context)
+        parent = service.parent
+        service.delete()
+        parent.executeAction('stop', context=job.context)
+        parent.delete()
 
 
 def export(job):
@@ -1006,3 +982,6 @@ def processChange(job):
             updateNics(job, node, args)
         except ValueError:
             job.logger.error("vm {} doesn't exist, cant update devices", service.name)
+
+def monitor(job):
+    pass
