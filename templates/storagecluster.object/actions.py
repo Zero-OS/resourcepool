@@ -342,10 +342,14 @@ def start(job):
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
-    cluster = get_cluster(job)
-    job.logger.info("stop cluster {}".format(service.name))
-    cluster.stop()
+    zerostors = service.producers.get("zerostor", [])
+    for zerostor in zerostors:
+        zerostor.executeAction("stop", context=job.context)
 
 
 def delete(job):
