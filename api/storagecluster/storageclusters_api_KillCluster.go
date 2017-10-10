@@ -62,11 +62,8 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	_, err = aysClient.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("Error in deleting storage_cluster %s", storageCluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	res, err = aysClient.Ays.DeleteServiceByName(storageCluster, "storage_cluster", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting storage_cluster") {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

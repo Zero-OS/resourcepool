@@ -3,8 +3,6 @@ package graph
 import (
 	"net/http"
 
-	"fmt"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -47,12 +45,10 @@ func (api *GraphAPI) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = aysClient.Ays.DeleteServiceByName(dashboard, "dashboard", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("Error in deleting dashboard %s ", dashboard)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	res, err := aysClient.Ays.DeleteServiceByName(dashboard, "dashboard", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting dashboard") {
 		return
 	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
