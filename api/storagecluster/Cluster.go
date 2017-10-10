@@ -5,12 +5,12 @@ import (
 )
 
 type Cluster struct {
-	DataStorage     []StorageServer      `yaml:"dataStorage" json:"dataStorage" validate:"nonzero"`
-	DriveType       EnumClusterDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
-	Label           string               `yaml:"label" json:"label" validate:"nonzero"`
-	MetadataStorage []StorageServer      `yaml:"metadataStorage" json:"metadataStorage" validate:"nonzero"`
-	Nodes           []string             `yaml:"nodes" json:"nodes" validate:"nonzero"`
-	Status          EnumClusterStatus    `yaml:"status" json:"status" validate:"nonzero"`
+	StorageServers []StorageServer      `yaml:"storageServers" json:"storageServers" validate:"nonzero"`
+	DriveType      EnumClusterDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
+	MetaDriveType  EnumClusterDriveType `yaml:"metaDriveType" json:"metaDriveType"`
+	Label          string               `yaml:"label" json:"label" validate:"nonzero"`
+	Nodes          []string             `yaml:"nodes" json:"nodes" validate:"nonzero"`
+	Status         EnumClusterStatus    `yaml:"status" json:"status" validate:"nonzero"`
 }
 
 func (s Cluster) Validate() error {

@@ -15,7 +15,7 @@ def init(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction("configure", context=job.context))
+    service.executeAction("configure", context=job.context)
 
 
 def configure(job):
@@ -159,8 +159,8 @@ def watchdog_handler(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
-    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler so here
-    # can focus on only the recovery
+    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler
+    # so here can focus on only the recovery
 
     service = job.service
     if service.model.data.status == 'recovering':
@@ -219,16 +219,15 @@ def watchdog_handler(job):
     # stop all remaining containers from the old cluster
     try:
         for etcd in working_etcds:
-            j.tools.async.wrappers.sync(etcd.executeAction('stop', context=job.context))
-            j.tools.async.wrappers.sync(etcd.parent.executeAction('stop', context=job.context))
-
+            etcd.executeAction('stop', context=job.context)
+            etcd.parent.executeAction('stop', context=job.context)
 
         # clean all reaminag tcps on old  running nodes
         for etcd in service.producers['etcd']:
             for tcp in etcd.producers['tcp']:
                 try:
                     Node.from_ays(etcd.parent.parent, password=token)
-                    j.tools.async.wrappers.sync(tcp.executeAction('drop', context=job.context))
+                    tcp.executeAction('drop', context=job.context)
                 except ConnectionError:
                     continue
                 j.tools.async.wrappers.sync(tcp.delete())
@@ -262,17 +261,17 @@ def watchdog_handler(job):
 
         service.model.data.etcds = []
         service.saveAll()
-        j.tools.async.wrappers.sync(service.executeAction('configure', context=job.context))
+        service.executeAction('configure', context=job.context)
         # install all services created by the configure of the etcd_cluster
         etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
         for etcd in etcd_services:
             for mount in etcd.parent.model.data.mounts:
                 fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
-                j.tools.async.wrappers.sync(fs.executeAction('install', context=job.context))
+                fs.executeAction('install', context=job.context)
             for tcp in etcd.producers['tcp']:
-                j.tools.async.wrappers.sync(tcp.executeAction('install',  context=job.context))
-            j.tools.async.wrappers.sync(etcd.parent.executeAction('install', context=job.context))
-            j.tools.async.wrappers.sync(etcd.executeAction('install', context=job.context))
+                tcp.executeAction('install',  context=job.context)
+            etcd.parent.executeAction('install', context=job.context)
+            etcd.executeAction('install', context=job.context)
 
         # save all vdisks to new etcd cluster
         vdisks = service.aysrepo.servicesFind(role='vdisk')
@@ -280,15 +279,19 @@ def watchdog_handler(job):
             j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
 
         # save all storage cluster to new etcd cluster
-        storage_clusters = service.aysrepo.servicesFind(role='storage_cluster')
-        for storage_cluster in storage_clusters:
-            j.tools.async.wrappers.sync(storage_cluster.executeAction('save_config', context=job.context))
+        storagecluster_block_services = service.aysrepo.servicesFind(role='storagecluster.block')
+        for storagecluster_block_service in storagecluster_block_services:
+            storagecluster_block_service.executeAction('save_config', context=job.context)
+
+        storagecluster_object_services = service.aysrepo.servicesFind(role='storagecluster.object')
+        for storagecluster_object_service in storagecluster_object_services:
+            storagecluster_object_service.executeAction('save_config', context=job.context)
 
         # restart all runnning vms
         vmachines = service.aysrepo.servicesFind(role='vm')
         for vmachine in vmachines:
             if vmachine.model.data.status == 'running':
-                j.tools.async.wrappers.sync(vmachine.executeAction('start', context=job.context))
+                vmachine.executeAction('start', context=job.context)
     finally:
         service.model.data.status = 'running'
         service.saveAll()

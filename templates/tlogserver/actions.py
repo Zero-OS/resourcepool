@@ -83,7 +83,7 @@ def install(job):
         vdiskstore = vdiskservice.parent
         objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
-            _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
+            data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
             config['storageClusters'].add(objectcluster)
             config['data-shards'] += data_shards
             config['parity-shards'] += parity_shards
@@ -121,7 +121,7 @@ def install(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "dropped":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('install', context=job.context))
+        tcpsrv.executeAction('install', context=job.context)
 
 
 def start(job):
@@ -129,18 +129,13 @@ def start(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_storagecluster_config(job, storagecluster):
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
+    objectcluster_service = job.service.aysrepo.serviceGet(role='storagecluster.object',
                                                            instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.data_shards, cluster.parity_shards
+    return objectcluster_service.model.data.dataShards, objectcluster_service.model.data.dataShards
 
 
 def stop(job):
@@ -174,7 +169,7 @@ def stop(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "opened":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('drop', context=job.context))
+        tcpsrv.executeAction('drop', context=job.context)
 
 
 def monitor(job):
@@ -193,7 +188,7 @@ def monitor(job):
     if is_port_listening(container, port):
         return
 
-    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))
+    service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)})
 
 
 def watchdog_handler(job):

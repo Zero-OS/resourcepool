@@ -20,6 +20,7 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -37,7 +38,6 @@ def init(job):
         raise j.exceptions.Input('OVS container needed to run this blueprint')
 
 
-
 def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -45,7 +45,7 @@ def install(job):
 
     job.service.model.data.status = "halted"
 
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def get_member(zerotier, zerotiernodeid, nicid):
