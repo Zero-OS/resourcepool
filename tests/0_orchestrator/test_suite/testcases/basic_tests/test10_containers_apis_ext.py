@@ -485,6 +485,7 @@ class TestcontaineridAPI(TestcasesBase):
         #. Attach B2 only to the container, should succeed
         #. Get Container, should find B2 only
         #. Attach Both B1 and B2, should succeed
+        #. Attach a default nic and check the internet connectivity
 
         """
         self.lg.info('Create container without nic, should succeed')
@@ -530,3 +531,10 @@ class TestcontaineridAPI(TestcasesBase):
         self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)
         d = json.loads(self.response.text.split('\n')[0])
         self.assertEqual(len(d['nics']), 2)
+
+        self.lg.info('Attach a default nic and check the internet connectivity')
+        nic4 = [{'type': 'default'}]
+        self.containers_api.update_container(self.nodeid, cont_name, nics=nic4)
+        c_client = self.core0_client.get_container_client(cont_name)
+        response = c_client.bash("ping -w5 8.8.8.8").get()
+        self.assertEqual(response.state, "SUCCESS", response.stdout)
