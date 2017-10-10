@@ -27,6 +27,10 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	}
 
 	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	if res.StatusCode == http.StatusNotFound {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -57,7 +61,7 @@ func (api *NodeAPI) DeleteGWForward(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !exists {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
