@@ -110,7 +110,7 @@ class TestStorageclustersAPI(TestcasesBase):
         self.assertEqual(response.status_code, 404)
 
     def test005_check_disks_wiped(self):
-        """ GAT-000
+        """ GAT-147
         **Test Scenario:**
         #. Deploy new storage cluster (SC1), should succeed with 201
         #. Check the disks, should be mounted
