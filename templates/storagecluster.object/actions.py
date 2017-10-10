@@ -147,7 +147,9 @@ def init(job):
             'storagePool': metastoragepoolname,
             'name': metacontainername,
         }
-        filesystems.append(fsactor.serviceCreate(instance=metacontainername, args=args))
+        fs = fsactor.serviceCreate(instance=metacontainername, args=args)
+        filesystems.append(fs)
+        service.consume(fs)
 
         # create containers
         args = {
@@ -361,6 +363,7 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     zerostors = service.producers.get('zerostor', [])
     pools = service.producers.get('storagepool', [])
+    filesystems = service.producers.get('filesystem', [])
 
     for storageEngine in zerostors:
         tcps = storageEngine.producers.get('tcp', [])
@@ -371,6 +374,10 @@ def delete(job):
         container = storageEngine.parent
         container.executeAction('stop', context=job.context)
         container.delete()
+
+    for filesystem in filesystems:
+        filesystem.executeAction('delete', context=job.context)
+        filesystem.delete()
 
     for pool in pools:
         pool.executeAction('delete', context=job.context)
