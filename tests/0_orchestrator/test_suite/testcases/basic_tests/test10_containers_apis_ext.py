@@ -487,7 +487,6 @@ class TestcontaineridAPI(TestcasesBase):
         #. Attach Both B1 and B2, should succeed
 
         """
-        time.sleep(540)
         self.lg.info('Create container without nic, should succeed')
         self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, nics=[])
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
@@ -496,10 +495,8 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info('Attach a non existent bridge to the container, should fail')
         nics = [{'type': 'bridge', 'id': self.random_string()}]
-        try:
-            self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nics)
-        except requests.HTTPError as e:
-            self.assertEqual(e.response.status_code, 400)
+        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nics)
+        self.assertEqual(self.response.status_code, 400)
 
         self.lg.info('create two bridges (B1 and B2), should succeed')
         response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
