@@ -235,7 +235,7 @@ def install(job):
     if dashboardsrv:
         cluster = get_cluster(job)
         dashboardsrv.model.data.dashboard = cluster.dashboard
-        j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
+        dashboardsrv.executeAction('install', context=job.context)
 
     save_config(job)
     job.service.model.actions['start'].state = 'ok'
@@ -363,8 +363,8 @@ def monitor(job):
         # Delete orphan vdisk if operator didn't act for 7 days
         orphan_time = (int(time.time()) - orphan_service.model.data.timestamp) / (3600 * 24)
         if orphan_time >= 7:
-            j.tools.async.wrappers.sync(orphan_service.executeAction('delete', context=job.context))
-            j.tools.async.wrappers.sync(orphan_service.delete())
+            orphan_service.executeAction('delete', context=job.context)
+            orphan_service.delete()
             continue
         old_orphans.add(orphan_service.name)
 
