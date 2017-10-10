@@ -74,8 +74,10 @@ def init(job):
             'storagePool': storagepoolname,
             'name': containername,
         }
-        filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
+        fs_service = fsactor.serviceCreate(instance=containername, args=args)
+        filesystems.append(fs_service)
         config = get_configuration(job.service.aysrepo)
+        service.consume(fs_service)
 
         # create containers
         args = {
@@ -270,6 +272,7 @@ def delete(job):
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
     pools = service.producers.get('storagepool', [])
+    filesystems = service.producers.get('filesystem', [])
 
     for storageEngine in storageEngines:
         tcps = storageEngine.producers.get('tcp', [])
@@ -280,6 +283,10 @@ def delete(job):
         container = storageEngine.parent
         container.executeAction('stop', context=job.context)
         container.delete()
+
+    for filesystem in filesystems:
+        filesystem.executeAction('delete', context=job.context)
+        filesystem.delete()
 
     for pool in pools:
         pool.executeAction('delete', context=job.context)
