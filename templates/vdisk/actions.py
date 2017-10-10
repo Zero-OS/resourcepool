@@ -82,6 +82,7 @@ def delete(job):
         result = container.client.system(cmd, id="vdisk.delete.%s" % service.name).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl delete {} {}".format(result.stdout, result.stderr))
+        delete_config(job)
     finally:
         container.stop()
 
@@ -136,6 +137,33 @@ def save_config(job):
 
     yamlconfig = yaml.safe_dump(config, default_flow_style=False)
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
+
+
+def delete_config(job):
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    vdiskstore = service.parent
+
+    service = job.service
+
+    etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+    etcd = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
+
+    # delete base config
+    etcd.delete(key="%s:vdisk:conf:static" % service.name)
+
+    # delete tlog config from etcd
+    vdiskType = service.model.data.type
+    objectStoragecluster = '' if vdiskType == 'tmp'or vdiskType == 'cache' else vdiskstore.model.data.objectCluster
+    if objectStoragecluster:
+        etcd.delete(key="%s:vdisk:conf:storage:tlog" % service.name)
+
+    # delete nbd config from etcd
+    etcd.delete(key="%s:vdisk:conf:storage:nbd" % service.name)
+
 
 
 def get_cluster_config(job, type="block"):
