@@ -7,19 +7,19 @@ import time
 class TestStorageclustersAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
-    
+
         if self._testID != 'test003_deploy_new_storagecluster':
 
             nodes = [self.nodeid]
-            number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
+            self.number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
 
-            if number_of_free_disks == []:
+            if not number_of_free_disks:
                 self.skipTest(' [*] No free disks to create storagecluster')
 
             self.response, self.data = self.storageclusters_api.post_storageclusters(
-                nodes=nodes, 
-                driveType=disk_type, 
-                servers=randint(1, number_of_free_disks)
+                nodes=nodes,
+                driveType=disk_type,
+                servers=randint(1, self.number_of_free_disks)
             )
             self.assertEqual(self.response.status_code, 201, " [*] Can't create new storagecluster %s." % self.response.content)
 
@@ -108,3 +108,30 @@ class TestStorageclustersAPI(TestcasesBase):
         self.lg.info(' [*] Kill nonexisting storage cluster, should fail with 404')
         response = self.storageclusters_api.delete_storageclusters_label(self.rand_str())
         self.assertEqual(response.status_code, 404)
+
+    def test005_check_disks_wiped(self):
+        """ GAT-000
+        **Test Scenario:**
+        #. Deploy new storage cluster (SC1), should succeed with 201
+        #. Check the disks, should be mounted
+        #. Kill storage cluster (SC1), should succeed with 204
+        #. Make sure the disks are wiped, should succeed
+        """
+
+        self.lg.info(' [*] Check the disks, should be mounted')
+        #(Pdb) self.data
+        #{'label': '8388a225f1', 'servers': 2, 'driveType': 'hdd', 'nodes': ['0cc47a740636'], 'clusterType': 'block'}
+        response = self.nodes_api.get_nodes_mounts(self.nodeid)
+        s = response.json()
+        mounted_disks_num = sum()[1 for x in s if self.data['label'] in x['mountpoint']])
+        self.assertEqual(self.data['servers'], mounted_disks_num)
+
+        self.lg.info(' [*] Kill storage cluster (SC1), should succeed with 204')
+        response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info(' [*] Make sure the disks are wiped, should succeed')
+        free_disks_num , disk_type = self.get_max_available_free_disks([self.nodeid])
+        self.assertEqual(free_disks_num, self.number_of_free_disks)
+        mounted_disks_num = sum()[1 for x in s if self.data['label'] in x['mountpoint']])
+        self.assertEqual(mounted_disks_num, 0)
