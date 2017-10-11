@@ -13,6 +13,10 @@ class InfluxDB:
         # Only client-server port is forwarded
         self.rpcport = rpcport
 
+    @property
+    def client(self):
+        return j.clients.influxdb.get(self.ip, port=self.port)
+
     def apply_config(self):
         influx_conf = templates.render('influxdb.conf', ip=self.ip, port=self.port,
                                        rpcport=self.rpcport)
@@ -74,17 +78,12 @@ class InfluxDB:
             raise RuntimeError('Failed to start influxd.')
 
     def list_databases(self):
-        client = j.clients.influxdb.get(self.ip, port=self.port)
-        return client.get_list_database()
+        return self.client.get_list_database()
 
     def create_databases(self, databases):
-        client = j.clients.influxdb.get(self.ip, port=self.port)
-
         for database in databases:
-            client.create_database(database)
+            self.client.create_database(database)
 
     def drop_databases(self, databases):
-        client = j.clients.influxdb.get(self.ip, port=self.port)
-
         for database in databases:
-            client.drop_database(database)
+            self.client.drop_database(database)

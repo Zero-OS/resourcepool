@@ -8,6 +8,8 @@ from collections import namedtuple
 from datetime import datetime
 from io import BytesIO
 import netaddr
+import time
+import redis
 
 Mount = namedtuple('Mount', ['device', 'mountpoint', 'fstype', 'options'])
 
@@ -17,10 +19,11 @@ class Node:
 
     def __init__(self, addr, port=6379, password=None, timeout=120):
         # g8os client to talk to the node
-        self._client = Client(host=addr, port=port, password=password, timeout=timeout)
         self._storageAddr = None
         self.addr = addr
         self.port = port
+        self.password = password
+        self.timeout = timeout
         self.disks = Disks(self)
         self.storagepools = StoragePools(self)
         self.containers = Containers(self)
@@ -38,7 +41,7 @@ class Node:
 
     @property
     def client(self):
-        return self._client
+        return Client(host=self.addr, port=self.port, password=self.password, timeout=self.timeout)
 
     @property
     def name(self):
@@ -72,7 +75,7 @@ class Node:
 
     def get_nic_by_ip(self, addr):
         try:
-            res = next(nic for nic in self._client.info.nic() if any(addr == a['addr'].split('/')[0] for a in nic['addrs']))
+            res = next(nic for nic in self.client.info.nic() if any(addr == a['addr'].split('/')[0] for a in nic['addrs']))
             return res
         except StopIteration:
             return None
@@ -86,7 +89,7 @@ class Node:
         eligible = {t: [] for t in priorities}
         # Pick up the first ssd
         usedisks = []
-        for pool in (self._client.btrfs.list() or []):
+        for pool in (self.client.btrfs.list() or []):
             for device in pool['devices']:
                 usedisks.append(device['path'])
         for disk in disks[::-1]:
@@ -232,6 +235,23 @@ class Node:
                                    mount['fstype'],
                                    mount['opts']))
         return allmounts
+
+    def is_running(self):
+        state = False
+        start = time.time()
+        err = None
+        while time.time() < start + 30:
+            try:
+                self.client.testConnectionAttempts = 0
+                state = self.client.ping()
+                break
+            except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
+                err = error
+                time.sleep(1)
+        else:
+            print("Could not ping %s within 30 seconds due to %s" % (self.addr, err))
+
+        return state
 
     def __str__(self):
         return "Node <{host}:{port}>".format(

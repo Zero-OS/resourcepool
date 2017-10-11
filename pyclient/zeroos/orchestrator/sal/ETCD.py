@@ -17,7 +17,6 @@ class EtcdCluster:
         self._ays = None
         self.logger = logger if logger else default_logger
         self._client = None
-        self._connect()
 
     def _connect(self):
         dialstrings = self.mgmtdialstrings.split(",")
@@ -26,7 +25,7 @@ class EtcdCluster:
             try:
                 self._client = etcd3.client(host=host, port=port, timeout=5)
                 self._client.status()
-                return # connection is valid
+                return  # connection is valid
             except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as err:
                 self._client = None
                 self.logger.error("Could not connect to etcd on %s:%s : %s" % (host, port, str(err)))
@@ -41,13 +40,11 @@ class EtcdCluster:
 
         dialstrings = set()
         for etcd_service in service.producers.get('etcd', []):
-            etcd = ETCD.from_ays(etcd_service, password)
-            dialstrings.add(etcd.clientBind)
+            dialstrings.add(etcd_service.model.data.clientBind)
 
         mgmtdialstrings = set()
         for etcd_service in service.producers.get('etcd', []):
-            etcd = ETCD.from_ays(etcd_service, password)
-            mgmtdialstrings.add(etcd.mgmtClientBind)
+            mgmtdialstrings.add(etcd_service.model.data.mgmtClientBind)
 
         return cls(
             name=service.name,
@@ -59,6 +56,8 @@ class EtcdCluster:
     # TODO: replace code duplication with decorator ?
 
     def put(self, key, value):
+        if not self._client:
+            self._connect()
         try:
             self._client.put(key, value)
         except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError):
@@ -66,6 +65,8 @@ class EtcdCluster:
             self.put(key, value)
 
     def delete(self, key):
+        if not self._client:
+            self._connect()
         try:
             self._client.delete(key)
         except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError):
@@ -132,6 +133,10 @@ class ETCD:
 
     def stop(self):
         import time
+
+        if not self.container.is_running():
+            return
+
         jobID = "etcd.{}".format(self.name)
         self.container.client.job.kill(jobID)
         start = time.time()

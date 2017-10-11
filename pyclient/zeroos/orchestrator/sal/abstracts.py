@@ -12,9 +12,9 @@ class Mountable:
         if self.mountpoint == target:
             return
 
-        self._client.bash('mkdir -p {}'.format(target))
+        self.client.bash('mkdir -p {}'.format(target))
 
-        self._client.disk.mount(
+        self.client.disk.mount(
             source=self.devicename,
             target=target,
             options=options,
@@ -27,7 +27,7 @@ class Mountable:
         Unmount disk
         """
         if self.mountpoint:
-            self._client.disk.umount(
+            self.client.disk.umount(
                 source=self.mountpoint,
             )
         self.mountpoint = None

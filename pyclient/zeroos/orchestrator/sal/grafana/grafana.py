@@ -10,8 +10,11 @@ class Grafana:
         self.ip = ip
         self.port = port
         self.url = url
-        self.client = j.clients.grafana.get(url='http://%s:%d' % (
-            ip, port), username='admin', password='admin')
+
+    @property
+    def client(self):
+        return j.clients.grafana.get(url='http://%s:%d' % (
+            self.ip, self.port), username='admin', password='admin')
 
     def apply_config(self):
         f = self.container.client.filesystem.open('/opt/grafana/conf/defaults.ini')

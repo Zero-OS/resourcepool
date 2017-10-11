@@ -20,6 +20,7 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -35,7 +36,6 @@ def init(job):
     ovs_container = node.client.container.find('ovs')
     if not ovs_container:
         raise j.exceptions.Input('OVS container needed to run this blueprint')
-
 
 
 def install(job):
