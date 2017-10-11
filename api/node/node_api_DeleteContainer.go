@@ -48,7 +48,7 @@ func (api *NodeAPI) DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := aysClient.Ays.DeleteServiceByName(containername, "container", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "deleting service") {
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
 

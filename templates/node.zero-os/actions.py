@@ -63,8 +63,7 @@ def getAddresses(job):
     networks = service.producers.get('network', [])
     networkmap = {}
     for network in networks:
-        job = network.getJob('getAddresses', args={'node_name': service.name})
-        networkmap[network.name] = j.tools.async.wrappers.sync(job.execute())
+        networkmap[network.name] = network.executeAction('getAddresses', args={'node_name': service.name})
     return networkmap
 
 
@@ -87,14 +86,12 @@ def install(job):
 
     job.logger.info('configure networks')
     for network in service.producers.get('network', []):
-        job = network.getJob('configure', args={'node_name': service.name})
-        j.tools.async.wrappers.sync(job.execute())
+        network.executeAction('configure', args={'node_name': service.name})
 
     stats_collector_service = get_stats_collector(service)
     statsdb_service = get_statsdb(service)
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'install', context=job.context))
+        stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
 
 
@@ -103,7 +100,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
-    import asyncio
     import time
 
     service = job.service
@@ -115,7 +111,9 @@ def monitor(job):
     if install_action != 'ok' and install_action != 'error':
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
+                                                         instance='node_%s' % service.name,
+                                                         die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
@@ -142,8 +140,7 @@ def monitor(job):
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
-            job = service.getJob('install', args={})
-            j.tools.async.wrappers.sync(job.execute())
+            service.executeAction('install', context=job.context)
             for consumer in service.getConsumersRecursive():
                 consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
@@ -158,8 +155,7 @@ def monitor(job):
         # Check if there is a running statsdb and if so make sure stats_collector for this node is started
         if (stats_collector_service and stats_collector_service.model.data.status != 'running'
                 and statsdb_service.model.data.status == 'running'):
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-                'start', context=job.context))
+            stats_collector_service.executeAction('start', context=job.context)
 
         # healthchecks
         nodestatus.add_message('node', 'OK', 'Node is running')
@@ -265,12 +261,12 @@ def reboot(job):
             try:
                 node = Node.from_ays(service, token, timeout=5)
                 node.client.testConnectionAttempts = 0
-                state = node.client.ping()
+                node.client.ping()
             except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError):
                 break
             time.sleep(1)
         else:
-             print("Could not wait within 10 seconds for node to reboot")
+            job.logger.info("Could not wait within 10 seconds for node to reboot")
         service._recurring_tasks['monitor'].start()
 
 
@@ -384,7 +380,7 @@ def watchdog(job):
             args = {'message': message, 'eof': eof, 'level': level}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
             handler = watched_roles[role].get('handler', 'watchdog_handler')
-            await srv.executeAction(handler, context=job.context, args=args)
+            await srv.asyncExecuteAction(handler, context=job.context, args=args)
 
     async def check_node(job):
         job.context['token'] = get_jwt_token(job.service.aysrepo)

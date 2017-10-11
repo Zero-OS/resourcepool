@@ -5,7 +5,7 @@ def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def start(job):
@@ -32,7 +32,6 @@ def stop(job):
     storageEngine = StorageEngine.from_ays(service, job.context['token'])
     storageEngine.stop()
     service.model.data.status = 'halted'
-    service.saveAll()
 
 
 def monitor(job):
@@ -41,7 +40,7 @@ def monitor(job):
 
     service = job.service
 
-    if service.model.actionsState['install'] == 'ok':
+    if service.model.actionsState["install"] == "ok":
         storageEngine = StorageEngine.from_ays(service, get_jwt_token(service.aysrepo))
         running, process = storageEngine.is_running()
 
@@ -55,10 +54,11 @@ def monitor(job):
 def watchdog_handler(job):
     import asyncio
     service = job.service
-    if service.model.data.status != 'running':
+
+    if service.model.data.status != "running":
         return
 
     loop = j.atyourservice.server.loop
-    eof = job.model.args['eof']
+    eof = job.model.args["eof"]
     if eof:
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(service.asyncExecuteAction("start", context=job.context), loop=loop)

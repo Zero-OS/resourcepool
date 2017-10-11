@@ -485,9 +485,9 @@ class TestcontaineridAPI(TestcasesBase):
         #. Attach B2 only to the container, should succeed
         #. Get Container, should find B2 only
         #. Attach Both B1 and B2, should succeed
+        #. Attach a default nic and check the internet connectivity
 
         """
-        time.sleep(540)
         self.lg.info('Create container without nic, should succeed')
         self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, nics=[])
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
@@ -496,10 +496,8 @@ class TestcontaineridAPI(TestcasesBase):
 
         self.lg.info('Attach a non existent bridge to the container, should fail')
         nics = [{'type': 'bridge', 'id': self.random_string()}]
-        try:
-            self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nics)
-        except requests.HTTPError as e:
-            self.assertEqual(e.response.status_code, 400)
+        self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nics)
+        self.assertEqual(self.response.status_code, 400)
 
         self.lg.info('create two bridges (B1 and B2), should succeed')
         response, data_bridge = self.bridges_api.post_nodes_bridges(node_id=self.nodeid)
@@ -533,3 +531,13 @@ class TestcontaineridAPI(TestcasesBase):
         self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)
         d = json.loads(self.response.text.split('\n')[0])
         self.assertEqual(len(d['nics']), 2)
+        self.lg.info("Make sure you can't reach the internet")
+        c_client = self.core0_client.get_container_client(cont_name)
+        response = c_client.bash("ping -w5 8.8.8.8").get()
+        self.assertEqual(response.state, "ERROR", response.stdout)
+
+        self.lg.info('Attach a default nic and check the internet connectivity')
+        nic4 = [{'type': 'default'}]
+        self.containers_api.update_container(self.nodeid, cont_name, nics=nic4)
+        response = c_client.bash("ping -w5 8.8.8.8").get()
+        self.assertEqual(response.state, "SUCCESS", response.stdout)

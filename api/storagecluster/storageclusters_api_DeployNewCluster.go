@@ -32,7 +32,14 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	exists, err := aysClient.ServiceExists("storage_cluster", reqBody.Label, api.AysRepo)
+	role := ""
+	if reqBody.ClusterType == EnumClusterTypeBlock {
+		role = "storagecluster.block"
+	} else {
+		role = "storagecluster.object"
+	}
+
+	exists, err := aysClient.ServiceExists(role, reqBody.Label, api.AysRepo)
 	if err != nil {
 		errmsg := fmt.Sprintf("error getting storage cluster service by name %s ", reqBody.Label)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
@@ -48,43 +55,17 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	blueprint := struct {
-		Label               string          `yaml:"label" json:"label"`
-		NrServer            int             `yaml:"nrServer" json:"nrServer"`
-		DiskType            string          `yaml:"diskType" json:"diskType"`
-		MetaDiskType        string          `yaml:"metadiskType" json:"metadiskType"`
-		Nodes               []string        `yaml:"nodes" json:"nodes"`
-		ClusterType         EnumClusterType `yaml:"clusterType" json:"clusterType"`
-		DataShards          int             `yaml:"dataShards" json:"dataShards"`
-		ParityShards        int             `yaml:"parityShards" json:"parityShards"`
-		ServersPerMetaDrive int             `yaml:"serversPerMetaDrive" json:"serversPerMetaDrive"`
-	}{
-		Label:               reqBody.Label,
-		NrServer:            reqBody.Servers,
-		DiskType:            string(reqBody.DriveType),
-		MetaDiskType:        string(reqBody.MetaDriveType),
-		Nodes:               reqBody.Nodes,
-		ClusterType:         reqBody.ClusterType,
-		DataShards:          reqBody.DataShards,
-		ParityShards:        reqBody.ParityShards,
-		ServersPerMetaDrive: reqBody.ServersPerMetaDrive,
+	// Deploy object cluster
+	var obj map[string]interface{}
+	if reqBody.ClusterType == EnumClusterTypeBlock {
+		obj = deployBlockCluster(aysClient, reqBody)
+	} else {
+		obj = deployObjectCluster(aysClient, reqBody)
 	}
 
-	if string(blueprint.MetaDiskType) == "" {
-		blueprint.MetaDiskType = string(EnumClusterCreateDriveTypessd)
-	}
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storagecluster.block", reqBody.Label, "install", obj)
 
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("storage_cluster__%s", reqBody.Label)] = blueprint
-	obj["actions"] = []tools.ActionBlock{{
-		Action:  "install",
-		Actor:   "storage_cluster",
-		Service: reqBody.Label,
-	}}
-
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "storage_cluster", reqBody.Label, "install", obj)
-
-	errmsg := fmt.Sprintf("error executing blueprint for storage_cluster %s creation", reqBody.Label)
+	errmsg := fmt.Sprintf("error executing blueprint for storage cluster %s creation", reqBody.Label)
 	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
@@ -92,7 +73,72 @@ func (api *StorageclustersAPI) DeployNewCluster(w http.ResponseWriter, r *http.R
 	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
 		return
 	}
-
 	w.Header().Set("Location", fmt.Sprintf("/storageclusters/%s", reqBody.Label))
 	w.WriteHeader(http.StatusCreated)
+}
+
+func deployObjectCluster(aysClient *tools.AYStool, reqBody ClusterCreate) map[string]interface{} {
+	blueprint := struct {
+		Label                string   `yaml:"label" json:"label"`
+		NrServer             int      `yaml:"nrServer" json:"nrServer"`
+		DataDiskType         string   `yaml:"dataDiskType" json:"dataDiskType"`
+		MetaDiskType         string   `yaml:"metaDiskType" json:"metaDiskType"`
+		Nodes                []string `yaml:"nodes" json:"nodes"`
+		DataShards           int      `yaml:"dataShards" json:"dataShards"`
+		ParityShards         int      `yaml:"parityShards" json:"parityShards"`
+		ServersPerMetaDrive  int      `yaml:"serversPerMetaDrive" json:"serversPerMetaDrive"`
+		ZerostorOrganization string   `yaml:"zerostorOrganization" json:"zerostorOrganization"`
+		ZerostorNamespace    string   `yaml:"zerostorNamespace" json:"zerostorNamespace"`
+		ZerostorClientID     string   `yaml:"zerostorClientID" json:"zerostorClientID"`
+		ZerostorSecret       string   `yaml:"zerostorSecret" json:"zerostorSecret"`
+	}{
+		Label:                reqBody.Label,
+		NrServer:             reqBody.Servers,
+		DataDiskType:         string(reqBody.DriveType),
+		MetaDiskType:         string(reqBody.MetaDriveType),
+		Nodes:                reqBody.Nodes,
+		DataShards:           reqBody.DataShards,
+		ParityShards:         reqBody.ParityShards,
+		ServersPerMetaDrive:  reqBody.ServersPerMetaDrive,
+		ZerostorOrganization: reqBody.ZerostorOrganization,
+		ZerostorNamespace:    reqBody.ZerostorNamespace,
+		ZerostorClientID:     reqBody.ZerostorClientID,
+		ZerostorSecret:       reqBody.ZerostorSecret,
+	}
+
+	if string(blueprint.MetaDiskType) == "" {
+		blueprint.MetaDiskType = string(EnumClusterCreateDriveTypessd)
+	}
+
+	obj := make(map[string]interface{})
+	obj[fmt.Sprintf("storagecluster.object__%s", reqBody.Label)] = blueprint
+	obj["actions"] = []tools.ActionBlock{{
+		Action:  "install",
+		Actor:   "storagecluster.object",
+		Service: reqBody.Label,
+	}}
+	return obj
+}
+
+func deployBlockCluster(aysClient *tools.AYStool, reqBody ClusterCreate) map[string]interface{} {
+	blueprint := struct {
+		Label    string   `yaml:"label" json:"label"`
+		NrServer int      `yaml:"nrServer" json:"nrServer"`
+		DiskType string   `yaml:"diskType" json:"diskType"`
+		Nodes    []string `yaml:"nodes" json:"nodes"`
+	}{
+		Label:    reqBody.Label,
+		NrServer: reqBody.Servers,
+		DiskType: string(reqBody.DriveType),
+		Nodes:    reqBody.Nodes,
+	}
+
+	obj := make(map[string]interface{})
+	obj[fmt.Sprintf("storagecluster.block__%s", reqBody.Label)] = blueprint
+	obj["actions"] = []tools.ActionBlock{{
+		Action:  "install",
+		Actor:   "storagecluster.block",
+		Service: reqBody.Label,
+	}}
+	return obj
 }

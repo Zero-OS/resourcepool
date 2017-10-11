@@ -55,7 +55,7 @@ def create_zerodisk_container(job, parent):
     containerservice = actor.serviceCreate(instance=container_name, args=args)
     # make sure the container has the right parent, the node where this vm runs.
     containerservice.model.changeParent(parent)
-    j.tools.async.wrappers.sync(containerservice.executeAction('start', context=job.context))
+    containerservice.executeAction('start', context=job.context)
 
     return containerservice
 
@@ -172,10 +172,10 @@ def _start_nbd(job, nbdname=None):
     container = Container.from_ays(nbdserver.parent, job.context['token'], logger=job.service.logger)
     if not container.is_running():
         # start container
-        j.tools.async.wrappers.sync(nbdserver.parent.executeAction('start', context=job.context))
+        nbdserver.parent.executeAction('start', context=job.context)
 
     # make sure the nbdserver is started
-    j.tools.async.wrappers.sync(nbdserver.executeAction('start', context=job.context))
+    nbdserver.executeAction('start', context=job.context)
     for vdisk in job.service.model.data.vdisks:
         url = _nbd_url(job, container, nbdserver, vdisk)
         medias.append({'url': url})
@@ -196,10 +196,10 @@ def start_tlog(job):
     container = Container.from_ays(tlogserver.parent, password=job.context['token'], logger=job.service.logger)
     # make sure container is up
     if not container.is_running():
-        j.tools.async.wrappers.sync(tlogserver.parent.executeAction('start', context=job.context))
+        tlogserver.parent.executeAction('start', context=job.context)
 
     # make sure the tlogserver is started
-    j.tools.async.wrappers.sync(tlogserver.executeAction('start', context=job.context))
+    tlogserver.executeAction('start', context=job.context)
 
 
 def get_media_for_disk(medias, disk):
@@ -285,7 +285,7 @@ def start(job):
     service = job.service
     service.model.data.status = 'starting'
     service.saveAll()
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_domain(job):
@@ -319,7 +319,7 @@ def destroy(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('stop', context=job.context))
+    job.service.executeAction('stop', context=job.context)
     service = job.service
     tlogservers = service.producers.get('tlogserver', [])
     nbdservers = service.producers.get('nbdserver', [])
@@ -882,7 +882,7 @@ def export(job):
         snapshotID = str(int(time.time() * 10**6))
         args["snapshotID"] = snapshotID
         vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
-        j.tools.async.wrappers.sync(vdisksrv.executeAction('export', context=job.context, args=args))
+        vdisksrv.executeAction('export', context=job.context, args=args)
         metadata["snapshotIDs"].append(snapshotID)
         metadata["vdisks"].append({
             "blockSize": vdisksrv.model.data.blocksize,

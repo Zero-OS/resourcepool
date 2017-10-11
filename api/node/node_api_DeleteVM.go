@@ -43,7 +43,7 @@ func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := aysClient.Ays.DeleteServiceByName(vmId, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "deleting vm") {
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting vm") {
 		return
 	}
 
