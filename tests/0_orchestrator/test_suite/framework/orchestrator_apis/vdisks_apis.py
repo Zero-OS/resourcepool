@@ -34,12 +34,11 @@ class VDisksAPIs(OrchestratorBase):
     def post_import_image(self, vdiskstorageid, **kwargs):
         size = random.randint(1, 50)
         block_size = 2**random.randint(9, 15)
-        export_block_size = 2**random.randint(15, 20)
         imagename = self.random_string()
         data = {"imageName": imagename,
                 "exportName": "template:ubuntu-1604",
                 "exportSnapshot": "default",
-                "exportBlockSize": export_block_size,
+                "exportBlockSize": 1048576,
                 "size": size,
                 "diskBlockSize": block_size,
                 "url": "ftp://hub.gig.tech"

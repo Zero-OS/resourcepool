@@ -24,6 +24,7 @@ class TestcasesBase(TestCase):
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.nodes_info = self.orchasterator_driver.nodes_info
+        self.Client = Client
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
 
@@ -77,7 +78,7 @@ class TestcasesBase(TestCase):
 
     def create_zerotier_network(self, default_config=True, private=False):
         url = 'https://my.zerotier.com/api/network'
-        
+
         if default_config:
             data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
                                                     'ipRangeStart': '10.147.17.1'}],
@@ -86,7 +87,7 @@ class TestcasesBase(TestCase):
                             'v4AssignMode': {'zt': True}}}
         else:
             data = {}
-        
+
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']
@@ -197,7 +198,7 @@ class TestcasesBase(TestCase):
             nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
             node_client = Client(ip=nodeip, password=self.jwt)
             free_disks.extend(node_client.getFreeDisks())
-    
+
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
 
