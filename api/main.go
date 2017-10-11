@@ -27,7 +27,7 @@ func main() {
 		organization string
 	)
 	app := cli.NewApp()
-	app.Version = "0.2.0"
+	app.Version = "1.1.0-alpha-8"
 	app.Name = "G8OS Stateless GRID API"
 
 	app.Flags = []cli.Flag{
