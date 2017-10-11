@@ -74,8 +74,10 @@ def init(job):
             'storagePool': storagepoolname,
             'name': containername,
         }
-        filesystems.append(fsactor.serviceCreate(instance=containername, args=args))
+        fs_service = fsactor.serviceCreate(instance=containername, args=args)
+        filesystems.append(fs_service)
         config = get_configuration(job.service.aysrepo)
+        service.consume(fs_service)
 
         # create containers
         args = {
@@ -235,7 +237,7 @@ def install(job):
     if dashboardsrv:
         cluster = get_cluster(job)
         dashboardsrv.model.data.dashboard = cluster.dashboard
-        j.tools.async.wrappers.sync(dashboardsrv.executeAction('install', context=job.context))
+        dashboardsrv.executeAction('install', context=job.context)
 
     save_config(job)
     job.service.model.actions['start'].state = 'ok'
@@ -253,10 +255,14 @@ def start(job):
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
-    cluster = get_cluster(job)
-    job.logger.info("stop cluster {}".format(service.name))
-    cluster.stop()
+    storage_engines = service.producers.get("storage_engine", [])
+    for storage_engine in storage_engines:
+        storage_engine.executeAction("stop", context=job.context)
 
 
 def delete(job):
@@ -266,6 +272,7 @@ def delete(job):
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
     pools = service.producers.get('storagepool', [])
+    filesystems = service.producers.get('filesystem', [])
 
     for storageEngine in storageEngines:
         tcps = storageEngine.producers.get('tcp', [])
@@ -276,6 +283,10 @@ def delete(job):
         container = storageEngine.parent
         container.executeAction('stop', context=job.context)
         container.delete()
+
+    for filesystem in filesystems:
+        filesystem.executeAction('delete', context=job.context)
+        filesystem.delete()
 
     for pool in pools:
         pool.executeAction('delete', context=job.context)
@@ -363,8 +374,8 @@ def monitor(job):
         # Delete orphan vdisk if operator didn't act for 7 days
         orphan_time = (int(time.time()) - orphan_service.model.data.timestamp) / (3600 * 24)
         if orphan_time >= 7:
-            j.tools.async.wrappers.sync(orphan_service.executeAction('delete', context=job.context))
-            j.tools.async.wrappers.sync(orphan_service.delete())
+            orphan_service.executeAction('delete', context=job.context)
+            orphan_service.delete()
             continue
         old_orphans.add(orphan_service.name)
 
