@@ -1,5 +1,4 @@
 from ..healthcheck import HealthCheckRun
-from js9 import j
 import hashlib
 
 descr = """
@@ -20,11 +19,14 @@ class QemuVMLogs(HealthCheckRun):
             domains_list = []
             # go for multiprocessing.
             results = []
-            
+
             def report_domain(domain):
                 logpath = vmlogpath.format(vm_name=domain)
+                tmplogpath = vmlogpath.format(vm_name='tmpvm_%s' % domain)
                 if self.node.client.filesystem.exists(logpath):
-                    out = self.node.client.system('tail %s' % logpath).get()
+                    self.node.client.system('cp %s %s' % (logpath, tmplogpath)).get()
+                    out = self.node.client.system('tail %s' % tmplogpath).get()
+                    self.node.client.system('rm %s' % tmplogpath).get()
                     last10 = out.stdout.splitlines()
                     for line in last10:
                         for phrase in search_phrases:
@@ -38,7 +40,7 @@ class QemuVMLogs(HealthCheckRun):
                 name = machine.get('name')
                 if name:
                     domains_list.append(name)
-                
+
             list(map(report_domain, domains_list))
 
             if len(results) == 0:
