@@ -35,6 +35,7 @@ def install(job):
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
                --flush-size 128 \
+               --force \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
                                           dialstrings=etcd_cluster.dialstrings,
