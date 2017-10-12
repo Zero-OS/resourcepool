@@ -85,7 +85,7 @@ def install(job):
         vdiskstore = vdiskservice.parent
         objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
-            _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
+            data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
             config['storageClusters'].add(objectcluster)
             config['data-shards'] += data_shards
             config['parity-shards'] += parity_shards
@@ -151,14 +151,9 @@ def start(job):
 
 
 def get_storagecluster_config(job, storagecluster):
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
+    objectcluster_service = job.service.aysrepo.serviceGet(role='storagecluster.object',
                                                            instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.data_shards, cluster.parity_shards
+    return objectcluster_service.model.data.dataShards, objectcluster_service.model.data.dataShards
 
 
 def stop(job):

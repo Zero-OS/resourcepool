@@ -20,6 +20,7 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -37,13 +38,13 @@ def init(job):
         raise j.exceptions.Input('OVS container needed to run this blueprint')
 
 
-
 def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     job.service.model.data.status = "halted"
+
     job.service.executeAction('start', context=job.context)
 
 

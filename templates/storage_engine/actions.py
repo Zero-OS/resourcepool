@@ -47,7 +47,6 @@ def stop(job):
     storageEngine.stop()
 
     service.model.data.status = 'halted'
-    service.saveAll()
 
 
 def monitor(job):
@@ -58,29 +57,24 @@ def monitor(job):
     if service.model.actionsState['install'] != 'ok':
         return
 
-    if service.model.data.status != 'running':
-        return
-
     storageEngine = StorageEngine.from_ays(service, get_jwt_token(service.aysrepo))
     running, process = storageEngine.is_running()
-    if not running:
-        service.model.data.status = 'halted'
 
-    if not storageEngine.is_healthy():
-        service.model.data.status = 'broken'
+    if running:
+        if not storageEngine.is_healthy():
+            service.model.data.status = 'broken'
+        else:
+            service.model.data.status = "running"
 
 
 def watchdog_handler(job):
     import asyncio
     service = job.service
-    if not service.model.data.enabled:
+
+    if service.model.data.status != "running":
         return
 
-    # TODO: revert
-    # for now we don't try to restart so we can test selh-healing
-    service.model.data.status = 'broken'
-    return
-    # loop = j.atyourservice.server.loop
-    # eof = job.model.args['eof']
-    # if eof:
-    #     asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
+    loop = j.atyourservice.server.loop
+    eof = job.model.args["eof"]
+    if eof:
+        asyncio.ensure_future(service.asyncExecuteAction("start", context=job.context), loop=loop)

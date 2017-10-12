@@ -414,3 +414,40 @@ class TestVmsAPI(TestcasesBase):
         new_core0_client = Client(new_node_ip[0], password=self.jwt)
         vms = new_core0_client.client.kvm.list()
         self.assertIn(self.data['id'], [x['name'] for x in vms])
+
+
+    def test012_create_two_vms_with_same_vdisk(self):
+        """ GAT-077
+        **Test Scenario:**
+        
+        #. Get random nodid (N0).
+        #. Create (VM1) on node (N0) and attach vdisk (VD1) to it. should succeed.
+        #. Create (VM2) and attach vdisk (VD1) to it. should fail.
+        #. Stop (VM1), should succeed.
+        #. Create (VM3) and attach vdisk (VD1) to it. should fail.
+        """
+
+        self.lg.info("Create VM2 and attach vdisk VD1 to it. should fail")
+        response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
+        self.assertEqual(response.status_code, 400, response.content)
+
+        self.lg.info("Stop VM1, should succeed")
+        response = self.vms_api.post_nodes_vms_vmid_stop(nodeid=self.nodeid, vmid=self.data['id'])
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'halted', "[*] Can't stop VM")
+        
+        self.lg.info("Create VM3 and attach vdisk VD1 to it. should fail")
+        response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
+        self.assertEqual(response.status_code, 400, response.content)
+
+
+
+
+
+
+
+
+        

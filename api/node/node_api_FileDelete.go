@@ -2,11 +2,11 @@ package node
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	client "github.com/zero-os/0-core/client/go-client"
 	"github.com/zero-os/0-orchestrator/api/tools"
+	"github.com/gorilla/mux"
 )
 
 // FileDelete is the handler for DELETE /nodes/{nodeid}/container/{containername}/filesystem
@@ -26,6 +26,35 @@ func (api *NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
+	vars := mux.Vars(r)
+	nodeID := vars["nodeid"]
+	containerName := vars["containername"]
+
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
+	// return if node doesnt exist
+	exists, err := aysClient.ServiceExists("node.zero-os", nodeID, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check if node exists")
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	// return if container doesnt exist
+	exists, err = aysClient.ServiceExists("container", containerName, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check if container exists")
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	container, err := tools.GetContainerConnection(r, api)
 	if err != nil {
@@ -40,8 +69,7 @@ func (api *NodeAPI) FileDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if res != true {
-		err := fmt.Errorf("path %s does not exist", reqBody.Path)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

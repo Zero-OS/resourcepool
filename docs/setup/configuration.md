@@ -49,13 +49,3 @@ The following are the available keys:
   - If not configured, the services will connect to 0core with supplying a password
 * `jwt-key`:
   - Key used to validate the JWT token
-* `0-stor-organization`:
-  - ItsYou.online organization used by 0-stor as root namespace
-* `0-stor-namespace`:
-  - ItsYou.online sub-organization used by 0-stor, namespace can be created with [zerostorcli](https://github.com/zero-os/0-stor/tree/master/client/cmd/zerostorcli)
-* `0-stor-clientid`:
-  - ItsYou.online client-id to use for 0-stor
-* `0-stor-clientsecret`:
-  - ItsYou.online client-secret to use for 0-stor
-
-**Note**: `ItsYou.online` configuration keys are required only to deploy storage clusters of type object

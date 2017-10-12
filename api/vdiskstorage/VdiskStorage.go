@@ -19,33 +19,33 @@ func (s VdiskStorage) Validate(aysClient *tools.AYStool, api *VdiskstorageAPI) e
 	// validate vdiskstorage name
 
 	// validate block cluster name
-	exists, err := aysClient.ServiceExists("storage_cluster", s.BlockCluster, api.AysRepo)
+	exists, err := aysClient.ServiceExists("storagecluster.block", s.BlockCluster, api.AysRepo)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		err = fmt.Errorf("storage_cluster with name %s does not exists", s.BlockCluster)
+		err = fmt.Errorf("storagecluster with name %s does not exists", s.BlockCluster)
 		return err
 	}
 
 	// validate object cluster name
 	if s.ObjectCluster != "" {
-		exists, err = aysClient.ServiceExists("storage_cluster", s.ObjectCluster, api.AysRepo)
+		exists, err = aysClient.ServiceExists("storagecluster.object", s.ObjectCluster, api.AysRepo)
 		if err != nil {
 			return err
 		}
 		if !exists {
-			err = fmt.Errorf("storage_cluster with name %s does not exists", s.ObjectCluster)
+			err = fmt.Errorf("storagecluster with name %s does not exists", s.ObjectCluster)
 			return err
 		}
 		if s.SlaveCluster != "" {
 			// validate slave cluster name
-			exists, err = aysClient.ServiceExists("storage_cluster", s.SlaveCluster, api.AysRepo)
+			exists, err = aysClient.ServiceExists("storagecluster.block", s.SlaveCluster, api.AysRepo)
 			if err != nil {
 				return err
 			}
 			if !exists {
-				err = fmt.Errorf("storage_cluster with name %s does not exists", s.SlaveCluster)
+				err = fmt.Errorf("storagecluster with name %s does not exists", s.SlaveCluster)
 				return err
 			}
 		}

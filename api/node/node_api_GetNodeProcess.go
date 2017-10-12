@@ -31,7 +31,7 @@ func (api *NodeAPI) GetNodeProcess(w http.ResponseWriter, r *http.Request) {
 	core := client.Core(conn)
 	process, err := core.Process(processID)
 	if err != nil {
-		errmsg := fmt.Sprintf("Error getting process  %s on node", processID)
+		errmsg := fmt.Sprintf("Error getting process %v on node", processID)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}

@@ -26,7 +26,7 @@ class EtcdCluster:
             try:
                 self._client = etcd3.client(host=host, port=port, timeout=5)
                 self._client.status()
-                return # connection is valid
+                return  # connection is valid
             except (etcd3.exceptions.ConnectionFailedError, etcd3.exceptions.ConnectionTimeoutError) as err:
                 self._client = None
                 self.logger.error("Could not connect to etcd on %s:%s : %s" % (host, port, str(err)))
