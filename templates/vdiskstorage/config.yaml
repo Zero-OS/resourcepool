@@ -3,17 +3,17 @@ links:
     - auto: false
       min: 1
       max: 1
-      role: storage_cluster
+      role: storagecluster.block
       argname: blockCluster
 
     - auto: false
       min: 0
       max: 1
-      role: storage_cluster
+      role: storagecluster.object
       argname: objectCluster
 
     - auto: false
       min: 0
       max: 1
-      role: storage_cluster
+      role: storagecluster.block
       argname: slaveCluster

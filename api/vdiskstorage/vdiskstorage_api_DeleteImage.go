@@ -1,7 +1,6 @@
 package vdiskstorage
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -18,18 +17,6 @@ func (api *VdiskstorageAPI) DeleteImage(w http.ResponseWriter, r *http.Request) 
 	}
 	vars := mux.Vars(r)
 	imageID := vars["imageid"]
-
-	exists, err := aysClient.ServiceExists("vdisk_image", imageID, api.AysRepo)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the image")
-		return
-	}
-
-	if !exists {
-		// doesn't exist, nothing to delete. all good.
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
@@ -57,12 +44,10 @@ func (api *VdiskstorageAPI) DeleteImage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = aysClient.Ays.DeleteServiceByName(imageID, "vdisk_image", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("Error in deleting image %s ", imageID)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	res, err := aysClient.Ays.DeleteServiceByName(imageID, "vdisk_image", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting vdisk_image") {
 		return
 	}
+
 	w.WriteHeader(http.StatusNoContent)
 }

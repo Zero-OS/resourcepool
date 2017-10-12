@@ -26,8 +26,10 @@ class Mountable:
         """
         Unmount disk
         """
-        if self.mountpoint:
+        _mount = self.mountpoint
+        if _mount:
             self.client.disk.umount(
-                source=self.mountpoint,
+                source=_mount,
             )
+            self.client.bash("rm -rf %s" % _mount).get()
         self.mountpoint = None

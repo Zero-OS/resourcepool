@@ -8,7 +8,8 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// Creates the VM
+// CreateNewVdiskStorage is the handler for POST /vdiskstorage
+// CreateNewVdiskStorage creates new VdiskStorage
 func (api *VdiskstorageAPI) CreateNewVdiskStorage(w http.ResponseWriter, r *http.Request) {
 	aysClient, err := tools.GetAysConnection(api)
 	if err != nil {

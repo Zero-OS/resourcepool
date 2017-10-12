@@ -44,6 +44,7 @@ def install(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     job.service.model.data.status = "halted"
+
     job.service.executeAction('start', context=job.context)
 
 
