@@ -491,14 +491,14 @@ def start_migartion_channel(job, old_service, new_service):
         file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = old_node.client.info.os().get("hostname")
         node.client.filesystem.write(file_discriptor,
-                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr,
+                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.storageAddr,
                                                                                   addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
         file_discriptor = old_node.client.filesystem.open("/etc/hosts", mode='a')
         host_name = node.client.info.os().get("hostname")
         old_node.client.filesystem.write(file_discriptor,
-                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr,
+                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.storageAddr,
                                                                                       addr=host_name)))
         node.client.filesystem.close(file_discriptor)
 
@@ -514,7 +514,7 @@ def start_migartion_channel(job, old_service, new_service):
         old_node.client.filesystem.close(file_discriptor)
 
         # write the ssh identy into the known hosts of old node if it doesnt exist
-        ssh_identity = old_node.client.system('ssh-keyscan -p %s %s' % (port, node.addr)).get().stdout
+        ssh_identity = old_node.client.system('ssh-keyscan -p %s %s' % (port, node.storageAddr)).get().stdout
         if not ssh_identity:
             raise j.exceptions.RuntimeError('could not get the ssh identity')
         exists = old_node.client.filesystem.exists("/root/.ssh/known_hosts")
@@ -631,125 +631,134 @@ def migrate(job):
     target_node_sal = Node.from_ays(target_node, job.context['token'])
 
     old_node = service.parent
-    job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
-
     # start migration channel to copy keys and start ssh deamon
-    ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
+    ssh_port, migration_channel_job_id = start_migartion_channel(job, old_node, target_node)
 
-    #start tlog server on target node
-    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]
-    if len(services) < 2:
-        raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
-
-    services.remove(old_node) # source node
-
-    if len(services) == 1:
-        # if we only have one node available, no other choice to deploy on the same node as the vm
-        tlog_target_node = services[0]
-    else:
-        services.remove(target_node) # make sure we don't deploy on the same node as the vm
-        tlog_target_node = random.choice(services)
-
-    job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node)
-    tlog_container_service = create_zerodisk_container_service(job, tlog_target_node, "tlog")
-    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
-    tlog_container_service.executeAction('start', context=job.context)
-
-    # find some fee ports for the tlog servers on the target node
-    ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 2)
-    # open the ports
-    for tcp_service in tcp_services:
-        tcp_service.executeAction('install', context=job.context)
-
-    # Create tlogserver service
-    bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
-    waitListenBind = "%s:%s" % (tlog_container.node.storageAddr, ports[1])
-    tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind, acceptAddress=target_node_sal.storageAddr)
-    tlogserver_service.consume(tcp_services[0])
-    tlogserver_service.consume(tcp_services[1])
-
-    # destination tlogserver consume source tlog server, so he can synchronise with it during migration
-    if 'tlogserver' in service.producers and len(service.producers['tlogserver']) > 0:
-        source_tlogserver_service = service.producers['tlogserver'][0]
-        tlogserver_service.consume(source_tlogserver_service)
-    job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
-    service.consume(tlogserver_service)
-
-    # make sure the tlogserver is started
-    tlogserver_service.executeAction('start', context=job.context)
-
-    # start new nbdserver on target node
-    nbd_container = create_zerodisk_container_service(job, target_node, "nbd")
-    job.logger.info("start nbd server for migration of vm {}".format(service.name))
-    nbdserver = create_service(service, nbd_container)
-    nbd_actor = service.aysrepo.actorGet('nbdserver')
-    nbdserver.consume(nbd_container)
-    nbdserver.consume(tlogserver_service)
-
-    service.consume(nbdserver)
-    service.consume(nbd_container)
-    target_node_client = Node.from_ays(target_node, job.context['token']).client
-    node_client = Node.from_ays(service.parent, job.context['token']).client
-
-    # change parent service to new node and save
-    service.model.changeParent(target_node)
-    target_node.saveAll()
-    old_node.saveAll()
-    service.saveAll()
-
-    # start nbds
-    medias = _start_nbd(job, nbdserver.name)
-
-    # run the migrate command
-    uuid = vm["uuid"]
-    _, nics = format_media_nics(job, medias)
-    target_node_client.kvm.prepare_migration_target(
-        uuid=uuid,
-        nics=nics,
-    )
     try:
-        node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
-    except Exception as e:
-        service.model.data.node = old_node.name
-        service.model.changeParent(old_node)
-        service.model.data.status = 'running'
-        service.saveAll()
+        migration_max_try = 5
+        migration_try = 0
+        while migration_try < migration_max_try:
+            migration_try += 1
 
-        # Cleanup nbdserver & tlogserver we are not using anymore
-        job.logger.info("delete new nbd services and vdisk container created for life migration")
-        stop_and_delete(job, [nbdserver])
-        stop_and_delete(job, [tlogserver_service])
+            job.logger.info("start migration of vm {vm} from {src} to {dst} (try {rety})".format(
+                            vm=service.name, src=service.parent.name, dst=target_node.name, rety=migration_try))
 
-        raise e
+            #start tlog server on target node
+            services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]
+            if len(services) < 2:
+                raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
 
-    # open vnc port
-    node = Node.from_ays(target_node, job.context['token'])
-    start = time.time()
-    while start + 15 > time.time():
-        kvm = get_domain(job)
-        if kvm:
-            service.model.data.vnc = kvm['vnc']
-            if kvm['vnc'] != -1:
-                if node.client.nft.rule_exists(kvm['vnc']):
-                    break
-                node.client.nft.open_port(kvm['vnc'])
-            break
+            services.remove(old_node) # source node
+
+            if len(services) == 1:
+                # if we only have one node available, no other choice to deploy on the same node as the vm
+                tlog_target_node = services[0]
+            else:
+                services.remove(target_node) # make sure we don't deploy on the same node as the vm
+                tlog_target_node = random.choice(services)
+
+            job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node)
+            tlog_container_service = create_zerodisk_container_service(job, tlog_target_node, "tlog")
+            tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
+            tlog_container_service.executeAction('start', context=job.context)
+
+            # find some fee ports for the tlog servers on the target node
+            ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 2)
+            # open the ports
+            for tcp_service in tcp_services:
+                tcp_service.executeAction('install', context=job.context)
+
+            # Create tlogserver service
+            bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
+            waitListenBind = "%s:%s" % (tlog_container.node.storageAddr, ports[1])
+            tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind, acceptAddress=target_node_sal.storageAddr)
+            tlogserver_service.consume(tcp_services[0])
+            tlogserver_service.consume(tcp_services[1])
+
+            # destination tlogserver consume source tlog server, so he can synchronise with it during migration
+            if 'tlogserver' in service.producers and len(service.producers['tlogserver']) > 0:
+                source_tlogserver_service = service.producers['tlogserver'][0]
+                tlogserver_service.consume(source_tlogserver_service)
+            job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
+            service.consume(tlogserver_service)
+
+            # make sure the tlogserver is started
+            tlogserver_service.executeAction('start', context=job.context)
+
+            # start new nbdserver on target node
+            nbd_container = create_zerodisk_container_service(job, target_node, "nbd")
+            job.logger.info("start nbd server for migration of vm {}".format(service.name))
+            nbdserver = create_service(service, nbd_container)
+            nbd_actor = service.aysrepo.actorGet('nbdserver')
+            nbdserver.consume(nbd_container)
+            nbdserver.consume(tlogserver_service)
+            service.consume(nbdserver)
+            service.consume(nbd_container)
+
+            # change parent service to new node and save
+            service.model.changeParent(target_node)
+            target_node.saveAll()
+            old_node.saveAll()
+            service.saveAll()
+
+            # start nbds
+            medias = _start_nbd(job, nbdserver.name)
+
+            # run the migrate command
+            uuid = vm["uuid"]
+            _, nics = format_media_nics(job, medias)
+            target_node_sal.client.kvm.prepare_migration_target(
+                uuid=uuid,
+                nics=nics,
+            )
+            try:
+                old_node_sal.client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node_sal.storageAddr, ssh_port))
+                break
+            except Exception as e:
+                service.model.data.node = old_node.name
+                service.model.changeParent(old_node)
+                service.model.data.status = 'running'
+                service.saveAll()
+
+                # Cleanup nbdserver & tlogserver we are not using anymore
+                job.logger.info("delete new nbd services and vdisk container created for life migration")
+                stop_and_delete(job, [nbdserver], force=True)
+                stop_and_delete(job, [tlogserver_service], force=True)
+
+                if migration_try >= migration_max_try:
+                    # if all tries failed, let the error buble up
+                    raise e
+
+
+        # open vnc port
+        node = Node.from_ays(target_node, job.context['token'])
+        start = time.time()
+        while start + 15 > time.time():
+            kvm = get_domain(job)
+            if kvm:
+                service.model.data.vnc = kvm['vnc']
+                if kvm['vnc'] != -1:
+                    if node.client.nft.rule_exists(kvm['vnc']):
+                        break
+                    node.client.nft.open_port(kvm['vnc'])
+                break
+            else:
+                time.sleep(3)
         else:
-            time.sleep(3)
-    else:
-        service.model.data.status = 'error'
-        raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
+            service.model.data.status = 'error'
+            raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
 
-    service.model.data.status = 'running'
+        service.model.data.status = 'running'
 
-    # cleanup to remove ssh job and config file
-    node.client.job.kill(job_id)
-    node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
-    tcp_name = "migrationtcp_%s_%s" % (node.name, ssh_port)
-    tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
-    tcp_service.executeAction("drop", context=job.context)
-    tcp_service.delete()
-    service.saveAll()
+    finally:
+        # cleanup to remove ssh job and config file
+        target_node_sal.client.job.kill(migration_channel_job_id)
+        target_node_sal.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
+        tcp_name = "migrationtcp_%s_%s" % (node.name, ssh_port)
+        tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
+        tcp_service.executeAction("drop", context=job.context)
+        tcp_service.delete()
+        service.saveAll()
 
 
 def _remove_duplicates(col):
@@ -893,16 +902,20 @@ def update_data(job, args):
     service.saveAll()
 
 
-def stop_and_delete(job, services):
+def stop_and_delete(job, services, force=False):
     """
     stop a list of services and their parents
     then delete the service and all its children
     """
+    args = {}
+    if force:
+        args["force_stop"] = force
+
     for service in list(services):
-        service.executeAction('stop', context=job.context)
+        service.executeAction('stop', context=job.context, args=args)
         parent = service.parent
         service.delete()
-        parent.executeAction('stop', context=job.context)
+        parent.executeAction('stop', context=job.context, args=args)
         parent.delete()
 
 

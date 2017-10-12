@@ -76,11 +76,8 @@ def watchdog_handler(job):
     if not service.model.data.enabled:
         return
 
-    # TODO: revert
-    # for now we don't try to restart so we can test selh-healing
     service.model.data.status = 'broken'
-    return
-    # loop = j.atyourservice.server.loop
-    # eof = job.model.args['eof']
-    # if eof:
-    #     asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
+    loop = j.atyourservice.server.loop
+    eof = job.model.args['eof']
+    if eof:
+        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)
