@@ -418,9 +418,9 @@ class TestVmsAPI(TestcasesBase):
 
         self.lg.info('check that the node, VM0 moved to, is cleaned up')
         res = new_core0_client.client.bash('ps -a | grep "sshd.config"').get()
-        self.assertNotIn('myvm', res.stdout)
+        self.assertNotIn(self.data['id'], res.stdout)
         res = new_core0_client.client.bash('ls /tmp').get()
-        self.assertNotIn('myvm', res.stdout)
+        self.assertNotIn(self.data['id'], res.stdout)
         res = new_core0_client.client.bash("netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
         self.assertNotIn('400', res.stdout)
 
