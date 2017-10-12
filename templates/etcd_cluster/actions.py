@@ -11,11 +11,7 @@ def input(job):
 
 
 def init(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    service = job.service
-    service.executeAction("configure", context=job.context)
+    configure(job)
 
 
 def configure(job):
@@ -165,6 +161,10 @@ def watchdog_handler(job):
     service = job.service
     if service.model.data.status == 'recovering':
         return
+
+    if not service.aysrepo.servicesFind(role='node'):
+        return
+
     service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
@@ -201,7 +201,7 @@ def watchdog_handler(job):
         if len(working_etcds) > (len(etcds)-1)/2:
             # respawn dead etcd only
             for etcd in dead_etcds_working_containers:
-                j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+                etcd.executeAction('start', context=job.context)
                 service.model.data.status = 'running'
                 service.saveAll()
                 service.logger.info("etcd %s respwaned" % etcd.name)
@@ -209,8 +209,8 @@ def watchdog_handler(job):
             # respawn dead containers
             if not ping:
                 raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
-            j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-            j.tools.async.wrappers.sync(etcd.executeAction('start', context=job.context))
+            container.executeAction('start', context=job.context)
+            etcd.executeAction('start', context=job.context)
             service.model.data.status = 'running'
             service.saveAll()
             service.logger.info("etcd %s and container %s respawned" % (etcd.name, container.name))
@@ -230,7 +230,7 @@ def watchdog_handler(job):
                     tcp.executeAction('drop', context=job.context)
                 except ConnectionError:
                     continue
-                j.tools.async.wrappers.sync(tcp.delete())
+                tcp.delete()
 
         # check if nodes are more than the min number for cluster deployment which is 3.
         tmp = list()
@@ -261,7 +261,7 @@ def watchdog_handler(job):
 
         service.model.data.etcds = []
         service.saveAll()
-        service.executeAction('configure', context=job.context)
+        configure(job)
         # install all services created by the configure of the etcd_cluster
         etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
         for etcd in etcd_services:
@@ -276,7 +276,7 @@ def watchdog_handler(job):
         # save all vdisks to new etcd cluster
         vdisks = service.aysrepo.servicesFind(role='vdisk')
         for vdisk in vdisks:
-            j.tools.async.wrappers.sync(vdisk.executeAction('save_config', context=job.context))
+            vdisk.executeAction('save_config', context=job.context)
 
         # save all storage cluster to new etcd cluster
         storagecluster_block_services = service.aysrepo.servicesFind(role='storagecluster.block')
@@ -300,7 +300,7 @@ def watchdog_handler(job):
         if etcd_service.model.data.status != 'running':
             container_status, etcd_status = check_container_etcd_status(job, etcd_service.parent)
             if not etcd_status:
-                j.tools.async.wrappers.sync(etcd_service.parent.delete())
+                etcd_service.parent.delete()
     service.logger.info("etcd_cluster  %s respawned" % service.name)
 
 
