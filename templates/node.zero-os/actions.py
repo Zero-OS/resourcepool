@@ -113,7 +113,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
-    import asyncio
     import time
 
     service = job.service
@@ -125,7 +124,9 @@ def monitor(job):
     if install_action != 'ok' and install_action != 'error':
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
+                                                         instance='node_%s' % service.name,
+                                                         die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
@@ -152,7 +153,7 @@ def monitor(job):
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
-            service.executeAction('install',context=job.context)
+            service.executeAction('install', context=job.context)
             for consumer in service.getConsumersRecursive():
                 consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
@@ -271,12 +272,12 @@ def reboot(job):
             try:
                 node = Node.from_ays(service, token, timeout=5)
                 node.client.testConnectionAttempts = 0
-                state = node.client.ping()
+                node.client.ping()
             except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError):
                 break
             time.sleep(1)
         else:
-             print("Could not wait within 10 seconds for node to reboot")
+            job.logger.info("Could not wait within 10 seconds for node to reboot")
         service._recurring_tasks['monitor'].start()
 
 

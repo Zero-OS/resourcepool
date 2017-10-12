@@ -18,6 +18,17 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 
+	// return if node doesnt exist
+	exists, err := aysClient.ServiceExists("node.zero-os", nodeID, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check if node exists")
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	// execute the uninstall action of the node
 	bp := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
