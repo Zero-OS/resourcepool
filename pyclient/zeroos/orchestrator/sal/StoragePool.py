@@ -316,7 +316,7 @@ class FileSystem:
         """
         Delete filesystem
         """
-        paths = [fs['Path'] for fs in self._client.btrfs.subvol_list(self.path)]
+        paths = [fs['Path'] for fs in self.client.btrfs.subvol_list(self.path)]
         paths.sort(reverse=True)
         for path in paths:
             rpath = os.path.join(self.path, os.path.relpath(path, self.subvolume))

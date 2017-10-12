@@ -12,17 +12,22 @@ def get_statsdb(service):
     if statsdb_services:
         return statsdb_services[0]
 
+
 def get_version(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     service = job.service
-    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    if service.model.data.status != 'running':
+        version = ''
+    else:
+        node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+        pong = node.client.ping()
+        version = pong.split('Version: ')[1] if pong else ''
 
-    pong = node.client.ping()
-    version = pong.split('Version: ')[1] if pong else ''
     service.model.data.version = version
     service.saveAll()
     return version
+
 
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
@@ -105,7 +110,6 @@ def install(job):
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
         stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
-
 
 
 def monitor(job):

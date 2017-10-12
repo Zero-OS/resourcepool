@@ -162,7 +162,7 @@ class Container:
         if self.hostname and self.hostname != self.name:
             tags.append(self.hostname)
 
-        # Populate the correct mounts dict if this instance was created using the from_ays function.
+        # Populate the correct mounts dict if this instance was created using the `from_ays` function.
         if type(self.mounts) == list:
             mounts = {}
             for mount in self.mounts:
