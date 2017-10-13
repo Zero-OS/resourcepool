@@ -375,6 +375,7 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. Migrate virtual machine (VM0) to another node, should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be migrating.
+        #. check that the node, VM0 moved to, is cleaned up
         """
         self.lg.info(' [*] List nodes.')
         response = self.nodes_api.get_nodes()
@@ -415,6 +416,13 @@ class TestVmsAPI(TestcasesBase):
         vms = new_core0_client.client.kvm.list()
         self.assertIn(self.data['id'], [x['name'] for x in vms])
 
+        self.lg.info('check that the node, VM0 moved to, is cleaned up')
+        res = new_core0_client.client.bash('ps -a | grep "sshd.config"').get()
+        self.assertNotIn(self.data['id'], res.stdout)
+        res = new_core0_client.client.bash('ls /tmp').get()
+        self.assertNotIn(self.data['id'], res.stdout)
+        res = new_core0_client.client.bash("netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
+        self.assertNotIn('400', res.stdout)
 
     def test012_create_two_vms_with_same_vdisk(self):
         """ GAT-077
@@ -438,16 +446,7 @@ class TestVmsAPI(TestcasesBase):
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'halted', "[*] Can't stop VM")
-        
+
         self.lg.info("Create VM3 and attach vdisk VD1 to it. should fail")
         response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response.status_code, 400, response.content)
-
-
-
-
-
-
-
-
-        
