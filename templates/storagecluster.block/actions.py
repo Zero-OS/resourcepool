@@ -271,6 +271,7 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
+    zerostors = service.producers.get('zerostor', [])
     pools = service.producers.get('storagepool', [])
     filesystems = service.producers.get('filesystem', [])
 

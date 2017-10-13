@@ -1,9 +1,12 @@
-@0xa2d7ef76f23ce9a6;
+@0xe97fdbcd2e47a6cd;
 
 struct Schema {
     container @0 :Text; # parent
     bind @1 :Text; # parent
     status @2: Status;
+    waitListenBind @3: Text;
+    acceptAddress @4: Text;
+
 
     enum Status{
         halted @0;

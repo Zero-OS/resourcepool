@@ -1,4 +1,4 @@
-@0x80bf2ccb5d7de793;
+@0x935023b5e21bf041;
 
 struct Schema {
     homeDir @0 :Text; # directory where the storageEngine db will be stored
@@ -10,11 +10,11 @@ struct Schema {
 
     container @3 :Text; # pointer to the parent service
     status @4: Status;
+    enabled @5: Bool;
 
     enum Status{
-        halted @0;
-        halting @1;
-        running @2;
-        unhealthy @3;
+        halted @0; # halted can be changed to running, or broken
+        running @1; # running can be changed to halted or broken
+        broken @2; # once the engine is in broken state, there is no going back
     }
 }

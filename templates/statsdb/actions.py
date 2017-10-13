@@ -115,7 +115,7 @@ def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def start(job):
@@ -126,8 +126,8 @@ def start(job):
     job.service.saveAll()
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('install', context=job.context))
-    j.tools.async.wrappers.sync(grafana.executeAction('install', context=job.context))
+    influxdb.executeAction('install', context=job.context)
+    grafana.executeAction('install', context=job.context)
 
     # Start stats_collector on all nodes
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
@@ -136,8 +136,8 @@ def start(job):
 
         if stats_collector_service:
             if stats_collector_service.model.data.status == 'running':
-                j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('start', context=job.context))
+                stats_collector_service.executeAction('stop', context=job.context)
+            stats_collector_service.executeAction('start', context=job.context)
 
 
 def stop(job):
@@ -150,14 +150,18 @@ def stop(job):
 
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(grafana.executeAction('stop', context=job.context))
+
+    influxdb.executeAction('stop', context=job.context)
+    grafana.executeAction('stop', context=job.context)
+
+    job.service.model.data.status = 'halted'
+    job.service.saveAll()
 
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service and stats_collector_service.model.data.status == 'running':
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
+            stats_collector_service.executeAction('stop', context=job.context)
 
 
 def uninstall(job):
@@ -169,16 +173,16 @@ def uninstall(job):
     grafana = get_grafana(job.service, False)
 
     if grafana:
-        j.tools.async.wrappers.sync(grafana.executeAction('uninstall', context=job.context))
+        grafana.executeAction('uninstall', context=job.context)
     if influxdb:
-        j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
+        influxdb.executeAction('uninstall', context=job.context)
 
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service:
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
-    j.tools.async.wrappers.sync(job.service.delete())
+            stats_collector_service.executeAction('uninstall', context=job.context)
+    job.service.delete()
 
 
 def processChange(job):
@@ -193,9 +197,7 @@ def processChange(job):
         service.saveAll()
         influxdb = get_influxdb(job.service)
         job.context['token'] = get_jwt_token_from_job(job)
-        j.tools.async.wrappers.sync(
-            influxdb.executeAction('processChange', context=job.context, args={'port': args['port']}))
-
+        influxdb.executeAction('processChange', context=job.context, args={'port': args['port']})
 
 def monitor(job):
     from zeroos.orchestrator.configuration import get_jwt_token

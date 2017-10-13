@@ -8,7 +8,7 @@ struct Schema {
     readOnly @4 :Bool;
     status @5 :Status;
     vdiskstorage @6 :Text;
-    timestamp @7: UInt64;
+    timestamp @7: Int64;
     backupUrl @8 :Text;
 
     enum Status {

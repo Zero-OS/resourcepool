@@ -17,7 +17,7 @@ func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queryParams := map[string]interface{}{
-		"fields": "hostname,status,id,redisAddr",
+		"fields": "hostname,status,id,redisAddr,version",
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("node.zero-os", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
@@ -36,6 +36,7 @@ func (api *NodeAPI) ListNodes(w http.ResponseWriter, r *http.Request) {
 		respBody[i].Status = node.Status
 		respBody[i].Hostname = node.Hostname
 		respBody[i].Id = service.Name
+		respBody[i].Version = node.Version
 	}
 
 	w.Header().Set("Content-Type", "application/json")
