@@ -44,12 +44,11 @@ class StoragePools:
     def list(self):
         storagepools = []
         btrfs_list = self._client.btrfs.list()
-        if btrfs_list:
-            for btrfs in self._client.btrfs.list():
-                if btrfs['label'].startswith('sp_'):
-                    name = btrfs['label'].split('_', 1)[1]
-                    devicenames = [device['path'] for device in btrfs['devices']]
-                    storagepools.append(StoragePool(self.node, name, devicenames))
+        for btrfs in btrfs_list:
+            if btrfs['label'].startswith('sp_'):
+                name = btrfs['label'].split('_', 1)[1]
+                devicenames = [device['path'] for device in btrfs['devices']]
+                storagepools.append(StoragePool(self.node, name, devicenames))
         return storagepools
 
     def get(self, name):
@@ -96,7 +95,8 @@ class StoragePool(Mountable):
         Destroy storage pool
         param zero: write zeros (nulls) to the first 500MB of each disk in this storagepool
         """
-        self.umount()
+        while self.mountpoint:
+            self.umount()
         partitionmap = {}
         for disk in self.node.disks.list():
             for partition in disk.partitions:

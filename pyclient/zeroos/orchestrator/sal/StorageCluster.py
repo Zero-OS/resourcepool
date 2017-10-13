@@ -28,6 +28,33 @@ class BaseStorageCluster:
         board = StorageDashboard(self)
         return board.template
 
+    def get_config(self):
+        data = {'dataStorage': [],
+                'metadataStorage': None,
+                'label': self.name,
+                'status': 'ready' if self.is_running() else 'error',
+                'nodes': [node.name for node in self.nodes]}
+        for storageserver in self.storage_servers:
+            if 'metadata' in storageserver.name:
+                data['metadataStorage'] = {'address': storageserver.storageEngine.bind}
+            else:
+                disabled = not storageserver.storageEngine.enabled or \
+                        storageserver.storageEngine.status == 'broken'
+
+                data['dataStorage'].append({
+                    'address': storageserver.storageEngine.bind,
+                    'disabled': disabled
+                })
+        return data
+
+    @property
+    def nr_server(self):
+        """
+        Number of storage server part of this cluster
+        """
+        return len(self.storage_servers)
+
+
     def find_disks(self, disk_type):
         """
         return a list of disk that are not used by storage pool

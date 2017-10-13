@@ -40,7 +40,7 @@ def install(job):
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster}'
+            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster} --flush-size 128'
 
             if objectStoragecluster:
                 object_st = service.aysrepo.serviceGet(role='storagecluster.object', instance=objectStoragecluster)
@@ -200,8 +200,12 @@ def create_from_template_container(job, parent):
     container_name = 'vdisk_{}_{}'.format(job.service.name, parent.name)
     node = Node.from_ays(parent, job.context['token'])
     config = get_configuration(job.service.aysrepo)
+    flist = config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist')
+
+    print("Creating container for flist: %s" % flist)
+
     container = Container(name=container_name,
-                          flist=config.get('0-disk-flist', 'https://hub.gig.tech/gig-official-apps/0-disk-master.flist'),
+                          flist=flist,
                           host_network=True,
                           node=node)
     container.start()
@@ -240,7 +244,7 @@ def rollback(job):
     if 'vm' not in service.consumers:
         raise j.exceptions.Input('Can not rollback a disk that is not attached to a vm')
     service.model.data.status = 'rollingback'
-    ts = job.model.args['timestamp']
+    ts = int(job.model.args['timestamp']) * 10**9
 
     clusterconfig = get_cluster_config(job, type="object")
     node = random.choice(clusterconfig['nodes'])
@@ -341,8 +345,11 @@ def import_vdisk(job):
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
+               --flush-size 128 \
                --config {dialstrings} \
                --key {cryptoKey} \
+               --flus-size 128 \
+               --job 100 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
@@ -403,13 +410,22 @@ def processChange(job):
 
     args = job.model.args
     category = args.pop('changeCategory')
-    if category == "dataschema" and service.model.actionsState['install'] == 'ok':
-        if args.get('size', None):
-            j.tools.async.wrappers.sync(service.executeAction('resize', context=job.context, args={'size': args['size']}))
-        if args.get('timestamp', None):
-            if str(service.model.data.status) != "halted":
-                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
-            if str(service.model.data.type) not in ["boot", "db"]:
-                raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
-            args['timestamp'] = args['timestamp'] * 10**9
-            j.tools.async.wrappers.sync(service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context))
+    if category != "dataschema" or service.model.actionsState['install'] != 'ok':
+        return
+
+    if args.get('size', None):
+        service.executeAction('resize', context=job.context, args={'size': args['size']})
+
+    if 'timestamp' in args:
+        timestamp = args['timestamp']
+        if timestamp < 0:
+            return
+
+        if str(service.model.data.status) != "halted":
+            raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be halted to rollback")
+        if str(service.model.data.type) not in ["boot", "db"]:
+            raise j.exceptions.RuntimeError("Failed to rollback vdisk, vdisk must be of type boot or db")
+
+        service.model.data.timestamp = -1
+        service.saveAll()
+        service.executeAction('rollback', args={'timestamp': args['timestamp']}, context=job.context)

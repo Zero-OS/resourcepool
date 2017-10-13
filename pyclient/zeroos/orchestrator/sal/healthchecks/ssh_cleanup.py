@@ -29,8 +29,8 @@ class SSHCleanup(HealthCheckRun):
                     for tcp_service in tcp_services:
                         if 'migrationtcp' not in tcp_service.name:
                             continue
-                        j.tools.async.wrappers.sync(tcp_service.executeAction("drop"), context=self.job.context)
-                        j.tools.async.wrappers.sync(tcp_service.delete())
+                        tcp_service.executeAction("drop", context=self.job.context)
+                        tcp_service.delete()
                     finished.append("ssh.config_%s" % vm.name)
 
             for proc in self.node.client.process.list():

@@ -165,7 +165,7 @@ class Container:
         return buff.getvalue().decode()
 
     def _create_container(self, timeout=60):
-        self.logger.debug("send create container command to g8os")
+        self.logger.debug("send create container command to zero-os (%s)", self.flist)
         tags = [self.name]
         if self.hostname and self.hostname != self.name:
             tags.append(self.hostname)

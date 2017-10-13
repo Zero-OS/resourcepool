@@ -261,7 +261,9 @@ def watchdog_handler(job):
 
         service.model.data.etcds = []
         service.saveAll()
+
         configure(job)
+
         # install all services created by the configure of the etcd_cluster
         etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
         for etcd in etcd_services:
@@ -302,7 +304,3 @@ def watchdog_handler(job):
             if not etcd_status:
                 etcd_service.parent.delete()
     service.logger.info("etcd_cluster  %s respawned" % service.name)
-
-
-def monitor(job):
-    pass

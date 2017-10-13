@@ -8,12 +8,13 @@ logger = logging.getLogger(__name__)
 class ZeroStor:
     """zerostor server"""
 
-    def __init__(self, name, container, bind='0.0.0.0:8080', data_dir='/mnt/data', meta_dir='/mnt/metadata'):
+    def __init__(self, name, container, bind='0.0.0.0:8080', data_dir='/mnt/data', meta_dir='/mnt/metadata', max_size_msg=64):
         self.name = name
         self.container = container
         self.bind = bind
         self.data_dir = data_dir
         self.meta_dir = meta_dir
+        self.max_size_msg = max_size_msg
         self._ays = None
 
     @classmethod
@@ -29,6 +30,7 @@ class ZeroStor:
             bind=service.model.data.bind,
             data_dir=service.model.data.dataDir,
             meta_dir=service.model.data.metaDir,
+            max_size_msg=service.model.data.maxSizeMsg,
         )
 
     def stop(self, timeout=30):
@@ -59,7 +61,9 @@ class ZeroStor:
             --bind {bind} \
             --data "{datadir}" \
             --meta "{metadir}" \
-            '.format(bind=self.bind, datadir=self.data_dir, metadir=self.meta_dir)
+            --max-msg-size {msgsize} \
+            --async-write \
+            '.format(bind=self.bind, datadir=self.data_dir, metadir=self.meta_dir, msgsize=self.max_size_msg)
         self.container.client.system(cmd, id="zerostor.{}".format(self.name))
         start = time.time()
         while start + 15 > time.time():
