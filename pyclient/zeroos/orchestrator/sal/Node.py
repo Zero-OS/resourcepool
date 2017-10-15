@@ -29,6 +29,7 @@ class Node:
         self.containers = Containers(self)
         self.network = Network(self)
         self.healthcheck = HealthCheck(self)
+        self._client = None
 
     @classmethod
     def from_ays(cls, service, password=None, timeout=120):
@@ -41,7 +42,9 @@ class Node:
 
     @property
     def client(self):
-        return Client(host=self.addr, port=self.port, password=self.password, timeout=self.timeout)
+        if not self._client:
+            self._client = Client(host=self.addr, port=self.port, password=self.password, timeout=self.timeout)
+        return self._client
 
     @property
     def name(self):

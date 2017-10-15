@@ -61,6 +61,7 @@ class Container:
         self.identity = identity
         self.env = env or {}
         self.logger = logger if logger else default_logger
+        self._client = None
 
         self._ays = None
         for nic in self.nics:
@@ -143,7 +144,9 @@ class Container:
 
     @property
     def client(self):
-        return self.node.client.container.client(self.id)
+        if not self._client:
+            self._client = self.node.client.container.client(self.id)
+        return self._client
 
     def upload_content(self, remote, content):
         if isinstance(content, str):

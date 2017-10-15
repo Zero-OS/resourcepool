@@ -12,10 +12,13 @@ class InfluxDB:
         self.port = port
         # Only client-server port is forwarded
         self.rpcport = rpcport
+        self._client = None
 
     @property
     def client(self):
-        return j.clients.influxdb.get(self.ip, port=self.port)
+        if not self._client:
+            self._client = j.clients.influxdb.get(self.ip, port=self.port)
+        return self._client
 
     def apply_config(self):
         influx_conf = templates.render('influxdb.conf', ip=self.ip, port=self.port,
