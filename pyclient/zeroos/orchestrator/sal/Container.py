@@ -57,11 +57,11 @@ class Container:
         self.host_network = host_network
         self.storage = storage
         self.init_processes = init_processes or []
-        self._client = None
         self.privileged = privileged
         self.identity = identity
         self.env = env or {}
         self.logger = logger if logger else default_logger
+        self._client = None
 
         self._ays = None
         for nic in self.nics:
@@ -103,15 +103,10 @@ class Container:
             source, dest = portmap.split(':')
             ports[int(source)] = int(dest)
         nics = [nic.to_dict() for nic in service.model.data.nics]
-        mounts = {}
-        for mount in service.model.data.mounts:
-            fs_service = service.aysrepo.serviceGet('filesystem', mount.filesystem)
-            try:
-                sp = node.storagepools.get(fs_service.parent.name)
-                fs = sp.get(fs_service.name)
-            except KeyError:
-                continue
-            mounts[fs.path] = mount.target
+        mounts = service.model.data.to_dict().get('mounts', [])
+        for mount in mounts:
+            fs_service = service.aysrepo.serviceGet('filesystem', mount['filesystem'])
+            mount['storagepool'] = fs_service.parent.name
 
         container = cls(
             name=service.name,
@@ -149,7 +144,7 @@ class Container:
 
     @property
     def client(self):
-        if self._client is None:
+        if not self._client:
             self._client = self.node.client.container.client(self.id)
         return self._client
 
@@ -169,6 +164,19 @@ class Container:
         tags = [self.name]
         if self.hostname and self.hostname != self.name:
             tags.append(self.hostname)
+
+        # Populate the correct mounts dict if this instance was created using the `from_ays` function.
+        if type(self.mounts) == list:
+            mounts = {}
+            for mount in self.mounts:
+                try:
+                    sp = self.node.storagepools.get(mount['storagepool'])
+                    fs = sp.get(mount['filesystem'])
+                except KeyError:
+                    continue
+                mounts[fs.path] = mount['target']
+            self.mounts = mounts
+
         job = self.node.client.container.create(
             root_url=self.flist,
             mount=self.mounts,
@@ -185,11 +193,10 @@ class Container:
         )
 
         containerid = job.get(timeout)
-        self._client = self.node.client.container.client(containerid)
 
     def is_job_running(self, cmd):
         try:
-            for job in self._client.job.list():
+            for job in self.client.job.list():
                 arguments = job['cmd']['arguments']
                 if 'name' in arguments and arguments['name'] == cmd:
                     return job
@@ -229,10 +236,9 @@ class Container:
         self.logger.debug("stop %s", self)
 
         self.node.client.container.terminate(self.id)
-        self._client = None
 
     def is_running(self):
-        return self.id is not None
+        return self.node.is_running() and self.id is not None
 
     @property
     def ays(self):

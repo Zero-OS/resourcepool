@@ -43,20 +43,25 @@ func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		var healthcheck HealthCheck
-		if err := json.Unmarshal(healthService.Data, &healthcheck); err != nil {
+		var health struct {
+			HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
+		}
+		if err := json.Unmarshal(healthService.Data, &health); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 
-		for _, message := range healthcheck.Messages {
-			if message.Status != "OK" {
-				healthstatus = message.Status
-				if message.Status == "ERROR" {
-					break
+		for _, healthCheck := range health.HealthChecks {
+			for _, message := range healthCheck.Messages {
+				if message.Status != "OK" {
+					healthstatus = message.Status
+					if message.Status == "ERROR" {
+						break
+					}
 				}
 			}
 		}
+
 		respBody[i].Status = healthstatus
 
 	}
