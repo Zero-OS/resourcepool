@@ -255,7 +255,7 @@ func (aystool AYStool) getRun(runid, repoName string) (*ays.AYSRun, error) {
 	}
 
 	if err = aystool.checkRun(run); err != nil {
-		//resp.StatusCode = http.StatusInternalServerError
+		resp.StatusCode = http.StatusInternalServerError
 		return &run, NewHTTPError(resp, err.Error())
 	}
 	return &run, nil
