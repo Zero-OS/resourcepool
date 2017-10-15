@@ -79,10 +79,10 @@ class TestcasesBase(TestCase):
         url = 'https://my.zerotier.com/api/network'
         if default_config:
             data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
-                                                    'ipRangeStart': '10.147.17.1'}],
-                            'private': private,
-                            'routes': [{'target': '10.147.17.0/24', 'via': None}],
-                            'v4AssignMode': {'zt': True}}}
+                                                      'ipRangeStart': '10.147.17.1'}],
+                               'private': private,
+                               'routes': [{'target': '10.147.17.0/24', 'via': None}],
+                               'v4AssignMode': {'zt': True}}}
         else:
             data = {}
         response = self.session.post(url=url, json=data)
@@ -160,12 +160,12 @@ class TestcasesBase(TestCase):
                     "hosts": [
                         {
                             "hostname": "hostname1",
-                            "ipaddress": ip[:-4]+'10',
+                            "ipaddress": ip[:-4] + '10',
                             "macaddress": self.get_random_mac()
                         },
                         {
                             "hostname": "hostname2",
-                            "ipaddress": ip[:-4]+'20',
+                            "ipaddress": ip[:-4] + '20',
                             "macaddress": self.get_random_mac()
                         }
                     ]
@@ -186,7 +186,6 @@ class TestcasesBase(TestCase):
         mac_address = ':'.join(map(lambda x: "%02x" % x, random_mac))
         return mac_address
 
-
     def get_max_available_free_disks(self, nodes):
         disk_types = ['ssd', 'hdd', 'nvme']
         free_disks = []
@@ -196,23 +195,32 @@ class TestcasesBase(TestCase):
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
-    def add_ssh_key_to_vm(self, vnc_ip, username, password, zerotier_ID, github_user):
+    def add_ssh_key_to_vm(self, vnc_ip, username, password, zerotier_ID=None):
         """
             Add ssh key to a vm with active vnc protocol.
         """
         vnc = "vncdotool -s %s" % vnc_ip
         commands = ["%s" % username, "%s" % password, """ 'sudo su' """, "%s" % password,
-                    """ "mkdir /home/.ssh; chmod 700 /home/.ssh; curl ssh.maxux.net/%s -o keys.sh; bash keys.sh" """ % github_user,
-                    """ "curl -s https" """, """ "//install.zerotier.com -o zr.sh" """, """ 'bash zr.sh' """,
-                    """ "zerotier-cli join %s" """ % zerotier_ID,
+                    """ "mkdir /root/.ssh; chmod 700 /root/.ssh;" """,
+                    """ 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd' """, "service sshd restart"
                     ]
+
+        if zerotier_ID:
+            commands.extend([""" "curl -s https" """, """ "//install.zerotier.com -o zr.sh" """, """ 'bash zr.sh' """,
+                             """ "zerotier-cli join %s" """ % zerotier_ID])
+
         for cmd in commands:
-            if "https" in cmd:
+            if "sed" in cmd:
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, cmd))
+                self.utiles.execute_shell_commands(cmd="%s key shift-_ type config key enter" % vnc)
+                time.sleep(1)
+            elif 'https' in cmd:
                 self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, cmd))
                 self.utiles.execute_shell_commands(cmd="%s key shift-:" % vnc)
             else:
                 self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, cmd))
                 time.sleep(1)
+
 
 class Utiles:
     def __init__(self):
