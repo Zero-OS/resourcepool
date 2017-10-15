@@ -1,4 +1,4 @@
-import uuid, random, requests, time, signal, logging
+import uuid, random, requests, time, signal, logging, subprocess
 from unittest import TestCase
 from framework.orchestrator_driver import OrchasteratorDriver
 from nose.tools import TimeExpired
@@ -196,6 +196,23 @@ class TestcasesBase(TestCase):
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
+    def add_ssh_key_to_vm(self, vnc_ip, username, password, zerotier_ID, github_user):
+        """
+            Add ssh key to a vm with active vnc protocol.
+        """
+        vnc = "vncdotool -s %s" % vnc_ip
+        commands = ["%s" % username, "%s" % password, """ 'sudo su' """, "%s" % password,
+                    """ "mkdir /home/.ssh; chmod 700 /home/.ssh; curl ssh.maxux.net/%s -o keys.sh; bash keys.sh" """ % github_user,
+                    """ "curl -s https" """, """ "//install.zerotier.com -o zr.sh" """, """ 'bash zr.sh' """,
+                    """ "zerotier-cli join %s" """ % zerotier_ID,
+                    ]
+        for cmd in commands:
+            if "https" in cmd:
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, cmd))
+                self.utiles.execute_shell_commands(cmd="%s key shift-:" % vnc)
+            else:
+                self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, cmd))
+                time.sleep(1)
 
 class Utiles:
     def __init__(self):
@@ -209,3 +226,8 @@ class Utiles:
         log.addHandler(fileHandler)
         self.logging.basicConfig(filename=log_file_name, filemode='rw', level=logging.INFO,
                                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    def execute_shell_commands(self, cmd):
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, error = process.communicate()
+        return out.decode('utf-8'), error.decode('utf-8')
