@@ -201,8 +201,7 @@ class TestcasesBase(TestCase):
         """
         vnc = "vncdotool -s %s" % vnc_ip
         commands = ["%s" % username, "%s" % password, """ 'sudo su' """, "%s" % password,
-                    """ "mkdir /root/.ssh; chmod 700 /root/.ssh;" """,
-                    """ 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd' """, "service sshd restart"
+                    """ 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd' """, """ "service sshd restart" """
                     ]
 
         if zerotier_ID:
