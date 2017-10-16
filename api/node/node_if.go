@@ -25,9 +25,6 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// GetContainerCPUInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/cpus
 	// Get detailed information of all CPUs in the container
 	GetContainerCPUInfo(http.ResponseWriter, *http.Request)
-	// GetContainerDiskInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/disks
-	// Get detailed information of all the disks in the container
-	// !!!!!!!GetContainerDiskInfo(http.ResponseWriter, *http.Request)
 	// FileDelete is the handler for DELETE /nodes/{nodeid}/containers/{containername}/filesystem
 	// Delete file from container
 	FileDelete(http.ResponseWriter, *http.Request)
@@ -342,7 +339,6 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/bridges", i.ListBridges).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/bridges", i.CreateBridge).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/cpus", i.GetContainerCPUInfo).Methods("GET")
-	// r.HandleFunc("/nodes/{nodeid}/containers/{containername}/disks", i.GetContainerDiskInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDelete).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDownload).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileUpload).Methods("POST")

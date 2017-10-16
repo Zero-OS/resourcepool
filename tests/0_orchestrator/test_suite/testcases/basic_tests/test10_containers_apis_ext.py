@@ -471,7 +471,7 @@ class TestcontaineridAPI(TestcasesBase):
         html = response.read()
         self.assertIn("test", html.decode('utf-8'))
 
-    #@unittest.skip('https://github.com/zero-os/0-orchestrator/issues/968')
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1212')
     def test012_attach_different_nics_to_same_container(self):
         """ GAT-141
         *Check container behaviour with attaching different nics to it*
@@ -512,12 +512,12 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info('Attach B1 to the container, should succeed')
         nic1 = [{'type': 'bridge', 'id': B1}]
         self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic1)
-        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(self.response.status_code, 204)
 
         self.lg.info('Attach B2 only to the container, should succeed')
         nic2 = [{'type': 'bridge', 'id': B2}]
         self.response, self.data = self.containers_api.update_container(self.nodeid, cont_name, nics=nic2)
-        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(self.response.status_code, 204)
 
         self.lg.info('Get Container, should find B2 only ')
         self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)

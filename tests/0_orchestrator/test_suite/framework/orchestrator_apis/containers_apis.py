@@ -120,3 +120,23 @@ class ContainersAPI(OrchestratorBase):
     def delete_containers_containerid_processes_processid(self, nodeid, containername, processid):
         return self.orchestrator_client.nodes.KillContainerProcess(nodeid=nodeid, containername=containername,
                                                                    processid=processid)
+
+    @catch_exception_decoration
+    def get_container_nics(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerNicInfo(nodeid=nodeid, containername=containername)
+        
+    @catch_exception_decoration
+    def get_container_mem(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerMemInfo(nodeid=nodeid, containername=containername)
+    
+    @catch_exception_decoration
+    def get_container_cpus(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerCPUInfo(nodeid=nodeid, containername=containername)
+
+    @catch_exception_decoration
+    def get_container_disks(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerDiskInfo(nodeid=nodeid, containername=containername)
+
+    @catch_exception_decoration
+    def get_container_info(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerOSInfo(nodeid=nodeid, containername=containername)
