@@ -1055,17 +1055,6 @@ types:
                 body:
                   application/json:
                     type: CPUInfo[]
-        /disks:
-          get:
-            (DirectAccess):
-            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-            displayName: GetContainerDiskInfo
-            description: Get detailed information of all the disks in the container
-            responses:
-              200:
-                body:
-                  application/json:
-                    type: DiskInfo[]
         /mem:
           get:
             (DirectAccess):

@@ -309,6 +309,9 @@ def get_domain(job):
 
 def stop(job):
     service = job.service
+    if service.parent.model.data.status != 'running':
+        return
+
     job.logger.info("stop vm {}".format(service.name))
     node = get_node(job)
     kvm = get_domain(job)
