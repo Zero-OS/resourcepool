@@ -583,7 +583,7 @@ class TestcontaineridAPI(TestcasesBase):
         output = container.bash('rm %s.text' % file_name).get().state
         self.assertEqual(output, "SUCCESS")
 
-
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1212')
     def test020_get_container_nics(self):
         """ GAT-148
         *get:/node/{nodeid}/containers/containerid/nics  *
@@ -595,6 +595,9 @@ class TestcontaineridAPI(TestcasesBase):
         #. Create container (C0) on node (N0) and attach bridge (B0) to it.
         #. Get container (C0) nic info, should succeed.
         #. Get container (C0) nic info using core0 client.
+        #. Compare results, should succeed.
+        #. Update container (C0) nics, should succeed.
+        #. Get container (C0) nic info, should succeed.
         #. Compare results, should succeed.
         #. Delete contaienr (C0), should succeed.
         #. Delete bridge (B0), should succeed.
@@ -629,6 +632,19 @@ class TestcontaineridAPI(TestcasesBase):
             del core0_nic_info[i]['speed']
 
             self.assertDictEqual(orchestrator_nic_info[i], core0_nic_info[i])
+
+        self.lg.info(' [*] Update container (C0) nics, should succeed')
+        nics = [{"type":"default"}]
+        response, data = self.containers_api.update_container(nodeid=self.nodeid, containername=container_data['name'], nics=nics)
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info(' [*] Get container (C0) nic info, should succeed')
+        response = self.containers_api.get_container_nics(nodeid=self.nodeid, containername=container_data['name'])
+        self.assertEqual(response.status_code, 200)
+        orchestrator_nic_info = response.json()
+
+        self.lg.info(' [*] Compare results, should succeed')
+        self.assertEqual(len(data['nics']), len([x for x in orchestrator_nic_info if 'eth' in x['name']]))
 
         self.lg.info(' [*] Delete contaienr (C0), should succeed')
         response = self.containers_api.delete_containers_containerid(nodeid=self.nodeid, containername=container_data['name'])
