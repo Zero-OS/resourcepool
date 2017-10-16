@@ -582,3 +582,118 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info('delete  file from container ')
         output = container.bash('rm %s.text' % file_name).get().state
         self.assertEqual(output, "SUCCESS")
+
+
+    def test020_get_container_nics(self):
+        """ GAT-148
+        *get:/node/{nodeid}/containers/containerid/nics  *
+
+        **Test Scenario:**
+
+        #. Get random node (N0).
+        #. Create bridge (B0) on node (N0).
+        #. Create container (C0) on node (N0) and attach bridge (B0) to it.
+        #. Get container (C0) nic info, should succeed.
+        #. Get container (C0) nic info using core0 client.
+        #. Compare results, should succeed.
+        #. Delete contaienr (C0), should succeed.
+        #. Delete bridge (B0), should succeed.
+
+        """
+        
+        self.lg.info(' [*] Create bridge (B0) on node (N0)')
+        response, bridge_data = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq')
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info(' [*] Create container (C0) on node (N0) and attach bridge (B0) to it')
+        nics = [{"type":"default"}, {"id":bridge_data['name'], "type":"bridge", "name":"test", "status":"up"}]
+        response, container_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info(' [*] Get container (C0) nic info, should succeed')
+        response = self.containers_api.get_container_nics(nodeid=self.nodeid, containername=container_data['name'])
+        self.assertEqual(response.status_code, 200)
+        orchestrator_nic_info = response.json()
+        
+        self.lg.info(' [*] Get container (C0) nic info using core0 client')
+        container_client = self.core0_client.get_container_client(container_data['name'])
+        core0_nic_info = container_client.info.nic()
+        
+        self.lg.info(' [*] Compare results, should succeed')
+        self.assertEqual(len(core0_nic_info), len(orchestrator_nic_info))
+        for i in range(len(orchestrator_nic_info)):
+            if not orchestrator_nic_info[i]['addrs']:
+                orchestrator_nic_info[i]['addrs'] = []
+
+            core0_nic_info[i]['addrs'] = [x['addr'] for x in core0_nic_info[i]['addrs']]
+            del core0_nic_info[i]['speed']
+
+            self.assertDictEqual(orchestrator_nic_info[i], core0_nic_info[i])
+
+        self.lg.info(' [*] Delete contaienr (C0), should succeed')
+        response = self.containers_api.delete_containers_containerid(nodeid=self.nodeid, containername=container_data['name'])
+        self.assertEqual(response.status_code, 204)
+        
+        self.lg.info(' [*] Delete bridge (B0), should succeed')
+        response = self.bridges_api.delete_nodes_bridges_bridgeid(nodeid=self.nodeid, bridgeid=bridge_data['name'])
+        self.assertEqual(response.status_code, 204)
+
+    def test022_get_container_memory(self):
+        """ GAT-149
+        *get:/node/{nodeid}/containers/containerid/mem  *
+
+        **Test Scenario:**
+
+        #. Get random node (N0).
+        #. Create container (C0) on node (N0), should succeed.
+        #. Get container (C0) memory info, should succeed.
+        #. Get container (C0) memory info using core0 client.
+        #. Compare results, should succeed.
+
+        """
+        self.lg.info(' [*] Get container (C0) memory info, should succeed')
+        response = self.containers_api.get_container_mem(nodeid=self.nodeid, containername=self.data['name'])
+        self.assertEqual(response.status_code, 200)
+        orchestrator_mem_info = response.json()
+
+        self.lg.info(' [*] Get container (C0) memory info using core0 client')
+        container_client = self.core0_client.get_container_client(self.data['name'])
+        core0_mem_info = container_client.info.mem()
+
+        for key in orchestrator_mem_info.keys():
+            delta = 0.1 * orchestrator_mem_info[key]
+            self.assertAlmostEquals(core0_mem_info[key], orchestrator_mem_info[key], delta=delta)
+    
+    def test023_get_container_cpus(self):
+        """ GAT-150
+        *get:/node/{nodeid}/containers/containerid/cpus  *
+
+        **Test Scenario:**
+
+        #. Get random node (N0).
+        #. Create container (C0) on node (N0), should succeed.
+        #. Get container (C0) cpus info, should succeed.
+        #. Get container (C0) cpus info using core0 client.
+        #. Compare results, should succeed.
+
+        """
+        self.lg.info(' [*] Get container (C0) cpus info, should succeed')
+        response = self.containers_api.get_container_cpus(nodeid=self.nodeid, containername=self.data['name'])
+        self.assertEqual(response.status_code, 200)
+        orchestrator_cpu_info = response.json()
+
+        self.lg.info(' [*] Get container (C0) cpus info using core0 client')
+        container_client = self.core0_client.get_container_client(self.data['name'])
+        core0_cpu_info = container_client.info.cpu()
+        
+        for i in range(len(orchestrator_cpu_info)):
+            for key in orchestrator_cpu_info[i].keys():
+                self.assertEqual(orchestrator_cpu_info[i][key], core0_cpu_info[i][key])
+
+
+
+            
+
+
+
+
