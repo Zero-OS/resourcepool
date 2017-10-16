@@ -5,6 +5,7 @@ matrix:
       dist: trusty
       python: 3.5
       install:
+        - pip install vncdotool
         - pip3 install -r tests/0_orchestrator/test_suite/requirements.txt
         - pip3 install git+https://github.com/gigforks/packet-python.git
       before_script:
