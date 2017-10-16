@@ -592,13 +592,13 @@ class TestcontaineridAPI(TestcasesBase):
 
         #. Get random node (N0).
         #. Create bridge (B0) on node (N0).
-        #. Create container (C0) on node (N0) and attach bridge (B0) to it.
+        #. Create container (C0) on node (N0) and attach bridge (B0) and nic with type default to it.
         #. Get container (C0) nic info, should succeed.
         #. Get container (C0) nic info using core0 client.
         #. Compare results, should succeed.
-        #. Update container (C0) nics, should succeed.
+        #. Update container (C0) nics and remove bridge (B0), should succeed.
         #. Get container (C0) nic info, should succeed.
-        #. Compare results, should succeed.
+        #. Check that bridge (B0) is not in container (C0) nics, should succeed.
         #. Delete contaienr (C0), should succeed.
         #. Delete bridge (B0), should succeed.
 
@@ -608,7 +608,7 @@ class TestcontaineridAPI(TestcasesBase):
         response, bridge_data = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq')
         self.assertEqual(response.status_code, 201)
 
-        self.lg.info(' [*] Create container (C0) on node (N0) and attach bridge (B0) to it')
+        self.lg.info(' [*] Create container (C0) on node (N0) and attach bridge (B0) and nic with type default to it')
         nics = [{"type":"default"}, {"id":bridge_data['name'], "type":"bridge", "name":"test", "status":"up"}]
         response, container_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
         self.assertEqual(response.status_code, 201)
@@ -633,7 +633,7 @@ class TestcontaineridAPI(TestcasesBase):
 
             self.assertDictEqual(orchestrator_nic_info[i], core0_nic_info[i])
 
-        self.lg.info(' [*] Update container (C0) nics, should succeed')
+        self.lg.info(' [*] Update container (C0) nics and remove bridge (B0), should succeed')
         nics = [{"type":"default"}]
         response, data = self.containers_api.update_container(nodeid=self.nodeid, containername=container_data['name'], nics=nics)
         self.assertEqual(response.status_code, 204)
@@ -643,7 +643,7 @@ class TestcontaineridAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         orchestrator_nic_info = response.json()
 
-        self.lg.info(' [*] Compare results, should succeed')
+        self.lg.info(' [*] Check that bridge (B0) is not in container (C0) nics, should succeed')
         self.assertEqual(len(data['nics']), len([x for x in orchestrator_nic_info if 'eth' in x['name']]))
 
         self.lg.info(' [*] Delete contaienr (C0), should succeed')
