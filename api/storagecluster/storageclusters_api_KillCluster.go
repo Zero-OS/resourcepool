@@ -39,7 +39,7 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	service, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storagecluster", api.AysRepo, nil, nil)
 
 	if err != nil {
-		errmsg := fmt.Sprintf("error executing blueprint for Storage cluster %s deletion", storageCluster)
+		errmsg := fmt.Sprintf("error getting storagecluster %s service", storageCluster)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}

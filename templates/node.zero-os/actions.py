@@ -12,17 +12,22 @@ def get_statsdb(service):
     if statsdb_services:
         return statsdb_services[0]
 
+
 def get_version(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     service = job.service
-    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    if service.model.data.status != 'running':
+        version = ''
+    else:
+        node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+        pong = node.client.ping()
+        version = pong.split('Version: ')[1] if pong else ''
 
-    pong = node.client.ping()
-    version = pong.split('Version: ')[1] if pong else ''
     service.model.data.version = version
     service.saveAll()
     return version
+
 
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
@@ -107,7 +112,6 @@ def install(job):
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
 
 
-
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
@@ -132,22 +136,10 @@ def monitor(job):
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
         service.consume(healthcheck_service)
 
-    start = time.time()
-    while time.time() < start + 30:
-        try:
-            node = Node.from_ays(service, token, timeout=5)
-            node.client.testConnectionAttempts = 0
-            state = node.client.ping()
-        except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
-            err = error
-            state = False
-        if state:
-            break
-        time.sleep(1)
-    else:
-        print("Could not ping %s within 30 seconds due to %s" % (service.name, err))
-
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
+
+    node = Node.from_ays(service, token, timeout=5)
+    state = node.is_running()
 
     if state:
         service.model.data.status = 'running'

@@ -39,11 +39,14 @@ def _prepare_device(node, devicename):
 class StoragePools:
     def __init__(self, node):
         self.node = node
-        self._client = node._client
+
+    @property
+    def client(self):
+        return self.node.client
 
     def list(self):
         storagepools = []
-        btrfs_list = self._client.btrfs.list()
+        btrfs_list = self.client.btrfs.list()
         for btrfs in btrfs_list:
             if btrfs['label'].startswith('sp_'):
                 name = btrfs['label'].split('_', 1)[1]
@@ -66,7 +69,7 @@ class StoragePools:
             part = _prepare_device(self.node, device)
             device_names.append(part.devicename)
 
-        self._client.btrfs.create(label, device_names, metadata_profile, data_profile, overwrite=overwrite)
+        self.client.btrfs.create(label, device_names, metadata_profile, data_profile, overwrite=overwrite)
         pool = StoragePool(self.node, name, device_names)
         return pool
 
@@ -75,11 +78,14 @@ class StoragePool(Mountable):
 
     def __init__(self, node, name, devices):
         self.node = node
-        self._client = node._client
         self.devices = devices
         self.name = name
         self._mountpoint = None
         self._ays = None
+
+    @property
+    def client(self):
+        return self.node.client
 
     @property
     def devicename(self):
@@ -106,9 +112,9 @@ class StoragePool(Mountable):
             partition = partitionmap.get(diskpath)
             if partition:
                 disk = partition.disk
-                self._client.disk.rmpart(disk.name, 1)
+                self.client.disk.rmpart(disk.name, 1)
                 if zero:
-                    self._client.bash('test -b /dev/{0} && dd if=/dev/zero bs=1M count=500 of=/dev/{0}'.format(diskpath)).get()
+                    self.client.bash('test -b /dev/{0} && dd if=/dev/zero bs=1M count=500 of=/dev/{0}'.format(diskpath)).get()
         return
 
     @property
@@ -140,11 +146,11 @@ class StoragePool(Mountable):
             logger.debug("add device %s to %s", device, self)
             to_add.append(part.devicename)
 
-        self._client.btrfs.device_add(self._get_mountpoint(), *to_add)
+        self.client.btrfs.device_add(self._get_mountpoint(), *to_add)
         self.devices.extend(to_add)
 
     def device_remove(self, *devices):
-        self._client.btrfs.device_remove(self._get_mountpoint(), *devices)
+        self.client.btrfs.device_remove(self._get_mountpoint(), *devices)
         for device in devices:
             if device in self.devices:
                 logger.debug("remove device %s to %s", device, self)
@@ -154,7 +160,7 @@ class StoragePool(Mountable):
     def fsinfo(self):
         if self.mountpoint is None:
             raise ValueError("can't get fsinfo if storagepool is not mounted")
-        return self._client.btrfs.info(self.mountpoint)
+        return self.client.btrfs.info(self.mountpoint)
 
     @mountpoint.setter
     def mountpoint(self, value):
@@ -169,18 +175,18 @@ class StoragePool(Mountable):
 
     @property
     def info(self):
-        for fs in self._client.btrfs.list():
+        for fs in self.client.btrfs.list():
             if fs['label'] == 'sp_{}'.format(self.name):
                 return fs
         return None
 
     def raw_list(self):
         mountpoint = self._get_mountpoint()
-        return self._client.btrfs.subvol_list(mountpoint) or []
+        return self.client.btrfs.subvol_list(mountpoint) or []
 
     def get_devices_and_status(self):
         device_map = []
-        disks = self._client.disk.list()['blockdevices']
+        disks = self.client.disk.list()['blockdevices']
         pool_status = 'healthy'
         for device in self.devices:
             info = None
@@ -198,7 +204,7 @@ class StoragePool(Mountable):
 
             status = 'healthy'
             if info['subsystems'] != 'block:virtio:pci':
-                result = self._client.bash("smartctl -H %s > /dev/null ;echo $?" % disk_name).get()
+                result = self.client.bash("smartctl -H %s > /dev/null ;echo $?" % disk_name).get()
                 exit_status = int(result.stdout)
 
                 if exit_status & 1 << 0:
@@ -250,9 +256,9 @@ class StoragePool(Mountable):
         logger.debug("Create filesystem %s on %s", name, self)
         mountpoint = self._get_mountpoint()
         fspath = os.path.join(mountpoint, 'filesystems')
-        self._client.filesystem.mkdir(fspath)
+        self.client.filesystem.mkdir(fspath)
         subvolpath = os.path.join(fspath, name)
-        self._client.btrfs.subvol_create(subvolpath)
+        self.client.btrfs.subvol_create(subvolpath)
         if quota:
             pass
         return FileSystem(name, self)
@@ -297,26 +303,29 @@ class FileSystem:
     def __init__(self, name, pool):
         self.name = name
         self.pool = pool
-        self._client = pool.node.client
         self.subvolume = "filesystems/{}".format(name)
         self.path = os.path.join(self.pool.mountpoint, self.subvolume)
         self.snapshotspath = os.path.join(self.pool.mountpoint, 'snapshots', self.name)
         self._ays = None
 
+    @property
+    def client(self):
+        return self.pool.node.client
+
     def delete(self, includesnapshots=True):
         """
         Delete filesystem
         """
-        paths = [fs['Path'] for fs in self._client.btrfs.subvol_list(self.path)]
+        paths = [fs['Path'] for fs in self.client.btrfs.subvol_list(self.path)]
         paths.sort(reverse=True)
         for path in paths:
             rpath = os.path.join(self.path, os.path.relpath(path, self.subvolume))
-            self._client.btrfs.subvol_delete(rpath)
-        self._client.btrfs.subvol_delete(self.path)
+            self.client.btrfs.subvol_delete(rpath)
+        self.client.btrfs.subvol_delete(self.path)
         if includesnapshots:
             for snapshot in self.list():
                 snapshot.delete()
-            self._client.filesystem.remove(self.snapshotspath)
+            self.client.filesystem.remove(self.snapshotspath)
 
     def get(self, name):
         """
@@ -332,8 +341,8 @@ class FileSystem:
         List snapshots
         """
         snapshots = []
-        if self._client.filesystem.exists(self.snapshotspath):
-            for fileentry in self._client.filesystem.list(self.snapshotspath):
+        if self.client.filesystem.exists(self.snapshotspath):
+            for fileentry in self.client.filesystem.list(self.snapshotspath):
                 if fileentry['is_dir']:
                     snapshots.append(Snapshot(fileentry['name'], self))
         return snapshots
@@ -352,8 +361,8 @@ class FileSystem:
         snapshot = Snapshot(name, self)
         if self.exists(name):
             raise RuntimeError("Snapshot path {} exists.")
-        self._client.filesystem.mkdir(self.snapshotspath)
-        self._client.btrfs.subvol_snapshot(self.path, snapshot.path)
+        self.client.filesystem.mkdir(self.snapshotspath)
+        self.client.btrfs.subvol_snapshot(self.path, snapshot.path)
         return snapshot
 
     @property
@@ -370,17 +379,20 @@ class FileSystem:
 class Snapshot:
     def __init__(self, name, filesystem):
         self.filesystem = filesystem
-        self._client = filesystem.pool.node.client
         self.name = name
         self.path = os.path.join(self.filesystem.snapshotspath, name)
         self.subvolume = "snapshots/{}/{}".format(self.filesystem.name, name)
 
+    @property
+    def client(self):
+        return self.filesystem.pool.node.client
+
     def rollback(self):
         self.filesystem.delete(False)
-        self._client.btrfs.subvol_snapshot(self.path, self.filesystem.path)
+        self.client.btrfs.subvol_snapshot(self.path, self.filesystem.path)
 
     def delete(self):
-        self._client.btrfs.subvol_delete(self.path)
+        self.client.btrfs.subvol_delete(self.path)
 
     def __repr__(self):
         return "Snapshot <{}: {!r}>".format(self.name, self.filesystem)

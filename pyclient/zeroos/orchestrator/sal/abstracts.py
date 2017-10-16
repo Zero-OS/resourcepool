@@ -12,9 +12,9 @@ class Mountable:
         if self.mountpoint == target:
             return
 
-        self._client.bash('mkdir -p {}'.format(target))
+        self.client.bash('mkdir -p {}'.format(target))
 
-        self._client.disk.mount(
+        self.client.disk.mount(
             source=self.devicename,
             target=target,
             options=options,
@@ -28,8 +28,8 @@ class Mountable:
         """
         _mount = self.mountpoint
         if _mount:
-            self._client.disk.umount(
+            self.client.disk.umount(
                 source=_mount,
             )
-            self._client.bash("rm -rf %s" % _mount).get()
+            self.client.bash("rm -rf %s" % _mount).get()
         self.mountpoint = None
