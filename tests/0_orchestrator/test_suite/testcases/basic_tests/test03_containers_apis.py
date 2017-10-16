@@ -677,7 +677,7 @@ class TestcontaineridAPI(TestcasesBase):
         core0_mem_info = container_client.info.mem()
 
         for key in orchestrator_mem_info.keys():
-            delta = 0.1 * orchestrator_mem_info[key]
+            delta = 0.05 * orchestrator_mem_info[key]
             self.assertAlmostEquals(core0_mem_info[key], orchestrator_mem_info[key], delta=delta)
     
     def test023_get_container_cpus(self):
