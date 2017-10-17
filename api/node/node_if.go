@@ -171,6 +171,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// CreateGW is the handler for POST /nodes/{nodeid}/gws
 	// Create a new gateway
 	CreateGW(http.ResponseWriter, *http.Request)
+	// MigrateGW is the handler for POST /hodex/{nodeid}/gws/{gwname}/migrate
+	// Migrate gateway to a new node
+	MigrateGW(w http.ResponseWriter, r *http.Request)
 	// GetNodeOSInfo is the handler for GET /nodes/{nodeid}/info
 	// Get detailed information of the OS of the node
 	GetNodeOSInfo(http.ResponseWriter, *http.Request)
@@ -380,6 +383,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}", i.GetHTTPProxy).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.ListHTTPProxies).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.CreateHTTPProxies).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/migrate", i.MigrateGW).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/start", i.StartGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/stop", i.StopGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}", i.DeleteGateway).Methods("DELETE")
