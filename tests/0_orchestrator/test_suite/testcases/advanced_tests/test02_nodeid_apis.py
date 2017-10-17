@@ -30,17 +30,15 @@ class TestNodeidAPI(TestcasesBase):
         """
 
         self.lg.info('Create a gateway with processes that corresponds to certain services')
-        nics = {"name": "nic2", "type": "vxlan", "id": "100",
-                "config": {"cidr": "192.168.112.22/24"},
-                "dhcpserver":
-                {"nameservers": ["8.8.8.8"],
-                 "hosts": [
-                 {"macaddress": "00:A0:C9:14:C8:29",
-                  "hostname": "test", "ipaddress": "192.168.112.11",
-                  "cloudinit":
-                        {"metadata": "{\"local-hostname\":\"myvm\"}",
-                         "userdata": "{\"users\":[{\"name\":\"myuser\",\"plain_text_passwd\":\"mypassword\"}]}"
-                         }}]}}
+        nics_gen = [{
+            'type': random.choice(['vlan', 'vxlan']),
+            'gateway': True,
+            'dhcp': True,
+            'bridge_name': '',
+            'zerotierbridge': False}]
+        nics = self.get_gateway_nic(nics_types=nics_gen)
+        nics['dhcpserver']['hosts']['cloudinit'] = {"metadata": "{\"local-hostname\":\"myvm\"}",
+                                                    "userdata": "{\"users\":[{\"name\":\"myuser\",\"plain_text_passwd\":\"mypassword\"}]}"}
         httpproxies = [
             {"host": "192.168.58.22",
              "types": ["http", "https"],
