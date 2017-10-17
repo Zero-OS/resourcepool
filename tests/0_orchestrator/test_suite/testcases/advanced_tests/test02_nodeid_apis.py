@@ -13,7 +13,7 @@ class TestNodeidAPI(TestcasesBase):
         #. Create a gateway with processes that corresponds to certain services.
         #. Create a bridge on node (N0), should succeed.
         #. Create storagepool (SP0) on node (N0), should succeed
-        #. Reboot the node, should succeed.
+        #. Reboot the node and check if it is running, should succeed.
         #. Make sure that all the processes are running.
         #. Make sure the Bridge is recreated and the Storagepool is remounted
         """
@@ -60,9 +60,13 @@ class TestNodeidAPI(TestcasesBase):
         self.assertEqual(response_sp.status_code, 201)
 
 
-        self.lg.info('Reboot the node, should succeed')
+        self.lg.info('Reboot the node and check if it is running, should succeed')
         response = self.nodes_api.post_nodes_nodeid_reboot(self.nodeid)
         self.assertEqual(response.status_code, 204)
+        response = self.nodes_api.get_nodes_nodeid(node_id=self.nodeid)
+        self.assertEqual(response.status_code, 200)
+        status = [node['status'] for node in response.json() if node['id'] == self.nodeid]
+        self.assertEqual('running', status[0])
 
         self.lg.info('Make sure that all the processes are running')
         processes = str(self.core0_client.get_processes_list())
@@ -74,9 +78,9 @@ class TestNodeidAPI(TestcasesBase):
         self.assertIn('statscollector', processes)
 
         self.lg.info('Make sure the Bridge is recreated and the Storagepool is remounted')
-        response = str(client.bash('ip a').get())
+        response = str(core0_client.bash('ip a').get())
         self.assertIn(data_b['name'], response)
-        response = str(client.bash('df -h').get())
+        response = str(core0_client.bash('df -h').get())
         self.assertIn('/mnt/storagepools/%s' % data_sp['name'], response)
 
         self.lg.info('Delete the gateway')
