@@ -78,9 +78,9 @@ class TestNodeidAPI(TestcasesBase):
         self.assertIn('statscollector', processes)
 
         self.lg.info('Make sure the Bridge is recreated and the Storagepool is remounted')
-        response = str(core0_client.bash('ip a').get())
+        response = str(self.core0_client.bash('ip a').get())
         self.assertIn(data_b['name'], response)
-        response = str(core0_client.bash('df -h').get())
+        response = str(self.core0_client.bash('df -h').get())
         self.assertIn('/mnt/storagepools/%s' % data_sp['name'], response)
 
         self.lg.info('Delete the gateway')
