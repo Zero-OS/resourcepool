@@ -60,6 +60,8 @@ def init(job):
     # Create storage cluster dashboards
     blockcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
     objectcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
+    print(blockcluster_services)
+    print(objectcluster_services)
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     for clusterservice in blockcluster_services:
@@ -112,10 +114,7 @@ def get_stats_collector_from_node(service):
 
 
 def install(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    job.service.executeAction('start', context=job.context)
+    start(job)
 
 
 def start(job):
@@ -147,10 +146,8 @@ def stop(job):
     job.service.model.data.status = 'halted'
     job.service.saveAll()
 
-
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
-
     influxdb.executeAction('stop', context=job.context)
     grafana.executeAction('stop', context=job.context)
 
