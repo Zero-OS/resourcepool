@@ -147,9 +147,8 @@ def stop(job):
                 continue
             return
 
-        if force_stop:
-            # if we couldn't stop the process gently and force stop is set, just kill it
-            container.client.job.kill(pid, signal=signal.SIGKILL)
+        # if we couldn't stop the process gently, just kill it
+        container.client.job.kill(pid, signal=signal.SIGKILL)
 
         if is_job_running(container, socket=service.model.data.socketPath):
             raise j.exceptions.RuntimeError("nbdserver %s didn't stop" % service.model.name)
