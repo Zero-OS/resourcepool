@@ -37,7 +37,7 @@ class TestNodeidAPI(TestcasesBase):
             'bridge_name': '',
             'zerotierbridge': False}]
         nics = self.get_gateway_nic(nics_types=nics_gen)
-        nics['dhcpserver']['hosts']['cloudinit'] = {"metadata": "{\"local-hostname\":\"myvm\"}",
+        nics['dhcpserver']['hosts'][0]['cloudinit'] = {"metadata": "{\"local-hostname\":\"myvm\"}",
                                                     "userdata": "{\"users\":[{\"name\":\"myuser\",\"plain_text_passwd\":\"mypassword\"}]}"}
         httpproxies = [
             {"host": "192.168.58.22",
