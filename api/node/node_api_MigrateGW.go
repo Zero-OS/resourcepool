@@ -63,7 +63,7 @@ func (api *NodeAPI) MigrateGW(w http.ResponseWriter, r *http.Request) {
 			"node": reqBody.Node,
 		},
 	}
-	//aysClient.UpdateBlueprint()
+
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", bp)
 
 	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwname)
