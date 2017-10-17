@@ -204,7 +204,12 @@ def get_zerotier_nic(zerotierid, containerobj):
         raise j.exceptions.RuntimeError("Failed to get zerotier network device")
 
 
-def migrate(job, service, container, containerobj, dest):
+def migrate(job, dest):
+    from zeroos.orchestrator.sal.Container import Container
+    service = job.service
+    container = service.producers.get('container')[0]
+    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
+
     node = service.aysrepo.serviceGet(role='node', instance=dest)
     service.model.changeParent(node)
     service.saveAll()
@@ -235,7 +240,7 @@ def processChange(job):
 
     nodechanged = gatewaydata.get('node') != args.get('node')
     if nodechanged:
-        migrate(job, service, container, containerobj, args.get('node'))
+        migrate(job, args.get('node'))
         return
 
     nicchanges = gatewaydata['nics'] != args.get('nics')
