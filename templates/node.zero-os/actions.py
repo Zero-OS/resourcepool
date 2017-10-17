@@ -494,7 +494,7 @@ def start_vm(job, vm):
 
 def shutdown_vm(job, vm):
     import asyncio
-    import asynciofrom zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.configuration import get_jwt_token
 
 
     if vm.model.data.status == 'running':
