@@ -60,8 +60,6 @@ def init(job):
     # Create storage cluster dashboards
     blockcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
     objectcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
-    print(blockcluster_services)
-    print(objectcluster_services)
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     for clusterservice in blockcluster_services:
