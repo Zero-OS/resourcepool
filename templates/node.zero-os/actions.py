@@ -482,22 +482,24 @@ def ork_handler(job):
         nic_shutdown(job, message)
 
 
-async def start_vm(job, vm):
+def start_vm(job, vm):
+    import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
     if vm.model.data.status == 'running':
-        await vm.asyncExecuteAction('start', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+        asyncio.ensure_future(vm.asyncExecuteAction('start', context=job.context), loop=job.service._loop)
 
 
-async def shutdown_vm(job, vm):
+def shutdown_vm(job, vm):
+    import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     if vm.model.data.status == 'running':
-        await vm.asyncExecuteAction('shutdown', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        asyncio.ensure_future(vm.asyncExecuteAction('shutdown', context=job.context), loop=job.service._loop)
 
 
 def vm_handler(job):

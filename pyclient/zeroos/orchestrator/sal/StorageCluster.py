@@ -54,7 +54,6 @@ class BaseStorageCluster:
         """
         return len(self.storage_servers)
 
-
     def find_disks(self, disk_type):
         """
         return a list of disk that are not used by storage pool
@@ -71,6 +70,7 @@ class BaseStorageCluster:
                         return True
 
         for node in self.nodes:
+            available_disks.setdefault(node.name, [])
             for disk in node.disks.list():
                 # skip disks of wrong type
                 if disk.type.name != disk_type:
@@ -81,11 +81,11 @@ class BaseStorageCluster:
 
                 # include devices which have partitions
                 if len(disk.partitions) == 0:
-                    available_disks.setdefault(node.name, []).append(disk)
+                    available_disks[node.name].append(disk)
                 else:
                     if check_partition(disk):
                         # devices that have partitions with correct label will be in the beginning
-                        available_disks.setdefault(node.name, []).insert(0, disk)
+                        available_disks[node.name].insert(0, disk)
         return available_disks
 
     def start(self):
