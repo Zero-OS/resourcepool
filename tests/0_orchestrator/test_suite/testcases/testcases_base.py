@@ -75,7 +75,7 @@ class TestcasesBase(TestCase):
     def random_item(self, array):
         return array[random.randint(0, len(array) - 1)]
 
-    def create_zerotier_network(self, default_config=True, private=False):
+    def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
         if default_config:
             data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
@@ -83,8 +83,6 @@ class TestcasesBase(TestCase):
                                'private': private,
                                'routes': [{'target': '10.147.17.0/24', 'via': None}],
                                'v4AssignMode': {'zt': True}}}
-        else:
-            data = {}
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']
