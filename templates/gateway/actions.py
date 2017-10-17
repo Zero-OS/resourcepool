@@ -217,27 +217,26 @@ def processChange(job):
         return
 
     gatewaydata = service.model.data.to_dict()
+    container = service.producers.get('container')[0]
+    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
+
     nodechanged = gatewaydata.get('node') != args.get('node')
     if nodechanged:
         node = service.aysrepo.serviceGet(role='node', instance=args.get('node'))
-        service.executeAction('stop', context=job.context)
         service.model.changeParent(node)
         service.saveAll()
-        for container in service.producers['container']:
-            container.executeAction('stop', context=job.context)
-            container.model.changeParent(node)
-            container.saveAll()
-            container.executeAction('install', context=job.context)
+
+        container.model.changeParent(node)
+        container.saveAll()
+        container.executeAction('install', context=job.context)
 
         service.executeAction('start', context=job.context)
+        containerobj.stop()
         return
 
     nicchanges = gatewaydata['nics'] != args.get('nics')
     httproxychanges = gatewaydata['httpproxies'] != args.get('httpproxies')
     portforwardchanges = gatewaydata['portforwards'] != args.get('portforwards')
-
-    container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
 
     if nicchanges:
         nics_args = {'nics': args['nics']}

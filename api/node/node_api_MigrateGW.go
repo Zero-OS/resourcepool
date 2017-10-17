@@ -73,5 +73,4 @@ func (api *NodeAPI) MigrateGW(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", reqBody.Node, gwname))
 	w.WriteHeader(http.StatusOK)
-
 }
