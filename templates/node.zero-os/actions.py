@@ -354,10 +354,6 @@ def watchdog(job):
     }
 
     async def callback(jobid, level, message, flag):
-        if "nbd" in jobid:
-            print("****** nbd: %s" % message)
-        if "tlog" in jobid:
-            print("****** tlog: %s" % message)
         if '.' not in jobid:
             return
 
@@ -486,30 +482,27 @@ def ork_handler(job):
         nic_shutdown(job, message)
 
 
-def start_vm(job, vm):
-    import asyncio
+async def start_vm(job, vm):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('start', context=job.context)
+        await vm.asyncExecuteAction('start', context=job.context)
 
 
-def shutdown_vm(job, vm):
-    import asyncio
+async def shutdown_vm(job, vm):
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('shutdown', context=job.context)
+        await vm.asyncExecuteAction('shutdown', context=job.context)
 
 
 def vm_handler(job):
     import json
+    import asyncio
 
     message = job.model.args.get('message')
     if not message:
@@ -521,10 +514,10 @@ def vm_handler(job):
         return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job, vm)
+        asyncio.ensure_future(start_vm(job, vm))
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
-        shutdown_vm(job, vm)
+        asyncio.ensure_future(shutdown_vm(job, vm))
 
 
 def processChange(job):
@@ -534,4 +527,3 @@ def processChange(job):
     if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
         service.model.data.forceReboot = args['forceReboot']
         service.saveAll()
-
