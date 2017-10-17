@@ -32,6 +32,21 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Prevent deletion of nonempty clusters
+	query := map[string]interface{}{
+		"consume": fmt.Sprintf("vdisk!%s", vdiskID),
+	}
+	services, res, err := aysClient.Ays.ListServicesByRole("vm", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+		return
+	}
+
+	if len(services) > 0 {
+		err := fmt.Errorf("Can't delete vdisk that is attached to VM")
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
+	}
+
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
