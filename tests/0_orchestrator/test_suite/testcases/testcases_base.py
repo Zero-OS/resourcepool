@@ -1,4 +1,4 @@
-import uuid, random, requests, time, signal, logging, subprocess
+import uuid, random, requests, time, signal, logging, subprocess, zerotier
 from unittest import TestCase
 from framework.orchestrator_driver import OrchasteratorDriver
 from nose.tools import TimeExpired
@@ -12,7 +12,6 @@ class TestcasesBase(TestCase):
         super().__init__(*args, **kwargs)
         self.utiles = Utiles()
         self.lg = self.utiles.logging
-
         self.nodes_api = self.orchasterator_driver.nodes_api
         self.containers_api = self.orchasterator_driver.container_api
         self.gateways_api = self.orchasterator_driver.gateway_api
@@ -23,6 +22,8 @@ class TestcasesBase(TestCase):
         self.vms_api = self.orchasterator_driver.vms_api
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
+        self.zerotier_client = zerotier.APIClient()
+        self.zerotier_client.set_auth_header('Bearer {}'.format(self.zerotier_token))
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
@@ -77,12 +78,17 @@ class TestcasesBase(TestCase):
 
     def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
+        
         if default_config:
-            data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
-                                                      'ipRangeStart': '10.147.17.1'}],
+            target = '10.{}.{}.0/24'.format(random.randint(1, 254), random.randint(1, 254))
+            ipRangeStart = target[:-4] + '1'
+            ipRangeEnd = target[:-4] + '254'
+            data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': ipRangeEnd,
+                                                      'ipRangeStart': ipRangeStart}],
                                'private': private,
-                               'routes': [{'target': '10.147.17.0/24', 'via': None}],
+                               'routes': [{'target': target, 'via': None}],
                                'v4AssignMode': {'zt': True}}}
+
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']
@@ -193,30 +199,48 @@ class TestcasesBase(TestCase):
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
-    def add_ssh_key_to_vm(self, vnc_ip, username, password, zerotier_ID=None):
+    def enable_ssh_access(self, vnc_ip, username, password, zerotier_nwid=None):
         """
             Add ssh key to a vm with active vnc protocol.
         """
-        vnc = "vncdotool -s %s" % vnc_ip
-        commands = ["%s" % username, "%s" % password, """ 'sudo su' """, "%s" % password,
-                    """ 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd' """, """ "service sshd restart" """
-                    ]
+        vnc = 'vncdotool -s %s' % vnc_ip
+        commands = [
+            '%s' % username, 
+            '%s' % password, 
+            'sudo su', 
+            '%s' % password,
+            'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd',
+            'service sshd restart'
+        ]
 
-        if zerotier_ID:
-            commands.extend([""" "curl -s https" """, """ "//install.zerotier.com -o zr.sh" """, """ 'bash zr.sh' """,
-                             """ "zerotier-cli join %s" """ % zerotier_ID])
+        if zerotier_nwid:
+            zerotier_commands = [
+                'curl -s https',
+                '//install.zerotier.com -o zr.sh',
+                'bash zr.sh',
+                'zerotier-cli join %s' % zerotier_nwid
+            ]
+            commands.extend(zerotier_commands)
 
         for cmd in commands:
             if "sed" in cmd:
-                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, cmd))
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, repr(cmd)))
                 self.utiles.execute_shell_commands(cmd="%s key shift-_ type config key enter" % vnc)
                 time.sleep(1)
             elif 'https' in cmd:
-                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, cmd))
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, repr(cmd)))
                 self.utiles.execute_shell_commands(cmd="%s key shift-:" % vnc)
             else:
-                self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, cmd))
+                self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, repr(cmd)))
                 time.sleep(1)
+
+    def get_zerotier_members_ips(self, nwid):
+        members_ips = []
+        response = self.zerotier_client.network.listMembers(nwid)
+        for member in response.json():
+            members_ips.extend(member['config']['ipAssignments'])
+        
+        return members_ips
 
 
 class Utiles:
