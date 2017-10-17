@@ -856,6 +856,7 @@ def updateNics(job, client, args):
     service.model.data.nics = args['nics']
     service.saveAll()
 
+
 def update_data(job, args):
     from zeroos.orchestrator.configuration import get_jwt_token
 
