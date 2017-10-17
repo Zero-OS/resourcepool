@@ -5,6 +5,16 @@ from testcases.core0_client import Client
 
 
 class TestVmsAPI(TestcasesBase):
+    @classmethod
+    def setUpClass(cls):
+        self = cls()
+        data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '192.168.191.254',
+                                                  'ipRangeStart': '192.168.191.1'}],
+                           'private': False,
+                           'routes': [{'target': '192.168.191.0/24', 'via': None}],
+                           'v4AssignMode': {'zt': True}}}
+        cls.vm_zerotier = self.create_zerotier_network(default_config=False, data=data)
+
     def setUp(self):
         super().setUp()
         nodes = [self.nodeid]
@@ -35,14 +45,16 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
 
         self.lg.info(' [*] Create vdisk ')
-        body = {"type":"boot", "blocksize":4096,"readOnly":False,"size":15}
-        response, self.vdisk = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"], imageid=self.imagedata["imageName"], **body)
+        body = {"type": "boot", "blocksize": 4096, "readOnly": False, "size": 15}
+        response, self.vdisk = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"],
+                                                           imageid=self.imagedata["imageName"], **body)
         self.assertEqual(response.status_code, 201, " [*] Can't create vdisk.")
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
 
         if self.id().split('.')[-1] != 'test003_post_node_vms':
             self.lg.info(' [*] Create virtual machine (VM0) on node (N0)')
-            self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
+            self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1,
+                                                                   disks=self.disks)
             self.assertEqual(self.response.status_code, 201)
 
     def tearDown(self):
@@ -64,6 +76,8 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] Get virtual machine (VM0), should succeed with 200')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
+        import ipdb;
+        ipdb.set_trace()
         keys_to_check = ['id', 'memory', 'cpu', 'nics', 'disks']
         for key in keys_to_check:
             self.assertEqual(self.data[key], response.json()[key])
@@ -84,7 +98,8 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200.
         """
-        self.lg.info(' [*] List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200')
+        self.lg.info(
+            ' [*] List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200')
         response = self.vms_api.get_nodes_vms(self.nodeid)
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data['id'], [x['id'] for x in response.json()])
@@ -366,7 +381,6 @@ class TestVmsAPI(TestcasesBase):
         vm0 = [x for x in vms if x['name'] == self.data['id']]
         self.assertEqual(vm0, [])
 
-
     def test011_post_nodes_vms_vmid_migrate(self):
         """ GAT-077
         **Test Scenario:**
@@ -421,7 +435,8 @@ class TestVmsAPI(TestcasesBase):
         self.assertNotIn(self.data['id'], res.stdout)
         res = new_core0_client.client.bash('ls /tmp').get()
         self.assertNotIn(self.data['id'], res.stdout)
-        res = new_core0_client.client.bash("netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
+        res = new_core0_client.client.bash(
+            "netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
         self.assertNotIn('400', res.stdout)
 
     def test012_create_two_vms_with_same_vdisk(self):
