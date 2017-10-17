@@ -112,10 +112,7 @@ def get_stats_collector_from_node(service):
 
 
 def install(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    job.service.executeAction('start', context=job.context)
+    start(job)
 
 
 def start(job):
@@ -147,10 +144,8 @@ def stop(job):
     job.service.model.data.status = 'halted'
     job.service.saveAll()
 
-
     influxdb = get_influxdb(job.service)
     grafana = get_grafana(job.service)
-
     influxdb.executeAction('stop', context=job.context)
     grafana.executeAction('stop', context=job.context)
 
