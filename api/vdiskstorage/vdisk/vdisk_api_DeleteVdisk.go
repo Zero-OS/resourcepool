@@ -28,7 +28,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("A vdisk with ID %s does not exist", vdiskID), "")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
