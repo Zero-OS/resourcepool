@@ -64,16 +64,13 @@ func (api *NodeAPI) MigrateGW(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "gateway", gwname, "update", bp)
+	_, err = aysClient.UpdateBlueprint(api.AysRepo, "gateway", gwname, "update", bp)
 
 	errmsg := fmt.Sprintf("error executing blueprint for gateway %s creation ", gwname)
 	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
-		return
-	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/gws/%s", reqBody.Node, gwname))
 	w.WriteHeader(http.StatusOK)
 
