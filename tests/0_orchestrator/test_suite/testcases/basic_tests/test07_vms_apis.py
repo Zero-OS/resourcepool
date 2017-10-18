@@ -1,8 +1,7 @@
-import random, time
+import random, time, unittest
 from testcases.testcases_base import TestcasesBase
-import unittest, time
 from testcases.core0_client import Client
-
+from parameterized import parameterized
 
 class TestVmsAPI(TestcasesBase):
     @classmethod
@@ -70,13 +69,13 @@ class TestVmsAPI(TestcasesBase):
         response = self.vms_api.get_nodes_vms_vmid(nodeid=self.nodeid, vmid=self.data['id'])
         self.assertEqual(response.status_code, 200)
 
+        self.lg.info('[*] Get virtual machine (VM0) default ip')
+        self.vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
+
+        self.lg.info('[*] Enable ssh access to virtual machine (VM0)')      
         vm_vnc_port = response.json()['vnc'] - 5900
         vm_vnc_url = '{}:{}'.format(self.nodeip, vm_vnc_port)
-
-        time.sleep(20)
-
         self.enable_ssh_access(vm_vnc_url)
-        self.vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
 
 
     def tearDown(self):
@@ -361,8 +360,9 @@ class TestVmsAPI(TestcasesBase):
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'ERROR')
 
-
-    def test011_post_nodes_vms_vmid_migrate(self):
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1199")
+    @parameterized.expand(['same_node', 'different_node'])
+    def test011_post_nodes_vms_vmid_migrate(self, destination_node):
         """ GAT-077
         **Test Scenario:**
 
@@ -372,25 +372,24 @@ class TestVmsAPI(TestcasesBase):
         #. Get virtual machine (VM0), virtual machine (VM0) status should be migrating.
         #. check that the node, VM0 moved to, is cleaned up
         """
+        print(self.data['id'])
         self.lg.info(' [*] List nodes.')
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
 
-        if len(self.nodes_info) < 2:
-            self.skipTest('need at least 2 nodes')
+        if destination_node == 'different_node':
+            if len(self.nodes_info) < 2:
+                self.skipTest('need at least 2 nodes')
 
-        self.lg.info(' [*] Migrate virtual machine (VM0) to another node, should succeed with 204')
-        new_node = self.get_random_node(except_node=self.nodeid)
+            self.lg.info(' [*] Migrate virtual machine (VM0) to another node, should succeed with 204')
+            new_node = self.get_random_node(except_node=self.nodeid)
+        else:
+            self.lg.info(' [*] Migrate virtual machine (VM0) to the same node, should succeed with 204')
+            new_node = self.nodeid
 
         body = {"nodeid": new_node}
-        try:
-            response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
-        except Exception as e:
-            self.fail(e.args)
-
+        response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 204)
-
-        time.sleep(30)
 
         response = self.vms_api.get_nodes_vms(new_node)
         self.assertEqual(response.status_code, 200)
@@ -400,9 +399,10 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running')
 
-        response = self.vms_api.get_nodes_vms(self.nodeid)
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
+        if destination_node == 'different_node':
+            response = self.vms_api.get_nodes_vms(self.nodeid)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
 
         new_node_ip = [x['ip'] for x in self.nodes_info if x['id'] == new_node]
         self.assertNotEqual(new_node_ip, [])
@@ -419,6 +419,7 @@ class TestVmsAPI(TestcasesBase):
         res = new_core0_client.client.bash(
             "netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
         self.assertNotIn('400', res.stdout)
+
 
     def test012_create_two_vms_with_same_vdisk(self):
         """ GAT-077
