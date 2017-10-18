@@ -83,6 +83,18 @@ class StoragePool(Mountable):
         self._mountpoint = None
         self._ays = None
 
+    @classmethod
+    def from_ays(cls, service, password, logger=None):
+        from .Node import Node
+        node = Node.from_ays(service.parent)
+        devices = []
+        for deviceObj in service.model.data.devices:
+            devices.append(deviceObj.device)
+        pool = cls(node=node,
+                   name=service.name,
+                   devices=devices)
+        return pool
+
     @property
     def client(self):
         return self.node.client
