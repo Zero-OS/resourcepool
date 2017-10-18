@@ -25,13 +25,13 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	query := map[string]interface{}{
 		"consume": fmt.Sprintf("storagecluster!%s", storageCluster),
 	}
-	services, res, err := aysClient.Ays.ListServicesByRole("vdisk", api.AysRepo, nil, query)
+	services, res, err := aysClient.Ays.ListServicesByRole("vdiskstorage", api.AysRepo, nil, query)
 	if !tools.HandleAYSResponse(err, res, w, "listing vdisks") {
 		return
 	}
 
 	if len(services) > 0 {
-		err := fmt.Errorf("Can't delete storage clusters with attached vdisks")
+		err := fmt.Errorf("Can't delete storage clusters with attached vdiskstorage")
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}

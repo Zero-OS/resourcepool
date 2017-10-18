@@ -94,6 +94,15 @@ class VdiskstorageService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def DeleteVdiskStorage(self, vdiskstorageid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Delete VdiskStorage
+        It is method for DELETE /vdiskstorage/{vdiskstorageid}
+        """
+        uri = self.client.base_url + "/vdiskstorage/"+vdiskstorageid
+        return self.client.delete(uri, None, headers, query_params, content_type)
+
+
     def GetVdiskStorageInfo(self, vdiskstorageid, headers=None, query_params=None, content_type="application/json"):
         """
         Get vdisk storage information

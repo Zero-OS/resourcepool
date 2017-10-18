@@ -216,12 +216,9 @@ def init(job):
 def save_config(job):
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
-    from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    aysconfig = get_configuration(job.service.aysrepo)
 
     service = job.service
     etcd_clusters = job.service.aysrepo.servicesFind(role='etcd_cluster')
@@ -233,10 +230,10 @@ def save_config(job):
 
     # Push zerostorconfig to etcd
     zerostor_services = service.producers["zerostor"]
-    zstor_organization = aysconfig["0-stor-organization"]
-    zstor_namespace = aysconfig["0-stor-namespace"]
-    zstor_clientid = aysconfig["0-stor-clientid"]
-    zstor_clientsecret = aysconfig["0-stor-clientsecret"]
+    zstor_organization = service.model.data.zerostorOrganization
+    zstor_namespace = service.model.data.zerostorNamespace
+    zstor_clientid = service.model.data.zerostorClientID
+    zstor_clientsecret = service.model.data.zerostorSecret
 
     zerostor_config = {
         "iyo": {

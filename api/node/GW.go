@@ -14,6 +14,14 @@ type GetGW struct {
 	Status         EnumGatewayStatus `json:"status" validate:"nonzero"`
 }
 
+type MigrateGW struct {
+	Node string `json:"node" yaml:"node" validate:"nonzero"`
+}
+
+func (s MigrateGW) Validate() error {
+	return validator.Validate(s)
+}
+
 type GW struct {
 	Domain       string        `json:"domain" yaml:"domain" validate:"nonzero"`
 	Httpproxies  []HTTPProxy   `json:"httpproxies,omitempty" yaml:"httpproxies"`
