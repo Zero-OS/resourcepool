@@ -206,20 +206,25 @@ def get_zerotier_nic(zerotierid, containerobj):
 
 def migrate(job, dest):
     from zeroos.orchestrator.sal.Container import Container
+    
     service = job.service
-    container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
-
     node = service.aysrepo.serviceGet(role='node', instance=dest)
+    containers = []
+    for container in service.producers.get('container'):
+        containers.append(
+            Container.from_ays(container, job.context['token'], logger=job.service.logger)
+        )
+
+        container.model.changeParent(node)
+        container.saveAll()
+        container.executeAction('install', context=job.context)
+    
     service.model.changeParent(node)
     service.saveAll()
-
-    container.model.changeParent(node)
-    container.saveAll()
-    container.executeAction('install', context=job.context)
-
     service.executeAction('start', context=job.context)
-    containerobj.stop()
+
+    for container_sal in containers:
+        container_sal.stop()
 
 
 def processChange(job):
