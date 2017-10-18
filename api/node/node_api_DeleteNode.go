@@ -30,7 +30,6 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// return if node doesnt exist
 	query := map[string]interface{}{
 		"consume": fmt.Sprintf("node!%s", nodeID),
 	}

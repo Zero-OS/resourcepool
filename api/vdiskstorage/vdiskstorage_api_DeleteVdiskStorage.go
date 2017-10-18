@@ -19,7 +19,6 @@ func (api *VdiskstorageAPI) DeleteVdiskStorage(w http.ResponseWriter, r *http.Re
 
 	vdiskstorageID := mux.Vars(r)["vdiskstorageid"]
 
-	// return if node doesnt exist
 	query := map[string]interface{}{
 		"parent": fmt.Sprintf("vdiskstorage!%s", vdiskstorageID),
 	}
@@ -48,5 +47,5 @@ func (api *VdiskstorageAPI) DeleteVdiskStorage(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusNoContent)
 }

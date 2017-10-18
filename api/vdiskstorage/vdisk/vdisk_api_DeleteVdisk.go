@@ -32,7 +32,7 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prevent deletion of nonempty clusters
+	// Prevent deletion of vdisks attached to vm
 	query := map[string]interface{}{
 		"consume": fmt.Sprintf("vdisk!%s", vdiskID),
 	}
