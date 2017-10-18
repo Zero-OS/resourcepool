@@ -13,16 +13,18 @@ class ContainersAPI(OrchestratorBase):
 
     @catch_exception_decoration_return
     def post_containers(self, nodeid, **kwargs):
-        data = {"name": self.random_string(),
-                "hostname": self.random_string(),
-                "flist": "https://hub.gig.tech/gig-official-apps/ubuntu1604.flist",
-                "hostNetworking": False,
-                "initProcesses": [],
-                "filesystems": [],
-                "ports": [],
-                "nics": [],
-                "storage": "ardb://hub.gig.tech:16379"
-                }
+        data = {
+            "name": self.random_string(),
+            "hostname": self.random_string(),
+            "flist": "https://hub.gig.tech/ah-elsayed/ubuntu.flist",
+            "hostNetworking": False,
+            "initProcesses": [],
+            "filesystems": [],
+            "ports": [],
+            "nics": [{"type":"default"}],
+            "storage": "ardb://hub.gig.tech:16379"
+        }
+
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateContainer(nodeid=nodeid, data=data)
         return response, data

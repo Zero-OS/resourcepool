@@ -1,4 +1,4 @@
-import uuid, random, requests, time, signal, logging, subprocess, zerotier
+import uuid, random, requests, time, signal, logging, subprocess
 from unittest import TestCase
 from framework.orchestrator_driver import OrchasteratorDriver
 from nose.tools import TimeExpired
@@ -22,8 +22,8 @@ class TestcasesBase(TestCase):
         self.vms_api = self.orchasterator_driver.vms_api
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
-        self.zerotier_client = zerotier.APIClient()
-        self.zerotier_client.set_auth_header('Bearer {}'.format(self.zerotier_token))
+        self.vm_username = self.orchasterator_driver.vm_username
+        self.vm_password = self.orchasterator_driver.vm_password        
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
@@ -199,7 +199,11 @@ class TestcasesBase(TestCase):
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
-    def enable_ssh_access(self, vnc_ip, username, password, zerotier_nwid=None):
+    def enable_ssh_access(self, vnc_ip, username=None, password=None, zerotier_nwid=None):
+
+        username = username or self.vm_username
+        password = password or self.vm_password
+
         """
             Add ssh key to a vm with active vnc protocol.
         """
@@ -234,13 +238,35 @@ class TestcasesBase(TestCase):
                 self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, repr(cmd)))
                 time.sleep(1)
 
-    def get_zerotier_members_ips(self, nwid):
-        members_ips = []
-        response = self.zerotier_client.network.listMembers(nwid)
-        for member in response.json():
-            members_ips.extend(member['config']['ipAssignments'])
-        
-        return members_ips
+
+    def get_vm_default_ipaddress(self, vmname):
+        cmd = "virsh dumpxml {} | grep 'mac address' | cut -d '=' -f2 | cut -d '/' -f1".format(vmname)
+        vm_mac_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+
+        cmd = "arp | grep {} | cut -d '(' -f2 | cut -d ')' -f1".format(vm_mac_addr)
+        for i in range(20):
+            vm_ip_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+            if vm_ip_addr:
+                break
+            else:
+                time.sleep(5)
+
+        return vm_ip_addr
+
+
+    def execute_command_inside_vm(self, client, vmip,  cmd, username=None, password=None):
+        username = username or self.vm_username
+        password = password or self.vm_password
+
+        cmd = 'sshpass -p "{password}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 {username}@{vmip} "{cmd}"'.format(
+            vmip=vmip,
+            username=username,
+            password=password,
+            cmd=cmd
+        )
+
+        response = client.bash(cmd).get()
+        return response
 
 
 class Utiles:
