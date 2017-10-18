@@ -41,10 +41,7 @@ def init(job):
 
 
 def install(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    job.service.executeAction('start', context=job.context)
+    start(job)
 
 
 def start(job):
@@ -92,7 +89,7 @@ def uninstall(job):
     container = get_container(service, False)
 
     if container:
-        service.executeAction('stop', context=job.context)
+        stop()
         container.delete()
     service.delete()
 

@@ -38,7 +38,6 @@ class StorageEngine:
             master = StorageEngine.from_ays(master_service, password)
         else:
             master = None
-
         return cls(
             name=service.name,
             container=container,
