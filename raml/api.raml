@@ -1411,6 +1411,16 @@ types:
               type: VdiskStorage
         404:
           description: The vdisk storage does not exist
+
+    delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: DeleteVdiskStorage
+          description: Delete VdiskStorage
+          responses:
+            204:
+              description: VdiskStorage has been deleted succefully
+
     /images:
       get:
         (AYSBased):

@@ -51683,6 +51683,10 @@ the "Authorization" header</p>
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
+            <a href="#vdiskstorage__vdiskstorageid__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
         </span>
       </h4>
     </div>
@@ -51699,6 +51703,15 @@ the "Authorization" header</p>
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Get vdisk storage information</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete VdiskStorage</p>
 
               </div>
               <div class="clearfix"></div>
@@ -51992,6 +52005,240 @@ details in a user&#39;s account without getting their password.</p>
 
                 
                   <div class="tab-pane" id="vdiskstorage__vdiskstorageid__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage</span>/{vdiskstorageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>VdiskStorage has been deleted succefully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>

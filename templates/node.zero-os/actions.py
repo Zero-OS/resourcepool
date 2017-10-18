@@ -291,6 +291,15 @@ def uninstall(job):
     if bootstraps:
         bootstraps[0].executeAction('delete_node', args={'node_name': service.name})
 
+    # Remove etcd_cluster if this was the last node service
+    node_services = service.aysrepo.servicesFind(role='node')
+    if node_services > 1:
+        return
+
+    for etcd_cluster_service in service.aysrepo.servicesFind(role='etcd_cluster'):
+        etcd_cluster_service.executeAction('delete', context=job.context)
+        etcd_cluster_service.delete()
+
 
 def watchdog(job):
     from zeroos.orchestrator.sal.Pubsub import Pubsub
