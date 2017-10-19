@@ -27,7 +27,7 @@ def find_disks(disk_type, nodes, partitionName):
         for disk in node.disks.list():
             # skip disks of wrong type
             if disk.type.name != disk_type:
-                    continue
+                continue
             # skip devices which have filesystems on the device
             if len(disk.filesystems) > 0:
                 continue
