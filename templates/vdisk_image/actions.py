@@ -98,8 +98,6 @@ def delete(job):
 
 
 def save_config(job):
-    import hashlib
-    from urllib.parse import urlparse
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -124,7 +122,6 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
-    vdiskType = "boot"
     objectStoragecluster = vdiskstore.model.data.objectCluster
     if objectStoragecluster:
         config = {

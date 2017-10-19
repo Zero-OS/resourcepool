@@ -13,8 +13,6 @@ def input(job):
 
 def recover_full_once(job, cluster, engine, vdisk):
     import time
-    import asyncio
-    loop = j.atyourservice.server.loop
     # the recovery action is granteed to run one time even if called many times (at the same time)
     # it can only be executed again when it finishes executing, otherwise callers will just return (not blocked)
     # this is to avoid executing the same recover scenario when the same error is reported via multiple nbdservers.
@@ -42,9 +40,9 @@ def recover_full_once(job, cluster, engine, vdisk):
         engine.reload()
 
     if not broken:
-        #Note: the restart of the machine is due too nbdserver crash on losing a connection
-        #once nbdserver is fixed, there will be no need to restart the machine, and we can
-        #just return in case the storage engine is not broken.
+        # Note: the restart of the machine is due too nbdserver crash on losing a connection
+        # once nbdserver is fixed, there will be no need to restart the machine, and we can
+        # just return in case the storage engine is not broken.
         vms = vdisk.consumers.get('vm', [])
         if len(vms) == 0:
             return
@@ -76,7 +74,6 @@ def recover_full_once(job, cluster, engine, vdisk):
     # TODO: find a way to do the rollback concurently, now it's sequential
     for vdisk in job.service.consumers.get('vdisk', []):
         vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context)
-
 
     job.logger.info("all rollback processes has been completed")
     job.logger.info("restarting virtual machines")

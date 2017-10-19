@@ -142,7 +142,6 @@ def init(job):
 
 def start_dependent_services(job):
     import random
-    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -160,7 +159,6 @@ def start_dependent_services(job):
         node = random.choice(services)
 
     tlog_container_service = create_zerodisk_container_service(job, node, "tlog")
-    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
 
     nbd_container_service = create_zerodisk_container_service(job, service.parent, "nbd")
     _init_zerodisk_services(job, nbd_container_service, tlog_container_service)
@@ -857,6 +855,7 @@ def updateNics(job, client, args):
 
     service.model.data.nics = args['nics']
     service.saveAll()
+
 
 def update_data(job, args):
     from zeroos.orchestrator.configuration import get_jwt_token

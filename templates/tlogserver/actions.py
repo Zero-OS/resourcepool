@@ -182,7 +182,7 @@ def stop(job):
             if not is_port_listening(container, port):
                 break
             raise j.exceptions.RuntimeError("Failed to stop Tlog server")
-    
+
     # after stop, in case this service was consume by another tlog server for synchronisation
     # need to clean the consumer relation cause the sync is done just before stop.
     # the relation doesn't need to exists anymore.
