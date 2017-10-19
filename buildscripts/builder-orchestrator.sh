@@ -1,24 +1,21 @@
 #!/bin/bash
 set -e
 source $(dirname $0)/tools.sh
+
 ensure_go
-
-branch="master"
-echo $1
-
-if [ "$1" != "" ]; then
-    branch="$1"
-fi
 
 apt-get update
 apt-get install -y curl git
 
-git clone -b "${branch}" https://github.com/zero-os/0-orchestrator.git $GOPATH/src/github.com/zero-os/0-orchestrator
 
-cd $GOPATH/src/github.com/zero-os/0-orchestrator/api
-go get -v
+GOPATH=/gopath
+ORCH=$ORCH
+mkdir -p $GOPATH/src/github.com/zero-os
 
+mv /0-orchestrator $ORCH
+
+
+cd $ORCH/api
 CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' .
 
-mkdir -p /tmp/archives/
-tar -czf "/tmp/archives/rest-api-${branch}.tar.gz" api
+tar -czf "/target/0-orchestrator.tar.gz" api
