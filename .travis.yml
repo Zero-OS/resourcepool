@@ -14,6 +14,8 @@ matrix:
         - bash tests/0_orchestrator/run_tests.sh run
       after_script:
         - bash tests/0_orchestrator/run_tests.sh after
+      after_failure:
+        - cat tests/0_orchestrator/test_suite/test_suite.log
 
     - language: go
       sudo: true
