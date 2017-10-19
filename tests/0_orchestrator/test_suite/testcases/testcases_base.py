@@ -225,7 +225,6 @@ class Utiles:
 
     def logger(self):
         logger = logging.getLogger('0-Orchestrator')
-        logger.setLevel(logging.INFO)
         if not logger.handlers:
             fileHandler = logging.FileHandler('test_suite.log', mode='w')  
             formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
@@ -233,6 +232,7 @@ class Utiles:
             logger.addHandler(fileHandler)
 
         return logger
+        
         
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
