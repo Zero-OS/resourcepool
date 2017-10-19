@@ -6,6 +6,10 @@ def input(job):
     args = job.model.args
     if args.get('type') != 'boot' and args.get('imageId'):
         raise j.exceptions.Input("Only boot vdisks can have an image")
+
+    if args.get('backupUrl'):
+        return
+
     if args.get('type') == 'boot' and not args.get('imageId'):
         raise j.exceptions.Input("imageId is a required field for boot vdisks")
     if args.get('type') == 'boot':
@@ -309,16 +313,15 @@ def export(job):
         if cryptoKey:
             cmd += " --key {cryptoKey}".format(cryptoKey=cryptoKey)
         job.logger.info(cmd)
-        # container_job = container.client.system(cmd, id="vdisk.export.%s" % service.name)
+        container_job = container.client.system(cmd, id="vdisk.export.%s" % service.name)
 
-        # try:
-        #     container.waitOnJob(container_job)
-        # except Exception as e:
-        #     strerror = e.args[0]
-        #     raise RuntimeError("Failed to export vdisk %s: %s", (service.name, strerror))
+        try:
+            container.waitOnJob(container_job)
+        except Exception as e:
+            strerror = e.args[0]
+            raise RuntimeError("Failed to export vdisk %s: %s", (service.name, strerror))
     finally:
-        pass
-        # container.stop()
+        container.stop()
 
 
 def import_vdisk(job):
@@ -331,13 +334,14 @@ def import_vdisk(job):
 
     save_config(job)
 
-    url = service.model.data.backupUrl.split("#")[0]
+    # backupurl includes the metadatafile ftp://172.17.0.1/vm_12123
+    url = service.model.data.backupUrl
     parsed_url = urlparse(url)
     metadata = os.path.basename(parsed_url.path)
     url = parsed_url.geturl().split(metadata)[0]
 
-    cryptoKey = service.model.data.backupUrl.split("#")[1]
-    snapshotID = service.model.data.backupUrl.split("#")[2]
+    cryptoKey = service.model.data.cryptoKey
+    snapshotID = service.model.data.snapshotID
 
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
@@ -348,14 +352,13 @@ def import_vdisk(job):
         cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} \
                --flush-size 128 \
                --config {dialstrings} \
-               --key {cryptoKey} \
-               --flus-size 128 \
-               --job 100 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
                                           snapshotID=snapshotID,
                                           ftpurl=url)
+        if cryptoKey:
+            cmd += " --key {cryptoKey}".format(cryptoKey=cryptoKey)
         job.logger.info(cmd)
         container_job = container.client.system(cmd, id="vdisk.import.%s" % service.name)
 
