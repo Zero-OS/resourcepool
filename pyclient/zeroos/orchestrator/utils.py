@@ -24,6 +24,7 @@ def find_disks(disk_type, nodes, partitionName):
                     return True
 
     for node in nodes:
+        available_disks.setdefault(node.name, [])
         for disk in node.disks.list():
             # skip disks of wrong type
             if disk.type.name != disk_type:
@@ -34,9 +35,9 @@ def find_disks(disk_type, nodes, partitionName):
 
             # include devices which have partitions
             if len(disk.partitions) == 0:
-                available_disks.setdefault(node.name, []).append(disk)
+                available_disks[node.name].append(disk)
             else:
                 if check_partition(disk):
                     # devices that have partitions with correct label will be in the beginning
-                    available_disks.setdefault(node.name, []).insert(0, disk)
+                    available_disks[node.name].insert(0, disk)
     return available_disks
