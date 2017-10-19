@@ -255,8 +255,7 @@ func ValidateObjectCluster(k int, m int, nrServers int, metaDisk string, perMeta
 // ftp://user:pass@12.30.120.200:3000;
 // ftp://user:pass@12.30.120.200:3000/root/dir
 func ValidateFtpURL(url string) error {
-	pattern := "^(ftp://(\\w+(:.*)?@)?)?((\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3})|[a-z]+):\\d+(/\\w+)*$"
-
+	pattern := "^(ftp://(\\w+(:.*)?@)?)?((\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3})|[a-z]+):\\d+(/\\w+|-|_)*$"
 	matched, err := regexp.MatchString(pattern, url)
 	if err != nil {
 		return err

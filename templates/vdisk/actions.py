@@ -301,22 +301,24 @@ def export(job):
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
         cmd = "/bin/zeroctl export vdisk {vdiskid} {snapshotID} \
                --config {dialstrings} \
-               --key {cryptoKey} \
+               --force \
                --storage {ftpurl}".format(vdiskid=service.name,
-                                          cryptoKey=cryptoKey,
                                           dialstrings=etcd_cluster.dialstrings,
                                           snapshotID=snapshotID,
                                           ftpurl=url)
+        if cryptoKey:
+            cmd += " --key {cryptoKey}".format(cryptoKey=cryptoKey)
         job.logger.info(cmd)
-        container_job = container.client.system(cmd, id="vdisk.export.%s" % service.name)
+        # container_job = container.client.system(cmd, id="vdisk.export.%s" % service.name)
 
-        try:
-            container.waitOnJob(container_job)
-        except Exception as e:
-            strerror = e.args[0]
-            raise RuntimeError("Failed to export vdisk %s: %s", (service.name, strerror))
+        # try:
+        #     container.waitOnJob(container_job)
+        # except Exception as e:
+        #     strerror = e.args[0]
+        #     raise RuntimeError("Failed to export vdisk %s: %s", (service.name, strerror))
     finally:
-        container.stop()
+        pass
+        # container.stop()
 
 
 def import_vdisk(job):

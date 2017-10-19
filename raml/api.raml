@@ -1270,13 +1270,13 @@ types:
             description: Export the virtual machine to ftp server
             body:
               application/json:
-                type: ExportUrl
+                type: ExportVM
             responses:
               200:
                 description: Virtual machine export is done successfully
                 body:
                   application/json:
-                  type: ExportUrl
+                  type: FTPUrl
 
         /import:
           post:
