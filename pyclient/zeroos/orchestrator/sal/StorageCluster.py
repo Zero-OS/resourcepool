@@ -30,65 +30,6 @@ class BaseStorageCluster:
         board = StorageDashboard(self)
         return board.template
 
-    def get_config(self):
-        data = {'dataStorage': [],
-                'metadataStorage': None,
-                'label': self.name,
-                'status': 'ready' if self.is_running() else 'error',
-                'nodes': [node.name for node in self.nodes]}
-        for storageserver in self.storage_servers:
-            if 'metadata' in storageserver.name:
-                data['metadataStorage'] = {'address': storageserver.storageEngine.bind}
-            else:
-                disabled = not storageserver.storageEngine.enabled or \
-                        storageserver.storageEngine.status == 'broken'
-
-                data['dataStorage'].append({
-                    'address': storageserver.storageEngine.bind,
-                    'disabled': disabled
-                })
-        return data
-
-    @property
-    def nr_server(self):
-        """
-        Number of storage server part of this cluster
-        """
-        return len(self.storage_servers)
-
-    def find_disks(self, disk_type):
-        """
-        return a list of disk that are not used by storage pool
-        or has a different type as the one required for this cluster
-        """
-        self.logger.debug("find available_disks")
-        cluster_name = 'sp_cluster_{}'.format(self.label)
-        available_disks = {}
-
-        def check_partition(disk):
-            for partition in disk.partitions:
-                for filesystem in partition.filesystems:
-                    if filesystem['label'].startswith(cluster_name):
-                        return True
-
-        for node in self.nodes:
-            available_disks.setdefault(node.name, [])
-            for disk in node.disks.list():
-                # skip disks of wrong type
-                if disk.type.name != disk_type:
-                    continue
-                # skip devices which have filesystems on the device
-                if len(disk.filesystems) > 0:
-                    continue
-
-                # include devices which have partitions
-                if len(disk.partitions) == 0:
-                    available_disks[node.name].append(disk)
-                else:
-                    if check_partition(disk):
-                        # devices that have partitions with correct label will be in the beginning
-                        available_disks[node.name].insert(0, disk)
-        return available_disks
 
     def start(self):
         self.logger.debug("start %s", self)
