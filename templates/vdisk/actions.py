@@ -163,7 +163,6 @@ def delete_config(job):
     etcd.delete(key="%s:vdisk:conf:storage:nbd" % service.name)
 
 
-
 def get_cluster_config(job, type="block"):
     from zeroos.orchestrator.configuration import get_jwt_token
 

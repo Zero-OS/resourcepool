@@ -660,7 +660,18 @@ types:
           responses:
             204:
               description: Gateway updated successfully
-
+        /migrate:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: MigrateGateway
+            description: Migrate Gateway
+            body:
+              application/json:
+                type: MigrateGW
+            responses:
+              200:
+                description: Gateway migrated successfully
         /firewall:
           /forwards:
             get:
@@ -1400,6 +1411,16 @@ types:
               type: VdiskStorage
         404:
           description: The vdisk storage does not exist
+
+    delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: DeleteVdiskStorage
+          description: Delete VdiskStorage
+          responses:
+            204:
+              description: VdiskStorage has been deleted succefully
+
     /images:
       get:
         (AYSBased):
