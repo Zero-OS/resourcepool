@@ -1,6 +1,7 @@
 package node
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -27,6 +28,19 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	if !exists {
 		w.WriteHeader(http.StatusNoContent)
 		return
+	}
+
+	query := map[string]interface{}{
+		"consume": fmt.Sprintf("node!%s", nodeID),
+	}
+	services, resp, err := aysClient.Ays.ListServicesByRole("storagecluster", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, resp, w, "listing storageclusters") {
+		return
+	}
+
+	if len(services) > 0 {
+		err = fmt.Errorf("Deleting a node that consume storage clusters is not allowed")
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 	}
 
 	// execute the uninstall action of the node

@@ -29,12 +29,12 @@ def install(job):
             raise j.exceptions.RuntimeError("no etcd_cluster service found")
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
-               --blocksize {blocksize} \
+               --flush-size 128 \
+               --force \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
-                                          blocksize=service.model.data.exportBlockSize,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
 
@@ -98,8 +98,6 @@ def delete(job):
 
 
 def save_config(job):
-    import hashlib
-    from urllib.parse import urlparse
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -124,7 +122,6 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
-    vdiskType = "boot"
     objectStoragecluster = vdiskstore.model.data.objectCluster
     if objectStoragecluster:
         config = {

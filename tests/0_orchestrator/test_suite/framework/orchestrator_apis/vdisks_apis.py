@@ -32,8 +32,9 @@ class VDisksAPIs(OrchestratorBase):
 
     @catch_exception_decoration_return
     def post_import_image(self, vdiskstorageid, **kwargs):
-        size = random.randint(1, 50)
-        block_size = 2**random.randint(9, 15)
+        size = random.randint(15, 100)
+        block_size = 2 ** random.randint(9, 15)
+        export_block_size = 1048576 # should be 1048576 for image: template:ubuntu-1604
         imagename = self.random_string()
         data = {"imageName": imagename,
                 "exportName": "template:ubuntu-1604",
@@ -62,8 +63,8 @@ class VDisksAPIs(OrchestratorBase):
 
     @catch_exception_decoration_return
     def post_vdisks(self, vdiskstorageid, imageid="",  **kwargs):
-        size = random.randint(1, 50)
-        block_size = 2**random.randint(9, 15)
+        size = random.randint(15, 100)
+        block_size = 2 ** random.randint(9, 15)
         data = {"id": self.random_string(),
                 "size": size,
                 "blocksize": block_size,

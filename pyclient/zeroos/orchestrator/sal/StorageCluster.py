@@ -1,9 +1,11 @@
 import json
+import os
 
 from js9 import j
 from .StorageEngine import StorageEngine
 from .ZeroStor import ZeroStor
 from .Node import Node
+from .StoragePool import StoragePool
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -28,38 +30,6 @@ class BaseStorageCluster:
         board = StorageDashboard(self)
         return board.template
 
-    def find_disks(self, disk_type):
-        """
-        return a list of disk that are not used by storage pool
-        or has a different type as the one required for this cluster
-        """
-        self.logger.debug("find available_disks")
-        cluster_name = 'sp_cluster_{}'.format(self.label)
-        available_disks = {}
-
-        def check_partition(disk):
-            for partition in disk.partitions:
-                for filesystem in partition.filesystems:
-                    if filesystem['label'].startswith(cluster_name):
-                        return True
-
-        for node in self.nodes:
-            for disk in node.disks.list():
-                # skip disks of wrong type
-                if disk.type.name != disk_type:
-                    continue
-                # skip devices which have filesystems on the device
-                if len(disk.filesystems) > 0:
-                    continue
-
-                # include devices which have partitions
-                if len(disk.partitions) == 0:
-                    available_disks.setdefault(node.name, []).append(disk)
-                else:
-                    if check_partition(disk):
-                        # devices that have partitions with correct label will be in the beginning
-                        available_disks.setdefault(node.name, []).insert(0, disk)
-        return available_disks
 
     def start(self):
         self.logger.debug("start %s", self)
@@ -88,12 +58,13 @@ class BaseStorageCluster:
 
 
 class ObjectCluster(BaseStorageCluster):
-    def __init__(self, label, nodes, nr_servers, data_disk_type, meta_disk_type, servers_per_meta_drive, storage_servers, logger=None):
+    def __init__(self, label, nodes, nr_servers, data_disk_type, meta_disk_type, servers_per_meta_drive, storage_servers, storage_pools=[], logger=None):
         super().__init__(label, nodes, nr_servers, storage_servers)
         self.data_disk_type = data_disk_type
         self.meta_disk_type = meta_disk_type
         self.servers_per_meta_drive = servers_per_meta_drive
         self.logger = logger if logger else default_logger
+        self.storage_pools = storage_pools
 
     @classmethod
     def from_ays(cls, service, password, logger=None):
@@ -108,6 +79,11 @@ class ObjectCluster(BaseStorageCluster):
             storages_server = ZeroStor.from_ays(storageEngine_service, password)
             storage_servers.add(storages_server)
 
+        storage_pools = set()
+        for storagePool_service in service.producers.get('storagepool', []):
+            storage_pool = StoragePool.from_ays(storagePool_service, password)
+            storage_pools.add(storage_pool)
+
         nodes = set()
         for node_service in service.producers["node"]:
             nodes.add(Node.from_ays(node_service, password))
@@ -119,6 +95,7 @@ class ObjectCluster(BaseStorageCluster):
                       data_disk_type=data_disk_type,
                       meta_disk_type=meta_disk_type,
                       servers_per_meta_drive=servers_per_meta_drive,
+                      storage_pools=storage_pools,
                       logger=logger)
 
         return cluster
@@ -156,7 +133,7 @@ class ObjectCluster(BaseStorageCluster):
 class BlockCluster(BaseStorageCluster):
     """BlockCluster is a cluster of StorageEngine servers"""
 
-    def __init__(self, label, nr_servers, disk_type, nodes=None, storage_servers=None, logger=None):
+    def __init__(self, label, nr_servers, disk_type, nodes=None, storage_pools=[], storage_servers=None, logger=None):
         """
         @param label: string repsenting the name of the storage cluster
         """
@@ -169,6 +146,8 @@ class BlockCluster(BaseStorageCluster):
         self.disk_type = disk_type
         self._ays = None
         self.logger = logger if logger else default_logger
+        self.storage_pools = storage_pools if storage_pools else []
+
 
     @classmethod
     def from_ays(cls, service, password, logger=None):
@@ -180,6 +159,11 @@ class BlockCluster(BaseStorageCluster):
             storages_server = StorageEngine.from_ays(storageEngine_service, password)
             storage_servers.add(storages_server)
 
+        storage_pools = set()
+        for storagePool_service in service.producers.get('storagepool', []):
+            storage_pool = StoragePool.from_ays(storagePool_service, password)
+            storage_pools.add(storage_pool)
+
         nodes = set()
         for node_service in service.producers["node"]:
             nodes.add(Node.from_ays(node_service, password))
@@ -189,7 +173,8 @@ class BlockCluster(BaseStorageCluster):
                       storage_servers=list(storage_servers),
                       logger=logger,
                       disk_type=service.model.data.diskType,
-                      nr_servers=service.model.data.nrServer)
+                      nr_servers=service.model.data.nrServer,
+                      storage_pools=storage_pools)
         cluster.storage_servers = storage_servers
         return cluster
 
@@ -536,9 +521,10 @@ class StorageDashboard:
         }
         panel_id = 1
         disks = set()
-        for server in self.cluster.storage_servers:
-            server = server.name.split("_")
-            disks.add("{}_{}".format(server[1], server[-3]))
+        for sp in self.cluster.storage_pools:
+            for devicePath in sp.devices:
+                deviceName = os.path.basename(devicePath)
+                disks.add("{}_{}".format(sp.node.name, deviceName))
         disks = list(disks)
         panels = []
         for title, measurement in AGGREGATED_CONFIG.items():

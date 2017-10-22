@@ -660,7 +660,18 @@ types:
           responses:
             204:
               description: Gateway updated successfully
-
+        /migrate:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: MigrateGateway
+            description: Migrate Gateway
+            body:
+              application/json:
+                type: MigrateGW
+            responses:
+              200:
+                description: Gateway migrated successfully
         /firewall:
           /forwards:
             get:
@@ -1055,17 +1066,6 @@ types:
                 body:
                   application/json:
                     type: CPUInfo[]
-        /disks:
-          get:
-            (DirectAccess):
-            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-            displayName: GetContainerDiskInfo
-            description: Get detailed information of all the disks in the container
-            responses:
-              200:
-                body:
-                  application/json:
-                    type: DiskInfo[]
         /mem:
           get:
             (DirectAccess):
@@ -1270,13 +1270,13 @@ types:
             description: Export the virtual machine to ftp server
             body:
               application/json:
-                type: ExportUrl
+                type: ExportVM
             responses:
               200:
                 description: Virtual machine export is done successfully
                 body:
                   application/json:
-                  type: ExportUrl
+                  type: FTPUrl
 
         /import:
           post:
@@ -1411,6 +1411,16 @@ types:
               type: VdiskStorage
         404:
           description: The vdisk storage does not exist
+
+    delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: DeleteVdiskStorage
+          description: Delete VdiskStorage
+          responses:
+            204:
+              description: VdiskStorage has been deleted succefully
+
     /images:
       get:
         (AYSBased):

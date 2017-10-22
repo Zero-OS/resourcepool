@@ -31,6 +31,9 @@ type VdiskstorageInterface interface { // DeleteImage is the handler for DELETE 
 	// CreateNewVdiskStorage is the handler for POST /vdiskstorage
 	// Create a new vdisk storage
 	CreateNewVdiskStorage(http.ResponseWriter, *http.Request)
+	// DeleteNewVdiskStorage is the handler for POST /vdiskstorage
+	// Delete a new vdisk storage
+	DeleteVdiskStorage(http.ResponseWriter, *http.Request)
 }
 
 // VdiskstorageInterfaceRoutes is routing for /vdiskstorage root endpoint
@@ -40,6 +43,7 @@ func VdiskstorageInterfaceRoutes(r *mux.Router, i VdiskstorageInterface) {
 	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images", i.ListImages).Methods("GET")
 	r.HandleFunc("/vdiskstorage/{vdiskstorageid}/images", i.ImportImage).Methods("POST")
 	r.HandleFunc("/vdiskstorage/{vdiskstorageid}", i.GetVdiskStorageInfo).Methods("GET")
+	r.HandleFunc("/vdiskstorage/{vdiskstorageid}", i.DeleteVdiskStorage).Methods("DELETE")
 	r.HandleFunc("/vdiskstorage", i.ListVdiskStorages).Methods("GET")
 	r.HandleFunc("/vdiskstorage", i.CreateNewVdiskStorage).Methods("POST")
 }

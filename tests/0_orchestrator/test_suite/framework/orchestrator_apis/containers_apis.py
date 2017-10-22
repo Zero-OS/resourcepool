@@ -13,16 +13,18 @@ class ContainersAPI(OrchestratorBase):
 
     @catch_exception_decoration_return
     def post_containers(self, nodeid, **kwargs):
-        data = {"name": self.random_string(),
-                "hostname": self.random_string(),
-                "flist": "https://hub.gig.tech/gig-official-apps/ubuntu1604.flist",
-                "hostNetworking": False,
-                "initProcesses": [],
-                "filesystems": [],
-                "ports": [],
-                "nics": [],
-                "storage": "ardb://hub.gig.tech:16379"
-                }
+        data = {
+            "name": self.random_string(),
+            "hostname": self.random_string(),
+            "flist": "https://hub.gig.tech/ah-elsayed/ubuntu.flist",
+            "hostNetworking": False,
+            "initProcesses": [],
+            "filesystems": [],
+            "ports": [],
+            "nics": [],
+            "storage": "ardb://hub.gig.tech:16379"
+        }
+
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateContainer(nodeid=nodeid, data=data)
         return response, data
@@ -120,3 +122,23 @@ class ContainersAPI(OrchestratorBase):
     def delete_containers_containerid_processes_processid(self, nodeid, containername, processid):
         return self.orchestrator_client.nodes.KillContainerProcess(nodeid=nodeid, containername=containername,
                                                                    processid=processid)
+
+    @catch_exception_decoration
+    def get_container_nics(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerNicInfo(nodeid=nodeid, containername=containername)
+        
+    @catch_exception_decoration
+    def get_container_mem(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerMemInfo(nodeid=nodeid, containername=containername)
+    
+    @catch_exception_decoration
+    def get_container_cpus(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerCPUInfo(nodeid=nodeid, containername=containername)
+
+    @catch_exception_decoration
+    def get_container_disks(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerDiskInfo(nodeid=nodeid, containername=containername)
+
+    @catch_exception_decoration
+    def get_container_info(self, nodeid, containername):
+        return self.orchestrator_client.nodes.GetContainerOSInfo(nodeid=nodeid, containername=containername)

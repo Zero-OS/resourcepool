@@ -270,4 +270,4 @@ def watchdog_handler(job):
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)
