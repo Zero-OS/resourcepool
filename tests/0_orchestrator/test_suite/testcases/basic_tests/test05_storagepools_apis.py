@@ -479,3 +479,43 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                   self.data_filesystem['name'],
                                                                                   'fake_filesystem')
         self.assertEqual(response.status_code, 404)
+
+
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1246")
+    def test017_remove_storagepoole_last_device(self):
+        """ GAT-151
+        **Test Scenario:**
+
+        #. Get random nodid (N0).
+        #. Create storagepool (SP0) with single device (D0).
+        #. Get device (D0) uuid, should succeed.
+        #. Delete device (D0), should fail with 400
+        #. Delete storagepool (SP0), should succeed.
+        """
+        self.lg.info('Create storagepool (SP0) with single device (D0)')
+        response, data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
+                                                                 metadataProfile='single',
+                                                                 dataProfile='single',
+                                                                 devices=[self.freeDisks[0]],
+                                                                 free_devices=self.freeDisks)
+        
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('Get device (D0) uuid, should succeed')
+        response = self.storagepools_api.get_storagepools_storagepoolname_devices(nodeid=self.nodeid,
+                                                                                  storagepoolname=data['name'])
+        self.assertEqual(response.status_code, 200)
+        deviceuuid = response.json()[0]['uuid']
+
+
+        self.lg.info('Delete device (D0), should fail with 400')
+        response = self.storagepools_api.delete_storagepools_storagepoolname_devices_deviceid(
+            nodeid=self.nodeid,
+            storagepoolname=data['name'],
+            deviceuuid=deviceuuid
+        )
+        self.assertEqual(response.status_code, 400)
+
+        self.lg.info('Delete storagepool (SP0)')
+        response = self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, data['name'])
+        self.assertEqual(response.status_code, 204)
