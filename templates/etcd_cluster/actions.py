@@ -25,9 +25,9 @@ def ensureStoragepool(job, node):
 
     # prefer nvme if not then ssd if not then just use the cache what ever it may be
     free_disks = find_disks('nvme', [node], 'sp_etcd_')
-    if not free_disks:
+    if not free_disks[node.name]:
         free_disks = find_disks('ssd', [node], 'sp_etcd_')
-        if not free_disks:
+        if not free_disks[node.name]:
             return "{}_fscache".format(node.name)
 
     # choose the first choice in the results since create takes a list we choose the first item and create a list with it.
