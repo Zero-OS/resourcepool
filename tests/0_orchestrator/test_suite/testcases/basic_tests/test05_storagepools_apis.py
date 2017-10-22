@@ -20,7 +20,8 @@ class TestStoragepoolsAPI(TestcasesBase):
         elif self.id().split('.')[-1] in ['test013_get_storagepool_filessystem_snapshot',
                                          'test014_list_storagepool_filesystems_snapshots',
                                          'test015_post_storagepool_filesystem_snapshot',
-                                         'test016_delete_storagepool_filesystem_snapshot']:
+                                         'test016_delete_storagepool_filesystem_snapshot', 
+                                         'test017_post_storagepool_filesystem_snapshot_rollback']:
             self.setUp_plus_fileSystem_plus_snapShots()
 
     def tearDown(self):
@@ -481,8 +482,81 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 404)
 
 
+    def test017_post_storagepool_filesystem_snapshot_rollback(self):
+        """ GAT-152
+        **Test Scenario:**
+
+        #. Get random nodid (N0), should succeed.
+        #. Create storagepool (SP0) on node (N0), should succeed.
+        #. Create filesystem (FS0) on storagepool (SP0).
+        #. Create snapshot (SS0) on filesystem (FS0).
+        #. Create file test.txt on filesystem (FS0).
+        #. Take a new snapshot (SS1).
+        #. Rollback filesystem to snapshot (SS0), should succeed.
+        #. Check that file test.txt doesn\'t exist, should succeed.
+        #. Rollback filesystem to snapshot (SS1), should succeed.
+        #. Check file test.txt exists and its data is correct, should succeed.
+
+        """
+        filesystem_path = '/mnt/storagepools/{}/filesystems/{}'.format(
+            self.data['name'], self.data_filesystem['name']
+        )
+
+        self.lg.info("Create file test.txt on filesystem (FS0)")
+        cmd = 'echo "test" > {}/test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+
+        self.lg.info('Take a new snapshot (SS1)')
+        response, new_snapshot_data = self.storagepools_api.post_filesystems_snapshots(
+            nodeid=self.nodeid,
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name']
+        )
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info("Rollback filesystem to snapshot (SS0), should succeed")
+        response = self.storagepools_api.post_filesystem_snapshots_snapshotname_rollback(
+            nodeid=self.nodeid, 
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name'],
+            snapshotname=self.data_snapshot['name']
+        )
+        self.assertEqual(response.status_code, 204)
+
+        time.sleep(5)
+
+        self.lg.info("Check that file test.txt doesn\'t exist, should succeed")
+        cmd = 'ls {} | grep test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertNotIn('test.txt', response.stdout)
+
+        self.lg.info("Rollback filesystem to snapshot (SS1), should succeed")
+        response = self.storagepools_api.post_filesystem_snapshots_snapshotname_rollback(
+            nodeid=self.nodeid, 
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name'],
+            snapshotname=new_snapshot_data['name']
+        )
+        self.assertEqual(response.status_code, 204)
+
+        time.sleep(5)
+        
+        self.lg.info("Check file test.txt exists and its data is correct, should succeed")
+        cmd = 'ls {} | grep test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertIn('test.txt', response.stdout)
+
+        cmd = 'cat {}/test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertIn('test', response.stdout.strip())
+
+
+
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1246")
-    def test017_remove_storagepoole_last_device(self):
+    def test018_remove_storagepoole_last_device(self):
         """ GAT-151
         **Test Scenario:**
 
