@@ -3,6 +3,8 @@ from unittest import TestCase
 from framework.orchestrator_driver import OrchasteratorDriver
 from nose.tools import TimeExpired
 from testcases.core0_client import Client
+from datetime import timedelta
+
 
 
 class TestcasesBase(TestCase):
@@ -11,7 +13,7 @@ class TestcasesBase(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.utiles = Utiles()
-        self.lg = self.utiles.logging
+        self.lg = self.utiles.logger()
         self.nodes_api = self.orchasterator_driver.nodes_api
         self.containers_api = self.orchasterator_driver.container_api
         self.gateways_api = self.orchasterator_driver.gateway_api
@@ -238,7 +240,6 @@ class TestcasesBase(TestCase):
                 self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, repr(cmd)))
                 time.sleep(1)
 
-
     def get_vm_default_ipaddress(self, vmname):
         cmd = "virsh dumpxml {} | grep 'mac address' | cut -d '=' -f2 | cut -d '/' -f1".format(vmname)
         vm_mac_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
@@ -268,21 +269,21 @@ class TestcasesBase(TestCase):
         response = client.bash(cmd).get()
         return response
 
-
 class Utiles:
-    def __init__(self):
-        self.config = {}
-        self.logging = logging
-        self.log('test_suite.log')
 
-    def log(self, log_file_name='log.log'):
-        log = self.logging.getLogger()
-        fileHandler = self.logging.FileHandler(log_file_name)
-        log.addHandler(fileHandler)
-        self.logging.basicConfig(filename=log_file_name, filemode='rw', level=logging.INFO,
-                                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    def logger(self):
+        logger = logging.getLogger('0-Orchestrator')
+        if not logger.handlers:
+            fileHandler = logging.FileHandler('test_suite.log', mode='w')  
+            formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
+            fileHandler.setFormatter(formatter)
+            logger.addHandler(fileHandler)
 
+        return logger
+        
+        
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, error = process.communicate()
         return out.decode('utf-8'), error.decode('utf-8')
+

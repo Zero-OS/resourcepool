@@ -265,6 +265,7 @@ def delete_config(job):
 
 def get_availabledisks(job, disktype):
     from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+    from zeroos.orchestrator.utils import find_disks
 
     service = job.service
 
@@ -278,7 +279,8 @@ def get_availabledisks(job, disktype):
         used_disks[node] = disks
 
     cluster = ObjectCluster.from_ays(service, job.context['token'])
-    availabledisks = cluster.find_disks(disktype)
+    partition_name = 'sp_cluster_{}'.format(cluster.name)
+    availabledisks = find_disks(disktype, cluster.nodes, partition_name)
     freedisks = {}
     for node, disks in availabledisks.items():
         node_disks = []
