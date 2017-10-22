@@ -910,7 +910,6 @@ def stop_and_delete(job, services):
 
 def export(job):
     from zeroos.orchestrator.sal.FtpClient import FtpClient
-    import hashlib
     import time
     import yaml
 
@@ -921,10 +920,10 @@ def export(job):
     # ftp://user:pass@12.30.120.200:3000
     # ftp://user:pass@12.30.120.200:3000/root/dir
     url = job.model.args.get("backupUrl", None)
-    if not url:
+    crypto_key = job.model.args.get("cryptoKey", "")
+    export_path = job.model.args.get("exportPath", None)
+    if not url or not export_path:
         return
-
-    url, filename = url.split("#", 1)
 
     if not url.startswith("ftp://"):
         url = "ftp://" + url
@@ -936,7 +935,7 @@ def export(job):
 
     # populate the metadata
     metadata = service.model.data.to_dict()
-    metadata["cryptoKey"] = hashlib.md5(str(int(time.time() * 10**6)).encode("utf-8")).hexdigest()
+    metadata["cryptoKey"] = crypto_key
     metadata["snapshotIDs"] = []
 
     args = {
@@ -948,21 +947,21 @@ def export(job):
     for vdisk in vdisks:
         snapshotID = str(int(time.time() * 10**6))
         args["snapshotID"] = snapshotID
-        vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
-        vdisksrv.executeAction('export', context=job.context, args=args)
+        vdisk_service = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
+        vdisk_service.executeAction('export', context=job.context, args=args)
         metadata["snapshotIDs"].append(snapshotID)
         metadata["vdisks"].append({
-            "blockSize": vdisksrv.model.data.blocksize,
-            "type": str(vdisksrv.model.data.type),
-            "size": vdisksrv.model.data.size,
-            "readOnly": vdisksrv.model.data.readOnly,
+            "blockSize": vdisk_service.model.data.blocksize,
+            "type": str(vdisk_service.model.data.type),
+            "size": vdisk_service.model.data.size,
+            "readOnly": vdisk_service.model.data.readOnly,
         })
 
     # upload metadta to ftp server
     yamlconfig = yaml.safe_dump(metadata, default_flow_style=False)
     content = yamlconfig.encode('utf8')
     ftpclient = FtpClient(url)
-    ftpclient.upload(content, filename)
+    ftpclient.upload(content, export_path)
 
 
 def processChange(job):

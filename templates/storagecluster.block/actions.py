@@ -179,6 +179,7 @@ def delete_config(job):
 
 def get_availabledisks(job):
     from zeroos.orchestrator.sal.StorageCluster import BlockCluster
+    from zeroos.orchestrator.utils import find_disks
 
     service = job.service
 
@@ -192,7 +193,8 @@ def get_availabledisks(job):
         used_disks[node] = disks
 
     cluster = BlockCluster.from_ays(service, job.context['token'])
-    availabledisks = cluster.find_disks(service.model.data.diskType)
+    partition_name = 'sp_cluster_{}'.format(cluster.name)
+    availabledisks = find_disks(service.model.data.diskType, cluster.nodes, partition_name)
     freedisks = {}
     for node, disks in availabledisks.items():
         node_disks = []

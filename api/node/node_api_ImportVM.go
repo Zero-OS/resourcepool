@@ -93,28 +93,46 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create vdisk storage for the new VM
+	now := time.Now()
+	vdiskstorageServiceName := fmt.Sprintf("vdiskstorage_%v", now.Unix())
+	obj := make(map[string]interface{})
+	obj[fmt.Sprintf("vdiskstorage__%s", vdiskstorageServiceName)] = struct {
+		BlockCluster  string `json:"blockCluster" yaml:"blockCluster"`
+		ObjectCluster string `json:"objectCluster" yaml:"objectCluster"`
+		SlaveCluster  string `json:"slaveCluster" yaml:"slaveCluster"`
+	}{
+		BlockCluster:  reqBody.BlockStoragecluster,
+		ObjectCluster: reqBody.ObjectStoragecluster,
+		SlaveCluster:  reqBody.BackupStoragecluster,
+	}
+	_, err = aysClient.UpdateBlueprint(api.AysRepo, "vdiskstorage", string(vdiskstorageServiceName), "install", obj)
+	if !tools.HandleExecuteBlueprintResponse(err, w, "") {
+		return
+	}
+
 	vdiskServices := []string{}
 	for idx, val := range metadata.Vdisks {
-		backupURL := fmt.Sprintf("%s#%s#%s", reqBody.URL, metadata.CryptoKey, metadata.SnapshotIDs[idx])
+		backupURL := reqBody.URL
 		// Create the blueprint
 		bp := struct {
-			Size                 int    `yaml:"size" json:"size"`
-			BlockSize            int    `yaml:"blocksize" json:"blocksize"`
-			ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
-			Type                 string `yaml:"type" json:"type"`
-			BackupURL            string `yaml:"backupUrl" json:"backupUrl"`
-			BlockStoragecluster  string `yaml:"blockStoragecluster" json:"blockStoragecluster"`
-			ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
-			BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
+			Size         int    `yaml:"size" json:"size"`
+			BlockSize    int    `yaml:"blocksize" json:"blocksize"`
+			ReadOnly     bool   `yaml:"readOnly" json:"readOnly"`
+			Type         string `yaml:"type" json:"type"`
+			BackupURL    string `yaml:"backupUrl" json:"backupUrl"`
+			Vdiskstorage string `yaml:"vdiskstorage" json:"vdiskstorage"`
+			CryptoKey    string `yaml:"cryptoKey" json:"cryptoKey"`
+			SnapshotID   string `yaml:"snapshotID" json:"snapshotID"`
 		}{
-			Size:                 val.Size,
-			BlockSize:            val.Blocksize,
-			ReadOnly:             val.ReadOnly,
-			Type:                 string(val.Vdisktype),
-			BlockStoragecluster:  reqBody.BlockStoragecluster,
-			ObjectStoragecluster: reqBody.ObjectStoragecluster,
-			BackupStoragecluster: reqBody.BackupStoragecluster,
-			BackupURL:            backupURL,
+			Size:         val.Size,
+			BlockSize:    val.Blocksize,
+			ReadOnly:     val.ReadOnly,
+			Type:         string(val.Vdisktype),
+			Vdiskstorage: string(vdiskstorageServiceName),
+			BackupURL:    backupURL,
+			CryptoKey:    metadata.CryptoKey,
+			SnapshotID:   metadata.SnapshotIDs[idx],
 		}
 
 		now := time.Now()
@@ -167,7 +185,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		BackupURL: "",
 	}
 
-	obj := make(map[string]interface{})
+	obj = make(map[string]interface{})
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
 	obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}}
 
