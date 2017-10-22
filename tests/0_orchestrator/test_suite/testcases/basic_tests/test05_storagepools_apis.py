@@ -482,14 +482,21 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 404)
 
 
-    def test018_post_storagepool_filesystem_snapshot_rollback(self):
-        """ GAT-060
+    def test017_post_storagepool_filesystem_snapshot_rollback(self):
+        """ GAT-152
         **Test Scenario:**
 
         #. Get random nodid (N0), should succeed.
         #. Create storagepool (SP0) on node (N0), should succeed.
         #. Create filesystem (FS0) on storagepool (SP0).
         #. Create snapshot (SS0) on filesystem (FS0).
+        #. Create file test.txt on filesystem (FS0).
+        #. Take a new snapshot (SS1).
+        #. Rollback filesystem to snapshot (SS0), should succeed.
+        #. Check that file test.txt doesn\'t exist, should succeed.
+        #. Rollback filesystem to snapshot (SS1), should succeed.
+        #. Check file test.txt exists and its data is correct, should succeed.
+
         """
         filesystem_path = '/mnt/storagepools/{}/filesystems/{}'.format(
             self.data['name'], self.data_filesystem['name']
@@ -541,7 +548,7 @@ class TestStoragepoolsAPI(TestcasesBase):
 
         time.sleep(5)
         
-        self.lg.info("Check file test.txt is exists and its data is correct, should succeed")
+        self.lg.info("Check file test.txt exists and its data is correct, should succeed")
         cmd = 'ls {} | grep test.txt'.format(filesystem_path)
         response = self.core0_client.client.bash(cmd).get()
         self.assertEqual(response.state, 'SUCCESS')
@@ -555,7 +562,7 @@ class TestStoragepoolsAPI(TestcasesBase):
 
 
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1246")
-    def test017_remove_storagepoole_last_device(self):
+    def test018_remove_storagepoole_last_device(self):
         """ GAT-151
         **Test Scenario:**
 
