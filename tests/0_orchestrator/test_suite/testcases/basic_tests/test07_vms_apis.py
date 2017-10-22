@@ -44,14 +44,12 @@ class TestVmsAPI(TestcasesBase):
         TestVmsAPI.imageSize = imagedata["size"]
         TestVmsAPI.blockSize = imagedata["diskBlockSize"]
 
-
     @classmethod
     def tearDownClass(cls):
         self = cls()
         self.lg.info('[*] Delete image')
         self.vdisks_api.delete_image(TestVmsAPI.vdiskstorageid, TestVmsAPI.imageid)
-
-        
+       
     def setUp(self):
         super().setUp()
 
@@ -63,7 +61,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         node_available_cpus = len(response.json())
 
-        self.lg.info(' [*] Create ssh client contaienr')
+        self.lg.info('[*] Create ssh client contaienr')
         nics = [{"type":"default"}]
         response, self.ssh_client_data = self.containers_api.post_containers(self.nodeid, nics=nics, hostNetworking=True)
         self.assertEqual(response.status_code, 201)
@@ -101,19 +99,17 @@ class TestVmsAPI(TestcasesBase):
         vm_vnc_url = '{}:{}'.format(self.nodeip, vm_vnc_port)
         self.enable_ssh_access(vm_vnc_url)
 
-
     def tearDown(self):
-        self.lg.info(' [*] Delete virtual machine (VM0)')
+        self.lg.info('[*] Delete virtual machine (VM0)')
         self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
 
-        self.lg.info(' [*] Delete virtual disk (VD0)')
+        self.lg.info('[*] Delete virtual disk (VD0)')
         self.vdisks_api.delete_vdisks_vdiskid(TestVmsAPI.vdiskstorageid, self.vdisk['id'])
 
-        self.lg.info(' [*] Delete ssh client contaienr')
+        self.lg.info('[*] Delete ssh client contaienr')
         self.containers_api.delete_containers_containerid(self.nodeid, self.ssh_client_data['name'])
         
         super().tearDown()
-
 
     def test001_get_nodes_vms_vmid(self):
         """ GAT-067
@@ -124,12 +120,12 @@ class TestVmsAPI(TestcasesBase):
         #. Get virtual machine (VM0), should succeed with 200.
         #. Get non existing virtual machine, should fail with 404.
         """
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
-        self.lg.info(' [*] Get virtual machine (VM0), should succeed with 200')
+        self.lg.info('[*] Get virtual machine (VM0), should succeed with 200')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
  
@@ -141,10 +137,9 @@ class TestVmsAPI(TestcasesBase):
         core0_vm_list = self.core0_client.client.kvm.list()
         self.assertIn(self.data['id'], [x['name'] for x in core0_vm_list])
 
-        self.lg.info(' [*] Get non existing virtual machine, should fail with 404')
+        self.lg.info('[*] Get non existing virtual machine, should fail with 404')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, 'fake_vm')
         self.assertEqual(response.status_code, 404)
-
 
     def test002_get_node_vms(self):
         """ GAT-068
@@ -154,7 +149,7 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. List node (N0) virtual machines, virtual machine (VM0) should be listed, should succeed with 200.
         """
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed with 200')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed with 200')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
@@ -182,7 +177,7 @@ class TestVmsAPI(TestcasesBase):
             "disks": self.disks
         }
 
-        self.lg.info(' [*] Stop virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Stop virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
@@ -190,11 +185,11 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'halted')
 
-        self.lg.info(' [*] Update virtual machine (VM1), should succeed with 204')
+        self.lg.info('[*] Update virtual machine (VM1), should succeed with 204')
         response = self.vms_api.put_nodes_vms_vmid(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
-        self.lg.info(' [*] Start virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
@@ -205,17 +200,16 @@ class TestVmsAPI(TestcasesBase):
         for key in ['memory', 'cpu', 'disks']:
             self.assertEqual(body[key], response.json()[key])
 
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
-        self.lg.info(' [*] Update virtual machine with missing parameters, should fail with 400')
+        self.lg.info('[*] Update virtual machine with missing parameters, should fail with 400')
         body = {"id": self.random_string()}
         response = self.vms_api.put_nodes_vms_vmid(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 400)
-
         
     def test005_get_nodes_vms_vmid_info(self):
         """ GAT-071
@@ -226,18 +220,18 @@ class TestVmsAPI(TestcasesBase):
         #. Get virtual machine (VM0) info, should succeed with 200.
         #. Get non existing virtual machine info, should fail with 404.
         """
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
-        self.lg.info(' [*] Get virtual machine (VM0) info, should succeed with 200')
+        self.lg.info('[*] Get virtual machine (VM0) info, should succeed with 200')
         response = self.vms_api.get_nodes_vms_vmid_info(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
 
-        self.lg.info(' [*] Get non existing virtual machine info, should fail with 404')
+        self.lg.info('[*] Get non existing virtual machine info, should fail with 404')
         response = self.vms_api.get_nodes_vms_vmid_info(self.nodeid, self.rand_str())
-        self.assertEqual(response.status_code, 404, " [*] get non existing vm returns %i" % response.status_code)
+        self.assertEqual(response.status_code, 404, "[*] get non existing vm returns %i" % response.status_code)
 
     def test006_delete_nodes_vms_vmid(self):
         """ GAT-072
@@ -249,20 +243,20 @@ class TestVmsAPI(TestcasesBase):
         #. List kvms in python client, (VM0) should be gone.
         #. Delete non existing virtual machine, should fail with 404.
         """
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
-        self.lg.info(' [*] Delete virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Delete virtual machine (VM0), should succeed with 204')
         response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
-        self.lg.info(' [*] List kvms in python client, (VM0) should be gone')
+        self.lg.info('[*] List kvms in python client, (VM0) should be gone')
         vms = self.core0_client.client.kvm.list()
         self.assertNotIn(self.data['id'], [x['name'] for x in vms])
 
-        self.lg.info(' [*] Delete non existing virtual machine, should fail with 404')
+        self.lg.info('[*] Delete non existing virtual machine, should fail with 404')
         response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, 'fake_vm')
         self.assertEqual(response.status_code, 404)
 
@@ -276,7 +270,7 @@ class TestVmsAPI(TestcasesBase):
         #. Start virtual machine (VM0), should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
         """
-        self.lg.info(' [*] Stop virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Stop virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
@@ -287,11 +281,11 @@ class TestVmsAPI(TestcasesBase):
         core0_vm_list = self.core0_client.client.kvm.list()
         self.assertNotIn(self.data['id'], [x['name'] for x in core0_vm_list])
 
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should fail')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should fail')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'ERROR')
 
-        self.lg.info(' [*] Start virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
@@ -299,7 +293,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running', "can't start vm")
 
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
@@ -307,7 +301,6 @@ class TestVmsAPI(TestcasesBase):
 
         core0_vm_list = self.core0_client.client.kvm.list()
         self.assertIn(self.data['id'], [x['name'] for x in core0_vm_list])
-
 
     def test009_post_nodes_vms_vmid_pause_resume(self):
         """ GAT-075
@@ -320,11 +313,11 @@ class TestVmsAPI(TestcasesBase):
         #. Resume virtual machine (VM0), should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running
         """
-        self.lg.info(' [*] Pause virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Pause virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_pause(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
-        self.lg.info(' [*] Get virtual machine (VM0), virtual machine (VM0) status should be paused')
+        self.lg.info('[*] Get virtual machine (VM0), virtual machine (VM0) status should be paused')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'paused', "can't pause vm")
@@ -334,15 +327,15 @@ class TestVmsAPI(TestcasesBase):
         self.assertNotEqual(target_vm, [])
         self.assertEquals(target_vm[0]['state'], 'paused')
 
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should fail')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should fail')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'ERROR')
 
-        self.lg.info(' [*] Resume virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Resume virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_resume(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
-        self.lg.info(' [*] Get virtual machine (VM0), virtual machine (VM0) status should be running')
+        self.lg.info('[*] Get virtual machine (VM0), virtual machine (VM0) status should be running')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running', "can't resume vm")
@@ -352,12 +345,11 @@ class TestVmsAPI(TestcasesBase):
         self.assertNotEqual(target_vm, [])
         self.assertEquals(target_vm[0]['state'], 'running')
 
-        self.lg.info(' [*] Execute command on virtual machine (VM0), should succeed')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
-
 
     @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/994')
     def test010_post_nodes_vms_vmid_shutdown(self):
@@ -368,8 +360,10 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. Shutdown virtual machine (VM0), should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be halted.
+        #. Start virtual machine (VM0), should succeed with 204.
+        #. Execute command on virtual machine (VM0), should succeed.
         """
-        self.lg.info(' [*] Shutdown virtual machine (VM0), should succeed with 204')
+        self.lg.info('[*] Shutdown virtual machine (VM0), should succeed with 204')
         response = self.vms_api.post_nodes_vms_vmid_shutdown(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204)
 
@@ -380,9 +374,23 @@ class TestVmsAPI(TestcasesBase):
         core0_list_vms = self.core0_client.client.kvm.list()
         self.assertNotIn(self.data['id'], [x['name'] for x in core0_list_vms])
 
-        elf.lg.info(' [*] Execute command on virtual machine (VM0), should fail')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should fail')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'ERROR')
+
+        self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
+        response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 204)
+
+        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'running', "can't start vm")
+
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
+        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
 
     @parameterized.expand(['same_node', 'different_node'])
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1199")    
@@ -396,7 +404,7 @@ class TestVmsAPI(TestcasesBase):
         #. Get virtual machine (VM0), virtual machine (VM0) status should be migrating.
         #. check that the node, VM0 moved to, is cleaned up
         """
-        self.lg.info(' [*] List nodes.')
+        self.lg.info('[*] List nodes.')
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
 
@@ -404,10 +412,10 @@ class TestVmsAPI(TestcasesBase):
             if len(self.nodes_info) < 2:
                 self.skipTest('need at least 2 nodes')
 
-            self.lg.info(' [*] Migrate virtual machine (VM0) to another node, should succeed with 204')
+            self.lg.info('[*] Migrate virtual machine (VM0) to another node, should succeed with 204')
             new_node = self.get_random_node(except_node=self.nodeid)
         else:
-            self.lg.info(' [*] Migrate virtual machine (VM0) to the same node, should succeed with 204')
+            self.lg.info('[*] Migrate virtual machine (VM0) to the same node, should succeed with 204')
             new_node = self.nodeid
 
         body = {"nodeid": new_node}
@@ -443,7 +451,6 @@ class TestVmsAPI(TestcasesBase):
             "netstat -lnt | awk 'NR>2{print $4}' | grep -E ':' | sed 's/.*://' | sort -n | uniq").get()
         self.assertNotIn('400', res.stdout)
 
-
     def test012_create_two_vms_with_same_vdisk(self):
         """ GAT-077
         **Test Scenario:**
@@ -455,11 +462,11 @@ class TestVmsAPI(TestcasesBase):
         #. Create (VM3) and attach vdisk (VD1) to it. should fail.
         """
 
-        self.lg.info("Create VM2 and attach vdisk VD1 to it. should fail")
+        self.lg.info("[*] Create VM2 and attach vdisk VD1 to it. should fail")
         response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response.status_code, 400, response.content)
 
-        self.lg.info("Stop VM1, should succeed")
+        self.lg.info("[*] Stop VM1, should succeed")
         response = self.vms_api.post_nodes_vms_vmid_stop(nodeid=self.nodeid, vmid=self.data['id'])
         self.assertEqual(response.status_code, 204, response.content)
 
@@ -467,6 +474,6 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'halted', "[*] Can't stop VM")
 
-        self.lg.info("Create VM3 and attach vdisk VD1 to it. should fail")
+        self.lg.info("[*] Create VM3 and attach vdisk VD1 to it. should fail")
         response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response.status_code, 400, response.content)
