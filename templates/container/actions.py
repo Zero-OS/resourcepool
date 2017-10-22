@@ -24,9 +24,15 @@ def input(job):
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    import re
+
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
     for nic in service.model.data.nics:
+        if nic.hwaddr:
+            pattern = re.compile(r'^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+            if not pattern.match(nic.hwaddr):
+                raise j.exceptions.Input('Hwaddr: string is not a valid mac address.')
         if nic.type == 'vlan':
             break
     else:
