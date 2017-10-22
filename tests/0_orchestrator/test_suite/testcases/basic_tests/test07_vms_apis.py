@@ -374,7 +374,7 @@ class TestVmsAPI(TestcasesBase):
         core0_list_vms = self.core0_client.client.kvm.list()
         self.assertNotIn(self.data['id'], [x['name'] for x in core0_list_vms])
 
-        elf.lg.info('[*] Execute command on virtual machine (VM0), should fail')
+        self.lg.info('[*] Execute command on virtual machine (VM0), should fail')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
         self.assertEqual(response.state, 'ERROR')
 
