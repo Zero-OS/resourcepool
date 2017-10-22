@@ -4,6 +4,8 @@ paramiko
 configparser
 nose-testconfig
 nose
+parameterized
 git+https://github.com/gigforks/packet-python.git
 git+https://github.com/zero-os/0-orchestrator.git#subdirectory=pyclient
 git+https://github.com/zero-os/0-core.git#subdirectory=client/py-client
+git+https://github.com/gigforks/packet-python.git
