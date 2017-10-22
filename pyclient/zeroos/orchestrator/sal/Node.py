@@ -107,6 +107,26 @@ class Node:
         else:
             raise RuntimeError("cannot find eligible disks for the fs cache")
 
+    def find_disks(self, disk_type):
+        """
+        return a list of disk that are not used by storage pool
+        or has a different type as the one required for this cluster
+        """
+        available_disks = {}
+        for disk in self.disks.list():
+            # skip disks of wrong type
+            if disk.type.name != disk_type:
+                continue
+            # skip devices which have filesystems on the device
+            if len(disk.filesystems) > 0:
+                continue
+
+            # include devices which have partitions
+            if len(disk.partitions) == 0:
+                available_disks.setdefault(self.name, []).append(disk)
+
+        return available_disks
+
     def _mount_fscache(self, storagepool):
         """
         mount the fscache storage pool and copy the content of the in memmory fs inside

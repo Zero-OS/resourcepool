@@ -11,6 +11,7 @@ type Cluster struct {
 	Label          string               `yaml:"label" json:"label" validate:"nonzero"`
 	Nodes          []string             `yaml:"nodes" json:"nodes" validate:"nonzero"`
 	Status         EnumClusterStatus    `yaml:"status" json:"status" validate:"nonzero"`
+	ClusterType    EnumClusterType      `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
 }
 
 func (s Cluster) Validate() error {
