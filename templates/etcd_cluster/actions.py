@@ -14,6 +14,30 @@ def init(job):
     configure(job)
 
 
+def ensureStoragepool(job, node):
+    """
+    param: job  ,, currently executing job object
+    param: node ,, node object from the zeroos.orchestrator.sal library
+    """
+    from zeroos.orchestrator.sal.StoragePool import StoragePools
+    from zeroos.orchestrator.utils import find_disks
+    service = job.service
+
+    # prefer nvme if not then ssd if not then just use the cache what ever it may be
+    free_disks = find_disks('nvme', [node], 'sp_etcd_')
+    if not free_disks[node.name]:
+        free_disks = find_disks('ssd', [node], 'sp_etcd_')
+        if not free_disks[node.name]:
+            return "{}_fscache".format(node.name)
+
+    # choose the first choice in the results since create takes a list we choose the first item and create a list with it.
+    devices = [free_disks[node.name][0].devicename]
+    storagePool = StoragePools(node).create('etcd_%s' % service.name, devices, 'single', 'single')
+    storagePool.mount()
+    storagePoolService = storagePool.ays.create(service.aysrepo)
+    return storagePoolService.name
+
+
 def configure(job):
     import random
     from zeroos.orchestrator.sal.Node import Node
@@ -44,7 +68,7 @@ def configure(job):
         containername = '{}_{}_{}_{}'.format(service.name, 'etcd', node.name, baseports[1])
 
         args = {
-            'storagePool': "{}_fscache".format(node.name),
+            'storagePool': ensureStoragepool(job, node),
             'name': containername,
         }
         old_filesystem_service = service.aysrepo.servicesFind(name=containername, role='filesystem')
