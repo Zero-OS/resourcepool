@@ -64,7 +64,8 @@ class TestVmsAPI(TestcasesBase):
         node_available_cpus = len(response.json())
 
         self.lg.info(' [*] Create ssh client contaienr')
-        response, self.ssh_client_data = self.containers_api.post_containers(self.nodeid, hostNetworking=True)
+        nics = [{"type":"default"}]
+        response, self.ssh_client_data = self.containers_api.post_containers(self.nodeid, nics=nics, hostNetworking=True)
         self.assertEqual(response.status_code, 201)
         self.ssh_client = self.core0_client.get_container_client(self.ssh_client_data['name'])
 
@@ -81,7 +82,8 @@ class TestVmsAPI(TestcasesBase):
         cpu = random.randint(1, node_available_cpus-1)
 
         self.lg.info('[*] Create virtual machine (VM0) on node (N0)')
-        response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=memory, cpu=cpu, disks=self.disks)
+        nics = [{"type":"default"}]
+        response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=memory, cpu=cpu, nics=nics, disks=self.disks)
         self.assertEqual(response.status_code, 201)
 
         self.lg.info('[*] Virtual machine (VM0) is created with specs : {}'.format(self.data))

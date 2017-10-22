@@ -21,7 +21,7 @@ class ContainersAPI(OrchestratorBase):
             "initProcesses": [],
             "filesystems": [],
             "ports": [],
-            "nics": [{"type":"default"}],
+            "nics": [],
             "storage": "ardb://hub.gig.tech:16379"
         }
 
