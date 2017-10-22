@@ -497,10 +497,7 @@ class TestStoragepoolsAPI(TestcasesBase):
 
         self.lg.info('Create storagepool (SP0) with single device (D0)')
         response, data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
-                                                                 metadataProfile='single',
-                                                                 dataProfile='single',
-                                                                 devices=[self.freeDisks[0]],
-                                                                 free_devices=self.freeDisks)
+                                                                 free_devices=[self.freeDisks[0]])
         
         self.assertEqual(response.status_code, 201)
 
