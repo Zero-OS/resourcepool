@@ -21,7 +21,7 @@ class TestStoragepoolsAPI(TestcasesBase):
                                          'test014_list_storagepool_filesystems_snapshots',
                                          'test015_post_storagepool_filesystem_snapshot',
                                          'test016_delete_storagepool_filesystem_snapshot', 
-                                         'test018_post_storagepool_filesystem_snapshot_rollback']:
+                                         'test017_post_storagepool_filesystem_snapshot_rollback']:
             self.setUp_plus_fileSystem_plus_snapShots()
 
     def tearDown(self):
