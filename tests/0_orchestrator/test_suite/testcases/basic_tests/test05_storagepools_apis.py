@@ -507,12 +507,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         response = self.core0_client.client.bash(cmd).get()
         self.assertEqual(response.state, 'SUCCESS')
 
-        self.lg.info("Make sure file test.txt is created")
-        cmd = 'ls {} | grep test.txt'.format(filesystem_path)
-        response = self.core0_client.client.bash(cmd).get()
-        self.assertEqual(response.state, 'SUCCESS')
-        self.assertIn('test.txt', response.stdout)
-
         self.lg.info('Take a new snapshot (SS1)')
         response, new_snapshot_data = self.storagepools_api.post_filesystems_snapshots(
             nodeid=self.nodeid,
