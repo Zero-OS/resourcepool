@@ -492,6 +492,9 @@ class TestStoragepoolsAPI(TestcasesBase):
         #. Delete device (D0), should fail with 400
         #. Delete storagepool (SP0), should succeed.
         """
+        if not self.freeDisks:
+            self.skipTest(' [*] No free disks on node {}'.format(self.nodeid))
+
         self.lg.info('Create storagepool (SP0) with single device (D0)')
         response, data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
                                                                  metadataProfile='single',
