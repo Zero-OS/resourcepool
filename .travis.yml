@@ -8,7 +8,6 @@ matrix:
         - sudo apt-get install sshpass 
         - pip install vncdotool
         - pip3 install -r tests/0_orchestrator/test_suite/requirements.txt
-        - pip3 install git+https://github.com/gigforks/packet-python.git
       before_script:
         - bash tests/0_orchestrator/run_tests.sh before
       script:
