@@ -62,7 +62,7 @@ class Test_etcd(TestcasesBase):
         #. Check that etcd process is running in all nodes if number of nodes odd.
         #. Check that etcd process is running in (n-1) nodes if number of nodes even.
         #. Kill etcd_cluster in less than or equal (n-1)/2 nodes ,should succeed.
-        #. Chech that etcd process return back in this nodes, should succeed.
+        #. Check that etcd process return back in this nodes, should succeed.
         #. Create (VM0),should succeed.
         #. Get (VM0) details ,(VM0) status should be running.
         """
@@ -88,7 +88,7 @@ class Test_etcd(TestcasesBase):
                 self.assertTrue(False, "etcd_cluster doesn't work again for node %s"%self.nodes_with_etcd[i]["id"])
 
         self.lg.info("Create (VM0),should succeed.")
-        self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
+        self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, disks=self.disks)
         self.assertEqual(self.response.status_code, 201)
 
         self.lg.info("Get (VM0) details ,(VM0) status should be running.")
@@ -132,7 +132,7 @@ class Test_etcd(TestcasesBase):
             for _ in range(5):
                 time.sleep(5)
                 response = node_client.client.bash("ps xu | grep [e]tcd | grep [r]ecovered ").get()
-                if response.stdout == "":
+                if "recovered" not in response.stdout:
                     continue
                 recoverd_etcd.append(self.nodes_info[i])
                 break
@@ -140,7 +140,7 @@ class Test_etcd(TestcasesBase):
             if (len(recoverd_etcd) == len(self.nodes_with_etcd)):
                 break
         else:
-            self.assertTrue(False, "recover etcd_cluster fail")
+            self.assertEqual(len(recoverd_etcd), len(self.nodes_with_etcd))
 
         self.lg.info("Create (VM0),should succeed.")
         self.response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
