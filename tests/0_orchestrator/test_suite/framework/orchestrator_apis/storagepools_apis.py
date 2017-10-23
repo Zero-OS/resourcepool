@@ -104,9 +104,9 @@ class StoragepoolsAPI(OrchestratorBase):
                                                                        filesystemname=filesystemname,
                                                                        snapshotname=snapshotname)
 
-    @catch_exception_decoration_return
+    @catch_exception_decoration
     def post_filesystem_snapshots_snapshotname_rollback(self, nodeid, storagepoolname, filesystemname, snapshotname,
-                                                        data):
+                                                        data={}):
         return self.orchestrator_client.nodes.RollbackFilesystemSnapshot(nodeid=nodeid, storagepoolname=storagepoolname,
                                                                          filesystemname=filesystemname,
                                                                          snapshotname=snapshotname,
