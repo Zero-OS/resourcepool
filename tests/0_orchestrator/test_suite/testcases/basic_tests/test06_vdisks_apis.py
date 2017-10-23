@@ -40,9 +40,6 @@ class TestVdisks(TestcasesBase):
         self.lg.info(' [*] Delete vdisk (VD0)')
         self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
 
-        self.lg.info(' [*] Delete vdiskstorage (VDS0)')
-        self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
-
         self.lg.info(' [*] Delete Image (IMG0)')
         self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
         super(TestVdisks, self).tearDown()
@@ -170,14 +167,17 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(new_size, response.json()['size'])
 
+    @unittest.skip(' https://github.com/zero-os/0-orchestrator/issues/1260')
     def test006_list_delete_vdiskstorage(self):
         """ GAT-143
         *GET:/vdiskstorage*
 
         **Test Scenario:**
 
-        #. Create vdiskstorage (VDS0).
+        #. Create vdiskstorage (VDS0), import image (IM0) and create vdisk (VD0).
+        #. Delete vdiskStorage (VDS0), should fail with 400 as VDS0 consume IM0 and VD0.
         #. List vdisksStorage, should succeed with 200.
+        #. Delete vdisk (VD0) and image (IM0), should succeed
         #. Delete vdiskStorage (VDS0), should succeed with 204.
         #. List vdisks, (VDS0) should be gone.
         #. Delete nonexisting vdisk, should fail with 404.
@@ -191,6 +191,18 @@ class TestVdisks(TestcasesBase):
                      "objectCluster": '',
                      "slaveCluster": ''}
         self.assertIn(svd0_data, response.json())
+
+        self.lg.info('Delete vdiskStorage (VDS0), should fail with 400 as VDS0 consume IM0 and VD0')
+        response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 400)
+
+        self.lg.info(' [*] Delete vdisk (VD0)')
+        response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info(' [*] Delete Image (IMG0)')
+        response = self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
+        self.assertEqual(response.status_code, 204)
 
         self.lg.info('Delete vdiskStorage (VDS0), should succeed with 204')
         response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
