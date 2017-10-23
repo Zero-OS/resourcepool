@@ -269,11 +269,10 @@ def watchdog_handler(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
         return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')
