@@ -897,7 +897,7 @@ if __name__ == "__main__":
 
     #
     # checking validity of the tokens (even if we generated them)
-    # a jwt can be grated but not contains organization requested
+    # a jwt can be granted but not contains organization requested
     # if the user is not member of the organization, we check now so
     # we can avoid error later
     #
