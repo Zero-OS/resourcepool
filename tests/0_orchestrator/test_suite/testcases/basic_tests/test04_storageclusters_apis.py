@@ -135,13 +135,12 @@ class TestStorageclustersAPI(TestcasesBase):
         mounted_disks_num = sum([1 for x in response.json() if self.data['label'] in x['mountpoint']])
         self.assertEqual(mounted_disks_num, 0)
 
-
-    def test006_delete_storagecluster_has_vdiskstorage(self):
+    def test006_delete_storagecluster_with_vdiskstorage(self):
         """ GAT-154
         **Test Scenario:**
         #. Deploy new storage cluster (SC1), should succeed with 201.
-        #. Create vdiskstorage (VS1) on storage cluster (SC1).
-        #. Kill storage cluster (SC0), should fail with 400.
+        #. Create vdiskstorage (VS1) on storage cluster (SC1), should succeed.
+        #. Kill storage cluster (SC0), should fail with 400 as it has vdiskstorage.
         #. Delete vdiskstorage (VS1), should succeed.
         #. Kill storage cluster (SC0), should succeed.
         """
