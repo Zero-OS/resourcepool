@@ -62,7 +62,8 @@ class StoragepoolsAPI(OrchestratorBase):
     @catch_exception_decoration_return
     def post_storagepools_storagepoolname_filesystems(self, node_id, storagepoolname, **kwargs):
         data = {"name": self.random_string(),
-                "quota": random.randint(0, 10)}
+                "quota": random.randint(0, 10),
+                "readOnly": False}
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateFilesystem(nodeid=node_id, storagepoolname=storagepoolname,
                                                                    data=data)

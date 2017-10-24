@@ -27,6 +27,10 @@ class VDisksAPIs(OrchestratorBase):
         return self.orchestrator_client.vdiskstorage.GetVdiskStorageInfo(vdiskstorageid=vdiskstorageid)
 
     @catch_exception_decoration
+    def delete_vdiskstorage(self, vdiskstorageid):
+        return self.orchestrator_client.vdiskstorage.DeleteVdiskStorage(vdiskstorageid=vdiskstorageid)
+
+    @catch_exception_decoration
     def get_import_images(self, vdiskstorageid):
         return self.orchestrator_client.vdiskstorage.ListImages(vdiskstorageid=vdiskstorageid)
 
@@ -82,7 +86,7 @@ class VDisksAPIs(OrchestratorBase):
         return self.orchestrator_client.vdiskstorage.GetVdiskInfo(vdiskstorageid=vdiskstorageid,vdiskid=vdiskid)
 
     @catch_exception_decoration
-    def delete_vdisks_vdiskid(self, vdiskstorageid,vdiskid):
+    def delete_vdisks_vdiskid(self, vdiskstorageid, vdiskid):
         return self.orchestrator_client.vdiskstorage.DeleteVdisk(vdiskstorageid=vdiskstorageid, vdiskid=vdiskid)
 
     @catch_exception_decoration

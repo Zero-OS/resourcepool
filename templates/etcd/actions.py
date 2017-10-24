@@ -36,10 +36,9 @@ def stop(job):
 def watchdog_handler(job):
     import asyncio
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd_cluster = service.consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')
 
 
 def monitor(job):
