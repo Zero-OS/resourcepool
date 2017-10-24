@@ -43,7 +43,7 @@ class VDisksAPIs(OrchestratorBase):
         data = {"imageName": imagename,
                 "exportName": "template:ubuntu-1604",
                 "exportSnapshot": "default",
-                "exportBlockSize": export_block_size,
+                "exportBlockSize": 1048576,
                 "size": size,
                 "diskBlockSize": block_size,
                 "url": "ftp://hub.gig.tech"
