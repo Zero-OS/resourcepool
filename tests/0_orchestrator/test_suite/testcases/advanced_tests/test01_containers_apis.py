@@ -24,64 +24,61 @@ class TestcontaineridAPI(TestcasesBase):
         *Test case for create containers with same zerotier network *
 
         **Test Scenario:**
-        #. Create Zerotier network using zerotier api ,should succeed.
-        #. Create two containers C1,C2 with same zertoier networkId, should succeed.
-        #. Check that two containers get zerotier ip, should succeed.
+        #. Create private Zerotier network using zerotier api.
+        #. Create two containers C1, C2 and make them join the same zertoier network, should succeed.
+        #. Create container C3 without nic with type zerotier.
+        #. Check that contaniers C1, C2 get zerotier ip, should succeed.
         #. Make sure that two containers can connect to each other, should succeed.
-
+        #. Try to ping container C1 from container C1, should fail.
         """
 
-        Z_Id = self.create_zerotier_network()
+        self.lg.info("  [*] Create private Zerotier network using zerotier api")
+        ztnwid = self.create_zerotier_network(private=True)
 
-        time.sleep(15)
+        time.sleep(5)
 
-        self.lg.info(' [*] Create 2 containers C1, C2 with same zerotier network Id , should succeed')
-        nic = [{'type': 'default'}, {'type': 'zerotier', 'id': Z_Id}]
-        response_c1, data_c1 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
-        self.assertEqual(response_c1.status_code, 201)
-        self.created['container'].append(data_c1['name'])
+        self.lg.info(' [*] Create two containers C1, C2 and make them join the same zertoier network, should succeed')
+        nics = [{'type': 'default'}, {'type': 'zerotier', 'id': ztnwid, "token": self.zerotier_token}]
+        response, container_1_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response.status_code, 201)
+        self.created['container'].append(container_1_data['name'])
 
-        response_c2, data_c2 = self.containers_api.post_containers(nodeid=self.nodeid, nics=nic)
-        self.assertEqual(response_c2.status_code, 201)
-        self.created['container'].append(data_c2['name'])
+        response, container_2_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(response.status_code, 201)
+        self.created['container'].append(container_2_data['name'])
 
-        self.lg.info(" [*] Get two containers client c1_client and c2_client .")
-        c1_client = self.core0_client.get_container_client(data_c1['name'])
-        c2_client = self.core0_client.get_container_client(data_c2['name'])
+        self.lg.info("  [*] Create container C3 without nic with type zerotier.")
+        response, container_3_data = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.assertEqual(response.status_code, 201)
+        self.created['container'].append(container_3_data['name'])
 
-        time.sleep(15)
+        container_1_client = self.core0_client.get_container_client(container_1_data['name'])
+        container_2_client = self.core0_client.get_container_client(container_2_data['name'])
+        container_3_client = self.core0_client.get_container_client(container_3_data['name'])
 
-        self.lg.info(" [*] Check that two containers get zerotier ip, should succeed ")
-        c1_zt_ip = self.core0_client.get_client_zt_ip(c1_client)
-        self.assertTrue(c1_zt_ip)
-        c2_zt_ip = self.core0_client.get_client_zt_ip(c2_client)
-        self.assertTrue(c2_zt_ip)
+        time.sleep(10)
 
-        self.lg.info(" [*] first container C1 ping second container C2 ,should succeed")
-        for i in range(5):
-            response = c1_client.bash('ping -w3 %s' % c2_zt_ip).get()
-            if response.state == "SUCCESS":
-                break
-            else:
-                time.sleep(5)
+        self.lg.info(" [*] Check that contaniers C1, C2 get zerotier ip, should succeed")
+        container_1_zt_ip = self.core0_client.get_client_zt_ip(container_1_client)
+        self.assertTrue(container_1_zt_ip)
+        container_2_zt_ip = self.core0_client.get_client_zt_ip(container_2_client)
+        self.assertTrue(container_2_zt_ip)
+
+        self.lg.info(" [*] Ping container C2 from container C1 using zerotier ip, should succeed")
+        response = container_1_client.bash('ping -w3 {}'.format(container_2_zt_ip)).get()
+        self.assertEqual(response.state, "SUCCESS")
+
+        self.lg.info(" [*] Ping container C1 from container C2 using zerotier ip, should succeed")
+        response = container_2_client.bash('ping -w3 {}'.format(container_1_zt_ip)).get()
+        self.assertEqual(response.state, "SUCCESS")
+
+        self.lg.info(" [*] Ping container C1 from container C3 using zerotier ip, should fail")
+        response = container_3_client.bash('ping -w3 {}'.format(container_1_zt_ip)).get()
+        self.assertEqual(response.state, "ERROR")
     
-        self.assertEqual(response.state, "SUCCESS")
-        self.lg.info(" [*] second container C2 ping first container C1 ,should succeed")
-        response = c2_client.bash('ping -w3 %s' % c1_zt_ip).get()
-        self.assertEqual(response.state, "SUCCESS")
+        self.lg.info(" [*] Delete zerotier network {}".format(ztnwid))
+        self.delete_zerotier_network(ztnwid)
 
-        self.lg.info(" [*] Create C3 without zerotier ")
-        response_c3, data_c3 = self.containers_api.post_containers(nodeid=self.nodeid)
-        self.assertEqual(response_c3.status_code, 201)
-        self.created['container'].append(data_c3['name'])
-        C3_client = self.core0_client.get_container_client(data_c3['name'])
-
-        self.lg.info(" [*] Check if third container (c3) can ping first container (c1), should fail.")
-        response = C3_client.bash('ping -w3 %s' % c1_zt_ip).get()
-        self.assertEqual(response.state, 'ERROR')
-
-        self.lg.info(" [*] Delete zerotier network ")
-        self.delete_zerotier_network(Z_Id)
 
     def test002_create_containers_with_vlan_network(self):
         """ GAT-090
@@ -394,6 +391,8 @@ class TestcontaineridAPI(TestcasesBase):
         self.lg.info(' [*] post job to container')
         response = self.containers_api.post_containers_containerid_jobs(self.nodeid, data_c1['name'], job_body)
         self.assertEqual(response.status_code, 202)
+
+        time.sleep(5)
         
         self.lg.info("check that job created successfully with it's specs.")
         response = c1_client.bash("ls |grep  out.text").get()
@@ -533,3 +532,49 @@ class TestcontaineridAPI(TestcasesBase):
         self.response = self.containers_api.get_containers_containerid(self.nodeid, cont_name)
         d = json.loads(self.response.text.split('\n')[0])
         self.assertEqual(len(d['nics']), 2)
+
+
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1140")
+    def test010_create_containers_with_bridge_with_hwaddr(self):
+        """ GAT-142
+
+        *Test case for test creation of containers with vlan network*
+
+        **Test Scenario:**
+
+        #. Create bridge B1, should succeed
+        #. Create container C1, attach bridge B1 to it, and set its hardwareaddr to HA1.
+        #. Check container C1 hardwareaddr should be equal to hardware address HA1
+        #. Create container C2 with invalid hardwareaddr, should fail
+        """
+        self.lg.info("[*] Create bridge B1, should succeed")
+        resposne, bridge_data = self.bridges_api.post_nodes_bridges(node_id=self.nodeid, networkMode='dnsmasq')
+        self.assertEqual(resposne.status_code, 201)
+        self.created['bridge'].append(bridge_data['name'])
+
+        self.lg.info("[*] Create container C1, attach bridge B1 to it, and set its hardwareaddr to HA1")
+        nic_name = 'nic_' + self.random_string()
+        hardwareaddr = self.randomMAC()
+
+        nics = [{"name": nic_name, "type": "bridge", "id": bridge_data['name'], "hwaddr": hardwareaddr}]
+        response, container_1_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(resposne.status_code, 201)
+        self.created['container'].append(container_1_data['name'])
+
+        self.lg.info("[*] Check container C1 hardwareaddr should be equal to hardware address HA1")
+        container_1_client = self.core0_client.get_container_client(container_1_data['name'])
+        contaienr_1_nics = container_1_client.info.nic()
+        target_nic = [x for x in container_1_client.info.nic() if x['name'] == nic_name]
+        self.assertNotEqual(target_nic, [])
+        self.assertEqual(target_nic[0]['hardwareaddr'], hardwareaddr)
+
+        self.lg.info("[*] Create container C2 with invalid hardwareaddr, should fail")
+        nics = [{"name": nic_name, "type": "bridge", "id": bridge_data['name'], "hwaddr": self.random_string()}]
+        response, container_2_data = self.containers_api.post_containers(nodeid=self.nodeid, nics=nics)
+        self.assertEqual(resposne.status_code, 400)
+
+
+
+
+
+

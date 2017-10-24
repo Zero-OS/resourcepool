@@ -64,12 +64,29 @@ def install(job):
             raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
         # make sure nbd is still running
         running = is_job_running(container, socket=socketpath)
+        if not running:
+            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
+
+        vdisk_state = {}
         for vdisk in vdisks:
+            # warmming up nbdserver manually. we send a qemu-ing info so the nbdserver already start doing the requests task in order to be ready to
+            # serve the vdisks
+            #cmd = 'qemu-img info nbd:unix:/mnt/container-{container_id}{socket_path}:exportname={vdisk_id}'.format(container_id=container.id, socket_path=socketpath, vdisk_id=vdisk.name)
+            #job.logger.debug("Executing cmd '%s' to warm up nbdserver for '%s'.", cmd, service.name)
+            #resp = container.node.client.system(cmd).get()
+            #start = time.time()
+            #timeout = 300
+            #while resp.state != 'SUCCESS' or (time.time() - start) > timeout:
+            #    job.logger.debug("%s\n%s\n%s", cmd, resp.stdout, resp.stderr)
+            #    time.sleep(0.5)
+            #    resp = container.node.client.system(cmd).get()
+            #if resp.state != 'SUCCESS':
+            #    running = False
             if running:
                 vdisk.model.data.status = 'running'
                 vdisk.saveAll()
-        if not running:
-            raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
+            else:
+                raise j.exceptions.RuntimeError("Failed to start nbdserver {}".format(vm.name))
 
         service.model.data.socketPath = socketpath
         service.model.data.status = 'running'
@@ -81,7 +98,7 @@ def start(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_storagecluster_config(job, storagecluster):
@@ -98,10 +115,14 @@ def get_storagecluster_config(job, storagecluster):
 def stop(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import time
+    import signal
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = get_container(service, job.context['token'])
+
+    force_stop = job.model.args.get("force_stop", False)
+    max_wait = 10 if force_stop else 60
 
     vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
@@ -109,22 +130,29 @@ def stop(job):
     service.saveAll()
     # Delete tmp vdisks
     for vdiskservice in vdisks:
-        j.tools.async.wrappers.sync(vdiskservice.executeAction('pause'))
+        vdiskservice.executeAction('pause')
         if vdiskservice.model.data.type == "tmp":
-            j.tools.async.wrappers.sync(vdiskservice.executeAction('delete', context=job.context))
+            vdiskservice.executeAction('delete', context=job.context)
 
     nbdjob = is_job_running(container, socket=service.model.data.socketPath)
     if nbdjob:
+        pid = nbdjob['cmd']['id']
         job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
-        container.client.job.kill(nbdjob['cmd']['id'])
+        container.client.job.kill(pid)
 
         job.logger.info("wait for nbdserver to stop")
-        for i in range(60):
+        for i in range(max_wait):
             time.sleep(1)
             if is_job_running(container, socket=service.model.data.socketPath):
                 continue
             return
-        raise j.exceptions.RuntimeError("nbdserver didn't stopped")
+
+        # if we couldn't stop the process gently, just kill it
+        container.client.job.kill(pid, signal=signal.SIGKILL)
+
+        if is_job_running(container, socket=service.model.data.socketPath):
+            raise j.exceptions.RuntimeError("nbdserver %s didn't stop" % service.model.name)
+
     service.model.data.status = 'halted'
     service.saveAll()
 
@@ -144,20 +172,55 @@ def monitor(job):
     running = is_job_running(container, socket=service.model.data.socketPath)
     for vdisk in vdisks:
         if running:
-            j.tools.async.wrappers.sync(vdisk.executeAction('start'))
+            vdisk.executeAction('start')
         else:
-            j.tools.async.wrappers.sync(vdisk.executeAction('pause'))
+            vdisk.executeAction('pause')
+
+
+def ardb_message(job, message):
+    # status = message['status']
+    # do we need to check the status ?
+    service = job.service
+    vdisk_id = message['data']['vdiskID']
+    vdisks = service.aysrepo.servicesFind(name=vdisk_id, role='vdisk')
+    job.logger.info("found %d disks to recover", len(vdisks))
+    for vdisk in vdisks:
+        # NOTE: this should match 1 vdisk at max
+        job.logger.info("calling recover for disk %s" % vdisk_id)
+        vdisk_storage = vdisk.parent
+        vdisk_storage.executeAction('recover', args={'message': message}, context=job.context)
+
+
+def handle_messages(job, message):
+    """ message == {"status":422,"subject":"ardb","data":{"address":"172.17.0.255:2000","db":0,"type":"primary","vdiskID":"vd6"}}"""
+    job.logger.info('processing nbdserver message "%s"', message)
+    switch = {
+        'ardb': ardb_message,
+    }
+
+    handler = switch.get(message['subject'])
+    if handler is not None:
+        return handler(job, message)
+
+
+def debug_failure(job):
+    handle_messages(job, {
+        "status":422,
+        "subject":"ardb",
+        "data": {
+            "address":"172.17.0.255:2000",
+            "db":0,
+            "type":"primary",
+            "vdiskID":"vd0"
+        }
+    })
 
 
 def watchdog_handler(job):
-    import asyncio
-    loop = j.atyourservice.server.loop
-    service = job.service
-    if str(service.model.data.status) != 'running':
-        return
-    eof = job.model.args['eof']
-    service = job.service
-    if eof:
-        vm_service = service.consumers['vm'][0]
-        asyncio.ensure_future(vm_service.executeAction('stop', context=job.context, args={"cleanup": False}), loop=loop)
-        asyncio.ensure_future(vm_service.executeAction('start', context=job.context), loop=loop)
+    message = job.model.args.get('message')
+    level = job.model.args.get('level')
+
+    job.logger.info('level: %d message: %s' % (level, message))
+    if level == 20:
+        return handle_messages(job, j.data.serializer.json.loads(message))
+

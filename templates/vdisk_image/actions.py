@@ -1,5 +1,11 @@
 from js9 import j
 
+
+def input(job):
+    if len(job.service.name) > 16:
+            raise j.exceptions.Input('Vdisk_image service name is longer than 16 characters.')
+
+
 def install(job):
     import random
     import os
@@ -26,12 +32,11 @@ def install(job):
             raise j.exceptions.RuntimeError("no etcd_cluster service found")
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
-               --blocksize {blocksize} \
+               --flush-size 128 \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
-                                          blocksize=service.model.data.exportBlockSize,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
 
