@@ -68,8 +68,8 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    clusterconfig = get_cluster_config(job)
-    node = random.choice(clusterconfig['nodes'])
+    nodes = get_cluster_nodes(job)
+    node = random.choice(nodes)
     container = create_from_template_container(job, node)
     try:
         # delete disk on storage cluster
