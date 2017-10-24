@@ -278,7 +278,7 @@ def watchdog_handler(job):
                         await tcp.asyncExecuteAction('drop', context=job.context)
                     except ConnectionError:
                         continue
-                    tcp.delete()
+                    await tcp.asyncExecuteAction('delete', context=job.context)
 
             # check if nodes are more than the min number for cluster deployment which is 3.
             tmp = list()
@@ -350,7 +350,7 @@ def watchdog_handler(job):
             if etcd_service.model.data.status != 'running':
                 container_status, etcd_status = check_container_etcd_status(job, etcd_service.parent)
                 if not etcd_status:
-                    etcd_service.parent.delete()
+                    await etcd_service.parent.asyncExecuteAction('delete', context=job.context)
         service.logger.info("etcd_cluster  %s respawned" % service.name)
     loop = job.service._loop
     asyncio.ensure_future(selfhealing(job), loop=loop)
