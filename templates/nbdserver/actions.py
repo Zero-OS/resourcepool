@@ -205,13 +205,13 @@ def handle_messages(job, message):
 
 def debug_failure(job):
     handle_messages(job, {
-        "status":422,
-        "subject":"ardb",
+        "status": 422,
+        "subject": "ardb",
         "data": {
-            "address":"172.17.0.255:2000",
-            "db":0,
-            "type":"primary",
-            "vdiskID":"vd0"
+            "address": "172.17.0.255:2000",
+            "db": 0,
+            "type": "primary",
+            "vdiskID": "vd0"
         }
     })
 

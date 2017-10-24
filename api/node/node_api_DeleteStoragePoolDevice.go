@@ -37,7 +37,7 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	if !exists {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Device %v not found", toDeleteUUID), "")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

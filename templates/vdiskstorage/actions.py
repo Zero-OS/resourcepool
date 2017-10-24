@@ -1,20 +1,11 @@
-from js9 import j
-
 def input(job):
     service = job.service
     args = job.model.args
-    block_cluster_service = service.aysrepo.serviceGet(instance=args.get('blockCluster'), role='storage_cluster')
-    if 'block' != block_cluster_service.model.data.clusterType:
-        raise RuntimeError('storage_cluster %s provided should be of type  block' % block_cluster_service.name)
+    block_service = service.aysrepo.serviceGet(instance=args.get('blockCluster'), role='storagecluster.block')
     if args.get('objectCluster'):
-        object_cluster_service = service.aysrepo.serviceGet(instance=args.get('objectCluster'), role='storage_cluster')
-        if 'object' != object_cluster_service.model.data.clusterType:
-            raise RuntimeError('storage_cluster %s provided should be of type  object' % object_cluster_service.name)
         if args.get('slaveCluster'):
-            slave_cluster_service = service.aysrepo.serviceGet(instance=args.get('slaveCluster'), role='storage_cluster')
-            if 'block' != slave_cluster_service.model.data.clusterType:
-                raise RuntimeError('storage_cluster %s provided should be of type  block' % slave_cluster_service.name)
-            if block_cluster_service.model.data.nrServer < slave_cluster_service.model.data.nrServer:
+            slave_cluster_service = service.aysrepo.serviceGet(instance=args.get('slaveCluster'), role='storagecluster.block')
+            if block_service.model.data.nrServer < slave_cluster_service.model.data.nrServer:
                     raise RuntimeError("blockStoragecluster's number of servers should be equal or larger than them in objectStoragecluster")
     elif args.get('slaveCluster'):
         raise RuntimeError("backup storage clusters cannot exist without an object cluster , please provide a storage cluster of type object.")
@@ -22,8 +13,6 @@ def input(job):
 
 def recover_full_once(job, cluster, engine, vdisk):
     import time
-    import asyncio
-    loop = j.atyourservice.server.loop
     # the recovery action is granteed to run one time even if called many times (at the same time)
     # it can only be executed again when it finishes executing, otherwise callers will just return (not blocked)
     # this is to avoid executing the same recover scenario when the same error is reported via multiple nbdservers.
@@ -51,9 +40,9 @@ def recover_full_once(job, cluster, engine, vdisk):
         engine.reload()
 
     if not broken:
-        #Note: the restart of the machine is due too nbdserver crash on losing a connection
-        #once nbdserver is fixed, there will be no need to restart the machine, and we can
-        #just return in case the storage engine is not broken.
+        # Note: the restart of the machine is due too nbdserver crash on losing a connection
+        # once nbdserver is fixed, there will be no need to restart the machine, and we can
+        # just return in case the storage engine is not broken.
         vms = vdisk.consumers.get('vm', [])
         if len(vms) == 0:
             return
@@ -85,7 +74,6 @@ def recover_full_once(job, cluster, engine, vdisk):
     # TODO: find a way to do the rollback concurently, now it's sequential
     for vdisk in job.service.consumers.get('vdisk', []):
         vdisk.executeAction('rollback', args={"timestamp": int(time.time())}, context=job.context)
-
 
     job.logger.info("all rollback processes has been completed")
     job.logger.info("restarting virtual machines")

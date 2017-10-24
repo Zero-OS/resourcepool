@@ -10,7 +10,6 @@ class Partition(Mountable):
         """
         # g8os client to talk to the node
         self.disk = disk
-        self._client = disk.node.client
         self.name = None
         self.size = None
         self.blocksize = None
@@ -19,6 +18,10 @@ class Partition(Mountable):
         self._filesystems = []
 
         self._load(part_info)
+
+    @property
+    def client(self):
+        return self.disk.node.client
 
     @property
     def filesystems(self):
@@ -43,7 +46,7 @@ class Partition(Mountable):
         all the filesystem present on the disk
         """
         self._filesystems = []
-        for fs in (self._client.btrfs.list() or []):
+        for fs in (self.client.btrfs.list() or []):
             for device in fs['devices']:
                 if device['path'] == "/dev/{}".format(self.name):
                     self._filesystems.append(fs)

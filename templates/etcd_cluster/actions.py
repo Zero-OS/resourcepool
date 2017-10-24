@@ -11,11 +11,31 @@ def input(job):
 
 
 def init(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
+    configure(job)
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+def ensureStoragepool(job, node):
+    """
+    param: job  ,, currently executing job object
+    param: node ,, node object from the zeroos.orchestrator.sal library
+    """
+    from zeroos.orchestrator.sal.StoragePool import StoragePools
+    from zeroos.orchestrator.utils import find_disks
     service = job.service
-    service.executeAction("configure", context=job.context)
+
+    # prefer nvme if not then ssd if not then just use the cache what ever it may be
+    free_disks = find_disks('nvme', [node], 'sp_etcd_')
+    if not free_disks[node.name]:
+        free_disks = find_disks('ssd', [node], 'sp_etcd_')
+        if not free_disks[node.name]:
+            return "{}_fscache".format(node.name)
+
+    # choose the first choice in the results since create takes a list we choose the first item and create a list with it.
+    devices = [free_disks[node.name][0].devicename]
+    storagePool = StoragePools(node).create('etcd_%s' % service.name, devices, 'single', 'single')
+    storagePool.mount()
+    storagePoolService = storagePool.ays.create(service.aysrepo)
+    return storagePoolService.name
 
 
 def configure(job):
@@ -48,7 +68,7 @@ def configure(job):
         containername = '{}_{}_{}_{}'.format(service.name, 'etcd', node.name, baseports[1])
 
         args = {
-            'storagePool': "{}_fscache".format(node.name),
+            'storagePool': ensureStoragepool(job, node),
             'name': containername,
         }
         old_filesystem_service = service.aysrepo.servicesFind(name=containername, role='filesystem')
@@ -159,12 +179,16 @@ def watchdog_handler(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     import redis
-    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler so here
-    # can focus on only the recovery
+    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler
+    # so here can focus on only the recovery
 
     service = job.service
     if service.model.data.status == 'recovering':
         return
+
+    if not service.aysrepo.servicesFind(role='node'):
+        return
+
     service.model.data.status = 'recovering'
     etcds = set(service.producers.get('etcd', []))
     working_etcds = set()
@@ -222,7 +246,6 @@ def watchdog_handler(job):
             etcd.executeAction('stop', context=job.context)
             etcd.parent.executeAction('stop', context=job.context)
 
-
         # clean all reaminag tcps on old  running nodes
         for etcd in service.producers['etcd']:
             for tcp in etcd.producers['tcp']:
@@ -262,7 +285,9 @@ def watchdog_handler(job):
 
         service.model.data.etcds = []
         service.saveAll()
-        service.executeAction('configure', context=job.context)
+
+        configure(job)
+
         # install all services created by the configure of the etcd_cluster
         etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
         for etcd in etcd_services:
@@ -280,9 +305,13 @@ def watchdog_handler(job):
             vdisk.executeAction('save_config', context=job.context)
 
         # save all storage cluster to new etcd cluster
-        storage_clusters = service.aysrepo.servicesFind(role='storage_cluster')
-        for storage_cluster in storage_clusters:
-            storage_cluster.executeAction('save_config', context=job.context)
+        storagecluster_block_services = service.aysrepo.servicesFind(role='storagecluster.block')
+        for storagecluster_block_service in storagecluster_block_services:
+            storagecluster_block_service.executeAction('save_config', context=job.context)
+
+        storagecluster_object_services = service.aysrepo.servicesFind(role='storagecluster.object')
+        for storagecluster_object_service in storagecluster_object_services:
+            storagecluster_object_service.executeAction('save_config', context=job.context)
 
         # restart all runnning vms
         vmachines = service.aysrepo.servicesFind(role='vm')

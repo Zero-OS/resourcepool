@@ -6,7 +6,6 @@ def init(job):
 def install(job):
     service = job.service
     grafanaclient = j.clients.grafana.get(url='http://%s:%d' % (service.parent.parent.model.data.redisAddr, service.parent.model.data.port), username='admin', password='admin')
-
     result = grafanaclient.updateDashboard(service.model.data.dashboard)
     if result.get('status', None) == 'success':
         service.model.data.slug = result['slug']

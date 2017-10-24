@@ -16,16 +16,19 @@ class Disks:
     """Subobject to list disks"""
     def __init__(self, node):
         self.node = node
-        self._client = node.client
+
+    @property
+    def client(self):
+        return self.node.client
 
     def list(self):
         """
         List of disks on the node
         """
         disks = []
-        disk_list = self._client.disk.list()
+        disk_list = self.client.disk.list()
         if 'blockdevices' in disk_list:
-            for disk_info in self._client.disk.list()['blockdevices']:
+            for disk_info in self.client.disk.list()['blockdevices']:
                 disks.append(Disk(
                     node=self.node,
                     disk_info=disk_info
@@ -52,7 +55,6 @@ class Disk(Mountable):
         """
         # g8os client to talk to the node
         self.node = node
-        self._client = node.client
         self.name = None
         self.size = None
         self.blocksize = None
@@ -66,6 +68,10 @@ class Disk(Mountable):
         self._load(disk_info)
 
     @property
+    def client(self):
+        return self.node.client
+
+    @property
     def devicename(self):
         return "/dev/{}".format(self.name)
 
@@ -76,7 +82,7 @@ class Disk(Mountable):
 
     def _load(self, disk_info):
         self.name = disk_info['name']
-        detail = self._client.disk.getinfo(self.name)
+        detail = self.client.disk.getinfo(self.name)
         self.size = int(disk_info['size'])
         self.blocksize = detail['blocksize']
         if detail['table'] != 'unknown':
@@ -98,7 +104,7 @@ class Disk(Mountable):
         all the filesystem present on the disk
         """
         self._filesystems = []
-        for fs in (self._client.btrfs.list() or []):
+        for fs in (self.client.btrfs.list() or []):
             for device in fs['devices']:
                 if device['path'] == "/dev/{}".format(self.name):
                     self._filesystems.append(fs)
@@ -131,7 +137,7 @@ class Disk(Mountable):
         if self.partition_table is not None and overwrite is False:
             return
 
-        self._client.disk.mktable(
+        self.client.disk.mktable(
             disk=self.name,
             table_type=table_type
         )
@@ -144,14 +150,14 @@ class Disk(Mountable):
         """
         before = {p.name for p in self.partitions}
 
-        self._client.disk.mkpart(
+        self.client.disk.mkpart(
             self.name,
             start=start,
             end=end,
             part_type=part_type,
         )
         after = {}
-        for disk in self._client.disk.list()['blockdevices']:
+        for disk in self.client.disk.list()['blockdevices']:
             if disk['name'] != self.name:
                 continue
             for part in disk.get('children', []):

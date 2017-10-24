@@ -1,114 +1,35 @@
 import json
+import os
 
 from js9 import j
 from .StorageEngine import StorageEngine
+from .ZeroStor import ZeroStor
+from .Node import Node
+from .StoragePool import StoragePool
 
 import logging
 logging.basicConfig(level=logging.INFO)
 default_logger = logging.getLogger(__name__)
 
 
-class StorageCluster:
-    """StorageCluster is a cluster of StorageEngine servers"""
-
-    def __init__(self, label, nodes=None, disk_type=None, logger=None):
-        """
-        @param label: string repsenting the name of the storage cluster
-        """
+class BaseStorageCluster:
+    def __init__(self, label, nodes, nr_servers, storage_servers=None, logger=None):
         self.label = label
         self.name = label
         self.nodes = nodes or []
-        self.filesystems = []
-        self.storage_servers = []
-        self.disk_type = disk_type
-        self.data_shards = 0
-        self.parity_shards = 0
-        self._ays = None
-        self.logger = logger if logger else default_logger
+        self.nr_servers = nr_servers
+        self.storage_servers = storage_servers or []
+        self.logger = logger or default_logger
 
     @classmethod
     def from_ays(cls, service, password, logger=None):
-        logger = logger or default_logger
-        logger.debug("load cluster storage cluster from service (%s)", service)
-        disk_type = str(service.model.data.diskType)
-
-        nodes = []
-        storage_servers = []
-        for storageEngine_service in service.producers.get('storage_engine', []):
-            storages_server = StorageServer.from_ays(storageEngine_service, password)
-            storage_servers.append(storages_server)
-            if storages_server.node not in nodes:
-                nodes.append(storages_server.node)
-
-        cluster = cls(label=service.name, nodes=nodes, disk_type=disk_type, logger=logger)
-        cluster.storage_servers = storage_servers
-        cluster.data_shards = service.model.data.dataShards
-        cluster.parity_shards = service.model.data.parityShards
-        return cluster
+        pass
 
     @property
     def dashboard(self):
         board = StorageDashboard(self)
         return board.template
 
-    def get_config(self):
-        data = {'dataStorage': [],
-                'metadataStorage': None,
-                'label': self.name,
-                'status': 'ready' if self.is_running() else 'error',
-                'nodes': [node.name for node in self.nodes]}
-        for storageserver in self.storage_servers:
-            if 'metadata' in storageserver.name:
-                data['metadataStorage'] = {'address': storageserver.storageEngine.bind}
-            else:
-                disabled = not storageserver.storageEngine.enabled or \
-                        storageserver.storageEngine.status == 'broken'
-
-                data['dataStorage'].append({
-                    'address': storageserver.storageEngine.bind,
-                    'disabled': disabled
-                })
-        return data
-
-    @property
-    def nr_server(self):
-        """
-        Number of storage server part of this cluster
-        """
-        return len(self.storage_servers)
-
-    def find_disks(self):
-        """
-        return a list of disk that are not used by storage pool
-        or has a different type as the one required for this cluster
-        """
-        self.logger.debug("find available_disks")
-        cluster_name = 'sp_cluster_{}'.format(self.label)
-        available_disks = {}
-
-        def check_partition(disk):
-            for partition in disk.partitions:
-                for filesystem in partition.filesystems:
-                    if filesystem['label'].startswith(cluster_name):
-                        return True
-
-        for node in self.nodes:
-            for disk in node.disks.list():
-                # skip disks of wrong type
-                if disk.type.name != self.disk_type:
-                    continue
-                # skip devices which have filesystems on the device
-                if len(disk.filesystems) > 0:
-                    continue
-
-                # include devices which have partitions
-                if len(disk.partitions) == 0:
-                    available_disks.setdefault(node.name, []).append(disk)
-                else:
-                    if check_partition(disk):
-                        # devices that have partitions with correct label will be in the beginning
-                        available_disks.setdefault(node.name, []).insert(0, disk)
-        return available_disks
 
     def start(self):
         self.logger.debug("start %s", self)
@@ -121,11 +42,166 @@ class StorageCluster:
             server.stop()
 
     def is_running(self):
-        # TODO: Improve this, what about part of server running and part stopped
         for server in self.storage_servers:
             if not server.is_running():
                 return False
         return True
+
+    def __str__(self):
+        return "StorageCluster <{}>".format(self.label)
+
+    def __repr__(self):
+        return str(self)
+
+    def get_disks(self, available_disks):
+        pass
+
+
+class ObjectCluster(BaseStorageCluster):
+    def __init__(self, label, nodes, nr_servers, data_disk_type, meta_disk_type, servers_per_meta_drive, storage_servers, storage_pools=[], logger=None):
+        super().__init__(label, nodes, nr_servers, storage_servers)
+        self.data_disk_type = data_disk_type
+        self.meta_disk_type = meta_disk_type
+        self.servers_per_meta_drive = servers_per_meta_drive
+        self.logger = logger if logger else default_logger
+        self.storage_pools = storage_pools
+
+    @classmethod
+    def from_ays(cls, service, password, logger=None):
+        logger = logger or default_logger
+        logger.debug("load cluster storage cluster from service (%s)", service)
+        data_disk_type = str(service.model.data.dataDiskType)
+        meta_disk_type = str(service.model.data.metaDiskType)
+        servers_per_meta_drive = service.model.data.serversPerMetaDrive
+
+        storage_servers = set()
+        for storageEngine_service in service.producers.get('zerostor', []):
+            storages_server = ZeroStor.from_ays(storageEngine_service, password)
+            storage_servers.add(storages_server)
+
+        storage_pools = set()
+        for storagePool_service in service.producers.get('storagepool', []):
+            storage_pool = StoragePool.from_ays(storagePool_service, password)
+            storage_pools.add(storage_pool)
+
+        nodes = set()
+        for node_service in service.producers["node"]:
+            nodes.add(Node.from_ays(node_service, password))
+
+        cluster = cls(label=service.name,
+                      nodes=list(nodes),
+                      storage_servers=list(storage_servers),
+                      nr_servers=service.model.data.nrServer,
+                      data_disk_type=data_disk_type,
+                      meta_disk_type=meta_disk_type,
+                      servers_per_meta_drive=servers_per_meta_drive,
+                      storage_pools=storage_pools,
+                      logger=logger)
+
+        return cluster
+
+    def get_disks(self, data_available_disks, meta_available_disks):
+        """
+        Get disks to be used by StorageEngine, 0-stor
+        It takes into account that 0-stor data, 0-stor meta disks can be of different types
+        """
+        import math
+
+        # diskmap example: {hdd: {node: [vda, vdb, vdc]}}
+        diskmap = {}
+        diskmap[self.data_disk_type] = data_available_disks
+        diskmap[self.meta_disk_type] = meta_available_disks
+
+        data_disks_per_node = self.nr_servers // len(self.nodes)
+        meta_disks_per_node = math.ceil(data_disks_per_node / self.servers_per_meta_drive)
+
+        datadisks = self._get_disks_from_map(diskmap[self.data_disk_type], data_disks_per_node, self.data_disk_type)
+        metadisks = self._get_disks_from_map(diskmap[self.meta_disk_type], meta_disks_per_node, self.meta_disk_type)
+
+        return datadisks, metadisks
+
+    def _get_disks_from_map(self, diskmap, diskspernode, disktype):
+        _disks = {}
+        for node, disks in diskmap.items():
+            if len(disks) < diskspernode:
+                raise ValueError("Not enough available {} disks on node {}".format(disktype, node))
+            _disks[node] = disks[:diskspernode]
+            diskmap[node] = diskmap[node][diskspernode:]
+        return _disks
+
+
+class BlockCluster(BaseStorageCluster):
+    """BlockCluster is a cluster of StorageEngine servers"""
+
+    def __init__(self, label, nr_servers, disk_type, nodes=None, storage_pools=[], storage_servers=None, logger=None):
+        """
+        @param label: string repsenting the name of the storage cluster
+        """
+        self.label = label
+        self.name = label
+        self.nodes = nodes or []
+        self.filesystems = []
+        self.nr_servers = nr_servers
+        self.storage_servers = storage_servers or []
+        self.disk_type = disk_type
+        self._ays = None
+        self.logger = logger if logger else default_logger
+        self.storage_pools = storage_pools if storage_pools else []
+
+
+    @classmethod
+    def from_ays(cls, service, password, logger=None):
+        logger = logger or default_logger
+        logger.debug("load cluster storage cluster from service (%s)", service)
+
+        storage_servers = set()
+        for storageEngine_service in service.producers.get('storage_engine', []):
+            storages_server = StorageEngine.from_ays(storageEngine_service, password)
+            storage_servers.add(storages_server)
+
+        storage_pools = set()
+        for storagePool_service in service.producers.get('storagepool', []):
+            storage_pool = StoragePool.from_ays(storagePool_service, password)
+            storage_pools.add(storage_pool)
+
+        nodes = set()
+        for node_service in service.producers["node"]:
+            nodes.add(Node.from_ays(node_service, password))
+
+        cluster = cls(label=service.name,
+                      nodes=list(nodes),
+                      storage_servers=list(storage_servers),
+                      logger=logger,
+                      disk_type=service.model.data.diskType,
+                      nr_servers=service.model.data.nrServer,
+                      storage_pools=storage_pools)
+        cluster.storage_servers = storage_servers
+        return cluster
+
+    def get_config(self):
+        data = {'dataStorage': [],
+                'label': self.name,
+                'status': 'ready' if self.is_running() else 'error',
+                'nodes': [node.name for node in self.nodes]}
+        for storageserver in self.storage_servers:
+            data['dataStorage'].append({'address': storageserver.bind})
+        return data
+
+    def get_disks(self, available_disks):
+        """
+        Get disks to be used by StorageEngine
+        """
+        # available_disks example: {node: [vda, vdb, vdc]}
+
+        disks_per_node = self.nr_servers // len(self.nodes)
+
+        diskmap = {}
+        for node, disks in available_disks.items():
+            if self.nr_servers > len(disks):
+                raise ValueError("Not enough available {} disks on node {}".format(self.disk_type, node))
+            diskmap[node] = disks[:disks_per_node]
+
+        return diskmap
 
     def health(self):
         """
@@ -138,18 +214,12 @@ class StorageCluster:
         """
         health = {}
         for server in self.storage_servers:
-            running, _ = server.storageEngine.is_running()
+            running, _ = server.is_running()
             health[server.name] = {
                 'storageEngine': running,
                 'container': server.container.is_running(),
             }
         return health
-
-    def __str__(self):
-        return "StorageCluster <{}>".format(self.label)
-
-    def __repr__(self):
-        return str(self)
 
 
 class StorageServer:
@@ -451,9 +521,10 @@ class StorageDashboard:
         }
         panel_id = 1
         disks = set()
-        for server in self.cluster.storage_servers:
-            server = server.name.split("_")
-            disks.add("{}_{}".format(server[1], server[-3]))
+        for sp in self.cluster.storage_pools:
+            for devicePath in sp.devices:
+                deviceName = os.path.basename(devicePath)
+                disks.add("{}_{}".format(sp.node.name, deviceName))
         disks = list(disks)
         panels = []
         for title, measurement in AGGREGATED_CONFIG.items():

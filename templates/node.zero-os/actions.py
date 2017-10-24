@@ -12,17 +12,22 @@ def get_statsdb(service):
     if statsdb_services:
         return statsdb_services[0]
 
+
 def get_version(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
     service = job.service
-    node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    if service.model.data.status != 'running':
+        version = ''
+    else:
+        node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+        pong = node.client.ping()
+        version = pong.split('Version: ')[1] if pong else ''
 
-    pong = node.client.ping()
-    version = pong.split('Version: ')[1] if pong else ''
     service.model.data.version = version
     service.saveAll()
     return version
+
 
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
@@ -107,13 +112,11 @@ def install(job):
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
 
 
-
 def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
-    import asyncio
     import time
 
     service = job.service
@@ -125,34 +128,24 @@ def monitor(job):
     if install_action != 'ok' and install_action != 'error':
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
+                                                         instance='node_%s' % service.name,
+                                                         die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
         service.consume(healthcheck_service)
 
-    start = time.time()
-    while time.time() < start + 30:
-        try:
-            node = Node.from_ays(service, token, timeout=5)
-            node.client.testConnectionAttempts = 0
-            state = node.client.ping()
-        except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
-            err = error
-            state = False
-        if state:
-            break
-        time.sleep(1)
-    else:
-        print("Could not ping %s within 30 seconds due to %s" % (service.name, err))
-
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
+
+    node = Node.from_ays(service, token, timeout=5)
+    state = node.is_running()
 
     if state:
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
-            service.executeAction('install',context=job.context)
+            service.executeAction('install', context=job.context)
             for consumer in service.getConsumersRecursive():
                 consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
@@ -271,12 +264,12 @@ def reboot(job):
             try:
                 node = Node.from_ays(service, token, timeout=5)
                 node.client.testConnectionAttempts = 0
-                state = node.client.ping()
+                node.client.ping()
             except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError):
                 break
             time.sleep(1)
         else:
-             print("Could not wait within 10 seconds for node to reboot")
+            job.logger.info("Could not wait within 10 seconds for node to reboot")
         service._recurring_tasks['monitor'].start()
 
 
@@ -298,6 +291,15 @@ def uninstall(job):
     if bootstraps:
         bootstraps[0].executeAction('delete_node', args={'node_name': service.name})
 
+    # Remove etcd_cluster if this was the last node service
+    node_services = service.aysrepo.servicesFind(role='node')
+    if node_services > 1:
+        return
+
+    for etcd_cluster_service in service.aysrepo.servicesFind(role='etcd_cluster'):
+        etcd_cluster_service.executeAction('delete', context=job.context)
+        etcd_cluster_service.delete()
+
 
 def watchdog(job):
     from zeroos.orchestrator.sal.Pubsub import Pubsub
@@ -310,7 +312,7 @@ def watchdog(job):
     service = job.service
     watched_roles = {
         'nbdserver': {
-            # 'message': (re.compile('^storageengine-failure.*$')),  # TODO: Not implemented yet in 0-disk yet
+            'level': 20,
             'message': (re.compile('.*'),),
             'eof': True
         },
@@ -361,10 +363,6 @@ def watchdog(job):
     }
 
     async def callback(jobid, level, message, flag):
-        if "nbd" in jobid:
-            print("****** nbd: %s" % message)
-        if "tlog" in jobid:
-            print("****** tlog: %s" % message)
         if '.' not in jobid:
             return
 
@@ -497,26 +495,25 @@ def start_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('start', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+        asyncio.ensure_future(vm.asyncExecuteAction('start', context=job.context), loop=job.service._loop)
 
 
 def shutdown_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('shutdown', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        asyncio.ensure_future(vm.asyncExecuteAction('shutdown', context=job.context), loop=job.service._loop)
 
 
 def vm_handler(job):
     import json
+    import asyncio
 
     message = job.model.args.get('message')
     if not message:
@@ -528,10 +525,10 @@ def vm_handler(job):
         return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job, vm)
+        asyncio.ensure_future(start_vm(job, vm))
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
-        shutdown_vm(job, vm)
+        asyncio.ensure_future(shutdown_vm(job, vm))
 
 
 def processChange(job):
@@ -541,4 +538,3 @@ def processChange(job):
     if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
         service.model.data.forceReboot = args['forceReboot']
         service.saveAll()
-

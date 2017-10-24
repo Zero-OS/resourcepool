@@ -8,6 +8,8 @@ from collections import namedtuple
 from datetime import datetime
 from io import BytesIO
 import netaddr
+import time
+import redis
 
 Mount = namedtuple('Mount', ['device', 'mountpoint', 'fstype', 'options'])
 
@@ -17,15 +19,17 @@ class Node:
 
     def __init__(self, addr, port=6379, password=None, timeout=120):
         # g8os client to talk to the node
-        self._client = Client(host=addr, port=port, password=password, timeout=timeout)
         self._storageAddr = None
         self.addr = addr
         self.port = port
+        self.password = password
+        self.timeout = timeout
         self.disks = Disks(self)
         self.storagepools = StoragePools(self)
         self.containers = Containers(self)
         self.network = Network(self)
         self.healthcheck = HealthCheck(self)
+        self._client = None
 
     @classmethod
     def from_ays(cls, service, password=None, timeout=120):
@@ -38,6 +42,8 @@ class Node:
 
     @property
     def client(self):
+        if not self._client:
+            self._client = Client(host=self.addr, port=self.port, password=self.password, timeout=self.timeout)
         return self._client
 
     @property
@@ -72,7 +78,7 @@ class Node:
 
     def get_nic_by_ip(self, addr):
         try:
-            res = next(nic for nic in self._client.info.nic() if any(addr == a['addr'].split('/')[0] for a in nic['addrs']))
+            res = next(nic for nic in self.client.info.nic() if any(addr == a['addr'].split('/')[0] for a in nic['addrs']))
             return res
         except StopIteration:
             return None
@@ -86,7 +92,7 @@ class Node:
         eligible = {t: [] for t in priorities}
         # Pick up the first ssd
         usedisks = []
-        for pool in (self._client.btrfs.list() or []):
+        for pool in (self.client.btrfs.list() or []):
             for device in pool['devices']:
                 usedisks.append(device['path'])
         for disk in disks[::-1]:
@@ -100,6 +106,26 @@ class Node:
                 return eligible[t][0]
         else:
             raise RuntimeError("cannot find eligible disks for the fs cache")
+
+    def find_disks(self, disk_type):
+        """
+        return a list of disk that are not used by storage pool
+        or has a different type as the one required for this cluster
+        """
+        available_disks = {}
+        for disk in self.disks.list():
+            # skip disks of wrong type
+            if disk.type.name != disk_type:
+                continue
+            # skip devices which have filesystems on the device
+            if len(disk.filesystems) > 0:
+                continue
+
+            # include devices which have partitions
+            if len(disk.partitions) == 0:
+                available_disks.setdefault(self.name, []).append(disk)
+
+        return available_disks
 
     def _mount_fscache(self, storagepool):
         """
@@ -232,6 +258,23 @@ class Node:
                                    mount['fstype'],
                                    mount['opts']))
         return allmounts
+
+    def is_running(self):
+        state = False
+        start = time.time()
+        err = None
+        while time.time() < start + 30:
+            try:
+                self.client.testConnectionAttempts = 0
+                state = self.client.ping()
+                break
+            except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
+                err = error
+                time.sleep(1)
+        else:
+            print("Could not ping %s within 30 seconds due to %s" % (self.addr, err))
+
+        return state
 
     def __str__(self):
         return "Node <{host}:{port}>".format(
