@@ -4,45 +4,63 @@ import unittest
 
 
 class TestVdisks(TestcasesBase):
-    def setUp(self):
-        super().setUp()
+
+    @classmethod
+    def setUpClass(cls):
+        self = cls()
+        super(TestVdisks, self).setUp()
+        TestcasesBase().setUp()
+        
         nodes = [self.nodeid]
         number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
-        if storageclusters.json() == []:
-            if number_of_free_disks == []:
-                self.skipTest(' [*] No free disks to create storagecluster')
+        if not storageclusters:
+            if not number_of_free_disks:
+                self.skipTest('[*] No free disks to create storagecluster')
 
-            self.lg.info(' [*] Deploy new storage cluster (SC0)')
+            self.lg.info('[*] Deploy new storage cluster (SC0)')
             response, data = self.storageclusters_api.post_storageclusters(
                 nodes=nodes,
                 driveType=disk_type,
                 servers=random.randint(1, number_of_free_disks)
             )
             self.assertEqual(response.status_code, 201)
-            self.storagecluster = data['label']
-
+            storagecluster = data['label']
         else:
-            self.storagecluster = storageclusters.json()[0]
-        self.lg.info(' [*] Create vdiskstorage (VDS0)')
-        response, self.vdiskstoragedata = self.vdisks_api.post_vdiskstorage(storagecluster=self.storagecluster)
+            storagecluster = storageclusters.json()[0]
+
+        self.lg.info('[*] Create vdiskstorage (VDS0)')
+        response, vdiskstoragedata = self.vdisks_api.post_vdiskstorage(storagecluster=storagecluster)
         self.assertEqual(response.status_code, 201)
 
-        self.lg.info(' [*] Import Image (IMG0) for (VDS0)')
-        response, self.imagedata = self.vdisks_api.post_import_image(vdiskstorageid=self.vdiskstoragedata["id"])
+        self.lg.info('[*] Import Image (IMG0) for (VDS0)')
+        response, imagedata = self.vdisks_api.post_import_image(vdiskstorageid=vdiskstoragedata['id'])
         self.assertEqual(response.status_code, 201)
 
+        TestVdisks.vdiskstoragedata = vdiskstoragedata
+        TestVdisks.imagedata = imagedata     
+
+    @classmethod
+    def tearDownClass(cls):
+        self = cls()
+        self.lg.info('[*] Delete imported image')
+        self.vdisks_api.delete_image(TestVdisks.vdiskstoragedata['id'], TestVdisks.imagedata['imageName'])
+        self.lg.info('[*] Delete vdiskstorage')
+        self.vdisks_api.delete_vdiskstorage(TestVdisks.vdiskstoragedata['id'])
+
+    def setUp(self):
+        super().setUp()
         self.lg.info(' [*] Create vdisk (VD0)')
-        response, self.data = self.vdisks_api.post_vdisks(vdiskstorageid=self.vdiskstoragedata["id"], imageid=self.imagedata["imageName"])
+        response, self.data = self.vdisks_api.post_vdisks(
+            vdiskstorageid=self.vdiskstoragedata['id'], 
+            imageid=self.imagedata['imageName']
+        )
         self.assertEqual(response.status_code, 201)
 
     def tearDown(self):
         self.lg.info(' [*] Delete vdisk (VD0)')
-        self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
-
-        self.lg.info(' [*] Delete Image (IMG0)')
-        self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
-        super(TestVdisks, self).tearDown()
+        self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata['id'], self.data['id'])
+        super().tearDown()
 
     def test001_get_vdisk_details(self):
         """ GAT-061
@@ -128,7 +146,7 @@ class TestVdisks(TestcasesBase):
 
         self.lg.info(' [*] Delete nonexisting vdisk, should fail with 404')
         response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], 'fake_vdisk')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
     def test005_resize_vdisk(self):
         """ GAT-065
@@ -284,3 +302,36 @@ class TestVdisks(TestcasesBase):
         fake_image = self.rand_str()
         response = self.vdisks_api.get_image_info(self.vdiskstoragedata["id"], fake_image)
         self.assertEqual(response.status_code, 404)
+
+    def test010_delete_vdisk_attached_to_vm(self):
+        """ GAT-155
+        *GET:/vdiskstorage/{vdiskstorageid}*
+
+        **Test Scenario:**
+
+        #. Create vdiskstorage (VDS0), should succeed.
+        #. Import image (IMG0) to vdiskstorage (VDS0), should succeed.
+        #. Create vdisk (VD0) with image (IMG0), should succeed.
+        #. Create virtual machine (VM0), should succeed.
+        #. Delete vdisk (VD0), should fail as vritual machine (VM0) is attatched to it.
+        #. Delete virtual machine (VM0), should succeed.
+        #. Delete vdisk (VD0), should succeed.
+
+        """
+        self.lg.info('Create virtual machine (VM0), should succeed')
+        disks = [{"vdiskid": self.data['id'], "maxIOps": 2000}]
+        response, vmdata = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=disks)
+        self.assertTrue(response.status_code, 201)
+
+        self.lg.info('Delete vdisk (VD0), should fail as vritual machine (VM0) is attatched to it')        
+        response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
+        self.assertTrue(response.status_code, 400)
+
+        self.lg.info('Delete virtual machine (VM0), should succeed')        
+        response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, vmdata['id'])
+        self.assertTrue(response.status_code, 204)
+
+        self.lg.info('Delete vdisk (VD0), should succeed')        
+        response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
+        self.assertTrue(response.status_code, 204)
+
