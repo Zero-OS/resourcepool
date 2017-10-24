@@ -40,7 +40,8 @@ class TestStorageclustersAPI(TestcasesBase):
         self.lg.info(' [*] Get storage cluster (SC0), should succeed with 200')
         response = self.storageclusters_api.get_storageclusters_label(self.data['label'])
         self.assertEqual(response.status_code, 200)
-        for key in ['label', 'driveType', 'nodes']:
+        
+        for key in ['label', 'driveType', 'nodes', 'clusterType']:
             self.assertEqual(response.json()[key], self.data[key])
         self.assertEqual(response.json()['status'], 'ready')
 
