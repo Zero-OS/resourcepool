@@ -5,8 +5,9 @@ matrix:
       dist: trusty
       python: 3.5
       install:
+        - sudo apt-get install sshpass 
+        - pip install vncdotool
         - pip3 install -r tests/0_orchestrator/test_suite/requirements.txt
-        - pip3 install git+https://github.com/gigforks/packet-python.git
       before_script:
         - bash tests/0_orchestrator/run_tests.sh before
       script:
@@ -14,7 +15,7 @@ matrix:
       after_script:
         - bash tests/0_orchestrator/run_tests.sh after
       after_failure:
-        - bash tests/0_orchestrator/run_tests.sh after
+        - cat tests/0_orchestrator/test_suite/test_suite.log
 
     - language: go
       sudo: true
@@ -22,9 +23,20 @@ matrix:
       go: 1.8
       before_install:
         - sudo apt-get -qq update
-        - sudo apt-get install -y libvirt-dev libcap-dev capnproto npm
+        - sudo apt-get install -y libvirt-dev npm
         - sudo npm install -g raml2html
       install:
         - go get github.com/Jumpscale/go-raml
       script:
         - bash test.sh
+
+    - language: python
+      sudo: true
+      dist: trusty
+      python: 3.5
+      before_install:
+        - sudo apt-get -qq update
+      install:
+        - sudo apt-get install -y capnproto libcap-dev
+      script:
+        - bash validate_syntax.sh

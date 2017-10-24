@@ -1,6 +1,7 @@
 package node
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -9,10 +10,38 @@ import (
 
 // DeleteNode is the handler for DELETE /nodes/{nodeid}
 // Delete Node
-func (api NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
+
+	// return if node doesnt exist
+	exists, err := aysClient.ServiceExists("node.zero-os", nodeID, api.AysRepo)
+	if err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check if node exists")
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	query := map[string]interface{}{
+		"consume": fmt.Sprintf("node!%s", nodeID),
+	}
+	services, resp, err := aysClient.Ays.ListServicesByRole("storagecluster", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, resp, w, "listing storageclusters") {
+		return
+	}
+
+	if len(services) > 0 {
+		err = fmt.Errorf("Deleting a node that consume storage clusters is not allowed")
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+	}
 
 	// execute the uninstall action of the node
 	bp := map[string]interface{}{

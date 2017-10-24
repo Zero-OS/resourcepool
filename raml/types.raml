@@ -28,6 +28,44 @@ CPUInfo:
       type: number
       format: float
 
+FTPUrl:
+  type: object
+  description: FTP server url
+  properties:
+    url:
+      type: string
+      description: |
+          FTP server url to export the vm from, and it should be in one of the following formats
+          - localhost:22
+          - ftp://1.2.3.4:200
+          - ftp://user@127.0.0.1:200
+          - ftp://user:pass@12.30.120.200:3000
+          - ftp://user:pass@12.30.120.200:3000/root/dir
+
+ExportVM:
+  type: object
+  description: FTP server url
+  properties:
+    url: FTPUrl
+    cryptoKey:
+      type: string
+      description: 32 byte string, used to encrypt exported VM
+
+ImportVM:
+  type: object
+  description: Import VM from ftp server
+  properties:
+    url: FTPUrl
+    blockStoragecluster:
+      type: string
+    objectStoragecluster:
+      type: string
+      required: false
+    backupStoragecluster:
+      type: string
+      required: false
+
+
 MemInfo:
   type: object
   description: Information about memory
@@ -63,6 +101,14 @@ OSInfo:
       format: int64
     virtualizationRole: string
     virtualizationSystem: string
+
+NodeReboot:
+  type: object
+  properties:
+    force:
+       type: boolean
+       default: false
+       description: If true, vms will be shutdown before reboot, otherwise, reboot will fail if there are any running
 
 NicInfo:
   type: object
@@ -527,6 +573,40 @@ Container:
       type: string
       description: A Url to the ardb storage to use to mount the root plist
 
+Backup:
+  type: object
+  properties:
+    name:
+      type: string
+      description: backup name
+    snapshot:
+      type: string
+      description: snapshot id
+    url:
+      type: string
+      description: restic url
+    type:
+      type: string
+      description: backup type
+    timestamp:
+      type: int64
+      description: unix timestamp of creation
+    meta:
+      type: object
+      description: meta data object
+
+BackupContainer:
+  type: object
+  properties:
+    name:
+      type: string
+      description: unique name
+    container:
+      type: string
+      description: container name to backup
+    url:
+      type: string
+      description: URL to restic repo
 
 CreateContainer:
   type: object
@@ -940,6 +1020,9 @@ ClusterCreate:
       enum: [nvme, ssd, hdd, archive]
       description: Required only for storage clusters of type object
       required: false
+    serversPerMetaDrive:
+      type: integer
+      description: Number of servers per metaDriveType to deploy in this cluster, required for object clusters
     nodes:
       type: string[]
       description: List of node ID on which we can deploy storage server
@@ -955,6 +1038,18 @@ ClusterCreate:
       type: integer
       description: parityShards variable of the erasure encoding, required for object clusters
       required: false
+    zerostorOrganization:
+      type: string
+      description: zerostor organization, required for object clusters
+    zerostorNamespace:
+      type: string
+      description: zerostor namespace, required for object clusters
+    zerostorClientID:
+      type: string
+      description: zerostor client ID, required for object clusters
+    zerostorSecret:
+      type: string
+      description: zerostor secret, required for object clusters
   example:
     label: cluster1
     servers: 256
@@ -976,12 +1071,13 @@ Cluster:
     nodes:
       type: string[]
       description: List of node ID on which storage server are deployed for this cluster
-    dataStorage:
+    storageServers:
       type: StorageServer[]
       description: List of data storage servers in the cluster
-    metadataStorage:
-      type: StorageServer[]
-      description: List of metadata storage servers in the cluster
+    clusterType:
+      type: string
+      description: type of the storagecluster
+
 
 # Vdisks API
 VdiskCreate:
@@ -1012,35 +1108,39 @@ VdiskCreate:
         | cache | no | yes | no | no | yes |
         | tmp | no | no | no | no | yes |
       required: true
-    templatevdisk:
-      type: string
-      description: |
-        Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
-        You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename
-
-        This property can only be used when the disk is of type boot.
-      required: false
     readOnly:
       type: boolean
       required: false
       default: false
-    blockStoragecluster:
-      type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-      required: true
-    objectStoragecluster:
+    imageId:
       type: string
       description: |
-        the objectStoragecluster used for this vdisk's transaction logs
-
-        This property can only be used when the disk is of type boot or db.
+        ID of the image to use in case you create a boot disk. The image need to be imported in the VdiskStorage where this vdisk is created
+        See `/vdiskstorage/{vdiskstorageid}/images` to list all available images.
       required: false
-    backupStoragecluster:
-      type: string
-      description: |
-        the storagecluster used for this vdisk's main storage.
 
-        This property can only be used when the disk is of type boot or db.
+VdiskStorage:
+  properties:
+    id: string
+    blockCluster:
+      type: string
+      description: block cluster to assign to vdisk store
+      required: true
+    slaveCluster:
+      type: string
+      description: slave cluster to assign to vdisk store
+      required: false
+    objectCluster:
+      type: string
+      description: object cluster to assign to vdisk store
+      required: false
+    slaveCluster:
+      type: string
+      description: slave cluster to assign to vdisk store
+      required: false
+    objectCluster:
+      type: string
+      description: object cluster to assign to vdisk store
       required: false
 
 Vdisk:
@@ -1063,15 +1163,13 @@ Vdisk:
       type: boolean
       default: false
       required: false
-    blockStoragecluster:
+    templatevdisk:
       type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-    objectStoragecluster:
+      required: false
+    vdiskstorage:
       type: string
-      description: the ObjectStoragecluster used for this vdisk's object storage
-    backupStoragecluster:
-      type: string
-      description: the backupStoragecluster used for this vdisk's backup storage
+      required: true
+      description: Collection of different kinds of  storage_clusters to deploy on.
 
 VdiskListItem:
   properties:
@@ -1082,15 +1180,10 @@ VdiskListItem:
     type:
       enum: [boot, db, cache, tmp]
       description: The type of vdisk.
-    blockStoragecluster:
+    vdiskstorage:
       type: string
-      description: the blockStoragecluster used for this vdisk's main storage.
-    objectStoragecluster:
-      type: string
-      description: the ObjectStoragecluster used for this vdisk's object storage.
-    backupStoragecluster:
-      type: string
-      description: the blockStoragecluster used for this vdisk's backup storage.
+      required: true
+      description: Collection of different kinds of  storage_clusters to deploy on.
 
 VdiskResize:
   properties:
@@ -1102,7 +1195,77 @@ VdiskRollback:
   properties:
     epoch:
       type: integer
-      description: Epoch to which we want to rollback the vdisk
+      description: Epoch to which we want to rollback the vdisk (0 means restore full disk)
+
+Image:
+  type: object
+  description: |
+    Vdisk image used as template for boot vdisks
+  properties:
+    name:
+      type: string
+      pattern: ^\w+$
+    size:
+      type: integer
+      description: Size of the vdisk in GiB
+    blocksize:
+      type: integer
+      description: blocksize in bytes
+      default: 4096
+
+ImageImport:
+  type: object
+  description: |
+    Import an image into a vdiskstorage
+  properties:
+    imageName:
+      type: string
+      description: Name to give to the image you are importing
+      required: true
+      pattern: ^\w+$
+    exportName:
+      type: string
+      required: true
+      description: |
+        Name of the exported image on the ftp server
+    exportSnapshot:
+      type: string
+      required: false
+      description: |
+        Name of the snapshot of the exported image on the ftp server
+        If not specified, defaults to 'default'
+      default: default
+    size:
+      type: integer
+      description: Size of the vdisk in GiB
+    diskBlockSize:
+      type: integer
+      description: block size in bytes of the image created in the local cluster
+      default: 4096
+    exportBlockSize:
+      type: integer
+      description: block size in bytes of the exported image. It can be different from the disk block size
+      default: 131072
+    url:
+      type: string
+      required: true
+      description: |
+        FTP server url of the image you want to import
+        - localhost:22
+        - ftp://1.2.3.4:200
+        - ftp://user@127.0.0.1:200
+        - ftp://user:pass@12.30.120.200:3000
+        - ftp://user:pass@12.30.120.200:3000/root/dir
+    encryptionKey:
+      type: string
+      required: false
+      description: |
+        In case the image has been encrypted during upload.
+        You need to specify the encryption key to be able to import it
+    overwrite:
+      type: boolean
+      description: overwrite an images if it already exist in the vdisk storage
+      required: false
 
 # GWS objects
 IPProtocol:
@@ -1298,6 +1461,12 @@ GW:
       type: HTTPProxy[]
       description: List of HTTPProxy
       required: false
+
+MigrateGW:
+  properties:
+    node:
+      type: string
+      description: New node to migrate to
 
 GetGW:
   properties:

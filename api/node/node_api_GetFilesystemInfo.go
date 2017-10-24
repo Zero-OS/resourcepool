@@ -12,7 +12,7 @@ import (
 
 // GetFilesystemInfo is the handler for GET /nodes/{nodeid}/storagepools/{storagepoolname}/filesystem/{filesystemname}
 // Get detailed filesystem information
-func (api NodeAPI) GetFilesystemInfo(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) GetFilesystemInfo(w http.ResponseWriter, r *http.Request) {
 
 	storagepool := mux.Vars(r)["storagepoolname"]
 	name := mux.Vars(r)["filesystemname"]
@@ -53,8 +53,11 @@ type FilesystemSchema struct {
 	StoragePool string `json:"storagePool"`
 }
 
-func (api NodeAPI) getFilesystemDetail(name string, r *http.Request) (*FilesystemSchema, error) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) getFilesystemDetail(name string, r *http.Request) (*FilesystemSchema, error) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		return nil, err
+	}
 	log.Debugf("Get schema detail for filesystem %s\n", name)
 
 	service, resp, err := aysClient.Ays.GetServiceByName(name, "filesystem", api.AysRepo, nil, nil)

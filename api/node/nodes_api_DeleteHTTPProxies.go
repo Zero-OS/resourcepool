@@ -12,8 +12,12 @@ import (
 
 // DeleteHTTPProxies is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/httpproxies
 // Delete HTTP proxy
-func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeID := vars["nodeid"]
@@ -24,6 +28,10 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	if res.StatusCode == http.StatusNotFound {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -53,8 +61,7 @@ func (api NodeAPI) DeleteHTTPProxies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !exists {
-		errMessage := fmt.Errorf("error proxy %+v is not found in gateway %+v", proxyID, gateway)
-		tools.WriteError(w, http.StatusNotFound, errMessage, "")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

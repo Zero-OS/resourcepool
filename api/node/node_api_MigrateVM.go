@@ -12,8 +12,12 @@ import (
 
 // MigrateVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/migrate
 // Migrate the VM to another host
-func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody VMMigrate
 	var vmData VMCreate
 
@@ -56,6 +60,16 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 		Node: reqBody.Nodeid,
 	}
 
+	_, res, err = aysClient.Ays.GetServiceByName(reqBody.Nodeid, "node", api.AysRepo, nil, nil)
+	if res.StatusCode == http.StatusNotFound {
+		errmsg := fmt.Errorf("node %s does not exist", reqBody.Nodeid)
+		tools.WriteError(w, http.StatusBadRequest, errmsg, "")
+		return
+	}
+	if !tools.HandleAYSResponse(err, res, w, "listing nodes") {
+		return
+	}
+
 	decl := fmt.Sprintf("vm__%v", vmID)
 
 	obj := make(map[string]interface{})
@@ -63,16 +77,13 @@ func (api NodeAPI) MigrateVM(w http.ResponseWriter, r *http.Request) {
 
 	// And execute
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
+	_, err = aysClient.UpdateBlueprint(api.AysRepo, "vm", vmID, "migrate", obj)
 
 	errmsg := fmt.Sprintf("error executing blueprint for vm %s migration", vmID)
 	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
-	if _, errr := tools.WaitOnRun(api, w, r, run.Key); errr != nil {
-		return
-	}
 	w.Header().Set("Location", fmt.Sprintf("/nodes/%s/vms/%s", reqBody.Nodeid, vmID))
 	w.WriteHeader(http.StatusNoContent)
 

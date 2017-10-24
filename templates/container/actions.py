@@ -20,12 +20,19 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    import re
+
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
     for nic in service.model.data.nics:
+        if nic.hwaddr:
+            pattern = re.compile(r'^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+            if not pattern.match(nic.hwaddr):
+                raise j.exceptions.Input('Hwaddr: string is not a valid mac address.')
         if nic.type == 'vlan':
             break
     else:
@@ -37,10 +44,14 @@ def init(job):
         raise j.exceptions.Input('OVS container needed to run this blueprint')
 
 
-
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     job.service.model.data.status = "halted"
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+
+    job.service.executeAction('start', context=job.context)
 
 
 def get_member(zerotier, zerotiernodeid, nicid):
@@ -64,6 +75,7 @@ def wait_for_interface(container):
         time.sleep(0.5)
     raise j.exceptions.RuntimeError("Could not find zerotier network interface")
 
+
 def zerotier_nic_config(service, logger, container, nic):
     from zerotier import client
     wait_for_interface(container)
@@ -81,9 +93,12 @@ def zerotier_nic_config(service, logger, container, nic):
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    container = Container.from_ays(service, job.context['token'])
+    container = Container.from_ays(service, job.context['token'], logger=service.logger)
     container.start()
 
     if container.is_running():
@@ -105,8 +120,11 @@ def start(job):
 
 def stop(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
 
-    container = Container.from_ays(job.service, job.context['token'])
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+    container = Container.from_ays(job.service, job.context['token'], logger=job.service.logger)
     container.stop()
 
     if not container.is_running():
@@ -116,9 +134,6 @@ def stop(job):
 
 
 def processChange(job):
-    from zeroos.orchestrator.sal.Container import Container
-
-    container = Container.from_ays(job.service, job.context['token'])
     service = job.service
     args = job.model.args
 
@@ -131,12 +146,16 @@ def processChange(job):
 
 def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
-    import json
+    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.core0.client.client import ResultError
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     token = job.context['token']
     logger = job.logger
-    container = Container.from_ays(service, token)
+    container = Container.from_ays(service, token, logger=service.logger)
     cl = container.node.client.container
 
     current_nics = service.model.data.to_dict()['nics']
@@ -182,12 +201,8 @@ def update(job, updated_nics):
             logger.info("Adding nic to container {}: {}".format(container.id, nic_dict))
             try:
                 cl.nic_add(container.id, nic_dict)
-            except RuntimeError as e:
-                if len(e.args) < 2:
-                    raise e
-                core_job = e.args[1]
-                if 499 >= core_job.code >= 400:
-                    job.model.dbobj.result = json.dumps({'message': core_job.data, 'code': core_job.code}).encode()
+            except ResultError as e:
+                Write_Status_code_Error(job, e)
                 service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))
@@ -199,46 +214,65 @@ def update(job, updated_nics):
 
 
 def monitor(job):
-    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
+    if service.model.actionsState['install'] != 'ok' or service.parent.model.data.status != 'running':
+        return
 
-    if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo))
-        running = container.is_running()
-        if not running and service.model.data.status == 'running':
-            try:
-                job.logger.warning("container {} not running, trying to restart".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.start()
+    token = get_jwt_token(job.service.aysrepo)
+    node = Node.from_ays(service.parent, token, timeout=5)
+    if not node.is_configured():
+        return
 
-                if container.is_running():
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't restart container {} not running".format(service.name))
-                service.model.dbobj.state = 'error'
-        elif running and service.model.data.status == 'halted':
-            try:
-                job.logger.warning("container {} running, trying to stop".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.stop()
-                running, _ = container.is_running()
-                if not running:
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't stop container {} is running".format(service.name))
-                service.model.dbobj.state = 'error'
+    container = Container.from_ays(job.service, token, logger=service.logger)
+    running = container.is_running()
+
+    if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
+        ovs_name = '{}_ovs'.format(container.node.name)
+        if ovs_name != service.name:
+            ovs_service = service.aysrepo.serviceGet(role='container', instance=ovs_name)
+            ovs_container = Container.from_ays(ovs_service, token)
+            if not ovs_container.is_running():
+                job.logger.warning\
+                    ("Can't attempt to restart container {}, container {} is not running".format(
+                        service.name, ovs_name))
+        try:
+            job.logger.warning("container {} not running, trying to restart".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.start()
+
+            if container.is_running():
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't restart container {} not running".format(service.name))
+            service.model.dbobj.state = 'error'
+    elif running and service.model.data.status == 'halted':
+        try:
+            job.logger.warning("container {} running, trying to stop".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.stop()
+            running, _ = container.is_running()
+            if not running:
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't stop container {} is running".format(service.name))
+            service.model.dbobj.state = 'error'
 
 
 def watchdog_handler(job):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
-        return 
+        return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')

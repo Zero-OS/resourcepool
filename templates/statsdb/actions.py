@@ -12,8 +12,9 @@ def input(job):
 def init(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     from zeroos.orchestrator.sal.templates import render
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
+    from zeroos.orchestrator.sal.StorageCluster import BlockCluster, ObjectCluster
     service = job.service
+
     influxdb_actor = service.aysrepo.actorGet('influxdb')
 
     args = {
@@ -57,9 +58,23 @@ def init(job):
             stats_collector_service.consume(node_service)
 
     # Create storage cluster dashboards
-    cluster_services = job.service.aysrepo.servicesFind(actor='storage_cluster')
-    for clusterservice in cluster_services:
-        cluster = StorageCluster.from_ays(clusterservice, get_jwt_token(service.aysrepo))
+    blockcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.block')
+    objectcluster_services = job.service.aysrepo.servicesFind(actor='storagecluster.object')
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    for clusterservice in blockcluster_services:
+        cluster = BlockCluster.from_ays(clusterservice, job.context['token'])
+        board = cluster.dashboard
+
+        args = {
+            'grafana': 'statsdb',
+            'dashboard': board
+        }
+        dashboard_actor.serviceCreate(instance=cluster.name, args=args)
+        stats_collector_service.consume(clusterservice)
+
+    for clusterservice in objectcluster_services:
+        cluster = ObjectCluster.from_ays(clusterservice, job.context['token'])
         board = cluster.dashboard
 
         args = {
@@ -97,57 +112,72 @@ def get_stats_collector_from_node(service):
 
 
 def install(job):
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    start(job)
 
 
 def start(job):
-    influxdb = get_influxdb(job.service)
-    grafana = get_grafana(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('install', context=job.context))
-    j.tools.async.wrappers.sync(grafana.executeAction('install', context=job.context))
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     job.service.model.data.status = 'running'
     job.service.saveAll()
+    influxdb = get_influxdb(job.service)
+    grafana = get_grafana(job.service)
+    influxdb.executeAction('install', context=job.context)
+    grafana.executeAction('install', context=job.context)
 
-    # Install stats_collector on all nodes
+    # Start stats_collector on all nodes
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
 
         if stats_collector_service:
             if stats_collector_service.model.data.status == 'running':
-                j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('start', context=job.context))
+                stats_collector_service.executeAction('stop', context=job.context)
+            stats_collector_service.executeAction('start', context=job.context)
 
 
 def stop(job):
-    influxdb = get_influxdb(job.service)
-    grafana = get_grafana(job.service)
-    j.tools.async.wrappers.sync(influxdb.executeAction('stop', context=job.context))
-    j.tools.async.wrappers.sync(grafana.executeAction('stop', context=job.context))
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     job.service.model.data.status = 'halted'
     job.service.saveAll()
+
+    influxdb = get_influxdb(job.service)
+    grafana = get_grafana(job.service)
+    influxdb.executeAction('stop', context=job.context)
+    grafana.executeAction('stop', context=job.context)
+
+    job.service.model.data.status = 'halted'
+    job.service.saveAll()
+
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service and stats_collector_service.model.data.status == 'running':
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('stop', context=job.context))
+            stats_collector_service.executeAction('stop', context=job.context)
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     influxdb = get_influxdb(job.service, False)
     grafana = get_grafana(job.service, False)
 
     if grafana:
-        j.tools.async.wrappers.sync(grafana.executeAction('uninstall', context=job.context))
+        grafana.executeAction('uninstall', context=job.context)
     if influxdb:
-        j.tools.async.wrappers.sync(influxdb.executeAction('uninstall', context=job.context))
+        influxdb.executeAction('uninstall', context=job.context)
 
     node_services = job.service.aysrepo.servicesFind(actor='node.zero-os')
     for node_service in node_services:
         stats_collector_service = get_stats_collector_from_node(node_service)
         if stats_collector_service:
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction('uninstall', context=job.context))
-    j.tools.async.wrappers.sync(job.service.delete())
+            stats_collector_service.executeAction('uninstall', context=job.context)
+    job.service.delete()
 
 
 def processChange(job):
@@ -157,21 +187,21 @@ def processChange(job):
     if args.get('changeCategory') != 'dataschema' or service.model.actionsState['install'] in ['new', 'scheduled']:
         return
 
-    if args.get('port'):
+    if 'port' in args:
+        service.model.data.port = args['port']
+        service.saveAll()
         influxdb = get_influxdb(job.service)
-        grafana = get_grafana(job.service)
         job.context['token'] = get_jwt_token_from_job(job)
-        j.tools.async.wrappers.sync(
-            influxdb.executeAction('processChange', context=job.context, args=args))
-        j.tools.async.wrappers.sync(
-            grafana.executeAction('processChange', context=job.context, args=args))
-        influxdb = get_influxdb(job.service)
-        grafana = get_grafana(job.service)
-        if str(influxdb.model.data.status) == 'running' and str(grafana.model.data.status) == 'running':
-            job.service.model.data.status = str(influxdb.model.data.status)
-        else:
-            job.service.model.data.status = 'halted'
-    service.saveAll()
+        influxdb.executeAction('processChange', context=job.context, args={'port': args['port']})
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    if job.service.model.data.status != 'running':
+        return
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    start(job)
 
 
 def init_actions_(service, args):

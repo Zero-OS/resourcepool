@@ -12,29 +12,23 @@ class VdiskCreate(object):
     """
 
     @staticmethod
-    def create(blockStoragecluster, blocksize, id, size, type, backupStoragecluster=None, objectStoragecluster=None, readOnly=None, templatevdisk=None):
+    def create(blocksize, id, size, type, imageId=None, readOnly=None):
         """
-        :type backupStoragecluster: str
-        :type blockStoragecluster: str
         :type blocksize: int
         :type id: str
-        :type objectStoragecluster: str
+        :type imageId: str
         :type readOnly: bool
         :type size: int
-        :type templatevdisk: str
         :type type: EnumVdiskCreateType
         :rtype: VdiskCreate
         """
 
         return VdiskCreate(
-            backupStoragecluster=backupStoragecluster,
-            blockStoragecluster=blockStoragecluster,
             blocksize=blocksize,
             id=id,
-            objectStoragecluster=objectStoragecluster,
+            imageId=imageId,
             readOnly=readOnly,
             size=size,
-            templatevdisk=templatevdisk,
             type=type,
         )
 
@@ -47,26 +41,6 @@ class VdiskCreate(object):
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
-
-        property_name = 'backupStoragecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.backupStoragecluster = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'blockStoragecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.blockStoragecluster = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'blocksize'
         val = data.get(property_name)
@@ -90,12 +64,12 @@ class VdiskCreate(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'objectStoragecluster'
+        property_name = 'imageId'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.objectStoragecluster = client_support.val_factory(val, datatypes)
+                self.imageId = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
@@ -118,15 +92,6 @@ class VdiskCreate(object):
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'templatevdisk'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.templatevdisk = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
 
         property_name = 'type'
         val = data.get(property_name)

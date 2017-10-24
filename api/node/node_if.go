@@ -25,9 +25,6 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// GetContainerCPUInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/cpus
 	// Get detailed information of all CPUs in the container
 	GetContainerCPUInfo(http.ResponseWriter, *http.Request)
-	// GetContainerDiskInfo is the handler for GET /nodes/{nodeid}/containers/{containername}/disks
-	// Get detailed information of all the disks in the container
-	// !!!!!!!GetContainerDiskInfo(http.ResponseWriter, *http.Request)
 	// FileDelete is the handler for DELETE /nodes/{nodeid}/containers/{containername}/filesystem
 	// Delete file from container
 	FileDelete(http.ResponseWriter, *http.Request)
@@ -174,6 +171,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// CreateGW is the handler for POST /nodes/{nodeid}/gws
 	// Create a new gateway
 	CreateGW(http.ResponseWriter, *http.Request)
+	// MigrateGW is the handler for POST /hodex/{nodeid}/gws/{gwname}/migrate
+	// Migrate gateway to a new node
+	MigrateGW(w http.ResponseWriter, r *http.Request)
 	// GetNodeOSInfo is the handler for GET /nodes/{nodeid}/info
 	// Get detailed information of the OS of the node
 	GetNodeOSInfo(http.ResponseWriter, *http.Request)
@@ -285,6 +285,12 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// StartVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/start
 	// Start the virtual machine
 	StartVM(http.ResponseWriter, *http.Request)
+	// ExportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/export
+	// export the virtual machine
+	ExportVM(http.ResponseWriter, *http.Request)
+	// ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
+	// import the virtual machine
+	ImportVM(http.ResponseWriter, *http.Request)
 	// StopVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/stop
 	// Stops the VM
 	StopVM(http.ResponseWriter, *http.Request)
@@ -330,13 +336,12 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 }
 
 // NodesInterfaceRoutes is routing for /nodes root endpoint
-func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
+func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/bridges/{bridgeid}", i.DeleteBridge).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/bridges/{bridgeid}", i.GetBridge).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/bridges", i.ListBridges).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/bridges", i.CreateBridge).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/cpus", i.GetContainerCPUInfo).Methods("GET")
-	// r.HandleFunc("/nodes/{nodeid}/containers/{containername}/disks", i.GetContainerDiskInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDelete).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileDownload).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/containers/{containername}/filesystem", i.FileUpload).Methods("POST")
@@ -378,6 +383,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}", i.GetHTTPProxy).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.ListHTTPProxies).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.CreateHTTPProxies).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/migrate", i.MigrateGW).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/start", i.StartGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/stop", i.StopGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}", i.DeleteGateway).Methods("DELETE")
@@ -423,6 +429,8 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface, org string) {
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/resume", i.ResumeVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/shutdown", i.ShutdownVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/start", i.StartVM).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/export", i.ExportVM).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/import", i.ImportVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/stop", i.StopVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.DeleteVM).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.GetVM).Methods("GET")

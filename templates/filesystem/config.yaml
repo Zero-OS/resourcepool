@@ -9,3 +9,6 @@ recurring:
   - action: update_sizeOnDisk
     log: true
     period: 30m
+  - action: monitor
+    log: true
+    period: 15m

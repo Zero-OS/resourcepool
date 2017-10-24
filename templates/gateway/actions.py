@@ -87,7 +87,14 @@ def init(job):
 
     # create http
     httpactor = service.aysrepo.actorGet('http')
-    httpactor.serviceCreate(instance=service.name, args=args)
+    http_args = args.copy()
+    http_args.update({'type': 'http'})
+    httpactor.serviceCreate(instance="%s-http" % service.name, args=http_args)
+
+    # create https
+    https_args = args.copy()
+    https_args.update({'type': 'https'})
+    httpactor.serviceCreate(instance="%s-https" % service.name, args=https_args)
 
     # create dhcp
     dhcpactor = service.aysrepo.actorGet('dhcp')
@@ -99,8 +106,11 @@ def init(job):
 
 
 def install(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('start', context=job.context))
+    service.executeAction('start', context=job.context)
 
 def save_certificates(job, container, caddy_dir="/.caddy"):
     from io import  BytesIO
@@ -194,9 +204,34 @@ def get_zerotier_nic(zerotierid, containerobj):
         raise j.exceptions.RuntimeError("Failed to get zerotier network device")
 
 
-def processChange(job):
-    from zeroos.orchestrator.configuration import get_jwt_token_from_job
+def migrate(job, dest):
     from zeroos.orchestrator.sal.Container import Container
+    
+    service = job.service
+    node = service.aysrepo.serviceGet(role='node', instance=dest)
+    containers = []
+    for container in service.producers.get('container'):
+        containers.append(
+            Container.from_ays(container, job.context['token'], logger=job.service.logger)
+        )
+
+        container.model.changeParent(node)
+        container.saveAll()
+        container.executeAction('install', context=job.context)
+    
+    service.model.changeParent(node)
+    service.saveAll()
+    service.executeAction('start', context=job.context)
+
+    for container_sal in containers:
+        container_sal.stop()
+
+
+def processChange(job):
+    from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     args = job.model.args
     category = args.pop('changeCategory')
@@ -205,21 +240,26 @@ def processChange(job):
         return
 
     gatewaydata = service.model.data.to_dict()
+    container = service.producers.get('container')[0]
+    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
+
+    nodechanged = gatewaydata.get('node') != args.get('node')
+    if nodechanged:
+        migrate(job, args.get('node'))
+        return
+
     nicchanges = gatewaydata['nics'] != args.get('nics')
     httproxychanges = gatewaydata['httpproxies'] != args.get('httpproxies')
     portforwardchanges = gatewaydata['portforwards'] != args.get('portforwards')
-
-    container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'])
 
     if nicchanges:
         nics_args = {'nics': args['nics']}
 
         cloudInitServ = service.aysrepo.serviceGet(role='cloudinit', instance=service.name)
-        j.tools.async.wrappers.sync(cloudInitServ.executeAction('update', context=job.context, args=nics_args))
+        cloudInitServ.executeAction('update', context=job.context, args=nics_args)
 
         dhcpServ = service.aysrepo.serviceGet(role='dhcp', instance=service.name)
-        j.tools.async.wrappers.sync(dhcpServ.executeAction('update', context=job.context, args=args))
+        dhcpServ.executeAction('update', context=job.context, args=args)
 
         ip = containerobj.client.ip
 
@@ -270,24 +310,25 @@ def processChange(job):
 
         # apply changes in container
         cont_service = service.aysrepo.serviceGet(role='container', instance=service.name)
-        j.tools.async.wrappers.sync(cont_service.executeAction('processChange', context=job.context, args=nics_args))
+        cont_service.executeAction('processChange', context=job.context, args=nics_args)
 
         # setup new zerotierbridges
         setup_zerotierbridges(job)
 
     if nicchanges or portforwardchanges:
         firewallServ = service.aysrepo.serviceGet(role='firewall', instance=service.name)
-        j.tools.async.wrappers.sync(firewallServ.executeAction('update', context=job.context, args=args))
+        firewallServ.executeAction('update', context=job.context, args=args)
 
     if portforwardchanges:
         service.model.data.portforwards = args.get('portforwards', [])
 
     if httproxychanges:
         httpproxies = args.get('httpproxies', [])
-        httpServ = service.aysrepo.serviceGet(role='http', instance=service.name)
-        http_args = {'httpproxies': httpproxies}
-        job.context['token'] = get_jwt_token_from_job(job)
-        j.tools.async.wrappers.sync(httpServ.executeAction('update', context=job.context, args=http_args))
+        for type in ['http', 'https']:
+            httpServ = service.aysrepo.serviceGet(role='http', instance='%s-%s' % (service.name, type))
+            http_args = {'httpproxies': httpproxies}
+            job.context['token'] = get_jwt_token(job.service.aysrepo)
+            httpServ.executeAction('update', context=job.context, args=http_args)
         service.model.data.httpproxies = httpproxies
 
     if args.get("domain", None):
@@ -300,22 +341,27 @@ def processChange(job):
 
 
 def uninstall(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
+        container.executeAction('stop', context=job.context)
+        container.delete()
 
 
 def start(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
     container = service.producers.get('container')[0]
-    if str(container.model.data.status) == 'halted':
-        j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
 
-    containerobj = Container.from_ays(container, job.context['token'])
+    containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # setup resolv.conf
     containerobj.upload_content('/etc/resolv.conf', 'nameserver 127.0.0.1\n')
 
@@ -331,36 +377,44 @@ def start(job):
 
     restore_certificates(job, containerobj)
     # start services
-    http = container.consumers.get('http')[0]
+    http = container.consumers.get('http')
     dhcp = container.consumers.get('dhcp')[0]
     cloudinit = container.consumers.get('cloudinit')[0]
     firewall = container.consumers.get('firewall')[0]
 
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(dhcp.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(http.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(firewall.executeAction('start', context=job.context))
-    j.tools.async.wrappers.sync(cloudinit.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
+    dhcp.executeAction('start', context=job.context)
+    for i in http:
+        i.executeAction('start', context=job.context)
+    firewall.executeAction('start', context=job.context)
+    cloudinit.executeAction('start', context=job.context)
     save_certificates(job, containerobj)
     service.model.data.status = "running"
 
 
 def stop(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     container = service.producers.get('container')[0]
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        container.executeAction('stop', context=job.context)
         service.model.data.status = "halted"
 
 
 def setup_zerotierbridges(job):
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
     from zerotier import client
     import time
 
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
     service = job.service
     container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'])
+    containerobj = Container.from_ays(container, job.context['token'], logger=service.logger)
     # get dict version of nics
     nics = service.model.data.to_dict()['nics']
 
@@ -423,3 +477,13 @@ def setup_zerotierbridges(job):
 
     service.model.data.zerotiernodeid = container.model.data.zerotiernodeid
     service.saveAll()
+
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    if job.service.model.data.status != 'running':
+        return
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+    start(job)

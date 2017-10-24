@@ -1,4 +1,4 @@
-@0xc32684ebe1b5ced0;
+@0x9f953e9e7f5493cf;
 
 struct Schema {
     node @0: Text; # pointer to the parent service
@@ -10,6 +10,9 @@ struct Schema {
     disks @6: List(DiskLink);
     vdisks @7: List(Text); # consume vdisk services, should not be set via blueprint, will be calculated from disks
     vnc @8: Int32 = -1; # the vnc port the machine is listening to
+    backupUrl @9 :Text; # Used for export vm, ghost property, should be removed after passing args is supported
+    cryptoKey @10 :Text; # Used for export vm, ghost property, should be removed after passing args is supported
+    exportPath @11 :Text; # Used for export vm, ghost property, should be removed after passing args is supported
 
     enum Status{
         deploying @0;

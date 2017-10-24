@@ -17,7 +17,10 @@ def combine(ip1, ip2, mask):
 class Network:
     def __init__(self, node):
         self.node = node
-        self._client = node.client
+
+    @property
+    def client(self):
+        return self.node.client
 
     def get_management_info(self):
         import netaddr
@@ -29,8 +32,8 @@ class Network:
                         return netaddr.IPNetwork(ip['addr'])
                     return
 
-        defaultgwdev = self._client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
-        nics = self._client.info.nic()
+        defaultgwdev = self.client.bash("ip route | grep default | awk '{print $5}'").get().stdout.strip()
+        nics = self.client.info.nic()
         mgmtaddr = None
         if defaultgwdev:
             ipgwdev = get_nic_ip(nics, defaultgwdev)
@@ -49,7 +52,7 @@ class Network:
         }
 
     def get_free_nics(self):
-        nics = self._client.info.nic()
+        nics = self.client.info.nic()
         nics.sort(key=lambda nic: nic['speed'])
         availablenics = {}
         for nic in nics:

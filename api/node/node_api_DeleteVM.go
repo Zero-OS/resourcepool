@@ -13,33 +13,37 @@ import (
 
 // DeleteVM is the handler for DELETE /nodes/{nodeid}/vms/{vmid}
 // Deletes the VM
-func (api NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) DeleteVM(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
-	vmId := vars["vmid"]
+	vmID := vars["vmid"]
 
 	obj := make(map[string]interface{})
 	obj["actions"] = []tools.ActionBlock{{
 		Action:  "destroy",
 		Actor:   "vm",
-		Service: vmId,
+		Service: vmID,
 		Force:   true,
 	}}
 
-	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmId, "delete", obj)
-	errmsg := fmt.Sprintf("error executing blueprint for vm %s deletion ", vmId)
+	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "vm", vmID, "delete", obj)
+	errmsg := fmt.Sprintf("error executing blueprint for vm %s deletion ", vmID)
 	if !tools.HandleExecuteBlueprintResponse(err, w, errmsg) {
 		return
 	}
 
 	if _, err := aysClient.WaitRunDone(run.Key, api.AysRepo); err != nil {
-		errmsg := fmt.Sprintf("Error while waiting for vm %s deletion", vmId)
+		errmsg := fmt.Sprintf("Error while waiting for vm %s deletion", vmID)
 		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
 		return
 	}
 
-	res, err := aysClient.Ays.DeleteServiceByName(vmId, "vm", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "deleting vm") {
+	res, err := aysClient.Ays.DeleteServiceByName(vmID, "vm", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting vm") {
 		return
 	}
 

@@ -7,7 +7,7 @@ Monitors if a number of interrupts
 
 
 class Interrupts(HealthCheckRun):
-    def __init__(self, node, warn=8000, error=1000):
+    def __init__(self, node, warn=180000, error=200000):
         resource = '/nodes/{}'.format(node.name)
         super().__init__('interrupts', 'CPU Interrupts', 'Hardware', resource)
         self._warn = warn

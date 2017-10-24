@@ -12,14 +12,18 @@ import (
 
 // GetGWForwards is the handler for GET /nodes/{nodeid}/gws/{gwname}/firewall/forwards
 // Get list for IPv4 Forwards
-func (api NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) GetGWForwards(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
-	nodeId := vars["nodeid"]
+	nodeID := vars["nodeid"]
 
 	queryParams := map[string]interface{}{
-		"parent": fmt.Sprintf("node.zero-os!%s", nodeId),
+		"parent": fmt.Sprintf("node.zero-os!%s", nodeID),
 		"fields": "portforwards",
 	}
 

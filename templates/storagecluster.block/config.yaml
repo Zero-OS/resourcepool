@@ -1,0 +1,25 @@
+links:
+  consume:
+    - auto: false
+      min: 1
+      max: 9999
+      role: node
+      argname: nodes
+
+    - auto: false
+      min: 0
+      max: 257
+      role: storage_engine
+      argname: storageEngines
+
+    - auto: false
+      min: 0
+      max: 257
+      role: filesystem
+      argname: filesystems
+
+
+recurring:
+  - action: monitor
+    log: true
+    period: 1d

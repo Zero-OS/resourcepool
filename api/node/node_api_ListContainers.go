@@ -12,8 +12,12 @@ import (
 
 // ListContainers is the handler for GET /nodes/{nodeid}/containers
 // List running Containers
-func (api NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) ListContainers(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	nodeID := vars["nodeid"]
 

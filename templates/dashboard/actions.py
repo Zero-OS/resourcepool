@@ -6,7 +6,6 @@ def init(job):
 def install(job):
     service = job.service
     grafanaclient = j.clients.grafana.get(url='http://%s:%d' % (service.parent.parent.model.data.redisAddr, service.parent.model.data.port), username='admin', password='admin')
-
     result = grafanaclient.updateDashboard(service.model.data.dashboard)
     if result.get('status', None) == 'success':
         service.model.data.slug = result['slug']
@@ -26,7 +25,7 @@ def uninstall(job):
     else:
         raise RuntimeError('Cannot remove dashboard, got: {}'.format(result))
 
-    j.tools.async.wrappers.sync(service.delete())
+    service.delete()
 
 
 def processChange(job):
@@ -38,8 +37,8 @@ def processChange(job):
 
     if args.get('dashboard'):
         service.model.data.dashboard = args['dashboard']
-    j.tools.async.wrappers.sync(service.uninstall())
-    j.tools.async.wrappers.sync(service.install())
+    service.executeAction('uninstall')
+    service.executeAction('install')
 
     service.saveAll()
 
@@ -51,3 +50,7 @@ def init_actions_(service, args):
         'delete': ['uninstall'],
         'uninstall': [],
     }
+
+
+def monitor(job):
+    pass

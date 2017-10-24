@@ -1,0 +1,6 @@
+bootstrap.zero-os__grid1:
+  zerotierNetID: ''
+  zerotierToken: ''
+  wipedisks: true
+  networks:
+    - storage

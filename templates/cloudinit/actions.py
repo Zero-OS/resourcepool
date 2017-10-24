@@ -12,8 +12,12 @@ def config_cloud_init(job, nics=None):
     import json
     from zeroos.orchestrator.sal.gateway.cloudinit import CloudInit
     from zeroos.orchestrator.sal.Container import Container
+    from zeroos.orchestrator.configuration import get_jwt_token
 
-    container = Container.from_ays(job.service.parent, job.context['token'])
+    service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
+
+    container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
     nics = nics or []
     config = {}
 
@@ -43,8 +47,13 @@ def update(job):
 
 def watchdog_handler(job):
     import asyncio
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    job.context['token'] = get_jwt_token(service.aysrepo)
 
     loop = j.atyourservice.server.loop
+
     gateway = job.service.parent.consumers['gateway'][0]
     if gateway.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)

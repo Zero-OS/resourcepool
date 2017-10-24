@@ -177,25 +177,29 @@ func ValidateIpInRange(cidr string, ip string) error {
 	return fmt.Errorf("%v: ip is not in valid range for cidr %v ", ip, cidr)
 }
 
-func ValidateVdisk(vtype string, tlog string, template string, size int, backup string) error {
+func ValidateVdisk(vtype string, template string, size int) error {
 	if template != "" {
 		if vtype != "boot" {
 			return fmt.Errorf("Vdisks of type %v do not have template support", vtype)
 		}
 	}
 
-	if tlog != "" && (vtype == "cache" || vtype == "tmp") {
-		return fmt.Errorf("Vdisks of type %v can't be redundant", vtype)
+	if size < 512 {
+		return fmt.Errorf("Invalid Blocksize, Blocksize should be larger than 512")
 	}
 
+	if size&(size-1) != 0 {
+		return fmt.Errorf("Invalid Blocksize, Blocksize should be a power of 2")
+	}
+	return nil
+}
+
+func ValidateVdiskStorage(tlog string, backup string) error {
 	if backup != "" && tlog == "" {
 		return fmt.Errorf("Tlog storage cluster is required for vdisk backup")
 	}
-
-	if (size % 512) != 0 {
-		return fmt.Errorf("Invalid block size")
-	}
 	return nil
+
 }
 
 func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
@@ -220,17 +224,45 @@ func ValidateCIDROverlap(cidr1, cidr2 string) (bool, error) {
 	return false, nil
 }
 
-func ValidateCluster(ctype string, k int, m int, nrServers int, metaDisk string) error {
-	if ctype == "object" {
-		if k == 0 || m == 0 {
-			return fmt.Errorf("K and M values required for object clusters")
-		}
-		if metaDisk == "" {
-			return fmt.Errorf("MetaDriveType is required for object clusters")
-		}
+func ValidateObjectCluster(k int, m int, nrServers int, metaDisk string, perMeta int, zorg string, zns string, zclientid string, zsecret string) error {
+	if k == 0 || m == 0 {
+		return fmt.Errorf("DataShards and ParityShards values required for object clusters")
 	}
+
+	if metaDisk == "" {
+		return fmt.Errorf("MetaDriveType is required for object clusters")
+	}
+
+	if perMeta == 0 {
+		return fmt.Errorf("serversPerMetaDrive is required for object clusters")
+	}
+
 	if (k + m) > nrServers {
-		return fmt.Errorf("Number of servers should be greater than or equal to K + M")
+		return fmt.Errorf("Number of servers should be greater than or equal to dataShards + parityShards")
+	}
+
+	if zorg == "" || zns == "" || zclientid == "" || zsecret == "" {
+		return fmt.Errorf("zerostor config is required for object clusters")
+	}
+
+	return nil
+}
+
+// ValidateFtpURL Validate if ftp url format is supported
+// localhost:22;
+// ftp://1.2.3.4:200;
+// ftp://user@127.0.0.1:200;
+// ftp://user:pass@12.30.120.200:3000;
+// ftp://user:pass@12.30.120.200:3000/root/dir
+func ValidateFtpURL(url string) error {
+	pattern := "^(ftp://(\\w+(:.*)?@)?)?((\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3})|[a-z]+):\\d+(/.*)*$"
+	matched, err := regexp.MatchString(pattern, url)
+	if err != nil {
+		return err
+	}
+
+	if matched != true {
+		return fmt.Errorf("Invalid ftp url format")
 	}
 	return nil
 }

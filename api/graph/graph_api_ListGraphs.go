@@ -11,8 +11,12 @@ import (
 
 // ListGraphs is the handler for GET /graphs
 // List Graphs
-func (api GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	queryParams := map[string]interface{}{
 		"fields": "node,port",
 	}

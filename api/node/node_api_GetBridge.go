@@ -13,8 +13,12 @@ import (
 
 // GetBridge is the handler for GET /nodes/{nodeid}/bridges/{bridgeid}
 // Get bridge details
-func (api NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) GetBridge(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var respBody Bridge
 
 	vars := mux.Vars(r)

@@ -11,8 +11,12 @@ import (
 
 // DeleteDHCPHost is the handler for DELETE /nodes/{nodeid}/gws/{gwname}/dhcp/{interface}/hosts/{macaddress}
 // Delete dhcp host
-func (api NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	gateway := vars["gwname"]
 	nodeId := vars["nodeid"]
@@ -24,6 +28,9 @@ func (api NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	service, res, err := aysClient.Ays.GetServiceByName(gateway, "gateway", api.AysRepo, nil, queryParams)
+	if res.StatusCode == http.StatusNotFound {
+		w.WriteHeader(http.StatusNoContent)
+	}
 	if !tools.HandleAYSResponse(err, res, w, "Getting gateway service") {
 		return
 	}
@@ -39,30 +46,23 @@ func (api NodeAPI) DeleteDHCPHost(w http.ResponseWriter, r *http.Request) {
 NicsLoop:
 	for i, nic := range data.Nics {
 		if nic.Name == nicInterface {
-			if nic.Dhcpserver == nil {
-				err = fmt.Errorf("Interface %v has no dhcp.", nicInterface)
-				tools.WriteError(w, http.StatusNotFound, err, "")
-				return
-			}
-
 			exists = true
-
-			for j, host := range nic.Dhcpserver.Hosts {
-				if host.Macaddress == macaddress {
-					data.Nics[i].Dhcpserver.Hosts = append(data.Nics[i].Dhcpserver.Hosts[:j],
-						data.Nics[i].Dhcpserver.Hosts[j+1:]...)
-					break NicsLoop
+			if nic.Dhcpserver != nil {
+				for j, host := range nic.Dhcpserver.Hosts {
+					if host.Macaddress == macaddress {
+						data.Nics[i].Dhcpserver.Hosts = append(data.Nics[i].Dhcpserver.Hosts[:j],
+							data.Nics[i].Dhcpserver.Hosts[j+1:]...)
+						break NicsLoop
+					}
 				}
 			}
-			err = fmt.Errorf("Dhcp has no host with macaddress %v", macaddress)
-			tools.WriteError(w, http.StatusNotFound, err, "")
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 	}
 
 	if !exists {
-		err = fmt.Errorf("Interface %v not found", nicInterface)
-		tools.WriteError(w, http.StatusNotFound, err, "")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

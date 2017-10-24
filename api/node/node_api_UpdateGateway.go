@@ -14,8 +14,12 @@ import (
 
 // UpdateGateway is the handler for PUT /nodes/{nodeid}/gws/{gwname}
 // Update Gateway
-func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var reqBody GW
 	vars := mux.Vars(r)
 	gwID := vars["gwname"]
@@ -27,7 +31,7 @@ func (api NodeAPI) UpdateGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := reqBody.Validate(); err != nil {
+	if err := reqBody.Validate(aysClient, api.AysRepo); err != nil {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}

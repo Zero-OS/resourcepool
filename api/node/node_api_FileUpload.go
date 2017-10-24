@@ -11,7 +11,7 @@ import (
 
 // FileUpload is the handler for POST /node/{nodeid}/container/{containername}/filesystem
 // Upload file to container
-func (api NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) FileUpload(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	if path == "" {
 		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing path"), "")

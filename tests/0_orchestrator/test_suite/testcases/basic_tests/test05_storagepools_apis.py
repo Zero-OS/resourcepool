@@ -5,7 +5,7 @@ import unittest, time
 class TestStoragepoolsAPI(TestcasesBase):
     def setUp(self):
         super().setUp()
-        self.freeDisks = self.core0_client.getFreeDisks()
+        self.freeDisks = [x['name'] for x in self.core0_client.getFreeDisks()] 
         if self.freeDisks == []:
             self.skipTest(' [*] No free disks on node {}'.format(self.nodeid))
 
@@ -20,7 +20,8 @@ class TestStoragepoolsAPI(TestcasesBase):
         elif self.id().split('.')[-1] in ['test013_get_storagepool_filessystem_snapshot',
                                          'test014_list_storagepool_filesystems_snapshots',
                                          'test015_post_storagepool_filesystem_snapshot',
-                                         'test016_delete_storagepool_filesystem_snapshot']:
+                                         'test016_delete_storagepool_filesystem_snapshot', 
+                                         'test017_post_storagepool_filesystem_snapshot_rollback']:
             self.setUp_plus_fileSystem_plus_snapShots()
 
     def tearDown(self):
@@ -142,7 +143,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         response = self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/209')
     def test005_get_storagepool_device(self):
         """ GAT-049
         **Test Scenario:**
@@ -195,7 +195,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         #. Create device with invalid body, should fail with 400.
         """
         self.lg.info(' [*] Create device (DV1) on storagepool (SP0), should succeed with 201')
-        free_devices = self.core0_client.getFreeDisks()
+        free_devices = [x['name'] for x in self.core0_client.getFreeDisks()]
         if free_devices == []:
             self.skipTest('no free disks on node {}'.format(self.nodeid))
 
@@ -206,7 +206,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
 
         for _ in range(30):
-            free_devices = self.core0_client.getFreeDisks()
+            free_devices = [x['name'] for x in self.core0_client.getFreeDisks()]
             if device not in free_devices:
                 break
             else:
@@ -223,7 +223,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         # response = self.storagepools_api.post_storagepools_storagepoolname_devices(self.nodeid, storagepool['name'], body)
         # self.assertEqual(response.status_code, 400)
 
-    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/209')
     def test008_delete_storagepool_device(self):
         """ GAT-052
         **Test Scenario:**
@@ -234,7 +233,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         #. Delete nonexisting device, should fail with 404.
         """
         self.lg.info(' [*] Create device (DV1) on storagepool (SP0), should succeed with 201')
-        free_devices = self.core0_client.getFreeDisks()
+        free_devices = [x['name'] for x in self.core0_client.getFreeDisks()]
         if free_devices == []:
             self.skipTest('no free disks on node {}'.format(self.nodeid))
 
@@ -245,7 +244,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
 
         for _ in range(30):
-            free_devices = self.core0_client.getFreeDisks()
+            free_devices = [x['name'] for x in self.core0_client.getFreeDisks()]
             if device not in free_devices:
                 break
             else:
@@ -264,7 +263,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 204)
 
         for _ in range(30):
-            free_devices = self.core0_client.getFreeDisks()
+            free_devices = [x['name'] for x in self.core0_client.getFreeDisks()]
             if device in free_devices:
                 break
             else:
@@ -281,7 +280,6 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                               self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/658')
     def test009_get_storagepool_filessystem(self):
         """ GAT-053
         **Test Scenario:**
@@ -306,7 +304,6 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                                      self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/658')
     def test010_list_storagepool_filesystems(self):
         """ GAT-054
         **Test Scenario:**
@@ -320,7 +317,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data_filesystem['name'], response.json())
 
-    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/658')
     def test011_post_storagepool_filesystem(self):
         """ GAT-055
         **Test Scenario:**
@@ -356,7 +352,6 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                        name=123456)
         self.assertEqual(response.status_code, 400)
 
-    # @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/658')
     def test012_delete_storagepool_filesystem(self):
         """ GAT-056
         **Test Scenario:**
@@ -387,7 +382,6 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                                         'fake_filesystem')
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test013_get_storagepool_filessystem_snapshot(self):
         """ GAT-057
         **Test Scenario:**
@@ -412,7 +406,6 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                self.rand_str())
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test014_list_storagepool_filesystems_snapshots(self):
         """ GAT-058
         **Test Scenario:**
@@ -428,7 +421,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data_snapshot['name'], response.json())
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test015_post_storagepool_filesystem_snapshot(self):
         """ GAT-059
         **Test Scenario:**
@@ -454,12 +446,11 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Create snapshot with missing required params, should fail with 400')
-        response = self.storagepools_api.post_filesystems_snapshots(self.nodeid, self.data['name'],
+        response, data = self.storagepools_api.post_filesystems_snapshots(self.nodeid, self.data['name'],
                                                                     self.data_filesystem['name'],
                                                                     name='')
         self.assertEqual(response.status_code, 400)
 
-    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/687')
     def test016_delete_storagepool_filesystem_snapshot(self):
         """ GAT-060
         **Test Scenario:**
@@ -489,3 +480,116 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                   self.data_filesystem['name'],
                                                                                   'fake_filesystem')
         self.assertEqual(response.status_code, 404)
+
+
+    def test017_post_storagepool_filesystem_snapshot_rollback(self):
+        """ GAT-152
+        **Test Scenario:**
+
+        #. Get random nodid (N0), should succeed.
+        #. Create storagepool (SP0) on node (N0), should succeed.
+        #. Create filesystem (FS0) on storagepool (SP0).
+        #. Create snapshot (SS0) on filesystem (FS0).
+        #. Create file test.txt on filesystem (FS0).
+        #. Take a new snapshot (SS1).
+        #. Rollback filesystem to snapshot (SS0), should succeed.
+        #. Check that file test.txt doesn\'t exist, should succeed.
+        #. Rollback filesystem to snapshot (SS1), should succeed.
+        #. Check file test.txt exists and its data is correct, should succeed.
+
+        """
+        filesystem_path = '/mnt/storagepools/{}/filesystems/{}'.format(
+            self.data['name'], self.data_filesystem['name']
+        )
+
+        self.lg.info("Create file test.txt on filesystem (FS0)")
+        cmd = 'echo "test" > {}/test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+
+        self.lg.info('Take a new snapshot (SS1)')
+        response, new_snapshot_data = self.storagepools_api.post_filesystems_snapshots(
+            nodeid=self.nodeid,
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name']
+        )
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info("Rollback filesystem to snapshot (SS0), should succeed")
+        response = self.storagepools_api.post_filesystem_snapshots_snapshotname_rollback(
+            nodeid=self.nodeid, 
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name'],
+            snapshotname=self.data_snapshot['name']
+        )
+        self.assertEqual(response.status_code, 204)
+
+        time.sleep(5)
+
+        self.lg.info("Check that file test.txt doesn\'t exist, should succeed")
+        cmd = 'ls {} | grep test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertNotIn('test.txt', response.stdout)
+
+        self.lg.info("Rollback filesystem to snapshot (SS1), should succeed")
+        response = self.storagepools_api.post_filesystem_snapshots_snapshotname_rollback(
+            nodeid=self.nodeid, 
+            storagepoolname=self.data['name'],
+            filesystemname=self.data_filesystem['name'],
+            snapshotname=new_snapshot_data['name']
+        )
+        self.assertEqual(response.status_code, 204)
+
+        time.sleep(5)
+        
+        self.lg.info("Check file test.txt exists and its data is correct, should succeed")
+        cmd = 'ls {} | grep test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertIn('test.txt', response.stdout)
+
+        cmd = 'cat {}/test.txt'.format(filesystem_path)
+        response = self.core0_client.client.bash(cmd).get()
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertIn('test', response.stdout.strip())
+
+
+
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1246")
+    def test018_remove_storagepoole_last_device(self):
+        """ GAT-151
+        **Test Scenario:**
+
+        #. Get random nodid (N0).
+        #. Create storagepool (SP0) with single device (D0).
+        #. Get device (D0) uuid, should succeed.
+        #. Delete device (D0), should fail with 400
+        #. Delete storagepool (SP0), should succeed.
+        """
+        if not self.freeDisks:
+            self.skipTest(' [*] No free disks on node {}'.format(self.nodeid))
+
+        self.lg.info('Create storagepool (SP0) with single device (D0)')
+        response, data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
+                                                                 free_devices=[self.freeDisks[0]])
+        
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('Get device (D0) uuid, should succeed')
+        response = self.storagepools_api.get_storagepools_storagepoolname_devices(nodeid=self.nodeid,
+                                                                                  storagepoolname=data['name'])
+        self.assertEqual(response.status_code, 200)
+        deviceuuid = response.json()[0]['uuid']
+
+
+        self.lg.info('Delete device (D0), should fail with 400')
+        response = self.storagepools_api.delete_storagepools_storagepoolname_devices_deviceid(
+            nodeid=self.nodeid,
+            storagepoolname=data['name'],
+            deviceuuid=deviceuuid
+        )
+        self.assertEqual(response.status_code, 400)
+
+        self.lg.info('Delete storagepool (SP0)')
+        response = self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, data['name'])
+        self.assertEqual(response.status_code, 204)

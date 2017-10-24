@@ -12,7 +12,7 @@ import (
 
 // FileDownload is the handler for GET /nodes/{nodeid}/container/{containername}/filesystem
 // Download file from container
-func (api NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
+func (api *NodeAPI) FileDownload(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	if path == "" {
 		tools.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing path"), "")

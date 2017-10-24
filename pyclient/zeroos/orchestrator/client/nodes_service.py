@@ -780,6 +780,24 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def ExportVM(self, data, vmid, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Export the virtual machine to ftp server
+        It is method for POST /nodes/{nodeid}/vms/{vmid}/export
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/vms/"+vmid+"/export"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
+    def ImportVM(self, data, vmid, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Import the virtual machine from ftp server
+        It is method for POST /nodes/{nodeid}/vms/{vmid}/import
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/vms/"+vmid+"/import"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def GetVMInfo(self, vmid, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Get statistical information about the virtual machine.

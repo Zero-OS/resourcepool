@@ -19,15 +19,7 @@ class DHCP:
         dhcp = templates.render('dhcp', dhcps=self.dhcps)
         self.container.upload_content('/etc/dhcp', dhcp)
 
-        for process in self.container.client.process.list():
-            if 'dnsmasq' in process['cmdline']:
-                self.container.client.process.kill(process['pid'], signal.SIGTERM)
-                start = time.time()
-                while start + 10 > time.time():
-                    if not self.is_running():
-                        break
-                    time.sleep(0.2)
-                break
+        self.stop()
 
         self.container.client.system(DNSMASQ, id='dhcp.{}'.format(self.container.name))
         # check if command is listening for dhcp
@@ -43,3 +35,8 @@ class DHCP:
         for port in self.container.client.info.port():
             if port['network'] == 'udp' and port['port'] == 53:
                 return True
+
+    def stop(self):
+        for process in self.container.client.process.list():
+            if 'dnsmasq' in process['cmdline']:
+                self.container.client.process.kill(process['pid'], signal.SIGKILL)

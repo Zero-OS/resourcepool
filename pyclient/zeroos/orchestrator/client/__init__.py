@@ -1,6 +1,8 @@
 import requests
 
 
+from .Backup import Backup
+from .BackupContainer import BackupContainer
 from .Bridge import Bridge
 from .BridgeCreate import BridgeCreate
 from .BridgeCreateSetting import BridgeCreateSetting
@@ -28,6 +30,7 @@ from .EnumBridgeCreateNetworkMode import EnumBridgeCreateNetworkMode
 from .EnumBridgeStatus import EnumBridgeStatus
 from .EnumClusterCreateClusterType import EnumClusterCreateClusterType
 from .EnumClusterCreateDriveType import EnumClusterCreateDriveType
+from .EnumClusterCreateMetaDriveType import EnumClusterCreateMetaDriveType
 from .EnumClusterDriveType import EnumClusterDriveType
 from .EnumClusterStatus import EnumClusterStatus
 from .EnumContainerListItemStatus import EnumContainerListItemStatus
@@ -58,6 +61,7 @@ from .EnumVdiskStatus import EnumVdiskStatus
 from .EnumVdiskType import EnumVdiskType
 from .EnumZerotierListItemType import EnumZerotierListItemType
 from .EnumZerotierType import EnumZerotierType
+from .ExportUrl import ExportUrl
 from .Filesystem import Filesystem
 from .FilesystemCreate import FilesystemCreate
 from .GW import GW
@@ -71,6 +75,9 @@ from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .HealthCheck import HealthCheck
 from .IPProtocol import IPProtocol
+from .Image import Image
+from .ImageImport import ImageImport
+from .ImportVM import ImportVM
 from .Job import Job
 from .JobListItem import JobListItem
 from .JobResult import JobResult
@@ -82,6 +89,7 @@ from .NicLink import NicLink
 from .Node import Node
 from .NodeHealthCheck import NodeHealthCheck
 from .NodeMount import NodeMount
+from .NodeReboot import NodeReboot
 from .OSInfo import OSInfo
 from .PortForward import PortForward
 from .Process import Process
@@ -107,6 +115,7 @@ from .VdiskCreate import VdiskCreate
 from .VdiskListItem import VdiskListItem
 from .VdiskResize import VdiskResize
 from .VdiskRollback import VdiskRollback
+from .VdiskStorage import VdiskStorage
 from .WriteFile import WriteFile
 from .Zerotier import Zerotier
 from .ZerotierBridge import ZerotierBridge

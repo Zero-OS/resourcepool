@@ -10,6 +10,9 @@ def input(job):
 
 def install(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     pservice = service.parent
 
@@ -55,6 +58,9 @@ def install(job):
 
 def delete(job):
     from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     pservice = service.parent
     node = Node.from_ays(pservice, job.context['token'])
@@ -62,7 +68,7 @@ def delete(job):
 
     try:
         pool = node.storagepools.get(name)
-        pool.delete()
+        pool.delete(zero=True)
     except ValueError:
         # pool does not exists, nothing to do
         pass
@@ -134,10 +140,15 @@ def monitor(job):
     service = job.service
     if service.model.actionsState['install'] == 'ok':
         pservice = service.parent
-        node = Node.from_ays(pservice, get_jwt_token(job.service.aysrepo))
+        token = get_jwt_token(job.service.aysrepo)
+        node = Node.from_ays(pservice, token)
 
         try:
             pool = node.storagepools.get(service.name)
+            if not pool.mountpoint:
+                job.context['token'] = token
+                install(job)
+
             devices, status = pool.get_devices_and_status()
 
             service.model.data.init('devices', len(devices))

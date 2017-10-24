@@ -8,19 +8,24 @@ def start(job):
 def apply_rules(job, httpproxies=None):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.gateway.http import HTTPServer
+    from zeroos.orchestrator.configuration import get_jwt_token
 
-    container = Container.from_ays(job.service.parent, job.context['token'])
+    job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+    container = Container.from_ays(job.service.parent, job.context['token'], logger=job.service.logger)
 
     httpproxies = [] if httpproxies is None else httpproxies
 
     # for cloud init we we add some proxies specially for cloud-init
+    # this will only take effect with the (http) type
     httpproxies.append({
         'host': '169.254.169.254',
         'destinations': ['http://127.0.0.1:8080'],
         'types': ['http']}
     )
 
-    http = HTTPServer(container, httpproxies)
+    service = job.service
+    http = HTTPServer(container, service, httpproxies)
     http.apply_rules()
 
 
@@ -34,4 +39,4 @@ def watchdog_handler(job):
     loop = j.atyourservice.server.loop
     gateway = job.service.parent.consumers['gateway'][0]
     if gateway.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)

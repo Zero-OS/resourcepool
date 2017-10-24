@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/validator.v2"
 	"strconv"
+	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type ListGW struct {
@@ -23,7 +24,7 @@ type GWCreate struct {
 	Portforwards []PortForward `json:"portforwards,omitempty" yaml:"portforwards,omitempty"`
 }
 
-func (s GWCreate) Validate() error {
+func (s GWCreate) Validate(aysClient *tools.AYStool, repoName string) error {
 	for _, proxy := range s.Httpproxies {
 		if err := proxy.Validate(); err != nil {
 			return err
@@ -31,7 +32,7 @@ func (s GWCreate) Validate() error {
 	}
 	nicnames := make(map[string]struct{})
 	for _, nic := range s.Nics {
-		if err := nic.Validate(); err != nil {
+		if err := nic.Validate(aysClient, repoName); err != nil {
 			return err
 		}
 		// check if the first char is not number

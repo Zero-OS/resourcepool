@@ -11,8 +11,12 @@ import (
 
 // ListNodesHealth is the handler for GET /health/nodes
 // List NodesHealth
-func (api HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request) {
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	queryParams := map[string]interface{}{
 		"fields": "hostname,id",
 	}
@@ -39,20 +43,25 @@ func (api HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		var healthcheck HealthCheck
-		if err := json.Unmarshal(healthService.Data, &healthcheck); err != nil {
+		var health struct {
+			HealthChecks []HealthCheck `json:"healthchecks" validate:"nonzero"`
+		}
+		if err := json.Unmarshal(healthService.Data, &health); err != nil {
 			tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
 			return
 		}
 
-		for _, message := range healthcheck.Messages {
-			if message.Status != "OK" {
-				healthstatus = message.Status
-				if message.Status == "ERROR" {
-					break
+		for _, healthCheck := range health.HealthChecks {
+			for _, message := range healthCheck.Messages {
+				if message.Status != "OK" {
+					healthstatus = message.Status
+					if message.Status == "ERROR" {
+						break
+					}
 				}
 			}
 		}
+
 		respBody[i].Status = healthstatus
 
 	}

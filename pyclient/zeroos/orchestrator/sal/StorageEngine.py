@@ -9,34 +9,40 @@ logger = logging.getLogger(__name__)
 class StorageEngine:
     """storageEngine server"""
 
-    def __init__(self, name, container, bind='0.0.0.0:16379', data_dir='/mnt/data', master=None):
+    def __init__(self, name, container, enabled=True, status='running', bind='0.0.0.0:16379', data_dir='/mnt/data', master=None):
         """
         TODO: write doc string
         """
         self.name = name
+        self.bind = bind
+        self.enabled = enabled
+        self.status = status
         self.master = master
         self.container = container
-        self.bind = bind
-        self.port = int(bind.split(':')[1])
         self.data_dir = data_dir
         self.master = master
         self._ays = None
+
+    @property
+    def port(self):
+        return int(self.bind.split(':')[1])
 
     @classmethod
     def from_ays(cls, service, password=None):
         logger.debug("create storageEngine from service (%s)", service)
         from .Container import Container
 
-        container = Container.from_ays(service.parent, password)
+        container = Container.from_ays(service.parent, password, logger=service.logger)
         if service.model.data.master != '':
             master_service = service.aysrepo.serviceGet('storage_engine', service.model.data.master)
             master = StorageEngine.from_ays(master_service, password)
         else:
             master = None
-
         return cls(
             name=service.name,
             container=container,
+            enabled=service.model.data.enabled,
+            status=service.model.data.status,
             bind=service.model.data.bind,
             data_dir=service.model.data.homeDir,
             master=master,
