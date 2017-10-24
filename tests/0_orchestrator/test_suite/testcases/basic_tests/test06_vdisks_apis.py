@@ -94,17 +94,12 @@ class TestVdisks(TestcasesBase):
 
         #. Create vdisk (VD1). should succeed with 201.
         #. List vdisks, (VD1) should be listed.
-        #. Delete vdisk (VD0), should succeed with 204.
         #. Create vdisk with invalid body, should fail with 400.
         """
         self.lg.info(' [*] List vdisks, (VD1) should be listed')
         response = self.vdisks_api.get_vdisks(self.vdiskstoragedata["id"])
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data['id'], [x['id'] for x in response.json()])
-
-        self.lg.info(' [*] Delete vdisk (VD0), should succeed with 204')
-        response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
-        self.assertEqual(response.status_code, 204)
 
         self.lg.info(' [*] Create vdisk with invalid body, should fail with 400')
         body = {"id": self.rand_str(),"type":"cash", "imageId":self.imagedata["imageName"]}
@@ -172,14 +167,20 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(new_size, response.json()['size'])
 
-    def test006_list_vdiskstorage(self):
+    @unittest.skip(' https://github.com/zero-os/0-orchestrator/issues/1260')
+    def test006_list_delete_vdiskstorage(self):
         """ GAT-143
         *GET:/vdiskstorage*
 
         **Test Scenario:**
 
-        #. Create vdiskstorage (VDS0).
+        #. Create vdiskstorage (VDS0), import image (IM0) and create vdisk (VD0).
+        #. Delete vdiskStorage (VDS0), should fail with 400 as VDS0 consume IM0 and VD0.
         #. List vdisksStorage, should succeed with 200.
+        #. Delete vdisk (VD0) and image (IM0), should succeed
+        #. Delete vdiskStorage (VDS0), should succeed with 204.
+        #. List vdisks, (VDS0) should be gone.
+        #. Delete nonexisting vdisk, should fail with 404.
 
         """
         self.lg.info(' [*] List vdisksStorage, should succeed with 200')
@@ -190,6 +191,31 @@ class TestVdisks(TestcasesBase):
                      "objectCluster": '',
                      "slaveCluster": ''}
         self.assertIn(svd0_data, response.json())
+
+        self.lg.info('Delete vdiskStorage (VDS0), should fail with 400 as VDS0 consume IM0 and VD0')
+        response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 400)
+
+        self.lg.info(' [*] Delete vdisk (VD0)')
+        response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info(' [*] Delete Image (IMG0)')
+        response = self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info('Delete vdiskStorage (VDS0), should succeed with 204')
+        response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info('List vdiskStorages, (VDS0) should be gone')
+        response = self.vdisks_api.get_vdiskstorage()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(svd0_data, response.json())
+
+        self.lg.info('Delete nonexisting vdiskStorage, should fail with 404')
+        response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
+        self.assertEqual(response.status_code, 404)
 
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1148")
     def test007_list_vdisk_images(self):
