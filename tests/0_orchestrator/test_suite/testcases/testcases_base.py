@@ -25,7 +25,7 @@ class TestcasesBase(TestCase):
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.vm_username = self.orchasterator_driver.vm_username
-        self.vm_password = self.orchasterator_driver.vm_password        
+        self.vm_password = self.orchasterator_driver.vm_password
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
@@ -80,7 +80,7 @@ class TestcasesBase(TestCase):
 
     def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
-        
+
         if default_config:
             target = '10.{}.{}.0/24'.format(random.randint(1, 254), random.randint(1, 254))
             ipRangeStart = target[:-4] + '1'
@@ -201,6 +201,22 @@ class TestcasesBase(TestCase):
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
+    def get_available_free_disks(self, nodes):
+        free_disks = []
+        for nodeid in nodes:
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            free_disks.extend(node_client.getFreeDisks())
+        return len(free_disks)
+
+    def get_available_cluster_type(self, clusters, clustertype):
+        clusters_details = []
+        for cluster in clusters:
+            response = self.storageclusters_api.get_storageclusters_label(cluster)
+            if response.json()["clusterType"] == clustertype:
+                clusters_details.append(response.json())
+        return clusters_details
+
     def enable_ssh_access(self, vnc_ip, username=None, password=None, zerotier_nwid=None):
 
         username = username or self.vm_username
@@ -211,9 +227,9 @@ class TestcasesBase(TestCase):
         """
         vnc = 'vncdotool -s %s' % vnc_ip
         commands = [
-            '%s' % username, 
-            '%s' % password, 
-            'sudo su', 
+            '%s' % username,
+            '%s' % password,
+            'sudo su',
             '%s' % password,
             'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd',
             'service sshd restart'
@@ -274,16 +290,15 @@ class Utiles:
     def logger(self):
         logger = logging.getLogger('0-Orchestrator')
         if not logger.handlers:
-            fileHandler = logging.FileHandler('test_suite.log', mode='w')  
+            fileHandler = logging.FileHandler('test_suite.log', mode='w')
             formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
             fileHandler.setFormatter(formatter)
             logger.addHandler(fileHandler)
 
         return logger
-        
-        
+
+
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, error = process.communicate()
         return out.decode('utf-8'), error.decode('utf-8')
-
