@@ -27,6 +27,7 @@ class TestcasesBase(TestCase):
         self.vm_username = self.orchasterator_driver.vm_username
         self.vm_password = self.orchasterator_driver.vm_password
         self.nodes_info = self.orchasterator_driver.nodes_info
+        self.Client = Client
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
 
@@ -90,7 +91,6 @@ class TestcasesBase(TestCase):
                                'private': private,
                                'routes': [{'target': target, 'via': None}],
                                'v4AssignMode': {'zt': True}}}
-
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
         nwid = response.json()['id']

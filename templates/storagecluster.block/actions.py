@@ -354,9 +354,6 @@ def monitor(job):
     if service.model.data.status == 'ready' and not cluster.is_running():
         cluster.start()
 
-    if service.model.data.clusterType == "object":
-        return
-
     healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
                                                          instance='storagecluster_block_%s' % service.name,
                                                          die=False)

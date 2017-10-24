@@ -93,11 +93,11 @@ class Container:
                    logger=logger)
 
     @classmethod
-    def from_ays(cls, service, password=None, logger=None):
+    def from_ays(cls, service, password=None, logger=None, timeout=120):
         logger = logger or default_logger
         logger.debug("create container from service (%s)", service)
         from .Node import Node
-        node = Node.from_ays(service.parent, password)
+        node = Node.from_ays(service.parent, password, timeout)
         ports = {}
         for portmap in service.model.data.ports:
             source, dest = portmap.split(':')
