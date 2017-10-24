@@ -40,7 +40,11 @@ func (api *NodeAPI) DeleteStoragePoolDevice(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-
+	if len(devices) == 1 {
+		err := fmt.Errorf("Can not delete the last device in the pool %s", toDeleteUUID)
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
+	}
 	bpContent := struct {
 		Devices []DeviceInfo `yaml:"devices" json:"devices"`
 	}{
