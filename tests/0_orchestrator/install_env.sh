@@ -27,6 +27,10 @@ sudo pip3 install -U git+https://github.com/zero-os/0-core.git@${CORE_0_BRANCH}#
 ## install zerotier in packet machine
 echo "[#] Installing Zerotier ..."
 curl -s https://install.zerotier.com/ | sudo bash
+
+## install local ftp server
+bash install_ftp_server.sh
+
 ## install Jumpscale 9
 url="https://raw.githubusercontent.com/Jumpscale/bash/${JS9_BRANCH}/install.sh"
 echo "[#] Installing Jumpscale 9 from ${url}"
