@@ -23,7 +23,7 @@ func (api *StorageclustersAPI) ListAllClusters(w http.ResponseWriter, r *http.Re
 	query := map[string]interface{}{
 		"fields": "label",
 	}
-	services, res, err := aysClient.Ays.ListServicesByRole("storage_cluster", api.AysRepo, nil, query)
+	services, res, err := aysClient.Ays.ListServicesByRole("storagecluster", api.AysRepo, nil, query)
 	if err != nil {
 		tools.WriteError(w, http.StatusInternalServerError, err, "Error calling ays list service")
 		return

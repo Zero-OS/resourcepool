@@ -14,7 +14,7 @@ class ClusterCreate(object):
     """
 
     @staticmethod
-    def create(clusterType, driveType, label, nodes, servers, serversPerMetaDrive, dataShards=None, metaDriveType=None, parityShards=None):
+    def create(clusterType, driveType, label, nodes, servers, serversPerMetaDrive, zerostorClientID, zerostorNamespace, zerostorOrganization, zerostorSecret, dataShards=None, metaDriveType=None, parityShards=None):
         """
         :type clusterType: EnumClusterCreateClusterType
         :type dataShards: int
@@ -25,6 +25,10 @@ class ClusterCreate(object):
         :type parityShards: int
         :type servers: int
         :type serversPerMetaDrive: int
+        :type zerostorClientID: str
+        :type zerostorNamespace: str
+        :type zerostorOrganization: str
+        :type zerostorSecret: str
         :rtype: ClusterCreate
         """
 
@@ -38,6 +42,10 @@ class ClusterCreate(object):
             parityShards=parityShards,
             servers=servers,
             serversPerMetaDrive=serversPerMetaDrive,
+            zerostorClientID=zerostorClientID,
+            zerostorNamespace=zerostorNamespace,
+            zerostorOrganization=zerostorOrganization,
+            zerostorSecret=zerostorSecret,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -138,6 +146,50 @@ class ClusterCreate(object):
             datatypes = [int]
             try:
                 self.serversPerMetaDrive = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'zerostorClientID'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerostorClientID = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'zerostorNamespace'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerostorNamespace = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'zerostorOrganization'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerostorOrganization = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'zerostorSecret'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.zerostorSecret = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

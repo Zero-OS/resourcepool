@@ -1,10 +1,14 @@
 from js9 import j
 
+
+def input(job):
+    if len(job.service.name) > 16:
+            raise j.exceptions.Input('Vdisk_image service name is longer than 16 characters.')
+
+
 def install(job):
     import random
-    import os
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
-    from urllib.parse import urlparse
 
     service = job.service
     vdiskstore = service.parent
@@ -17,8 +21,7 @@ def install(job):
         service.model.data.exportName,
         service.model.data.exportSnapshot)
 
-    clusterconfig = get_cluster_config(job)
-    node = random.choice(clusterconfig["nodes"])
+    node = random.choice(get_cluster_nodes(job))
     container = create_from_template_container(job, node)
     try:
         find_resp = service.aysrepo.servicesFind(role="etcd_cluster")
@@ -26,12 +29,12 @@ def install(job):
             raise j.exceptions.RuntimeError("no etcd_cluster service found")
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 20\
+        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
-               --blocksize {blocksize} \
+               --flush-size 128 \
+               --force \
                --storage {ftpurl}".format(vdiskid=service.name,
                                           snapshotID=snapshotID,
-                                          blocksize=service.model.data.exportBlockSize,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
 
@@ -42,7 +45,7 @@ def install(job):
             cmd += ' --force'
 
         if vdiskstore.model.data.objectCluster:
-            storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
+            storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.object',
                                                                instance=vdiskstore.model.data.objectCluster)
             cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
                                                                  storageclusterservice.model.data.parityShards)
@@ -95,8 +98,6 @@ def delete(job):
 
 
 def save_config(job):
-    import hashlib
-    from urllib.parse import urlparse
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -121,7 +122,6 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
-    vdiskType = "boot"
     objectStoragecluster = vdiskstore.model.data.objectCluster
     if objectStoragecluster:
         config = {
@@ -146,22 +146,15 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:storage:nbd" % service.name, value=yamlconfig)
 
 
-def get_cluster_config(job, type="block"):
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
+def get_cluster_nodes(job):
     service = job.service
     vdiskstore = service.parent
 
-    cluster = vdiskstore.model.data.blockCluster if type == "block" else vdiskstore.model.data.objectCluster
+    cluster = vdiskstore.model.data.blockCluster
 
-    storageclusterservice = service.aysrepo.serviceGet(role='storage_cluster',
-                                                       instance=cluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    nodes = list(set(storageclusterservice.producers["node"]))
-    return {"config": cluster.get_config(), "nodes": nodes, 'dataShards': cluster.data_shards, 'parityShards': cluster.parity_shards}
+    blockcluster_service = service.aysrepo.serviceGet(role='storagecluster.block', instance=cluster)
+    nodes = list(set(blockcluster_service.producers["node"]))
+    return nodes
 
 
 def create_from_template_container(job, parent):

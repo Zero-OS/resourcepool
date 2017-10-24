@@ -1,7 +1,6 @@
 package node
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -46,16 +45,8 @@ func (api *NodeAPI) DeleteFilesystemSnapshot(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	resp, err := aysClient.Ays.DeleteServiceByName(name, "fssnapshot", api.AysRepo, nil, nil)
-	if err != nil {
-		errmsg := "Error deleting fssnapshot services "
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		errmsg := fmt.Sprintf("Error deleting fssnapshot services : %+v", resp.Status)
-		tools.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status), errmsg)
+	res, err := aysClient.Ays.DeleteServiceByName(name, "fssnapshot", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
 

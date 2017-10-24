@@ -10,8 +10,3 @@ links:
       max: 9999
       role: vdisk
       argname: vdisks
-
-recurring:
-  - action: monitor
-    log: true
-    period: 30m

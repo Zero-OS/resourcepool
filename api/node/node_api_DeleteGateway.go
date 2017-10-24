@@ -46,7 +46,7 @@ func (api *NodeAPI) DeleteGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := aysClient.Ays.DeleteServiceByName(gwID, "gateway", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "deleting service") {
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
 

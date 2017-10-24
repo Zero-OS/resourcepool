@@ -1,4 +1,4 @@
-@0xe3c0cb7ad515908e;
+@0xf11a2557d84276d9;
 
 struct Schema {
     size @0 :UInt64;
@@ -8,8 +8,10 @@ struct Schema {
     readOnly @4 :Bool;
     status @5 :Status;
     vdiskstorage @6 :Text;
-    timestamp @7: UInt64;
-    backupUrl @8 :Text;
+    timestamp @7: Int64;
+    backupUrl @8 :Text; # Used for import vdisk, ghost property
+    cryptoKey @9 :Text; # Used for import vdisk, ghost property
+    snapshotID @10 :Text; # Used for import vdisk, ghost property
 
     enum Status {
         halted @0;

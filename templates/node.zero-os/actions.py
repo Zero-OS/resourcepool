@@ -13,6 +13,22 @@ def get_statsdb(service):
         return statsdb_services[0]
 
 
+def get_version(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+    service = job.service
+    if service.model.data.status != 'running':
+        version = ''
+    else:
+        node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+        pong = node.client.ping()
+        version = pong.split('Version: ')[1] if pong else ''
+
+    service.model.data.version = version
+    service.saveAll()
+    return version
+
+
 def input(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_configuration, get_jwt_token
@@ -63,8 +79,7 @@ def getAddresses(job):
     networks = service.producers.get('network', [])
     networkmap = {}
     for network in networks:
-        job = network.getJob('getAddresses', args={'node_name': service.name})
-        networkmap[network.name] = j.tools.async.wrappers.sync(job.execute())
+        networkmap[network.name] = network.executeAction('getAddresses', args={'node_name': service.name})
     return networkmap
 
 
@@ -77,6 +92,7 @@ def install(job):
     # at each boot recreate the complete state in the system
     service = job.service
     node = Node.from_ays(service, get_jwt_token(job.service.aysrepo))
+    get_version(job)
     job.logger.info('mount storage pool for fuse cache')
     poolname = '{}_fscache'.format(service.name)
     node.ensure_persistance(poolname)
@@ -87,14 +103,12 @@ def install(job):
 
     job.logger.info('configure networks')
     for network in service.producers.get('network', []):
-        job = network.getJob('configure', args={'node_name': service.name})
-        j.tools.async.wrappers.sync(job.execute())
+        network.executeAction('configure', args={'node_name': service.name})
 
     stats_collector_service = get_stats_collector(service)
     statsdb_service = get_statsdb(service)
     if stats_collector_service and statsdb_service and statsdb_service.model.data.status == 'running':
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'install', context=job.context))
+        stats_collector_service.executeAction('install', context=job.context)
     node.client.bash('modprobe ipmi_si && modprobe ipmi_devintf').get()
 
 
@@ -103,7 +117,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
     import redis
-    import asyncio
     import time
 
     service = job.service
@@ -115,35 +128,24 @@ def monitor(job):
     if install_action != 'ok' and install_action != 'error':
         return
 
-    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck', instance='node_%s' % service.name, die=False)
+    healthcheck_service = job.service.aysrepo.serviceGet(role='healthcheck',
+                                                         instance='node_%s' % service.name,
+                                                         die=False)
     if healthcheck_service is None:
         healthcheck_actor = service.aysrepo.actorGet('healthcheck')
         healthcheck_service = healthcheck_actor.serviceCreate(instance='node_%s' % service.name)
         service.consume(healthcheck_service)
 
-    start = time.time()
-    while time.time() < start + 30:
-        try:
-            node = Node.from_ays(service, token, timeout=5)
-            node.client.testConnectionAttempts = 0
-            state = node.client.ping()
-        except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError) as error:
-            err = error
-            state = False
-        if state:
-            break
-        time.sleep(1)
-    else:
-        print("Could not ping %s within 30 seconds due to %s" % (service.name, err))
-
     nodestatus = HealthCheckObject('nodestatus', 'Node Status', 'Node Status', '/nodes/{}'.format(service.name))
+
+    node = Node.from_ays(service, token, timeout=5)
+    state = node.is_running()
 
     if state:
         service.model.data.status = 'running'
         configured = node.is_configured(service.name)
         if not configured:
-            job = service.getJob('install', args={})
-            j.tools.async.wrappers.sync(job.execute())
+            service.executeAction('install', context=job.context)
             for consumer in service.getConsumersRecursive():
                 consumer.self_heal_action('monitor')
         stats_collector_service = get_stats_collector(service)
@@ -152,14 +154,12 @@ def monitor(job):
         # Check if statsdb is installed on this node and start it if needed
         if (statsdb_service and str(statsdb_service.parent) == str(job.service)
                 and statsdb_service.model.data.status != 'running'):
-            j.tools.async.wrappers.sync(statsdb_service.executeAction(
-                'start', context=job.context))
+            statsdb_service.executeAction('start', context=job.context)
 
         # Check if there is a running statsdb and if so make sure stats_collector for this node is started
         if (stats_collector_service and stats_collector_service.model.data.status != 'running'
                 and statsdb_service.model.data.status == 'running'):
-            j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-                'start', context=job.context))
+            stats_collector_service.executeAction('start', context=job.context)
 
         # healthchecks
         nodestatus.add_message('node', 'OK', 'Node is running')
@@ -187,7 +187,7 @@ def monitor(job):
             service.model.data.status = 'halted'
             nodestatus.add_message('node', 'ERROR', 'Node is halted')
     update_healthcheck(job, healthcheck_service, nodestatus.to_dict())
-
+    get_version(job)
     service.saveAll()
 
 
@@ -253,8 +253,7 @@ def reboot(job):
                     raise j.exceptions.RuntimeError(
                         'Failed to reboot node. Force reboot is not enabled and some vms are not halted')
                 else:
-                    j.tools.async.wrappers.sync(vm.executeAction(
-                        'shutdown', context=job.context))
+                    vm.executeAction('shutdown', context=job.context)
         service.model.data.status = 'rebooting'
         job.logger.info('reboot node {}'.format(service))
         node = Node.from_ays(service, job.context['token'])
@@ -265,12 +264,12 @@ def reboot(job):
             try:
                 node = Node.from_ays(service, token, timeout=5)
                 node.client.testConnectionAttempts = 0
-                state = node.client.ping()
+                node.client.ping()
             except (RuntimeError, ConnectionError, redis.TimeoutError, TimeoutError):
                 break
             time.sleep(1)
         else:
-             print("Could not wait within 10 seconds for node to reboot")
+            job.logger.info("Could not wait within 10 seconds for node to reboot")
         service._recurring_tasks['monitor'].start()
 
 
@@ -282,17 +281,24 @@ def uninstall(job):
     service = job.service
     stats_collector_service = get_stats_collector(service)
     if stats_collector_service:
-        j.tools.async.wrappers.sync(stats_collector_service.executeAction(
-            'uninstall', context=job.context))
+        stats_collector_service.executeAction('uninstall', context=job.context)
 
     statsdb_service = get_statsdb(service)
     if statsdb_service and str(statsdb_service.parent) == str(service):
-        j.tools.async.wrappers.sync(statsdb_service.executeAction(
-            'uninstall', context=job.context))
+        statsdb_service.executeAction('uninstall', context=job.context)
 
     bootstraps = service.aysrepo.servicesFind(actor='bootstrap.zero-os')
     if bootstraps:
-        j.tools.async.wrappers.sync(bootstraps[0].getJob('delete_node', args={'node_name': service.name}).execute())
+        bootstraps[0].executeAction('delete_node', args={'node_name': service.name})
+
+    # Remove etcd_cluster if this was the last node service
+    node_services = service.aysrepo.servicesFind(role='node')
+    if node_services > 1:
+        return
+
+    for etcd_cluster_service in service.aysrepo.servicesFind(role='etcd_cluster'):
+        etcd_cluster_service.executeAction('delete', context=job.context)
+        etcd_cluster_service.delete()
 
 
 def watchdog(job):
@@ -306,7 +312,8 @@ def watchdog(job):
     service = job.service
     watched_roles = {
         'nbdserver': {
-            # 'message': (re.compile('^storageengine-failure.*$')),  # TODO: Not implemented yet in 0-disk yet
+            'level': 20,
+            'message': (re.compile('.*'),),
             'eof': True
         },
         'tlogserver': {
@@ -384,7 +391,7 @@ def watchdog(job):
             args = {'message': message, 'eof': eof, 'level': level}
             job.context['token'] = get_jwt_token(job.service.aysrepo)
             handler = watched_roles[role].get('handler', 'watchdog_handler')
-            await srv.executeAction(handler, context=job.context, args=args)
+            await srv.asyncExecuteAction(handler, context=job.context, args=args)
 
     async def check_node(job):
         job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -488,26 +495,25 @@ def start_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    service = job.service
     if vm.model.data.status == 'running':
-        asyncio.ensure_future(vm.executeAction('start', context=job.context), loop=service._loop)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+        asyncio.ensure_future(vm.asyncExecuteAction('start', context=job.context), loop=job.service._loop)
 
 
 def shutdown_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
 
-    service = job.service
     if vm.model.data.status == 'running':
-        asyncio.ensure_future(vm.executeAction('shutdown', context=job.context), loop=service._loop)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        asyncio.ensure_future(vm.asyncExecuteAction('shutdown', context=job.context), loop=job.service._loop)
 
 
 def vm_handler(job):
     import json
+    import asyncio
 
     message = job.model.args.get('message')
     if not message:
@@ -519,10 +525,10 @@ def vm_handler(job):
         return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job, vm)
+        asyncio.ensure_future(start_vm(job, vm))
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
-        shutdown_vm(job, vm)
+        asyncio.ensure_future(shutdown_vm(job, vm))
 
 
 def processChange(job):
@@ -532,4 +538,3 @@ def processChange(job):
     if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
         service.model.data.forceReboot = args['forceReboot']
         service.saveAll()
-

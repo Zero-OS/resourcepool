@@ -20,12 +20,19 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    import re
+
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
     for nic in service.model.data.nics:
+        if nic.hwaddr:
+            pattern = re.compile(r'^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+            if not pattern.match(nic.hwaddr):
+                raise j.exceptions.Input('Hwaddr: string is not a valid mac address.')
         if nic.type == 'vlan':
             break
     else:
@@ -37,7 +44,6 @@ def init(job):
         raise j.exceptions.Input('OVS container needed to run this blueprint')
 
 
-
 def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -45,7 +51,7 @@ def install(job):
 
     job.service.model.data.status = "halted"
 
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def get_member(zerotier, zerotiernodeid, nicid):
@@ -263,11 +269,10 @@ def watchdog_handler(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
         return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')

@@ -54,6 +54,8 @@ def save_config(job, vdisks=None):
             "tlogServerClusterID": service.name,
             "slaveStorageClusterID": vdiskstore.model.data.slaveCluster or "",
         }
+        job.logger.debug("tlogserver %s save config for vdisk %s", service, vdisk)
+        job.logger.debug(config)
         yamlconfig = yaml.safe_dump(config, default_flow_style=False)
         etcd.put(key="%s:vdisk:conf:storage:nbd" % vdisk.name, value=yamlconfig)
 
@@ -83,7 +85,7 @@ def install(job):
         vdiskstore = vdiskservice.parent
         objectcluster = vdiskstore.model.data.objectCluster
         if objectcluster and objectcluster not in config['storageClusters']:
-            _, data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
+            data_shards, parity_shards = get_storagecluster_config(job, objectcluster)
             config['storageClusters'].add(objectcluster)
             config['data-shards'] += data_shards
             config['parity-shards'] += parity_shards
@@ -97,11 +99,21 @@ def install(job):
     data_shards = config.pop('data-shards')
     parity_shards = config.pop('parity-shards')
 
+    # check if we consume another tlog on which we need to sync at startup
+    tlogWaitAddr = None
+    if 'tlogserver' in service.producers:
+        waitTlogServer_service = service.producers['tlogserver'][0]
+        tlogWaitAddr = waitTlogServer_service.model.data.waitListenBind
+
     bind = service.model.data.bind
+    waitListenBind = service.model.data.waitListenBind
+
     if not is_port_listening(container, int(bind.split(':')[1]), listen=False):
         cmd = '/bin/tlogserver \
                 -id {id} \
+                -flush-size 128 \
                 -address {bind} \
+                -wait-listen-addr {waitListenBind} \
                 -data-shards {data_shards} \
                 -parity-shards {parity_shards} \
                 -config "{dialstrings}" \
@@ -109,9 +121,15 @@ def install(job):
                          bind=bind,
                          data_shards=data_shards,
                          parity_shards=parity_shards,
+                         waitListenBind=waitListenBind,
                          dialstrings=etcd_cluster.dialstrings)
         if backup:
-            cmd += '-with-slave-sync'
+            cmd += ' -with-slave-sync'
+        if tlogWaitAddr:
+            cmd += ' -wait-connect-addr {}'.format(tlogWaitAddr)
+        if service.model.data.acceptAddress:
+            cmd += ' -accept-address {}'.format(service.model.data.acceptAddress)
+
         job.logger.info("Starting tlog server: %s" % cmd)
         container.client.system(cmd, id="{}.{}".format(service.model.role, service.name))
         if not is_port_listening(container, int(bind.split(":")[1])):
@@ -121,7 +139,7 @@ def install(job):
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "dropped":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('install', context=job.context))
+        tcpsrv.executeAction('install', context=job.context)
 
 
 def start(job):
@@ -129,18 +147,13 @@ def start(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-    j.tools.async.wrappers.sync(service.executeAction('install', context=job.context))
+    service.executeAction('install', context=job.context)
 
 
 def get_storagecluster_config(job, storagecluster):
-    from zeroos.orchestrator.configuration import get_jwt_token
-    from zeroos.orchestrator.sal.StorageCluster import StorageCluster
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    storageclusterservice = job.service.aysrepo.serviceGet(role='storage_cluster',
+    objectcluster_service = job.service.aysrepo.serviceGet(role='storagecluster.object',
                                                            instance=storagecluster)
-    cluster = StorageCluster.from_ays(storageclusterservice, job.context['token'])
-    return cluster.get_config(), cluster.data_shards, cluster.parity_shards
+    return objectcluster_service.model.data.dataShards, objectcluster_service.model.data.dataShards
 
 
 def stop(job):
@@ -169,12 +182,19 @@ def stop(job):
             if not is_port_listening(container, port):
                 break
             raise j.exceptions.RuntimeError("Failed to stop Tlog server")
+
+    # after stop, in case this service was consume by another tlog server for synchronisation
+    # need to clean the consumer relation cause the sync is done just before stop.
+    # the relation doesn't need to exists anymore.
+    for consumer in service.consumers.get('tlogserver', []):
+        service.model.consumerRemove(consumer)
+
     service.model.data.status = 'halted'
     service.saveAll()
 
     tcpsrv = service.producers['tcp'][0]
     if tcpsrv.model.data.status == "opened":
-        j.tools.async.wrappers.sync(tcpsrv.executeAction('drop', context=job.context))
+        tcpsrv.executeAction('drop', context=job.context)
 
 
 def monitor(job):
@@ -193,7 +213,7 @@ def monitor(job):
     if is_port_listening(container, port):
         return
 
-    j.tools.async.wrappers.sync(service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)}))
+    service.executeAction('start', context={"token": get_jwt_token(job.service.aysrepo)})
 
 
 def watchdog_handler(job):
@@ -204,4 +224,4 @@ def watchdog_handler(job):
         return
     eof = job.model.args['eof']
     if eof:
-        asyncio.ensure_future(service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(service.asyncExecuteAction('start', context=job.context), loop=loop)
