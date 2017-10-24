@@ -149,9 +149,14 @@ def get_baseports(job, node, baseport, nrports):
 
 
 def check_container_etcd_status(job, etcd):
+    '''
+    checks status of both container and etcd , since we cannot check status of etcd without the container being running
+    param job,, job called on the watchdog_handler action
+    param etcd,, container etcd
+    '''
     try:
         container = etcd.parent
-        container_client, container_status = check_node_container_status(job, container)
+        container_client, container_status = check_container_status(job, container)
         if container_status:
             container_client.client.job.list("etcd.{}".format(etcd.name))
             return True, True
@@ -160,171 +165,192 @@ def check_container_etcd_status(job, etcd):
         return True, False
 
 
-def check_node_container_status(job, container):
+def check_container_status(job, container):
+    '''
+    checks status of the container and avoids throwing errors if node is down
+    param job,, job called on the watchdog_handler action
+    param container,, container service
+    '''
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     try:
-        container_client = Container.from_ays(container, password=job.context['token'], logger=job.service.logger)
+        container_client = Container.from_ays(container,
+                                              password=job.context['token'],
+                                              logger=job.service.logger,
+                                              timeout=5)
         if container_client.id:
+            # if returns empty means the container is down
             return container_client, True
         return None, False
     except ConnectionError as e:
+        # to catch exception if node is down
         return None, False
 
 
 def watchdog_handler(job):
-    from zeroos.orchestrator.sal.Node import Node
-    from zeroos.orchestrator.configuration import get_jwt_token
-    import redis
-    # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler
-    # so here can focus on only the recovery
+    '''
+    This action is called upon from either a container or etcd watchdog handler which are called from node service's
+    watchdog. This self heals the etcd cluster if etcd fails will redeploy, if container fails will redeploy and if the
+    cluster goes into disaster where the number of etcd dead > (n-1)/2 then the action will redeploy the cluster on the
+    nodes availabe on the enviroment and resave the configurations in the storage clusters and the vdisks .
+    '''
+    import asyncio
 
-    service = job.service
-    if service.model.data.status == 'recovering':
-        return
+    async def selfhealing(job):
+        from zeroos.orchestrator.sal.Node import Node
+        from zeroos.orchestrator.configuration import get_jwt_token
+        import redis
+        # needs refactoring : for refacotr the disabled services will be detected by the service's own watchdog handler
+        # so here can focus on only the recovery
 
-    if not service.aysrepo.servicesFind(role='node'):
-        return
-
-    service.model.data.status = 'recovering'
-    etcds = set(service.producers.get('etcd', []))
-    working_etcds = set()
-    dead_nodes = set()
-    dead_etcds_working_containers = set()
-    working_model_nodes = set()
-    token = get_jwt_token(job.service.aysrepo)
-    job.context['token'] = token
-    service.saveAll()
-
-    # check on etcd container since the watch dog will handle the actual service
-    for etcd in etcds:
-        container_status, etcd_status = check_container_etcd_status(job, etcd)
-        if not etcd_status and container_status:
-            dead_etcds_working_containers.add(etcd)
-
-        if etcd_status:
-            working_etcds.add(etcd)
-
-    dead_etcds_containers = etcds-working_etcds
-
-    for etcd in dead_etcds_containers:
-        container = etcd.parent
-        node = container.parent
-        try:
-            node_client = Node.from_ays(node, password=token, timeout=20)
-            ping = node_client.client.ping()
-            working_model_nodes.add(node)
-        except (redis.TimeoutError, ConnectionError) as e:
-            ping = None
-            dead_nodes.add(node.name)
-
-        # check if less than disaster threshold do normal respawn of single etcd or container and etcd
-        if len(working_etcds) > (len(etcds)-1)/2:
-            # respawn dead etcd only
-            for etcd in dead_etcds_working_containers:
-                etcd.executeAction('start', context=job.context)
-                service.model.data.status = 'running'
-                service.saveAll()
-                service.logger.info("etcd %s respwaned" % etcd.name)
-                return
-            # respawn dead containers
-            if not ping:
-                raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
-            container.executeAction('start', context=job.context)
-            etcd.executeAction('start', context=job.context)
-            service.model.data.status = 'running'
-            service.saveAll()
-            service.logger.info("etcd %s and container %s respawned" % (etcd.name, container.name))
+        service = job.service
+        if service.model.data.status == 'recovering':
             return
 
-    # stop all remaining containers from the old cluster
-    try:
-        for etcd in working_etcds:
-            etcd.executeAction('stop', context=job.context)
-            etcd.parent.executeAction('stop', context=job.context)
+        if not service.aysrepo.servicesFind(role='node'):
+            return
 
-        # clean all reaminag tcps on old  running nodes
-        for etcd in service.producers['etcd']:
-            for tcp in etcd.producers['tcp']:
-                try:
-                    Node.from_ays(etcd.parent.parent, password=token)
-                    tcp.executeAction('drop', context=job.context)
-                except ConnectionError:
-                    continue
-                tcp.delete()
+        service.model.data.status = 'recovering'
+        etcds = set(service.producers.get('etcd', []))
+        working_etcds = set()
+        dead_nodes = set()
+        dead_etcds_working_containers = set()
+        working_model_nodes = set()
+        token = get_jwt_token(job.service.aysrepo)
+        job.context['token'] = token
+        service.saveAll()
 
-        # check if nodes are more than the min number for cluster deployment which is 3.
-        tmp = list()
-        for node in [service for service in service.aysrepo.servicesFind(role='node')]:
-            if node.model.data.status == 'running':
-                tmp.append(node.name)
+        # check on etcd container since the watch dog will handle the actual service
+        for etcd in etcds:
+            container_status, etcd_status = check_container_etcd_status(job, etcd)
+            if not etcd_status and container_status:
+                dead_etcds_working_containers.add(etcd)
 
-        all_nodes = set(tmp)
-        if len(working_model_nodes) > 1:
-            service.model.data.nodes = [node.name for node in working_model_nodes]
-        else:
-            service.model.data.nodes = list(all_nodes - dead_nodes)
+            if etcd_status:
+                working_etcds.add(etcd)
 
-        # remove old nodes and etcds from producers (has tobe here)
-        for etcd_service in service.producers['etcd']:
-            service.model.producerRemove(etcd_service)
-            service.saveAll()
+        dead_etcds_containers = etcds-working_etcds
 
-        for node_service in service.producers['node']:
-            if node_service.name not in service.model.data.nodes:
-                service.model.producerRemove(node_service)
+        for etcd in dead_etcds_containers:
+            container = etcd.parent
+            node = container.parent
+            try:
+                node_client = Node.from_ays(node, password=token, timeout=20)
+                ping = node_client.client.ping()
+                working_model_nodes.add(node)
+            except (redis.TimeoutError, ConnectionError) as e:
+                ping = None
+                dead_nodes.add(node.name)
+
+            # check if less than disaster threshold do normal respawn of single etcd or container and etcd
+            if len(working_etcds) > (len(etcds)-1)/2:
+                # respawn dead etcd only
+                for etcd in dead_etcds_working_containers:
+                    await etcd.asyncExecuteAction('start', context=job.context)
+                    service.model.data.status = 'running'
+                    service.saveAll()
+                    service.logger.info("etcd %s respwaned" % etcd.name)
+                    return
+                # respawn dead containers
+                if not ping:
+                    raise j.exceptions.RunTimeError("node %s with Etcd %s is down" % (node.name, etcd.name))
+                await container.asyncExecuteAction('start', context=job.context)
+                service.model.data.status = 'running'
+                await etcd.asyncExecuteAction('start', context=job.context)
+                service.saveAll()
+                service.logger.info("etcd %s and container %s respawned" % (etcd.name, container.name))
+                return
+
+        # stop all remaining containers from the old cluster
+        try:
+            for etcd in working_etcds:
+                await etcd.asyncExecuteAction('stop', context=job.context)
+                await etcd.parent.asyncExecuteAction('stop', context=job.context)
+
+            # clean all reaminag tcps on old  running nodes
+            for etcd in service.producers['etcd']:
+                for tcp in etcd.producers['tcp']:
+                    try:
+                        Node.from_ays(etcd.parent.parent, password=token, timeout=5)
+                        await tcp.asyncExecuteAction('drop', context=job.context)
+                    except ConnectionError:
+                        continue
+                    tcp.delete()
+
+            # check if nodes are more than the min number for cluster deployment which is 3.
+            tmp = list()
+            for node in [service for service in service.aysrepo.servicesFind(role='node')]:
+                if node.model.data.status == 'running':
+                    tmp.append(node.name)
+
+            all_nodes = set(tmp)
+            if len(working_model_nodes) > 1:
+                service.model.data.nodes = [node.name for node in working_model_nodes]
+            else:
+                service.model.data.nodes = list(all_nodes - dead_nodes)
+
+            # remove old nodes and etcds from producers (has tobe here)
+            for etcd_service in service.producers['etcd']:
+                service.model.producerRemove(etcd_service)
                 service.saveAll()
 
-        # consume new nodes.
-        node_services = [service.aysrepo.serviceGet(instance=node, role='node')for node in service.model.data.nodes]
-        for node_service in node_services:
-            service.consume(node_service)
+            for node_service in service.producers['node']:
+                if node_service.name not in service.model.data.nodes:
+                    service.model.producerRemove(node_service)
+                    service.saveAll()
 
-        service.model.data.etcds = []
-        service.saveAll()
+            # consume new nodes.
+            node_services = [service.aysrepo.serviceGet(instance=node, role='node')for node in service.model.data.nodes]
+            for node_service in node_services:
+                service.consume(node_service)
 
-        configure(job)
+            service.model.data.etcds = []
+            service.saveAll()
 
-        # install all services created by the configure of the etcd_cluster
-        etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
-        for etcd in etcd_services:
-            for mount in etcd.parent.model.data.mounts:
-                fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
-                fs.executeAction('install', context=job.context)
-            for tcp in etcd.producers['tcp']:
-                tcp.executeAction('install',  context=job.context)
-            etcd.parent.executeAction('install', context=job.context)
-            etcd.executeAction('install', context=job.context)
+            await service.asyncExecuteAction('configure', context=job.context)
 
-        # save all vdisks to new etcd cluster
-        vdisks = service.aysrepo.servicesFind(role='vdisk')
-        for vdisk in vdisks:
-            vdisk.executeAction('save_config', context=job.context)
+            # install all services created by the configure of the etcd_cluster
+            etcd_services = [service.aysrepo.serviceGet(instance=i, role='etcd') for i in service.model.data.etcds]
+            for etcd in etcd_services:
+                for mount in etcd.parent.model.data.mounts:
+                    fs = service.aysrepo.serviceGet('filesystem', mount.filesystem)
+                    await fs.asyncExecuteAction('install', context=job.context)
+                for tcp in etcd.producers['tcp']:
+                    await tcp.asyncExecuteAction('install',  context=job.context)
+                await etcd.parent.asyncExecuteAction('install', context=job.context)
+                await etcd.asyncExecuteAction('install', context=job.context)
 
-        # save all storage cluster to new etcd cluster
-        storagecluster_block_services = service.aysrepo.servicesFind(role='storagecluster.block')
-        for storagecluster_block_service in storagecluster_block_services:
-            storagecluster_block_service.executeAction('save_config', context=job.context)
+            # save all vdisks to new etcd cluster
+            vdisks = service.aysrepo.servicesFind(role='vdisk')
+            for vdisk in vdisks:
+                vdisk.asyncExecuteAction('save_config', context=job.context)
 
-        storagecluster_object_services = service.aysrepo.servicesFind(role='storagecluster.object')
-        for storagecluster_object_service in storagecluster_object_services:
-            storagecluster_object_service.executeAction('save_config', context=job.context)
+            # save all storage cluster to new etcd cluster
+            storagecluster_block_services = service.aysrepo.servicesFind(role='storagecluster.block')
+            for storagecluster_block_service in storagecluster_block_services:
+                await storagecluster_block_service.asyncExecuteAction('save_config', context=job.context)
 
-        # restart all runnning vms
-        vmachines = service.aysrepo.servicesFind(role='vm')
-        for vmachine in vmachines:
-            if vmachine.model.data.status == 'running':
-                vmachine.executeAction('start', context=job.context)
-    finally:
-        service.model.data.status = 'running'
-        service.saveAll()
+            storagecluster_object_services = service.aysrepo.servicesFind(role='storagecluster.object')
+            for storagecluster_object_service in storagecluster_object_services:
+                await storagecluster_object_service.asyncExecuteAction('save_config', context=job.context)
 
-    for etcd_service in service.aysrepo.servicesFind(role='etcd'):
-        if etcd_service.model.data.status != 'running':
-            container_status, etcd_status = check_container_etcd_status(job, etcd_service.parent)
-            if not etcd_status:
-                etcd_service.parent.delete()
-    service.logger.info("etcd_cluster  %s respawned" % service.name)
+            # restart all runnning vms
+            vmachines = service.aysrepo.servicesFind(role='vm')
+            for vmachine in vmachines:
+                if vmachine.model.data.status == 'running':
+                    await vmachine.asyncExecuteAction('start', context=job.context)
+        finally:
+            service.model.data.status = 'running'
+            service.saveAll()
+
+        for etcd_service in service.aysrepo.servicesFind(role='etcd'):
+            if etcd_service.model.data.status != 'running':
+                container_status, etcd_status = check_container_etcd_status(job, etcd_service.parent)
+                if not etcd_status:
+                    etcd_service.parent.delete()
+        service.logger.info("etcd_cluster  %s respawned" % service.name)
+    loop = job.service._loop
+    asyncio.ensure_future(selfhealing(job), loop=loop)
