@@ -10,7 +10,6 @@ import (
 
 	"encoding/json"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -29,13 +28,13 @@ type NAPI interface {
 	ContainerCache() *cache.Cache
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
-	GetAysToken() (string, error)
+	GetJWT() (string, error)
 }
 
 type API interface {
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
-	GetAysToken() (string, error)
+	GetJWT() (string, error)
 }
 
 type redisInfo struct {
@@ -76,9 +75,11 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 	defer c.m.Unlock()
 
 	// set auth token for ays to make call to get node info
-	aysAPI := api.AysAPIClient()
-	aysAPI.AuthHeader = token
-	ays := GetAYSClient(aysAPI)
+	ays, err := GetAysConnection(api)
+	if err != nil {
+		return nil, err
+	}
+
 	srv, res, err := ays.Ays.GetServiceByName(nodeid, "node", api.AysRepoName(), nil, nil)
 
 	if err != nil {
@@ -87,7 +88,7 @@ func (c *connectionMiddleware) getConnection(nodeid string, token string, api NA
 
 	poolID := nodeid
 
-	token = strings.Trim(token, "Bearer ")
+	token = strings.TrimSpace(strings.TrimPrefix(token, "Bearer"))
 	if token != "" {
 		poolID = fmt.Sprintf("%s#%s", nodeid, token) // i used # as it cannot be part of the token while . and _ can be , so it can parsed later on
 	}
@@ -137,19 +138,18 @@ func ConnectionMiddleware(opt ...ConnectionOptions) func(h http.Handler) http.Ha
 }
 
 // GetAysConnection get connection For ays access
-func GetAysConnection(r *http.Request, api API) AYStool {
+func GetAysConnection(api API) (*AYStool, error) {
 	aysAPI := api.AysAPIClient()
 
-	token, err := api.GetAysToken()
+	token, err := api.GetJWT()
 	if err != nil {
-		if r.Header.Get("Authorization") != "" {
-			log.Error(err.Error())
-		}
-		aysAPI.AuthHeader = r.Header.Get("Authorization")
-	} else {
-		aysAPI.AuthHeader = token
+		return nil, err
 	}
-	return GetAYSClient(aysAPI)
+
+	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
+	return &AYStool{
+		Ays: aysAPI.Ays,
+	}, nil
 }
 
 func extractToken(token string) (string, error) {
@@ -174,11 +174,9 @@ func GetConnection(r *http.Request, api NAPI) (client.Client, error) {
 	vars := mux.Vars(r)
 	token := ""
 	var err error
-	if r.Header.Get("Authorization") != "" {
-		token, err = api.GetAysToken()
-		if err != nil {
-			return nil, err
-		}
+	token, err = api.GetJWT()
+	if err != nil {
+		return nil, err
 	}
 
 	nodeid := vars["nodeid"]

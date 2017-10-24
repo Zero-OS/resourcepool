@@ -31,7 +31,9 @@ if [ -z $1 ] || [ -z $2 ] || [ -s $3 ]; then
   echo "  BRANCH: 0-orchestrator development branch."
   echo "  ZEROTIERNWID: Zerotier network id."
   echo "  ZEROTIERTOKEN: Zerotier api token."
-  echo "  ITSYOUONLINEORG: itsyou.online organization for use to authenticate."
+  echo "  ITSYOUONLINEORG: itsyou.online organization for user to authenticate."
+  echo "  ITSYOUONLINEAPPID: itsyou.online application id for user to authenticate."
+  echo "  ITSYOUONLINESECRET: itsyou.online application secret for user to authenticate."
   echo "  DOMAIN: the domain to use for caddy."
   echo "  --development: an optional parameter to use self signed certificates."
   echo ""
@@ -100,10 +102,7 @@ echo "[+] development mode: ${DEVELOPMENT}"
 echo "[+] 0-core branch: ${CORE_BRANCH}"
 echo "[+] 0-orchestrator branch: ${ORCHESTRATOR_BRANCH}"
 
-CODEDIR="/root/gig/code"
-if [ "$GIGDIR" != "" ]; then
-    CODEDIR="$GIGDIR/code"
-fi
+CODEDIR="/opt/code"
 
 echo "[+] Configuring zerotier"
 mkdir -p /etc/my_init.d > ${logfile} 2>&1
@@ -194,7 +193,8 @@ if [ ! -d $ays_repos_dir/orchestrator-server ]; then
 fi
 
 bash $aysinit >> ${logfile} 2>&1
-
+tmp=`ays generatetoken --clientid  $ITSYOUONLINEAPPID --clientsecret $ITSYOUONLINESECRET --validity 3600 --organization $ITSYOUONLINEORG`
+JWT=${tmp/export JWT=/}
 echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
@@ -234,7 +234,7 @@ echo '#!/bin/bash -x' > ${orchinit}
 if [ -z "${ITSYOUONLINEORG}" ]; then
     echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server\"" >> ${orchinit}
 else
-    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}' --application-id '${ITSYOUONLINEAPPID}' --secret '${ITSYOUONLINESECRET}'\"" >> ${orchinit}
+    echo "cmd=\"orchestratorapiserver --bind '${PRIV}:8080' --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org '${ITSYOUONLINEORG}' --jwt '${JWT}' \"" >> ${orchinit}
 fi
 
 echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}

@@ -18,10 +18,10 @@ type StorageEngine struct {
 	Container string `json:"container" validate:"nonzero"`
 }
 
-func getStorageEngine(aysClient tools.AYStool, name string, api *StorageclustersAPI, w http.ResponseWriter) (StorageServer, []string, error) {
+func getStorageEngine(aysClient *tools.AYStool, name string, api *StorageclustersAPI, role string) (StorageServer, []string, error) {
 	var state EnumStorageServerStatus
-	service, res, err := aysClient.Ays.GetServiceByName(name, "storage_engine", api.AysRepo, nil, nil)
-	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
+	service, _, err := aysClient.Ays.GetServiceByName(name, role, api.AysRepo, nil, nil)
+	if err != nil {
 		return StorageServer{}, []string{""}, err
 	}
 	if service.State == "error" {
@@ -56,26 +56,31 @@ const clusterInfoCacheKey = "clusterInfoCacheKey"
 // GetClusterInfo is the handler for GET /storageclusters/{label}
 // Get full Information about specific cluster
 func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
-	var metadata []StorageServer
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	var data []StorageServer
 	vars := mux.Vars(r)
 	label := vars["label"]
 
 	//getting cluster service
-	service, res, err := aysClient.Ays.GetServiceByName(label, "storage_cluster", api.AysRepo, nil, nil)
+	service, res, err := aysClient.Ays.GetServiceByName(label, "storagecluster", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "Getting container service") {
 		return
 	}
+
 	clusterItem := struct {
-		Label          string               `json:"label" validate:"nonzero"`
-		Status         EnumClusterStatus    `json:"status" validate:"nonzero"`
-		NrServer       uint32               `json:"nrServer" validate:"nonzero"`
-		HasSlave       bool                 `json:"hasSlave" validate:"nonzero"`
-		DiskType       EnumClusterDriveType `json:"diskType" validate:"nonzero"`
-		Filesystems    []string             `json:"filesystems" validate:"nonzero"`
-		StorageEngines []string             `json:"storageEngines" validate:"nonzero"`
-		Nodes          []string             `json:"nodes" validate:"nonzero"`
+		Label               string               `json:"label" validate:"nonzero"`
+		Status              EnumClusterStatus    `json:"status" validate:"nonzero"`
+		NrServer            uint32               `json:"nrServer" validate:"nonzero"`
+		DiskType            EnumClusterDriveType `json:"diskType" validate:"nonzero"`
+		DataDiskType        EnumClusterDriveType `json:"dataDiskType"`
+		MetaDiskType        EnumClusterDriveType `json:"metaDiskType"`
+		ServersPerMetaDrive uint32               `json:"serversPerMetaDrive"`
+		StorageServers      []string             `json:"storageServers" validate:"nonzero"`
+		Nodes               []string             `json:"nodes" validate:"nonzero"`
 	}{}
 
 	if err := json.Unmarshal(service.Data, &clusterItem); err != nil {
@@ -83,33 +88,39 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	respBody := Cluster{
+		Label:         clusterItem.Label,
+		Status:        clusterItem.Status,
+		DriveType:     clusterItem.DiskType,
+		Nodes:         clusterItem.Nodes,
+		MetaDriveType: clusterItem.MetaDiskType,
+	}
+
+	if clusterItem.MetaDiskType != "" {
+		respBody.ClusterType = EnumClusterTypeObject
+	} else {
+		respBody.ClusterType = EnumClusterTypeBlock
+	}
 	//looping over all storageEngine disks relating to this cluster
-	for _, storageEngineName := range clusterItem.StorageEngines {
+	serverRole := "storage_engine"
+	respBody.DriveType = clusterItem.DiskType
+
+	if clusterItem.ServersPerMetaDrive != 0 {
+		serverRole = "zerostor"
+		respBody.DriveType = clusterItem.DataDiskType
+		respBody.MetaDriveType = clusterItem.MetaDiskType
+	}
+	for _, storageServerName := range clusterItem.StorageServers {
 		//getting all storageEngine disk services relating to this cluster to get more info on each storageEngine
-		storageServer, nameInfo, err := getStorageEngine(aysClient, storageEngineName, api, w)
+		storageServer, _, err := getStorageEngine(aysClient, storageServerName, api, serverRole)
 		if err != nil {
-			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting storageEngine service")
+			tools.WriteError(w, http.StatusInternalServerError, err, "Error getting storageServer service")
 			return
 		}
-
-		//check wether is data or metadata
-		variant := nameInfo[len(nameInfo)-2]
-		if variant == "data" {
-			data = append(data, storageServer)
-		} else if variant == "metadata" {
-			metadata = append(metadata, storageServer)
-		}
-
+		data = append(data, storageServer)
 	}
 
-	respBody := Cluster{
-		Label:           clusterItem.Label,
-		Status:          clusterItem.Status,
-		DriveType:       clusterItem.DiskType,
-		Nodes:           clusterItem.Nodes,
-		MetadataStorage: metadata,
-		DataStorage:     data,
-	}
+	respBody.StorageServers = data
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

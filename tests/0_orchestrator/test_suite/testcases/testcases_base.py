@@ -1,8 +1,10 @@
-import uuid, random, requests, time, signal, logging
+import uuid, random, requests, time, signal, logging, subprocess
 from unittest import TestCase
 from framework.orchestrator_driver import OrchasteratorDriver
 from nose.tools import TimeExpired
 from testcases.core0_client import Client
+from datetime import timedelta
+
 
 
 class TestcasesBase(TestCase):
@@ -11,8 +13,7 @@ class TestcasesBase(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.utiles = Utiles()
-        self.lg = self.utiles.logging
-
+        self.lg = self.utiles.logger()
         self.nodes_api = self.orchasterator_driver.nodes_api
         self.containers_api = self.orchasterator_driver.container_api
         self.gateways_api = self.orchasterator_driver.gateway_api
@@ -23,6 +24,8 @@ class TestcasesBase(TestCase):
         self.vms_api = self.orchasterator_driver.vms_api
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
+        self.vm_username = self.orchasterator_driver.vm_username
+        self.vm_password = self.orchasterator_driver.vm_password        
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
@@ -35,7 +38,7 @@ class TestcasesBase(TestCase):
             raise TimeExpired('Timeout expired before end of test %s' % self._testID)
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(600)
+        signal.alarm(540)
 
         self.nodeid = self.get_random_node()
         self.lg.info('Get random nodeid : %s' % str(self.nodeid))
@@ -75,13 +78,18 @@ class TestcasesBase(TestCase):
     def random_item(self, array):
         return array[random.randint(0, len(array) - 1)]
 
-    def create_zerotier_network(self, private=False):
+    def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
-        data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': '10.147.17.254',
-                                                  'ipRangeStart': '10.147.17.1'}],
-                           'private': private,
-                           'routes': [{'target': '10.147.17.0/24', 'via': None}],
-                           'v4AssignMode': {'zt': True}}}
+        
+        if default_config:
+            target = '10.{}.{}.0/24'.format(random.randint(1, 254), random.randint(1, 254))
+            ipRangeStart = target[:-4] + '1'
+            ipRangeEnd = target[:-4] + '254'
+            data = {'config': {'ipAssignmentPools': [{'ipRangeEnd': ipRangeEnd,
+                                                      'ipRangeStart': ipRangeStart}],
+                               'private': private,
+                               'routes': [{'target': target, 'via': None}],
+                               'v4AssignMode': {'zt': True}}}
 
         response = self.session.post(url=url, json=data)
         response.raise_for_status()
@@ -117,7 +125,6 @@ class TestcasesBase(TestCase):
         self.createdcontainer.append({"node": node_id, "container": name})
         response = self.containers_api.get_containers_containerid(node_id, name)
         self.assertEqual(response.json()['status'], 'running')
-
         return name
 
     def get_gateway_nic(self, nics_types):
@@ -126,24 +133,28 @@ class TestcasesBase(TestCase):
             ip = '192.168.%i.2/24' % random.randint(1, 254)
             if nic['type'] == 'vlan':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'vlan',
                     "id": str(random.randint(1, 4094)),
                     "config": {"cidr": ip}
                 }
             elif nic['type'] == 'vxlan':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'vxlan',
                     "id": str(random.randint(1, 100000)),
                     "config": {"cidr": ip}
                 }
             elif nic['type'] == 'bridge':
                 nic_data = {
-                    "name": self.random_string(),
+                    "name": 'nic' + self.random_string(),
                     "type": 'bridge',
                     "id": nic['bridge_name'],
                     "config": {"cidr": ip}
+                }
+            elif nic['type'] == 'default':
+                nic_data = {
+                    "type": "default"
                 }
 
             if nic['gateway']:
@@ -155,12 +166,12 @@ class TestcasesBase(TestCase):
                     "hosts": [
                         {
                             "hostname": "hostname1",
-                            "ipaddress": ip[:-4]+'10',
+                            "ipaddress": ip[:-4] + '10',
                             "macaddress": self.get_random_mac()
                         },
                         {
                             "hostname": "hostname2",
-                            "ipaddress": ip[:-4]+'20',
+                            "ipaddress": ip[:-4] + '20',
                             "macaddress": self.get_random_mac()
                         }
                     ]
@@ -181,15 +192,98 @@ class TestcasesBase(TestCase):
         mac_address = ':'.join(map(lambda x: "%02x" % x, random_mac))
         return mac_address
 
-class Utiles:
-    def __init__(self):
-        self.config = {}
-        self.logging = logging
-        self.log('test_suite.log')
+    def get_max_available_free_disks(self, nodes):
+        disk_types = ['ssd', 'hdd', 'nvme']
+        free_disks = []
+        for nodeid in nodes:
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            free_disks.extend(node_client.getFreeDisks())
+        return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
 
-    def log(self, log_file_name='log.log'):
-        log = self.logging.getLogger()
-        fileHandler = self.logging.FileHandler(log_file_name)
-        log.addHandler(fileHandler)
-        self.logging.basicConfig(filename=log_file_name, filemode='rw', level=logging.INFO,
-                                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    def enable_ssh_access(self, vnc_ip, username=None, password=None, zerotier_nwid=None):
+
+        username = username or self.vm_username
+        password = password or self.vm_password
+
+        """
+            Add ssh key to a vm with active vnc protocol.
+        """
+        vnc = 'vncdotool -s %s' % vnc_ip
+        commands = [
+            '%s' % username, 
+            '%s' % password, 
+            'sudo su', 
+            '%s' % password,
+            'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd',
+            'service sshd restart'
+        ]
+
+        if zerotier_nwid:
+            zerotier_commands = [
+                'curl -s https',
+                '//install.zerotier.com -o zr.sh',
+                'bash zr.sh',
+                'zerotier-cli join %s' % zerotier_nwid
+            ]
+            commands.extend(zerotier_commands)
+
+        for cmd in commands:
+            if "sed" in cmd:
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, repr(cmd)))
+                self.utiles.execute_shell_commands(cmd="%s key shift-_ type config key enter" % vnc)
+                time.sleep(1)
+            elif 'https' in cmd:
+                self.utiles.execute_shell_commands(cmd="%s type %s" % (vnc, repr(cmd)))
+                self.utiles.execute_shell_commands(cmd="%s key shift-:" % vnc)
+            else:
+                self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, repr(cmd)))
+                time.sleep(1)
+
+    def get_vm_default_ipaddress(self, vmname):
+        cmd = "virsh dumpxml {} | grep 'mac address' | cut -d '=' -f2 | cut -d '/' -f1".format(vmname)
+        vm_mac_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+
+        cmd = "arp | grep {} | cut -d '(' -f2 | cut -d ')' -f1".format(vm_mac_addr)
+        for i in range(20):
+            vm_ip_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+            if vm_ip_addr:
+                break
+            else:
+                time.sleep(5)
+
+        return vm_ip_addr
+
+
+    def execute_command_inside_vm(self, client, vmip,  cmd, username=None, password=None):
+        username = username or self.vm_username
+        password = password or self.vm_password
+
+        cmd = 'sshpass -p "{password}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 {username}@{vmip} "{cmd}"'.format(
+            vmip=vmip,
+            username=username,
+            password=password,
+            cmd=cmd
+        )
+
+        response = client.bash(cmd).get()
+        return response
+
+class Utiles:
+
+    def logger(self):
+        logger = logging.getLogger('0-Orchestrator')
+        if not logger.handlers:
+            fileHandler = logging.FileHandler('test_suite.log', mode='w')  
+            formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
+            fileHandler.setFormatter(formatter)
+            logger.addHandler(fileHandler)
+
+        return logger
+        
+        
+    def execute_shell_commands(self, cmd):
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, error = process.communicate()
+        return out.decode('utf-8'), error.decode('utf-8')
+

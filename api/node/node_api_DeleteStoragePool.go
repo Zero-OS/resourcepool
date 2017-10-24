@@ -1,7 +1,6 @@
 package node
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,7 +10,11 @@ import (
 // DeleteStoragePool is the handler for DELETE /node/{nodeid}/storagepool/{storagepoolname}
 // Delete the storage pool
 func (api *NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	name := vars["storagepoolname"]
 
@@ -42,16 +45,8 @@ func (api *NodeAPI) DeleteStoragePool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := aysClient.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
-	if err != nil {
-		errmsg := "Error deleting storagepool services"
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		errmsg := fmt.Sprintf("Error deleting storagepool services : %+v", resp.Status)
-		tools.WriteError(w, resp.StatusCode, fmt.Errorf("bad response from AYS: %s", resp.Status), errmsg)
+	res, err := aysClient.Ays.DeleteServiceByName(name, "storagepool", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
 

@@ -41,10 +41,7 @@ def init(job):
 
 
 def install(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    start(job)
 
 
 def start(job):
@@ -55,12 +52,12 @@ def start(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    service.model.data.status = 'running'
     container = get_container(service)
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
     grafana.start()
-    service.model.data.status = 'running'
     add_datasources(grafana, service.producers.get('influxdb'))
     service.saveAll()
 
@@ -78,7 +75,7 @@ def stop(job):
     if container_ays.is_running():
         grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
         grafana.stop()
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        container.executeAction('stop', context=job.context)
 
     service.model.data.status = 'halted'
     service.saveAll()
@@ -92,9 +89,9 @@ def uninstall(job):
     container = get_container(service, False)
 
     if container:
-        j.tools.async.wrappers.sync(service.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
-    j.tools.async.wrappers.sync(service.delete())
+        stop()
+        container.delete()
+    service.delete()
 
 
 def processChange(job):
@@ -113,24 +110,16 @@ def processChange(job):
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
 
-    if args.get('port'):
-        service.model.data.port = args['port']
+    if 'url' in args or 'port' in args:
+        service.model.data.port = args.get('port', service.model.data.port)
+        service.model.data.url = args.get('url', service.model.data.url)
         if container_ays.is_running() and grafana.is_running()[0]:
             grafana.stop()
-            service.model.data.status = 'halted'
-            grafana.port = args['port']
+            grafana.port = service.model.data.port
+            grafana.url = service.model.data.url
             grafana.start()
 
-            service.model.data.status = 'running'
-    elif args.get('url'):
-        service.model.data.url = args['url']
-        if container_ays.is_running() and grafana.is_running()[0]:
-            grafana.stop()
-            service.model.data.status = 'halted'
-            grafana.url = args['url']
-            grafana.start()
-            service.model.data.status = 'running'
-    elif args.get('influxdb'):
+    if args.get('influxdb'):
         service.model.data.influxdb = args['influxdb']
         added = []
         removed = []
@@ -162,3 +151,8 @@ def init_actions_(service, args):
         'delete': ['uninstall'],
         'uninstall': [],
     }
+
+
+def monitor(job):
+    pass
+

@@ -8,17 +8,23 @@ import (
 )
 
 type Backup struct {
-	Name     string      `json:"name"`
-	Snaphost string      `json:"snapshot"`
-	URL      string      `json:"url"`
-	Type     string      `json:"type"`
-	Meta     interface{} `json:"meta"`
+	Name      string      `json:"name"`
+	Snaphost  string      `json:"snapshot"`
+	URL       string      `json:"url"`
+	Type      string      `json:"type"`
+	Timestamp int64       `json:"timestamp"`
+	Meta      interface{} `json:"meta"`
 }
 
 // List is the handler for GET /backup
 // List backups
 func (api *BackupAPI) List(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
+
 	services, res, err := aysClient.Ays.ListServicesByRole("backup", api.AysRepo, nil, nil)
 	if !tools.HandleAYSResponse(err, res, w, "listing container_backup") {
 		return

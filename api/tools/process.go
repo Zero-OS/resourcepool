@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zero-os/0-core/client/go-client"
+	"strings"
 )
 
 func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
@@ -27,6 +28,11 @@ func KillProcess(pid string, cl client.Client, w http.ResponseWriter) {
 		}
 
 		if err := core.KillProcess(processID, signal); err != nil {
+			notFound := strings.Contains(err.Error(), "no such process")
+			if notFound {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
 			WriteError(w, http.StatusInternalServerError, err, "Error killing process")
 			return
 		}

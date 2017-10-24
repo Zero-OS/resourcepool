@@ -30,10 +30,7 @@ def init(job):
 
 
 def install(job):
-    from zeroos.orchestrator.configuration import get_jwt_token
-
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    start(job)
 
 
 def start(job):
@@ -44,16 +41,17 @@ def start(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    service.model.data.status = 'running'
     container = get_container(service)
-    j.tools.async.wrappers.sync(container.executeAction('start', context=job.context))
+    container.executeAction('start', context=job.context)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     stats_collector = StatsCollector(
         container_ays, service.model.data.ip,
         service.model.data.port, service.model.data.db,
         service.model.data.retention, job.context['token'])
     stats_collector.start()
-    job.service.model.data.status = 'running'
-    job.service.saveAll()
+
+    service.saveAll()
 
 
 def stop(job):
@@ -64,6 +62,7 @@ def stop(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
+    service.model.data.status = 'halted'
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
 
@@ -73,7 +72,7 @@ def stop(job):
             service.model.data.port, service.model.data.db,
             service.model.data.retention, job.context['token'])
         stats_collector.stop()
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
+        container.executeAction('stop', context=job.context)
     job.service.model.data.status = 'halted'
     job.service.saveAll()
 
@@ -84,9 +83,9 @@ def uninstall(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     container = get_container(job.service, False)
     if container:
-        j.tools.async.wrappers.sync(container.executeAction('stop', context=job.context))
-        j.tools.async.wrappers.sync(container.delete())
-    j.tools.async.wrappers.sync(job.service.delete())
+        container.executeAction('stop', context=job.context)
+        container.delete()
+    job.service.delete()
 
 
 def processChange(job):
@@ -138,4 +137,4 @@ def watchdog_handler(job):
     loop = j.atyourservice.server.loop
 
     if job.service.model.data.status == 'running':
-        asyncio.ensure_future(job.service.executeAction('start', context=job.context), loop=loop)
+        asyncio.ensure_future(job.service.asyncExecuteAction('start', context=job.context), loop=loop)

@@ -41,3 +41,22 @@ def delete(job):
 
     node.client.bridge.delete(service.name)
     service.model.data.status = 'down'
+
+
+def monitor(job):
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    if service.parent.model.data.status != 'running':
+        return
+
+    # Get node client
+    token = get_jwt_token(job.service.aysrepo)
+    node = Node.from_ays(service.parent, token)
+
+    if service.model.data.status != 'up' or service.name in node.client.bridge.list():
+        return
+
+    job.context['token'] = token
+    install(job)

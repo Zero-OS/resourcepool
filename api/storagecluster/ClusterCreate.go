@@ -6,14 +6,19 @@ import (
 )
 
 type ClusterCreate struct {
-	DriveType     EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
-	MetaDriveType EnumClusterCreateDriveType `yaml:"metaDriveType" json:"metaDriveType"`
-	Label         string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
-	Nodes         []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
-	Servers       int                        `yaml:"servers" json:"servers" validate:"nonzero"`
-	ClusterType   EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
-	DataShards    int                        `yaml:"dataShards" json:"dataShards"`
-	ParityShards  int                        `yaml:"parityShards" json:"parityShards"`
+	DriveType            EnumClusterCreateDriveType `yaml:"driveType" json:"driveType" validate:"nonzero"`
+	MetaDriveType        EnumClusterCreateDriveType `yaml:"metaDriveType" json:"metaDriveType"`
+	ServersPerMetaDrive  int                        `yaml:"serversPerMetaDrive" json:"serversPerMetaDrive"`
+	Label                string                     `yaml:"label" json:"label" validate:"nonzero,servicename"`
+	Nodes                []string                   `yaml:"nodes" json:"nodes" validate:"nonzero"`
+	Servers              int                        `yaml:"servers" json:"servers" validate:"nonzero"`
+	ClusterType          EnumClusterType            `yaml:"clusterType" json:"clusterType" validate:"nonzero"`
+	DataShards           int                        `yaml:"dataShards" json:"dataShards"`
+	ParityShards         int                        `yaml:"parityShards" json:"parityShards"`
+	ZerostorOrganization string                     `yaml:"zerostorOrganization" json:"zerostorOrganization"`
+	ZerostorNamespace    string                     `yaml:"zerostorNamespace" json:"zerostorNamespace"`
+	ZerostorClientID     string                     `yaml:"zerostorClientID" json:"zerostorClientID"`
+	ZerostorSecret       string                     `yaml:"zerostorSecret" json:"zerostorSecret"`
 }
 
 func (s ClusterCreate) Validate() error {
@@ -28,12 +33,6 @@ func (s ClusterCreate) Validate() error {
 		return err
 	}
 
-	if string(s.MetaDriveType) != "" {
-		if err := validators.ValidateEnum("MetaDriveType", s.MetaDriveType, typeEnums); err != nil {
-			return err
-		}
-	}
-
 	clusterTypeEnums := map[interface{}]struct{}{
 		EnumClusterTypeBlock:  struct{}{},
 		EnumClusterTypeObject: struct{}{},
@@ -43,8 +42,14 @@ func (s ClusterCreate) Validate() error {
 		return err
 	}
 
-	if err := validators.ValidateCluster(string(s.ClusterType), s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType)); err != nil {
-		return err
+	if s.ClusterType == EnumClusterTypeObject {
+		if err := validators.ValidateEnum("MetaDriveType", s.MetaDriveType, typeEnums); err != nil {
+			return err
+		}
+
+		if err := validators.ValidateObjectCluster(s.DataShards, s.ParityShards, s.Servers, string(s.MetaDriveType), s.ServersPerMetaDrive, s.ZerostorOrganization, s.ZerostorNamespace, s.ZerostorClientID, s.ZerostorSecret); err != nil {
+			return err
+		}
 	}
 
 	return validator.Validate(s)

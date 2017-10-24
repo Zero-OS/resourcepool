@@ -1,0 +1,19 @@
+links:
+  consume:
+    - auto: false
+      min: 1
+      max: 1
+      role: storagecluster.block
+      argname: blockCluster
+
+    - auto: false
+      min: 0
+      max: 1
+      role: storagecluster.object
+      argname: objectCluster
+
+    - auto: false
+      min: 0
+      max: 1
+      role: storagecluster.block
+      argname: slaveCluster

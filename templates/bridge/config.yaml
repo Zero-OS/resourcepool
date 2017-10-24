@@ -3,4 +3,4 @@ links:
     auto: false
     role: node
     optional: false
-    argname: node  
+    argname: node

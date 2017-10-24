@@ -63,6 +63,8 @@ test = APIClient("<orchestrator ip >:5000")
 test.set_auth_header("Bearer <JWT token>")
 ```
 
+For all the DELETE APIs, we return 204 if the resource doesn't exist.
+
 The following are some examples on how to use the RESTful API:
 
 - [List all Zero-OS nodes](#list-nodes)

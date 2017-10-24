@@ -17,6 +17,9 @@ class OrchasteratorDriver:
     client_secret = config['main']['client_secret']
     organization = config['main']['organization']
     zerotier_token = config['main']['zerotier_token']
+    vm_username = config['main']['vm_username']
+    vm_password = config['main']['vm_password']
+    
 
     def __init__(self):
         self.JWT = None

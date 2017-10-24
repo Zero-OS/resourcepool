@@ -5631,6 +5631,58 @@ details in a user&#39;s account without getting their password.</p>
                     
 
                     
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>force</strong>:
+
+  
+    <em>required (boolean - default: false)
+    </em>
+  
+
+<p>If true, vms will be shutdown before reboot, otherwise, reboot will fail if there are any running</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
                   </div>
                 
 
@@ -25500,6 +25552,361 @@ the "Authorization" header</p>
 
 
   
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__gws__gwname__migrate">
+          <span class="parent">/nodes/{nodeid}/gws/{gwname}</span>/migrate
+        </a>
+
+        <span class="methods">
+          
+            <a href="#nodes__nodeid__gws__gwname__migrate_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_nodes__nodeid__gws__gwname__migrate" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#nodes__nodeid__gws__gwname__migrate_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Migrate Gateway</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="nodes__nodeid__gws__gwname__migrate_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/nodes/{nodeid}/gws/{gwname}</span>/migrate
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Migrate Gateway</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="nodes__nodeid__gws__gwname__migrate_post_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>nodeid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>gwname</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>node</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>New node to migrate to</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__gws__gwname__migrate_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+<p>Gateway migrated successfully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__gws__gwname__migrate_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+  
 
 
   
@@ -38752,587 +39159,6 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__containers__containername__disks">
-          <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/disks
-        </a>
-
-        <span class="methods">
-          
-            <a href="#nodes__nodeid__containers__containername__disks_get"><!-- modal shown by hashchange event -->
-              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-            </a>
-          
-        </span>
-      </h4>
-    </div>
-
-    <div id="panel_nodes__nodeid__containers__containername__disks" class="panel-collapse collapse">
-      <div class="panel-body">
-        
-          
-        
-
-        <div class="list-group">
-          
-            <div onclick="window.location.href = '#nodes__nodeid__containers__containername__disks_get'" class="list-group-item">
-              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-              <div class="method_description">
-<p>Get detailed information of all the disks in the container</p>
-
-              </div>
-              <div class="clearfix"></div>
-            </div>
-          
-        </div>
-      </div>
-    </div>
-
-    
-      <div class="modal fade" tabindex="0" id="nodes__nodeid__containers__containername__disks_get">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title" id="myModalLabel">
-                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/disks
-              </h4>
-            </div>
-
-            <div class="modal-body">
-              
-                <div class="alert alert-info">
-<p>Get detailed information of all the disks in the container</p>
-
-                </div>
-              
-
-              
-                
-                  
-                    <div class="alert alert-warning">
-                      
-                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
-                      Secured by <b>itsyouonline</b>
-                      
-                        with scopes:
-                        <ul>
-                          
-                            <li>user:memberof:0-orchestrator</li>
-                          
-                        </ul>
-                      
-                      
-<p>OAuth2 is a protocol that lets external apps request authorization to private
-details in a user&#39;s account without getting their password.</p>
-
-                      
-                    </div>
-                  
-                
-              
-
-              <!-- Nav tabs -->
-              <ul class="nav nav-tabs">
-                
-                  <li class="active">
-                    <a href="#nodes__nodeid__containers__containername__disks_get_request" data-toggle="tab">Request</a>
-                  </li>
-                
-
-                
-                  <li>
-                    <a href="#nodes__nodeid__containers__containername__disks_get_response" data-toggle="tab">Response</a>
-                  </li>
-                
-
-                
-                  <li>
-                    <a href="#nodes__nodeid__containers__containername__disks_get_securedby" data-toggle="tab">Security</a>
-                  </li>
-                
-              </ul>
-
-              <!-- Tab panes -->
-              <div class="tab-content">
-                
-                  <div class="tab-pane active" id="nodes__nodeid__containers__containername__disks_get_request">
-                    
-                      <h3>URI Parameters</h3>
-                      <ul>
-                        
-                          <li>
-  <strong>nodeid</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                        
-                          <li>
-  <strong>containername</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                        
-                      </ul>
-                    
-
-                    
-                      <h3>Annotations</h3>
-                      <ul>
-                        
-                          <li>
-  <strong>DirectAccess</strong>:
-
-  
-    <em>()
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                        
-                      </ul>
-                    
-
-                    
-
-                    
-
-                    
-
-                    
-                  </div>
-                
-
-                
-                  <div class="tab-pane" id="nodes__nodeid__containers__containername__disks_get_response">
-                    
-                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
-
-
-                      
-
-                      
-                        <h3>Body</h3>
-                        
-                          <p><strong>Media type</strong>: application/json</p>
-
-                          
-                            
-                              
-                                <p><strong>Type</strong>: array of DiskInfo</p>
-                              
-                            
-                          
-
-                          
-
-                          
-                            
-
-                            
-                              <p><strong>Items</strong>: DiskInfo</p>
-
-                              
-                                <div class="items">
-                                  
-                                    <ul>
-                                      
-                                        <li>
-  <strong>device</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Name of the device</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the disk in GiB</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>type</strong>:
-
-  
-    <em>required (one of ssd, nvme, hdd, archive)
-    </em>
-  
-
-<p>Kind of disk</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>partitions</strong>:
-
-  
-    <em>required (array of DiskPartition)
-    </em>
-  
-
-<p>List of the disk&#39;s partitions</p>
-
-
-  
-    
-
-    
-      <p><strong>Items</strong>: DiskPartition</p>
-
-      
-        <div class="items">
-          
-            <ul>
-              
-                <li>
-  <strong>name</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Name of the partition e.g. /dev/sda1</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the disk in GiB</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>partuuid</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>PartUUID of the partition</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>label</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Partition label</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>fstype</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Partition filesystem type</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-            </ul>
-          
-
-          
-          
-          
-        </div>
-      
-    
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                    </ul>
-                                  
-
-                                  
-                                  
-                                  
-                                </div>
-                              
-                            
-                          
-
-                          
-
-                          
-                          
-                          
-                        
-                      
-                    
-                  </div>
-                
-
-                
-                  <div class="tab-pane" id="nodes__nodeid__containers__containername__disks_get_securedby">
-                    
-                      
-                      <h1>Secured by itsyouonline</h1>
-
-                      
-                        <h3>Headers</h3>
-                        <ul>
-                          
-                            <li>
-  <strong>Authorization</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Used to send a valid OAuth 2 access token. Do not use together with
-the "access_token" query string parameter.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                          
-                        </ul>
-                      
-
-                      
-                        <h3>Query Parameters</h3>
-                        <ul>
-                          
-                            <li>
-  <strong>access_token</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>Used to send a valid OAuth 2 access token. Do not use together with
-the "Authorization" header</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                          
-                        </ul>
-                      
-
-                      
-
-                    
-                  </div>
-                
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    
-  </div>
-
-
-
-
-
-  
-  <div class="panel panel-white resource-modal">
-    <div class="panel-heading">
-      <h4 class="panel-title">
         <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__containers__containername__mem">
           <span class="parent">/nodes/{nodeid}/containers/{containername}</span>/mem
         </a>
@@ -48057,6 +47883,22 @@ details in a user&#39;s account without getting their password.</p>
   <strong>url</strong>:
 
   
+    <em>required (object)
+    </em>
+  
+
+<p>FTP server url</p>
+
+
+  
+
+  
+    <ul>
+      
+        <li>
+  <strong>url</strong>:
+
+  
     <em>required (string)
     </em>
   
@@ -48069,6 +47911,42 @@ details in a user&#39;s account without getting their password.</p>
 <li>ftp://user:pass@12.30.120.200:3000</li>
 <li>ftp://user:pass@12.30.120.200:3000/root/dir</li>
 </ul>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+      
+    </ul>
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>cryptoKey</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>32 byte string, used to encrypt exported VM</p>
 
 
   
@@ -48478,11 +48356,27 @@ details in a user&#39;s account without getting their password.</p>
   <strong>url</strong>:
 
   
+    <em>required (object)
+    </em>
+  
+
+<p>FTP server url</p>
+
+
+  
+
+  
+    <ul>
+      
+        <li>
+  <strong>url</strong>:
+
+  
     <em>required (string)
     </em>
   
 
-<p>FTP server url of the metadata to import the vm from, and it should be in one of the following formats</p>
+<p>FTP server url to export the vm from, and it should be in one of the following formats</p>
 <ul>
 <li>localhost:22</li>
 <li>ftp://1.2.3.4:200</li>
@@ -48494,6 +48388,18 @@ details in a user&#39;s account without getting their password.</p>
 
   
 
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+      
+    </ul>
   
   
   
@@ -48914,6 +48820,78 @@ details in a user&#39;s account without getting their password.</p>
   
 
 <p>restic url</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>type</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>backup type</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>timestamp</strong>:
+
+  
+    <em>required (int64)
+    </em>
+  
+
+<p>unix timestamp of creation</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>meta</strong>:
+
+  
+    <em>required (object)
+    </em>
+  
+
+<p>meta data object</p>
 
 
   
@@ -49570,13 +49548,38 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>label</strong>:
+  <strong>parityShards</strong>:
+
+  
+    <em>(integer)
+    </em>
+  
+
+<p>parityShards variable of the erasure encoding, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>zerostorOrganization</strong>:
 
   
     <em>required (string)
     </em>
   
 
+<p>zerostor organization, required for object clusters</p>
 
 
   
@@ -49593,14 +49596,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>servers</strong>:
+  <strong>nodes</strong>:
 
   
-    <em>required (integer)
+    <em>required (array of )
     </em>
   
 
-<p>Number of storage servers to deploy in this cluster</p>
+<p>List of node ID on which we can deploy storage server</p>
 
 
   
@@ -49617,10 +49620,34 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>driveType</strong>:
+  <strong>dataShards</strong>:
 
   
-    <em>required (one of nvme, ssd, hdd, archive)
+    <em>(integer)
+    </em>
+  
+
+<p>dataShards variable of the erasure encoding, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>label</strong>:
+
+  
+    <em>required (string)
     </em>
   
 
@@ -49664,14 +49691,109 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>nodes</strong>:
+  <strong>servers</strong>:
 
   
-    <em>required (array of )
+    <em>required (integer)
     </em>
   
 
-<p>List of node ID on which we can deploy storage server</p>
+<p>Number of storage servers to deploy in this cluster</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>zerostorNamespace</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>zerostor namespace, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>zerostorClientID</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>zerostor client ID, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>serversPerMetaDrive</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Number of servers per metaDriveType to deploy in this cluster, required for object clusters</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>driveType</strong>:
+
+  
+    <em>required (one of nvme, ssd, hdd, archive)
+    </em>
+  
+
 
 
   
@@ -49712,38 +49834,14 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>dataShards</strong>:
+  <strong>zerostorSecret</strong>:
 
   
-    <em>(integer)
+    <em>required (string)
     </em>
   
 
-<p>dataShards variable of the erasure encoding, required for object clusters</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>parityShards</strong>:
-
-  
-    <em>(integer)
-    </em>
-  
-
-<p>parityShards variable of the erasure encoding, required for object clusters</p>
+<p>zerostor secret, required for object clusters</p>
 
 
   
@@ -50412,7 +50510,7 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>dataStorage</strong>:
+  <strong>storageServers</strong>:
 
   
     <em>required (array of StorageServer)
@@ -50573,153 +50671,16 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>metadataStorage</strong>:
-
-  
-    <em>required (array of StorageServer)
-    </em>
-  
-
-<p>List of metadata storage servers in the cluster</p>
-
-
-  
-    
-
-    
-      <p><strong>Items</strong>: StorageServer</p>
-
-      
-        <div class="items">
-          
-            <ul>
-              
-                <li>
-  <strong>id</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>unique id for this storage server</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>ip</strong>:
+  <strong>clusterType</strong>:
 
   
     <em>required (string)
     </em>
   
 
+<p>type of the storagecluster</p>
 
 
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>port</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>container</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>URL to the container resource running this server</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-                <li>
-  <strong>status</strong>:
-
-  
-    <em>required (one of ready, error)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-              
-            </ul>
-          
-
-          
-          
-          
-        </div>
-      
-    
   
 
   
@@ -51073,10 +51034,21 @@ the "Authorization" header</p>
           
             <div class="panel panel-default">
               <div class="panel-heading">
-                <h3 id="vdisks" class="panel-title">/vdisks</h3>
+                <h3 id="vdiskstorage" class="panel-title">/vdiskstorage</h3>
               </div>
 
               <div class="panel-body">
+                
+                  <div class="top-resource-description">
+<p>A VdiskStorage is a logical object that include 3 storage clusters. It&#39;s used to hold VM images and Vdisks.
+a VdiskStorage can be composed of:</p>
+<ul>
+<li>Master block storage cluster</li>
+<li>Slave block storage cluster</li>
+<li>Object storage cluster</li>
+</ul>
+
+                  </div>
                 
 
                 <div class="panel-group">
@@ -51084,17 +51056,17 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_vdisks">
-          <span class="parent"></span>/vdisks
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage">
+          <span class="parent"></span>/vdiskstorage
         </a>
 
         <span class="methods">
           
-            <a href="#vdisks_get"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage_get"><!-- modal shown by hashchange event -->
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
-            <a href="#vdisks_post"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage_post"><!-- modal shown by hashchange event -->
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -51102,13 +51074,3113 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_vdisks" class="panel-collapse collapse">
+    <div id="panel_vdiskstorage" class="panel-collapse collapse">
       <div class="panel-body">
         
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#vdisks_get'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage_get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>List vdisks storages</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Create a new vdisk storage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage_get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent"></span>/vdiskstorage
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>List vdisks storages</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+
+                
+                  <li class="active">
+                    <a href="#vdiskstorage_get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage_get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+
+                
+                  <div class="tab-pane active" id="vdiskstorage_get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: array of VdiskStorage</p>
+                              
+                            
+                          
+
+                          
+
+                          
+                            
+
+                            
+                              <p><strong>Items</strong>: VdiskStorage</p>
+
+                              
+                                <div class="items">
+                                  
+                                    <ul>
+                                      
+                                        <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>blockCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>block cluster to assign to vdisk store</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>slaveCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>objectCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                    </ul>
+                                  
+
+                                  
+                                  
+                                  
+                                </div>
+                              
+                            
+                          
+
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage_get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent"></span>/vdiskstorage
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Create a new vdisk storage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage_post_request">
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blockCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>block cluster to assign to vdisk store</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>slaveCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>objectCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2>
+
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Location</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>URL to the created vdisk storage resource</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2>
+<p>The storagecluster does not exist</p>
+
+
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2>
+<p>A vdisk storage with this ID already exists</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid_">
+          <span class="parent">/vdiskstorage</span>/{vdiskstorageid}
+        </a>
+
+        <span class="methods">
+          
+            <a href="#vdiskstorage__vdiskstorageid__get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#vdiskstorage__vdiskstorageid__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_vdiskstorage__vdiskstorageid_" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Get vdisk storage information</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete VdiskStorage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage</span>/{vdiskstorageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Get vdisk storage information</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: object</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+                            <strong>Properties</strong>
+                            <ul>
+                              
+                                <li>
+  <strong>id</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blockCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>block cluster to assign to vdisk store</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>slaveCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>objectCluster</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                            </ul>
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>The vdisk storage does not exist</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage</span>/{vdiskstorageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>VdiskStorage has been deleted succefully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__images">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/images
+        </a>
+
+        <span class="methods">
+          
+            <a href="#vdiskstorage__vdiskstorageid__images_get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#vdiskstorage__vdiskstorageid__images_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_vdiskstorage__vdiskstorageid__images" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images_get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>List all vdisk images installed in this VdiskStroage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Import an image from an FTP server into the VdiskStorage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images_get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/images
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>List all vdisk images installed in this VdiskStroage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images_get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images_get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images_get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images_get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images_get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: array of Image</p>
+                              
+                            
+                          
+
+                          
+
+                          
+                            
+
+                            
+                              <p><strong>Items</strong>: Image</p>
+
+                              
+                                <div class="items">
+                                  
+                                    <ul>
+                                      
+                                        <li>
+  <strong>name</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                        <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                                      
+                                    </ul>
+                                  
+
+                                  
+                                  
+                                  
+                                </div>
+                              
+                            
+                          
+
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>The vdisk storage does not exist</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images_get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/images
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Import an image from an FTP server into the VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images_post_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>encryptionKey</strong>:
+
+  
+    <em>(string)
+    </em>
+  
+
+<p>In case the image has been encrypted during upload.
+You need to specify the encryption key to be able to import it</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportBlockSize</strong>:
+
+  
+    <em>required (integer - default: 131072)
+    </em>
+  
+
+<p>block size in bytes of the exported image. It can be different from the disk block size</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportName</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Name of the exported image on the ftp server</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>overwrite</strong>:
+
+  
+    <em>(boolean)
+    </em>
+  
+
+<p>overwrite an images if it already exist in the vdisk storage</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>url</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>FTP server url of the image you want to import</p>
+<ul>
+<li>localhost:22</li>
+<li>ftp://1.2.3.4:200</li>
+<li>ftp://user@127.0.0.1:200</li>
+<li>ftp://user:pass@12.30.120.200:3000</li>
+<li>ftp://user:pass@12.30.120.200:3000/root/dir</li>
+</ul>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>imageName</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+<p>Name to give to the image you are importing</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>exportSnapshot</strong>:
+
+  
+    <em>(string - default: default)
+    </em>
+  
+
+<p>Name of the snapshot of the exported image on the ftp server
+If not specified, defaults to &#39;default&#39;</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>diskBlockSize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>block size in bytes of the image created in the local cluster</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/202" target="_blank">202</a></h2>
+
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Location</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>URL to the created image</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: object</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+                            <strong>Properties</strong>
+                            <ul>
+                              
+                                <li>
+  <strong>name</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                            </ul>
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2>
+<p>The vdisk storage does not exist</p>
+
+
+                      
+
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>The image id doesn&#39;t exist on the specified FTP</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__images__imageid_">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+        </a>
+
+        <span class="methods">
+          
+            <a href="#vdiskstorage__vdiskstorageid__images__imageid__get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_vdiskstorage__vdiskstorageid__images__imageid_" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images__imageid__get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Get detail about a vdisk image</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__images__imageid__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete an vdisk image from the VdiskStorage</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images__imageid__get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Get detail about a vdisk image</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images__imageid__get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>imageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+<p>Image found</p>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: object</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+                            <strong>Properties</strong>
+                            <ul>
+                              
+                                <li>
+  <strong>name</strong>:
+
+  
+    <em>required (string - pattern: ^\w+$)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                            </ul>
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Image with this id not found</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__images__imageid__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/images</span>/{imageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete an vdisk image from the VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__images__imageid__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__images__imageid__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>imageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>Image has been deleted succefully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__images__imageid__delete_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__vdisks">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/vdisks
+        </a>
+
+        <span class="methods">
+          
+            <a href="#vdiskstorage__vdiskstorageid__vdisks_get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#vdiskstorage__vdiskstorageid__vdisks_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_vdiskstorage__vdiskstorageid__vdisks" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks_get'" class="list-group-item">
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>List vdisks</p>
@@ -51117,7 +54189,7 @@ the "Authorization" header</p>
               <div class="clearfix"></div>
             </div>
           
-            <div onclick="window.location.href = '#vdisks_post'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks_post'" class="list-group-item">
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Create a new vdisk, can be a copy from an existing vdisk</p>
@@ -51131,14 +54203,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="vdisks_get">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks_get">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent"></span>/vdisks
+                <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/vdisks
               </h4>
             </div>
 
@@ -51178,16 +54250,20 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Nav tabs -->
               <ul class="nav nav-tabs">
                 
-
-                
                   <li class="active">
-                    <a href="#vdisks_get_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_get_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks_get_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_get_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -51195,9 +54271,79 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks_get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>:
+
+  
+    <em>()
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
 
                 
-                  <div class="tab-pane active" id="vdisks_get_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks_get_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
 
@@ -51302,62 +54448,14 @@ details in a user&#39;s account without getting their password.</p>
 
                                       
                                         <li>
-  <strong>blockStoragecluster</strong>:
+  <strong>vdiskstorage</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>objectStoragecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the ObjectStoragecluster used for this vdisk&#39;s object storage.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                                      
-                                        <li>
-  <strong>backupStoragecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the blockStoragecluster used for this vdisk&#39;s backup storage.</p>
+<p>Collection of different kinds of  storage_clusters to deploy on.</p>
 
 
   
@@ -51396,7 +54494,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks_get_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks_get_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -51476,14 +54574,14 @@ the "Authorization" header</p>
         </div>
       </div>
     
-      <div class="modal fade" tabindex="0" id="vdisks_post">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks_post">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent"></span>/vdisks
+                <span class="parent">/vdiskstorage/{vdiskstorageid}</span>/vdisks
               </h4>
             </div>
 
@@ -51524,19 +54622,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#vdisks_post_request" data-toggle="tab">Request</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_post_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks_post_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_post_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks_post_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks_post_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -51544,7 +54642,35 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="vdisks_post_request">
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks_post_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
                     
 
                     
@@ -51605,15 +54731,62 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>backupStoragecluster</strong>:
+  <strong>id</strong>:
 
   
-    <em>(string)
+    <em>required (string)
     </em>
   
 
-<p>the storagecluster used for this vdisk&#39;s main storage.</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
+<p>name of the vdisk. need to be unique</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>size</strong>:
+
+  
+    <em>required (integer)
+    </em>
+  
+
+<p>Size of the vdisk in GiB</p>
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>blocksize</strong>:
+
+  
+    <em>required (integer - default: 4096)
+    </em>
+  
+
+<p>blocksize in bytes</p>
 
 
   
@@ -51699,79 +54872,6 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>size</strong>:
-
-  
-    <em>required (integer)
-    </em>
-  
-
-<p>Size of the vdisk in GiB</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>blocksize</strong>:
-
-  
-    <em>required (integer - default: 4096)
-    </em>
-  
-
-<p>blocksize in bytes</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>objectStoragecluster</strong>:
-
-  
-    <em>(string)
-    </em>
-  
-
-<p>the objectStoragecluster used for this vdisk&#39;s transaction logs</p>
-<p>This property can only be used when the disk is of type boot or db.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>readOnly</strong>:
 
   
@@ -51795,64 +54895,15 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>id</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>name of the vdisk. need to be unique</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>templatevdisk</strong>:
+  <strong>imageId</strong>:
 
   
     <em>(string)
     </em>
   
 
-<p>Url to ardb server with the name of the template as path eg. ardb://myardb:16379/mytemplatename
-You can ommit the netlocation to use storage server defined in the g8os eg. ardb:///mytemplatename</p>
-<p>This property can only be used when the disk is of type boot.</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>blockStoragecluster</strong>:
-
-  
-    <em>required (string)
-    </em>
-  
-
-<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
+<p>ID of the image to use in case you create a boot disk. The image need to be imported in the VdiskStorage where this vdisk is created
+See <code>/vdiskstorage/{vdiskstorageid}/images</code> to list all available images.</p>
 
 
   
@@ -51880,7 +54931,7 @@ You can ommit the netlocation to use storage server defined in the g8os eg. ardb
                 
 
                 
-                  <div class="tab-pane" id="vdisks_post_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks_post_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/202" target="_blank">202</a></h2>
 
@@ -51949,6 +55000,14 @@ You can ommit the netlocation to use storage server defined in the g8os eg. ardb
 
                       
                     
+                      <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Image not found</p>
+
+
+                      
+
+                      
+                    
                       <h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2>
 <p>A vdisk with this ID already exists</p>
 
@@ -51961,7 +55020,7 @@ You can ommit the netlocation to use storage server defined in the g8os eg. ardb
                 
 
                 
-                  <div class="tab-pane" id="vdisks_post_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks_post_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -52049,17 +55108,17 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_vdisks__vdiskid_">
-          <span class="parent">/vdisks</span>/{vdiskid}
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid_">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks</span>/{vdiskid}
         </a>
 
         <span class="methods">
           
-            <a href="#vdisks__vdiskid__get"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__get"><!-- modal shown by hashchange event -->
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
-            <a href="#vdisks__vdiskid__delete"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete"><!-- modal shown by hashchange event -->
               <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -52067,7 +55126,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_vdisks__vdiskid_" class="panel-collapse collapse">
+    <div id="panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid_" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -52075,7 +55134,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#vdisks__vdiskid__get'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks__vdiskid__get'" class="list-group-item">
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Get vdisk information</p>
@@ -52084,7 +55143,7 @@ the "Authorization" header</p>
               <div class="clearfix"></div>
             </div>
           
-            <div onclick="window.location.href = '#vdisks__vdiskid__delete'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete'" class="list-group-item">
               <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Delete Vdisk</p>
@@ -52098,14 +55157,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="vdisks__vdiskid__get">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__get">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/vdisks</span>/{vdiskid}
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks</span>/{vdiskid}
               </h4>
             </div>
 
@@ -52146,19 +55205,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#vdisks__vdiskid__get_request" data-toggle="tab">Request</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__get_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__get_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -52166,10 +55225,33 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="vdisks__vdiskid__get_request">
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
                         
                           <li>
   <strong>vdiskid</strong>:
@@ -52238,7 +55320,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__get_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
 
@@ -52267,14 +55349,13 @@ details in a user&#39;s account without getting their password.</p>
                             <ul>
                               
                                 <li>
-  <strong>backupStoragecluster</strong>:
+  <strong>id</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>the backupStoragecluster used for this vdisk&#39;s backup storage</p>
 
 
   
@@ -52291,14 +55372,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>type</strong>:
+  <strong>status</strong>:
 
   
-    <em>required (one of boot, db, cache, tmp)
+    <em>required (one of running, halted, rollingback)
     </em>
   
 
-<p>The type of vdisk.</p>
+<p>Status of the vdisk</p>
 
 
   
@@ -52363,14 +55444,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>objectStoragecluster</strong>:
+  <strong>type</strong>:
 
   
-    <em>required (string)
+    <em>required (one of boot, db, cache, tmp)
     </em>
   
 
-<p>the ObjectStoragecluster used for this vdisk&#39;s object storage</p>
+<p>The type of vdisk.</p>
 
 
   
@@ -52391,53 +55472,6 @@ details in a user&#39;s account without getting their password.</p>
 
   
     <em>(boolean - default: false)
-    </em>
-  
-
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                              
-                                <li>
-  <strong>status</strong>:
-
-  
-    <em>required (one of running, halted, rollingback)
-    </em>
-  
-
-<p>Status of the vdisk</p>
-
-
-  
-
-  
-  
-  
-  
-  
-
-  
-
-</li>
-
-                              
-                                <li>
-  <strong>id</strong>:
-
-  
-    <em>required (string)
     </em>
   
 
@@ -52480,14 +55514,14 @@ details in a user&#39;s account without getting their password.</p>
 
                               
                                 <li>
-  <strong>blockStoragecluster</strong>:
+  <strong>vdiskstorage</strong>:
 
   
     <em>required (string)
     </em>
   
 
-<p>the blockStoragecluster used for this vdisk&#39;s main storage.</p>
+<p>Collection of different kinds of  storage_clusters to deploy on.</p>
 
 
   
@@ -52524,7 +55558,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__get_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__get_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -52604,14 +55638,14 @@ the "Authorization" header</p>
         </div>
       </div>
     
-      <div class="modal fade" tabindex="0" id="vdisks__vdiskid__delete">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/vdisks</span>/{vdiskid}
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks</span>/{vdiskid}
               </h4>
             </div>
 
@@ -52652,19 +55686,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#vdisks__vdiskid__delete_request" data-toggle="tab">Request</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__delete_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__delete_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -52672,10 +55706,33 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="vdisks__vdiskid__delete_request">
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
                         
                           <li>
   <strong>vdiskid</strong>:
@@ -52744,7 +55801,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__delete_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
 <p>Deleted</p>
@@ -52766,7 +55823,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__delete_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__delete_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -52854,13 +55911,13 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_vdisks__vdiskid__resize">
-          <span class="parent">/vdisks/{vdiskid}</span>/resize
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}</span>/resize
         </a>
 
         <span class="methods">
           
-            <a href="#vdisks__vdiskid__resize_post"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post"><!-- modal shown by hashchange event -->
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -52868,7 +55925,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_vdisks__vdiskid__resize" class="panel-collapse collapse">
+    <div id="panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -52876,7 +55933,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#vdisks__vdiskid__resize_post'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post'" class="list-group-item">
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Resize vdisk</p>
@@ -52890,14 +55947,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="vdisks__vdiskid__resize_post">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/vdisks/{vdiskid}</span>/resize
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}</span>/resize
               </h4>
             </div>
 
@@ -52938,19 +55995,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#vdisks__vdiskid__resize_post_request" data-toggle="tab">Request</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__resize_post_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__resize_post_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -52958,10 +56015,33 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="vdisks__vdiskid__resize_post_request">
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
                         
                           <li>
   <strong>vdiskid</strong>:
@@ -53082,7 +56162,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__resize_post_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
 <p>Vdisk resized</p>
@@ -53096,7 +56176,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__resize_post_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__resize_post_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -53186,13 +56266,13 @@ the "Authorization" header</p>
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_vdisks__vdiskid__rollback">
-          <span class="parent">/vdisks/{vdiskid}</span>/rollback
+        <a class="collapsed" data-toggle="collapse" href="#panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback">
+          <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}</span>/rollback
         </a>
 
         <span class="methods">
           
-            <a href="#vdisks__vdiskid__rollback_post"><!-- modal shown by hashchange event -->
+            <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post"><!-- modal shown by hashchange event -->
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -53200,7 +56280,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_vdisks__vdiskid__rollback" class="panel-collapse collapse">
+    <div id="panel_vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -53208,7 +56288,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#vdisks__vdiskid__rollback_post'" class="list-group-item">
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post'" class="list-group-item">
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Rollback a vdisk to a previous state</p>
@@ -53222,14 +56302,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="vdisks__vdiskid__rollback_post">
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/vdisks/{vdiskid}</span>/rollback
+                <span class="parent">/vdiskstorage/{vdiskstorageid}/vdisks/{vdiskid}</span>/rollback
               </h4>
             </div>
 
@@ -53270,19 +56350,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#vdisks__vdiskid__rollback_post_request" data-toggle="tab">Request</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__rollback_post_response" data-toggle="tab">Response</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#vdisks__vdiskid__rollback_post_securedby" data-toggle="tab">Security</a>
+                    <a href="#vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -53290,10 +56370,33 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="vdisks__vdiskid__rollback_post_request">
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+  
+    <em>required (string)
+    </em>
+  
+
+
+
+  
+
+  
+  
+  
+  
+  
+
+  
+
+</li>
+
                         
                           <li>
   <strong>vdiskid</strong>:
@@ -53386,7 +56489,7 @@ details in a user&#39;s account without getting their password.</p>
     </em>
   
 
-<p>Epoch to which we want to rollback the vdisk</p>
+<p>Epoch to which we want to rollback the vdisk (0 means restore full disk)</p>
 
 
   
@@ -53414,7 +56517,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__rollback_post_response">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/202" target="_blank">202</a></h2>
 <p>Rollback started successfully</p>
@@ -53451,7 +56554,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="vdisks__vdiskid__rollback_post_securedby">
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__vdisks__vdiskid__rollback_post_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -53532,6 +56635,10 @@ the "Authorization" header</p>
       </div>
     
   </div>
+
+
+
+
 
 
 
@@ -55993,7 +59100,7 @@ the "Authorization" header</p>
               
                 <li><a href="#storageclusters">/storageclusters</a></li>
               
-                <li><a href="#vdisks">/vdisks</a></li>
+                <li><a href="#vdiskstorage">/vdiskstorage</a></li>
               
                 <li><a href="#graphs">/graphs</a></li>
               

@@ -33,12 +33,6 @@ type ActionBlock struct {
 	Force   bool   `json:"force" validate:"omitempty"`
 }
 
-func GetAYSClient(client *ays.AtYourServiceAPI) AYStool {
-	return AYStool{
-		Ays: client.Ays,
-	}
-}
-
 //ExecuteBlueprint runs ays operations needed to run blueprints. This will BLOCK until blueprint job is complete.
 // create blueprint
 // execute blueprint
@@ -89,23 +83,28 @@ func (aystool AYStool) UpdateBlueprint(repoName, role, name, action string, blue
 
 func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) {
 	run, err := aystool.getRun(runid, repoName)
-
-	if err != nil {
+	if err != nil && run.State != "error" {
 		return run, err
 	}
 
-	for run.State == "new" || run.State == "running" {
+	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6) {
 		time.Sleep(time.Second)
 
 		run, err = aystool.getRun(run.Key, repoName)
-		if err != nil {
+		if err != nil && run.State != "error" {
 			return run, err
 		}
 	}
-	return run, nil
+	return run, err
 }
 
 func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
+	var job ays.Job
+
+	if jobid == "" {
+		return job, fmt.Errorf("trying to get job with empty job ID")
+	}
+
 	job, resp, err := aystool.Ays.GetJob(jobid, repoName, nil, nil)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return job, err
@@ -113,6 +112,10 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 
 	for job.State == "new" || job.State == "running" {
 		time.Sleep(time.Second)
+
+		if job.Key == "" {
+			return job, fmt.Errorf("trying to get job with empty job ID")
+		}
 
 		job, resp, err = aystool.Ays.GetJob(job.Key, repoName, nil, nil)
 		if err != nil {
@@ -125,6 +128,11 @@ func (aystool AYStool) WaitJobDone(jobid, repoName string) (ays.Job, error) {
 // I dont pass the job struct becasue ays does not pass the result even when in error unless a getjob api call is made on it.
 // this will be fixed in ays 9.1.3 ?
 func (aystool AYStool) ParseJobError(jobKey string, repoName string) (ays.Job, error) {
+	var job ays.Job
+
+	if jobKey == "" {
+		return job, fmt.Errorf("trying to get job with empty job ID")
+	}
 
 	job, _, ayserr := aystool.Ays.GetJob(jobKey, repoName, nil, nil)
 	if ayserr != nil {

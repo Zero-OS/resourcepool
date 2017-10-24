@@ -24,3 +24,14 @@ def drop(job):
     node.client.nft.drop_port(service.model.data.port)
     service.model.data.status = "dropped"
     service.saveAll()
+
+
+def monitor(job):
+    from zeroos.orchestrator.configuration import get_jwt_token
+
+    service = job.service
+    if service.model.data.status != "opened":
+        return
+
+    job.context['token'] = get_jwt_token(service.aysrepo)
+    install(job)

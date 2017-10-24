@@ -20,12 +20,19 @@ def input(job):
 
     return args
 
+
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    import re
+
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
     for nic in service.model.data.nics:
+        if nic.hwaddr:
+            pattern = re.compile(r'^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+            if not pattern.match(nic.hwaddr):
+                raise j.exceptions.Input('Hwaddr: string is not a valid mac address.')
         if nic.type == 'vlan':
             break
     else:
@@ -37,7 +44,6 @@ def init(job):
         raise j.exceptions.Input('OVS container needed to run this blueprint')
 
 
-
 def install(job):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -45,7 +51,7 @@ def install(job):
 
     job.service.model.data.status = "halted"
 
-    j.tools.async.wrappers.sync(job.service.executeAction('start', context=job.context))
+    job.service.executeAction('start', context=job.context)
 
 
 def get_member(zerotier, zerotiernodeid, nicid):
@@ -68,6 +74,7 @@ def wait_for_interface(container):
                 return
         time.sleep(0.5)
     raise j.exceptions.RuntimeError("Could not find zerotier network interface")
+
 
 def zerotier_nic_config(service, logger, container, nic):
     from zerotier import client
@@ -207,36 +214,52 @@ def update(job, updated_nics):
 
 
 def monitor(job):
-    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.Node import Node
+    from zeroos.orchestrator.sal.Container import Container
 
     service = job.service
+    if service.model.actionsState['install'] != 'ok' or service.parent.model.data.status != 'running':
+        return
 
-    if service.model.actionsState['install'] == 'ok':
-        container = Container.from_ays(job.service, get_jwt_token(job.service.aysrepo), logger=service.logger)
-        running = container.is_running()
-        if not running and service.model.data.status == 'running':
-            try:
-                job.logger.warning("container {} not running, trying to restart".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.start()
+    token = get_jwt_token(job.service.aysrepo)
+    node = Node.from_ays(service.parent, token, timeout=5)
+    if not node.is_configured():
+        return
 
-                if container.is_running():
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't restart container {} not running".format(service.name))
-                service.model.dbobj.state = 'error'
-        elif running and service.model.data.status == 'halted':
-            try:
-                job.logger.warning("container {} running, trying to stop".format(service.name))
-                service.model.dbobj.state = 'error'
-                container.stop()
-                running, _ = container.is_running()
-                if not running:
-                    service.model.dbobj.state = 'ok'
-            except:
-                job.logger.error("can't stop container {} is running".format(service.name))
-                service.model.dbobj.state = 'error'
+    container = Container.from_ays(job.service, token, logger=service.logger)
+    running = container.is_running()
+
+    if not running and service.model.data.status == 'running' and container.node.is_configured(service.parent.name):
+        ovs_name = '{}_ovs'.format(container.node.name)
+        if ovs_name != service.name:
+            ovs_service = service.aysrepo.serviceGet(role='container', instance=ovs_name)
+            ovs_container = Container.from_ays(ovs_service, token)
+            if not ovs_container.is_running():
+                job.logger.warning\
+                    ("Can't attempt to restart container {}, container {} is not running".format(
+                        service.name, ovs_name))
+        try:
+            job.logger.warning("container {} not running, trying to restart".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.start()
+
+            if container.is_running():
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't restart container {} not running".format(service.name))
+            service.model.dbobj.state = 'error'
+    elif running and service.model.data.status == 'halted':
+        try:
+            job.logger.warning("container {} running, trying to stop".format(service.name))
+            service.model.dbobj.state = 'error'
+            container.stop()
+            running, _ = container.is_running()
+            if not running:
+                service.model.dbobj.state = 'ok'
+        except:
+            job.logger.error("can't stop container {} is running".format(service.name))
+            service.model.dbobj.state = 'error'
 
 
 def watchdog_handler(job):
@@ -246,11 +269,10 @@ def watchdog_handler(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
         return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].executeAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')

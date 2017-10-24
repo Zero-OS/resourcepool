@@ -12,11 +12,15 @@ import (
 // ListStorageClusterHealth is the handler for GET /health/storageclusters/{storageclusterid}
 // List NodeHealth
 func (api *HealthCheckApi) ListStorageClusterHealth(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	storageClusterID := vars["storageclusterid"]
 
-	serviceName := fmt.Sprintf("storage_cluster_%s", storageClusterID)
+	serviceName := fmt.Sprintf("storagecluster_block_%s", storageClusterID)
 	service, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
 
 	if !tools.HandleAYSResponse(err, res, w, "listing storage cluster health checks") {

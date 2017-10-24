@@ -12,7 +12,11 @@ import (
 // ExitZerotier is the handler for DELETE /node/{nodeid}/zerotiers/{zerotierid}
 // Exit the Zerotier network
 func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	nodeID := mux.Vars(r)["nodeid"]
 	zerotierID := vars["zerotierid"]
@@ -28,7 +32,6 @@ func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// And execute
-
 	run, err := aysClient.ExecuteBlueprint(api.AysRepo, "zerotier", zerotierID, "delete", bp)
 
 	errmsg := fmt.Sprintf("error executing blueprint for zerotier %s exit ", zerotierID)
@@ -49,10 +52,10 @@ func (api *NodeAPI) ExitZerotier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := aysClient.Ays.DeleteServiceByName(fmt.Sprintf("%s_%s", nodeID, zerotierID), "zerotier", api.AysRepo, nil, nil)
-
-	if !tools.HandleAYSResponse(err, res, w, fmt.Sprintf("Exiting zerotier %s", fmt.Sprintf("%s_%s", nodeID, zerotierID))) {
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
+
 
 	w.WriteHeader(http.StatusNoContent)
 }

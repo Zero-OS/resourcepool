@@ -3,8 +3,6 @@ package node
 import (
 	"net/http"
 
-	"fmt"
-
 	"github.com/gorilla/mux"
 	"github.com/zero-os/0-orchestrator/api/tools"
 )
@@ -12,22 +10,13 @@ import (
 // DeleteBridge is the handler for DELETE /node/{nodeid}/bridge/{bridgeid}
 // Remove bridge
 func (api *NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
-	aysClient := tools.GetAysConnection(r, api)
+	aysClient, err := tools.GetAysConnection(api)
+	if err != nil {
+		tools.WriteError(w, http.StatusUnauthorized, err, "")
+		return
+	}
 	vars := mux.Vars(r)
 	bridge := vars["bridgeid"]
-
-	exists, err := aysClient.ServiceExists("bridge", bridge, api.AysRepo)
-
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Failed to check for the bridge")
-		return
-	}
-
-	if !exists {
-		err = fmt.Errorf("Bridge %s doesn't exist", bridge)
-		tools.WriteError(w, http.StatusNotFound, err, err.Error())
-		return
-	}
 
 	// execute the delete action of the snapshot
 	blueprint := map[string]interface{}{
@@ -56,11 +45,8 @@ func (api *NodeAPI) DeleteBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = aysClient.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("Error in deleting bridge %s ", bridge)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+	res, err := aysClient.Ays.DeleteServiceByName(bridge, "bridge", api.AysRepo, nil, nil)
+	if !tools.HandleAYSDeleteResponse(err, res, w, "deleting service") {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -3,6 +3,8 @@ package node
 import (
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
+	"github.com/zero-os/0-orchestrator/api/tools"
+	"fmt"
 )
 
 // Definition of a virtual nic
@@ -12,7 +14,7 @@ type NicLink struct {
 	Type       EnumNicLinkType `json:"type" validate:"nonzero"`
 }
 
-func (s NicLink) Validate() error {
+func (s NicLink) Validate(aysClient *tools.AYStool, repoName string) error {
 	typeEnums := map[interface{}]struct{}{
 		EnumNicLinkTypevlan:    struct{}{},
 		EnumNicLinkTypevxlan:   struct{}{},
@@ -26,6 +28,16 @@ func (s NicLink) Validate() error {
 
 	if err := validators.ValidateConditional(s.Type, EnumNicLinkTypedefault, s.Id, "Id"); err != nil {
 		return err
+	}
+
+	if s.Type == EnumNicLinkTypebridge {
+		exists, err := aysClient.ServiceExists("bridge", s.Id, repoName)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return fmt.Errorf("bridge %s does not exists", s.Id)
+		}
 	}
 
 	return validator.Validate(s)
