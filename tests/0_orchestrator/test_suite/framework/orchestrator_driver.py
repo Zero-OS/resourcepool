@@ -7,6 +7,7 @@ from framework.orchestrator_apis.storagepools_apis import StoragepoolsAPI
 from framework.orchestrator_apis.vms_apis import VmsAPI
 from framework.orchestrator_apis.vdisks_apis import VDisksAPIs
 from framework.orchestrator_apis.zerotiers_apis import ZerotiersAPI
+from framework.orchestrator_apis.backup_apis import BackupAPI
 from zeroos.orchestrator import client
 from testconfig import config
 
@@ -19,7 +20,7 @@ class OrchasteratorDriver:
     zerotier_token = config['main']['zerotier_token']
     vm_username = config['main']['vm_username']
     vm_password = config['main']['vm_password']
-    
+
 
     def __init__(self):
         self.JWT = None
@@ -35,6 +36,7 @@ class OrchasteratorDriver:
         self.vdisks_api = VDisksAPIs(self)
         self.vms_api = VmsAPI(self)
         self.zerotiers_api = ZerotiersAPI(self)
+        self.backup_api = BackupAPI(self)
 
         self.nodes_info = self.get_node_info()
 
