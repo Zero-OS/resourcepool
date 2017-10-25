@@ -17,7 +17,7 @@ import (
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
+// ImportVM is the handler for POST /nodes/{nodeid}/vms/import
 // Import the VM
 func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	aysClient, err := tools.GetAysConnection(api)
@@ -26,7 +26,6 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vars := mux.Vars(r)
-	vmID := vars["vmid"]
 	nodeID := vars["nodeid"]
 
 	var reqBody ImportVM
@@ -36,6 +35,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
+	vmID := reqBody.ID
 	reqBody.URL = strings.TrimRight(reqBody.URL, "/")
 
 	// validate request
@@ -94,22 +94,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create vdisk storage for the new VM
-	now := time.Now()
-	vdiskstorageServiceName := fmt.Sprintf("vdiskstorage_%v", now.Unix())
-	obj := make(map[string]interface{})
-	obj[fmt.Sprintf("vdiskstorage__%s", vdiskstorageServiceName)] = struct {
-		BlockCluster  string `json:"blockCluster" yaml:"blockCluster"`
-		ObjectCluster string `json:"objectCluster" yaml:"objectCluster"`
-		SlaveCluster  string `json:"slaveCluster" yaml:"slaveCluster"`
-	}{
-		BlockCluster:  reqBody.BlockStoragecluster,
-		ObjectCluster: reqBody.ObjectStoragecluster,
-		SlaveCluster:  reqBody.BackupStoragecluster,
-	}
-	_, err = aysClient.UpdateBlueprint(api.AysRepo, "vdiskstorage", string(vdiskstorageServiceName), "install", obj)
-	if !tools.HandleExecuteBlueprintResponse(err, w, "") {
-		return
-	}
+	vdiskstorageServiceName := reqBody.VdiskStorage
 
 	vdiskServices := []string{}
 	for idx, val := range metadata.Vdisks {
@@ -129,7 +114,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 			BlockSize:    val.Blocksize,
 			ReadOnly:     val.ReadOnly,
 			Type:         string(val.Vdisktype),
-			Vdiskstorage: string(vdiskstorageServiceName),
+			Vdiskstorage: vdiskstorageServiceName,
 			BackupURL:    backupURL,
 			CryptoKey:    metadata.CryptoKey,
 			SnapshotID:   metadata.SnapshotIDs[idx],
@@ -185,7 +170,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		BackupURL: "",
 	}
 
-	obj = make(map[string]interface{})
+	obj := make(map[string]interface{})
 	obj[fmt.Sprintf("vm__%s", vmID)] = bp
 	obj["actions"] = []tools.ActionBlock{{Service: vmID, Actor: "vm", Action: "install"}}
 
