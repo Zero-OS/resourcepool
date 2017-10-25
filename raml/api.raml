@@ -1278,18 +1278,18 @@ types:
                   application/json:
                   type: FTPUrl
 
-        /import:
-          post:
-            (AYSBased):
-            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-            displayName: ImportVM
-            description: Import the virtual machine from ftp server
-            body:
-              application/json:
-                type: ImportVM
-            responses:
-              200:
-                description: Virtual machine is imported successfully
+      /import:
+        post:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: ImportVM
+          description: Import the virtual machine from ftp server
+          body:
+            application/json:
+              type: ImportVM
+          responses:
+            200:
+              description: Virtual machine is imported successfully
 
 
 /backup:
