@@ -35,6 +35,8 @@ func GetFtpInfo(ftpUrl string) FtpInfo {
 		if isSet {
 			ftpinfo.Passwd = passwd
 		}
+	} else {
+		ftpinfo.Username = "anonymous"
 	}
 	return ftpinfo
 }
