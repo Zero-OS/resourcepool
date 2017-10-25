@@ -8,7 +8,7 @@ class TestBackupAPI(TestcasesBase):
         super().setUp()
         self.lg.info('Create new container. ')
         self.created_containers = []
-        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid)
+        self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid, flist='https://hub.gig.tech/gig-official-apps/0-disk-master.flist')
         self.assertEqual(self.response.status_code, 201, " [*] Can't create new container.")
         self.created_containers.append(self.data['name'])
 
@@ -26,7 +26,7 @@ class TestBackupAPI(TestcasesBase):
         #. Create restic repo, should succeed.
         #. Backup the container (C1) image, should succeed
         #. List the backups and get the backup snapshot, should succeed
-        #. Create container with restored data only, and change the nics .. should succeed
+        #. Create container with restored data, should succeed
         #. Check that the restored files are the same as the original backup.
         """
 
@@ -47,7 +47,7 @@ class TestBackupAPI(TestcasesBase):
         snapshot = [bkp['snapshot'] for bkp in response.json() if bkp['meta']['name'] == self.data['name']]
         self.assertTrue(snapshot)
 
-        self.lg.info('Create container with restored data only, should succeed')
+        self.lg.info('Create container with restored data, should succeed')
         res_url = 'restic:' + url + '#{}'.format(snapshot[0])
         self.lg.info(' [*] Create new container. ')
         self.response, self.data = self.containers_api.post_containers(nodeid=self.nodeid,
