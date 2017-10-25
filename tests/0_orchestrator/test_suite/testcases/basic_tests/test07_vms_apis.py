@@ -25,19 +25,19 @@ class TestVmsAPI(TestcasesBase):
 
             self.lg.info('[*] Storagecluster is created with specs : {}'.format(cluster))
             storagecluster = cluster['label']
-        
+
         else:
             storagecluster = storageclusters.json()[0]
-  
+
         self.lg.info('[*] Create vdiskstorage')
         response, vdiskstorage = self.vdisks_api.post_vdiskstorage(storagecluster=storagecluster)
         self.assertEqual(response.status_code, 201)
-        
+
         self.lg.info('[*] Import image to vdiskstorage')
         response, imagedata = self.vdisks_api.post_import_image(vdiskstorageid=vdiskstorage['id'])
         self.assertEqual(response.status_code, 201)
 
-        self.lg.info('[*] Import is imported with specs : {}'.format(imagedata)) 
+        self.lg.info('[*] Import is imported with specs : {}'.format(imagedata))
 
         TestVmsAPI.vdiskstorageid = vdiskstorage['id']
         TestVmsAPI.imageid = imagedata["imageName"]
@@ -49,7 +49,7 @@ class TestVmsAPI(TestcasesBase):
         self = cls()
         self.lg.info('[*] Delete image')
         self.vdisks_api.delete_image(TestVmsAPI.vdiskstorageid, TestVmsAPI.imageid)
-       
+
     def setUp(self):
         super().setUp()
 
@@ -67,13 +67,13 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
         self.ssh_client = self.core0_client.get_container_client(self.ssh_client_data['name'])
 
-        self.lg.info('[*] Create vdisk')  
+        self.lg.info('[*] Create vdisk')
         vdisk_size = random.randint(TestVmsAPI.imageSize, TestVmsAPI.imageSize + 10)
-        body = {"type": "boot", "size":vdisk_size, "blocksize":TestVmsAPI.blockSize, "readOnly": False}      
+        body = {"type": "boot", "size":vdisk_size, "blocksize":TestVmsAPI.blockSize, "readOnly": False}
         response, self.vdisk = self.vdisks_api.post_vdisks(vdiskstorageid=TestVmsAPI.vdiskstorageid, imageid=TestVmsAPI.imageid, **body)
         self.assertEqual(response.status_code, 201)
 
-        self.lg.info('[*] Vdisk disk is created with specs : {}'.format(self.vdisk)) 
+        self.lg.info('[*] Vdisk disk is created with specs : {}'.format(self.vdisk))
 
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
         memory = random.randint(1, node_available_memory-1) * 1024
@@ -91,10 +91,10 @@ class TestVmsAPI(TestcasesBase):
 
         self.lg.info('[*] Get virtual machine (VM0) default ip')
         self.vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
-        
+
         time.sleep(20)
 
-        self.lg.info('[*] Enable ssh access to virtual machine (VM0)')      
+        self.lg.info('[*] Enable ssh access to virtual machine (VM0)')
         vm_vnc_port = response.json()['vnc'] - 5900
         vm_vnc_url = '{}:{}'.format(self.nodeip, vm_vnc_port)
         self.enable_ssh_access(vm_vnc_url)
@@ -108,7 +108,7 @@ class TestVmsAPI(TestcasesBase):
 
         self.lg.info('[*] Delete ssh client contaienr')
         self.containers_api.delete_containers_containerid(self.nodeid, self.ssh_client_data['name'])
-        
+
         super().tearDown()
 
     def test001_get_nodes_vms_vmid(self):
@@ -128,7 +128,7 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info('[*] Get virtual machine (VM0), should succeed with 200')
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
- 
+
         for key in ['id', 'memory', 'cpu', 'disks']:
             self.assertEqual(self.data[key], response.json()[key])
 
@@ -201,7 +201,7 @@ class TestVmsAPI(TestcasesBase):
             self.assertEqual(body[key], response.json()[key])
 
         self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
-        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
@@ -210,7 +210,7 @@ class TestVmsAPI(TestcasesBase):
         body = {"id": self.random_string()}
         response = self.vms_api.put_nodes_vms_vmid(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 400)
-        
+
     def test005_get_nodes_vms_vmid_info(self):
         """ GAT-071
         **Test Scenario:**
@@ -294,7 +294,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.json()['status'], 'running', "can't start vm")
 
         self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
-        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
@@ -321,7 +321,7 @@ class TestVmsAPI(TestcasesBase):
         response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'paused', "can't pause vm")
-         
+
         core0_list_vms = self.core0_client.client.kvm.list()
         target_vm = [x for x in core0_list_vms if x['name'] == self.data['id']]
         self.assertNotEqual(target_vm, [])
@@ -346,7 +346,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEquals(target_vm[0]['state'], 'running')
 
         self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
-        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
@@ -387,13 +387,13 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.json()['status'], 'running', "can't start vm")
 
         self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
-        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])        
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
         response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
     @parameterized.expand(['same_node', 'different_node'])
-    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1199")    
+    @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1199")
     def test011_post_nodes_vms_vmid_migrate(self, destination_node):
         """ GAT-077
         **Test Scenario:**
@@ -454,7 +454,7 @@ class TestVmsAPI(TestcasesBase):
     def test012_create_two_vms_with_same_vdisk(self):
         """ GAT-077
         **Test Scenario:**
-        
+
         #. Get random nodid (N0).
         #. Create (VM1) on node (N0) and attach vdisk (VD1) to it. should succeed.
         #. Create (VM2) and attach vdisk (VD1) to it. should fail.
@@ -477,3 +477,191 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info("[*] Create VM3 and attach vdisk VD1 to it. should fail")
         response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response.status_code, 400, response.content)
+
+
+class TestVmsAPI_with_objectcluster(TestcasesBase):
+    @classmethod
+    def setUpClass(cls):
+        self = cls()
+        super(TestVmsAPI_with_objectcluster, self).setUp()
+
+        TestVmsAPI_with_objectcluster.nodeid = self.nodeid
+        nodes = [TestVmsAPI_with_objectcluster.nodeid]
+        number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
+
+        storageclusters = self.storageclusters_api.get_storageclusters()
+        blockclusters = self.get_available_cluster_type(storageclusters.json(), "block")
+        if not blockclusters:
+
+            if not number_of_free_disks:
+                self.skipTest('[*] No free disks to create storage cluster')
+
+            self.lg.info('[*] Create storagecluster')
+            response, cluster = self.storageclusters_api.post_storageclusters(nodes=nodes, driveType=disk_type, servers=1)
+            self.assertEqual(response.status_code, 201)
+            storagecluster = cluster['label']
+        else:
+            storagecluster = blockclusters[0]['label']
+
+        objectcluster = self.get_available_cluster_type(storageclusters.json(), "object")
+        if not objectcluster:
+            number_of_free_disks = self.get_available_free_disks(nodes)
+            if number_of_free_disks < 3:
+                self.skipTest('[*] No free disks to create object cluster')
+
+            number_of_max_free_disks, disk_type = self.get_max_available_free_disks(nodes)
+            if number_of_max_free_disks < 2:
+                self.skipTest('[*] No free disks to create object cluster')
+
+            elif number_of_max_free_disks >= 3:
+                self.lg.info("[*] Create objectcluster. ")
+                response, cluster = self.storageclusters_api.post_object_cluster(nodes=nodes, driveType=disk_type)
+                self.assertEqual(response.status_code, 201)
+                objectcluster = cluster['label']
+            else:
+                number_of_max_free_disks, meta_drive_type = self.get_max_available_free_disks(nodes, disk_type)
+                self.lg.info("[*] Create objectcluster. ")
+                response, cluster = self.storageclusters_api.post_object_cluster(nodes=nodes,
+                                                                                 driveType=disk_type,
+                                                                                 metaDriveType=meta_drive_type)
+                self.assertEqual(response.status_code, 201)
+                objectcluster = cluster['label']
+        else:
+            objectcluster = objectcluster[0]['label']
+
+        self.lg.info('[*] Create vdiskstorage')
+        response, vdiskstorage = self.vdisks_api.post_vdiskstorage(storagecluster=storagecluster, objectCluster=objectcluster)
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('[*] Import image to vdiskstorage')
+        response, imagedata = self.vdisks_api.post_import_image(vdiskstorageid=vdiskstorage['id'])
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('[*] Import is imported with specs : {}'.format(imagedata))
+
+        TestVmsAPI_with_objectcluster.vdiskstorageid = vdiskstorage['id']
+        TestVmsAPI_with_objectcluster.imageid = imagedata["imageName"]
+        TestVmsAPI_with_objectcluster.imageSize = imagedata["size"]
+        TestVmsAPI_with_objectcluster.blockSize = imagedata["diskBlockSize"]
+
+    @classmethod
+    def tearDownClass(cls):
+        self = cls()
+        self.lg.info('[*] Delete image')
+        self.vdisks_api.delete_image(TestVmsAPI_with_objectcluster.vdiskstorageid, TestVmsAPI_with_objectcluster.imageid)
+
+    def setUp(self):
+        super().setUp()
+
+        response = self.nodes_api.get_nodes_nodeid_mem(self.nodeid)
+        self.assertEqual(response.status_code, 200)
+        node_available_memory = int(response.json()['available'] / (1024 ** 3))
+
+        response = self.nodes_api.get_nodes_nodeid_cpus(self.nodeid)
+        self.assertEqual(response.status_code, 200)
+        node_available_cpus = len(response.json())
+
+        self.lg.info('[*] Create ssh client contaienr')
+        nics = [{"type":"default"}]
+        response, self.ssh_client_data = self.containers_api.post_containers(self.nodeid, nics=nics, hostNetworking=True)
+        self.assertEqual(response.status_code, 201)
+        self.ssh_client = self.core0_client.get_container_client(self.ssh_client_data['name'])
+
+        self.lg.info('[*] Create vdisk')
+        vdisk_size = random.randint(TestVmsAPI_with_objectcluster.imageSize, TestVmsAPI_with_objectcluster.imageSize + 10)
+        body = {"type": "boot", "size":vdisk_size, "blocksize":TestVmsAPI_with_objectcluster.blockSize, "readOnly": False}
+        response, self.vdisk = self.vdisks_api.post_vdisks(vdiskstorageid=TestVmsAPI_with_objectcluster.vdiskstorageid,
+                                                           imageid=TestVmsAPI_with_objectcluster.imageid, **body)
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('[*] Vdisk disk is created with specs : {}'.format(self.vdisk))
+
+        self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
+        memory = random.randint(1, node_available_memory-200) * 1024
+        cpu = random.randint(1, node_available_cpus-1)
+
+        self.lg.info('[*] Create virtual machine (VM0) on node (N0)')
+        nics = [{"type": "default"}]
+
+        response, self.data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=memory, cpu=cpu, nics=nics, disks=self.disks)
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info('[*] Virtual machine (VM0) is created with specs : {}'.format(self.data))
+
+        response = self.vms_api.get_nodes_vms_vmid(nodeid=self.nodeid, vmid=self.data['id'])
+        self.assertEqual(response.status_code, 200)
+
+        self.lg.info('[*] Get virtual machine (VM0) default ip')
+        self.vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
+
+        time.sleep(20)
+
+        self.lg.info('[*] Enable ssh access to virtual machine (VM0)')
+        vm_vnc_port = response.json()['vnc'] - 5900
+        vm_vnc_url = '{}:{}'.format(self.nodeip, vm_vnc_port)
+        self.enable_ssh_access(vm_vnc_url)
+
+    def tearDown(self):
+        self.lg.info('[*] Delete virtual machine (VM0)')
+        self.vms_api.delete_nodes_vms_vmid(self.nodeid, self.data['id'])
+
+        self.lg.info('[*] Delete virtual disk (VD0)')
+        self.vdisks_api.delete_vdisks_vdiskid(TestVmsAPI_with_objectcluster.vdiskstorageid, self.vdisk['id'])
+
+        self.lg.info('[*] Delete ssh client contaienr')
+        self.containers_api.delete_containers_containerid(self.nodeid, self.ssh_client_data['name'])
+
+        super().tearDown()
+
+    def test001_post_nodes_vms_vmid_start_stop(self):
+        """ GAT-073
+        **Test Scenario:**
+
+        #. Get random nodid (N0).
+        #. Create virtual machine (VM0) on node (N0).
+        #. Execute command on virtual machine (VM0), should succeed
+        #. Stop virtual machine (VM0), should succeed with 204.
+        #. Get virtual machine (VM0), virtual machine (VM0) status should be halted.
+        #. Start virtual machine (VM0), should succeed with 204.
+        #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
+        #. Execute command on virtual machine (VM0), should succeed.
+        """
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
+        response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
+
+        self.lg.info('[*] Stop virtual machine (VM0), should succeed with 204')
+        response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info('[*] Get virtual machine (VM0), virtual machine (VM0) status should be haltd.')
+        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'halted', "can't stop vm")
+
+        core0_vm_list = self.core0_client.client.kvm.list()
+        self.assertNotIn(self.data['id'], [x['name'] for x in core0_vm_list])
+
+        self.lg.info('[*] Execute command on virtual machine (VM0), should fail')
+        response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'ERROR')
+
+        self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
+        response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info('[*] Get virtual machine (VM0), virtual machine (VM0) status should be running.')
+        response = self.vms_api.get_nodes_vms_vmid(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'running', "can't start vm")
+
+        core0_vm_list = self.core0_client.client.kvm.list()
+        self.assertIn(self.data['id'], [x['name'] for x in core0_vm_list])
+
+        self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
+        time.sleep(5)
+        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
