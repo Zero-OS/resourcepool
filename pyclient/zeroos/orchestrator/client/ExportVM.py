@@ -1,47 +1,45 @@
 """
-Auto-generated class for ImportVM
+Auto-generated class for ExportVM
 """
 from .FTPUrl import FTPUrl
 
 from . import client_support
 
 
-class ImportVM(object):
+class ExportVM(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(id, url, vdiskstorage):
+    def create(cryptoKey, url):
         """
-        :type id: str
+        :type cryptoKey: str
         :type url: FTPUrl
-        :type vdiskstorage: str
-        :rtype: ImportVM
+        :rtype: ExportVM
         """
 
-        return ImportVM(
-            id=id,
+        return ExportVM(
+            cryptoKey=cryptoKey,
             url=url,
-            vdiskstorage=vdiskstorage,
         )
 
     def __init__(self, json=None, **kwargs):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'ImportVM'
+        class_name = 'ExportVM'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'id'
+        property_name = 'cryptoKey'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.id = client_support.val_factory(val, datatypes)
+                self.cryptoKey = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
@@ -53,17 +51,6 @@ class ImportVM(object):
             datatypes = [FTPUrl]
             try:
                 self.url = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
-        property_name = 'vdiskstorage'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.vdiskstorage = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
