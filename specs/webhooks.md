@@ -46,10 +46,9 @@ GET /webhooks/mywebhook
 DELETE /webhooks/mywebhook
 ```
 
-```
+```json
 PUT /webhooks/mywebhook
 {
-    "name": "mywebhook",
     "url": "http://mypublicurl.com/webhookhandler",
     "eventtypes": ["healtcheck", "qos"]
 
