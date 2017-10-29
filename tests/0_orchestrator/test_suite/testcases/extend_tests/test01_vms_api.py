@@ -148,9 +148,9 @@ class TestVmsAPI(TestcasesBase):
         #. Get random nodid (N0).
         #. Create virtual machine (VM0) on node (N0).
         #. Migrate virtual machine (VM0) to another node(N1), should succeed with 204.
-        #. Get virtual machine (VM0) in (N1) , virtual machine (VM0) status should be running.
+        #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
         #. Migrate virtual machine (VM0) to (N0) again, should succeed with 204.
-        #. Get virtual machine (VM0) in (N0), virtual machine (VM0) status should be running.
+        #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
 
         """
         self.setUp_vm_migration()
@@ -173,12 +173,13 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
 
-    def check_node_status(nodeid):
+    def check_node_status(self, nodeid):
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
         for node in response.json():
             return node['status']
 
+    @unittest.skip('not fully tested')
     def test002_migration_afer_node_shutdown(self):
         """ GAT-000
         **Test Scenario:**
@@ -195,15 +196,15 @@ class TestVmsAPI(TestcasesBase):
         self.setUp_vm_migration()
 
         self.lg.info('Shutdown node (N0) be leaving zerotier network, should succeed')
-        node_pb_ip = self.core0_client.bash("ip -o a s dev enp2s0 | awk '{print $4}' | head -1 | awk -F/ '{print $1}'").get().stdout.split('\n')[0]
+        node_pb_ip = self.core0_client.client.bash("ip -o a s dev enp2s0 | awk '{print $4}' | head -1 | awk -F/ '{print $1}'").get().stdout.split('\n')[0]
         zt_nid = self.core0_client.client.zerotier.list()[0]['id']
-        res = self.core0_client.client.zerotier.leave(zt_nid).get()
-        self.assertEqual(res.state, 'SUCCESS')
+        self.core0_client.client.zerotier.leave(zt_nid).get()
+
         ##List nodes make sure it's halted
         response = self.nodes_api.get_nodes()
         for i in range(60):
             time.sleep(1)
-            if check_node_status(self.nodeid) == 'halted'
+            if check_node_status(self.nodeid) == 'halted':
                 break
         self.assertEqual(check_node_status(self.nodeid), 'halted')
 
@@ -214,6 +215,6 @@ class TestVmsAPI(TestcasesBase):
         client.zerotier.join(zt_nid)
         for i in range(60):
             time.sleep(1)
-            if check_node_status(self.nodeid) == 'running'
+            if check_node_status(self.nodeid) == 'running':
                 break
         self.assertEqual(check_node_status(self.nodeid), 'running')
