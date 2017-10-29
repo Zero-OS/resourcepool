@@ -11,7 +11,7 @@ import queue
 hostname_qu = queue.Queue()
 def create_new_device(manager, hostname, zt_net_id, itsyouonline_org, branch='master'):
     project = manager.list_projects()[0]
-    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}'.format(branch, zt_net_id, itsyouonline_org)
+    ipxe_script_url = 'https://bootstrap.gig.tech/ipxe/{}/{}/organization={}%20debug'.format(branch, zt_net_id, itsyouonline_org)
 
     available_facility = None
     facilities = [x.code for x in manager.list_facilities()]
