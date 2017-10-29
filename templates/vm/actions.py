@@ -240,7 +240,7 @@ def format_media_nics(job, medias):
 def install(job):
     import time
     from zeroos.core0.client.client import ResultError
-    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.orchestrator.utils import write_status_code_error
     service = job.service
     node = get_node(job)
 
@@ -263,7 +263,7 @@ def install(job):
                 nics=nics,
             )
         except ResultError as e:
-            Write_Status_code_Error(job, e)
+            write_status_code_error(job, e)
             cleanupzerodisk(job)
             service.saveAll()
             raise j.exceptions.Input(str(e))
