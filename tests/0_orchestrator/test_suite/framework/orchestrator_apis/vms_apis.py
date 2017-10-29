@@ -63,3 +63,27 @@ class VmsAPI(OrchestratorBase):
     @catch_exception_decoration
     def post_nodes_vms_vmid_migrate(self, nodeid, vmid, data):
         return self.orchestrator_client.nodes.MigrateVM(nodeid=nodeid, vmid=vmid, data=data)
+
+
+    @catch_exception_decoration_return
+    def post_nodes_vms_vmid_export(self, nodeid, vmid, **kwargs):
+        data = {
+                "url": self.orchestrator_driver.ftp_server
+                }
+        print("**********************url******************* %s "%self.orchestrator_driver.ftp_server)
+        data = self.update_default_data(default_data=data, new_data=kwargs)
+        response = self.orchestrator_client.nodes.ExportVM(nodeid=nodeid, vmid=vmid, data=data)
+        return response, data
+        
+
+    @catch_exception_decoration_return
+    def post_nodes_vms_import(self, nodeid, vdiskstorage, url, **kwargs):
+        data = {
+                "id": self.random_string(),
+                "vdiskstorage": vdiskstorage,
+                "url": url
+                }
+
+        data = self.update_default_data(default_data=data, new_data=kwargs)
+        response = self.orchestrator_client.nodes.ImportVM(nodeid=nodeid, data=data)
+        return response, data

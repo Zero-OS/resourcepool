@@ -70,14 +70,14 @@ def create_pkt_machine(manager, zt_net_id, itsyouonline_org, branch='master'):
                 raise
             continue
 
-    while True:
-        dev = manager.get_device(device.id)
-        if dev.state == 'active':
-            print(' [*] The new machines is active now.')
-            break
-        else:
-            print(' [*] provisioning the new machine ..')
-            time.sleep(10)
+    # while True:
+    #     dev = manager.get_device(device.id)
+    #     if dev.state == 'active':
+    #         print(' [*] The new machines is active now.')
+    #         break
+    #     else:
+    #         print(' [*] provisioning the new machine ..')
+    #         time.sleep(10)
     time.sleep(5)
     hostname_qu.put(hostname)
 

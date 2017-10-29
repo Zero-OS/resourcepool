@@ -19,7 +19,8 @@ class OrchasteratorDriver:
     zerotier_token = config['main']['zerotier_token']
     vm_username = config['main']['vm_username']
     vm_password = config['main']['vm_password']
-    
+    ftp_server = config['main']['ftp_server']
+
 
     def __init__(self):
         self.JWT = None

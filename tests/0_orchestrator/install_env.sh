@@ -28,9 +28,6 @@ sudo pip3 install -U git+https://github.com/zero-os/0-core.git@${CORE_0_BRANCH}#
 echo "[#] Installing Zerotier ..."
 curl -s https://install.zerotier.com/ | sudo bash
 
-## install local ftp server
-bash install_ftp_server.sh
-
 ## install Jumpscale 9
 url="https://raw.githubusercontent.com/Jumpscale/bash/${JS9_BRANCH}/install.sh"
 echo "[#] Installing Jumpscale 9 from ${url}"
@@ -85,6 +82,10 @@ echo "Enabling JWT..."
 cd tests/0_orchestrator/
 scp -P 2222 enable_jwt.sh root@localhost:
 ssh -tA root@localhost -p 2222 "bash enable_jwt.sh ${zerotierid} ${zerotiertoken} ${JS9_BRANCH} ${TRAVIS_BRANCH} ${CORE_0_BRANCH} ${ITSYOUONLINE_CL_ID} ${ITSYOUONLINE_CL_SECRET} ${ITSYOUONLINE_ORG} ${NAME_SPACE}"
+
+
+## install local ftp server
+bash install_ftp_server.sh
 
 # get orch-server ip
 orch_ip=$(ssh -At root@localhost -p 2222 "ip addr show zt0 | grep 'inet'")
