@@ -1,10 +1,10 @@
 package node
 
 import (
+	"fmt"
+	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/validators"
 	"gopkg.in/validator.v2"
-	"github.com/zero-os/0-orchestrator/api/tools"
-	"fmt"
 )
 
 // Definition of a virtual nic

@@ -17,6 +17,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
 	"github.com/zero-os/0-orchestrator/api/vdiskstorage/vdisk"
+	"github.com/zero-os/0-orchestrator/api/webhook"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -53,6 +54,7 @@ func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
 	r.PathPrefix("/vdiskstorage").Handler(apihandler)
+	r.PathPrefix("/webhooks").Handler(apihandler)
 
 	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
 	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
@@ -61,5 +63,7 @@ func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http
 	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, jwtProvider))
 	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, jwtProvider))
 	vdiskstorage.VdiskstorageInterfaceRoutes(api, vdiskstorage.NewVdiskStorageAPI(aysRepo, aysURL, jwtProvider))
+	webhook.WebhooksInterfaceRoutes(api, webhook.NewWebhookAPI(aysRepo, aysURL, jwtProvider))
+
 	return r
 }

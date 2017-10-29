@@ -7,9 +7,9 @@ import (
 
 // HealthCheckApi is API implementation of /health root endpoint
 type HealthCheckApi struct {
-	AysRepo       string
-	AysUrl        string
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysUrl      string
+	JWTProvider *tools.JWTProvider
 }
 
 func (api *HealthCheckApi) AysAPIClient() *ays.AtYourServiceAPI {
@@ -24,12 +24,12 @@ func (api *HealthCheckApi) AysRepoName() string {
 
 func NewHealthcheckAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *HealthCheckApi {
 	return &HealthCheckApi{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		JWTProvider:   jwtProvider,
+		AysRepo:     repo,
+		AysUrl:      aysurl,
+		JWTProvider: jwtProvider,
 	}
 }
 
 func (api *HealthCheckApi) GetJWT() (string, error) {
-        return api.JWTProvider.GetJWT()
+	return api.JWTProvider.GetJWT()
 }

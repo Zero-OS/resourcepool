@@ -112,6 +112,7 @@ def install(job):
     service = job.service
     service.executeAction('start', context=job.context)
 
+
 def save_certificates(job, container, caddy_dir="/.caddy"):
     from io import  BytesIO
     if container.client.filesystem.exists(caddy_dir):
