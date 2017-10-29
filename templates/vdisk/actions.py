@@ -346,6 +346,7 @@ def import_vdisk(job):
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
     container = create_from_template_container(job, node)
+    vdiskstorage_service = service.parent
     try:
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
@@ -357,6 +358,17 @@ def import_vdisk(job):
                                           dialstrings=etcd_cluster.dialstrings,
                                           snapshotID=snapshotID,
                                           ftpurl=url)
+
+        object_cluster = vdiskstorage_service.model.data.objectCluster
+        if vdiskstorage_service.model.data.objectCluster:
+            object_cluster_service = service.aysrepo.serviceGet(role='storagecluster.object', instance=object_cluster)
+            data_shards = object_cluster_service.model.data.dataShards
+            parity_shards = object_cluster_service.model.data.parityShards
+            cmd += " --data-shards {dataShards} --parity-shards {parityShards}".format(dataShards=data_shards,
+                                                                                       parityShards=parity_shards)
+        else:
+            cmd += " --data-shards 0 --parity-shards 0"
+
         if cryptoKey:
             cmd += " --key {cryptoKey}".format(cryptoKey=cryptoKey)
         job.logger.info(cmd)

@@ -648,8 +648,8 @@ def migrate(job):
     service.saveAll()
 
     try:
-        job.logger.info("start migration of vm {vm} from {src} to {dst} (try {rety})".format(
-                        vm=service.name, src=service.parent.name, dst=target_node.name, rety=migration_try))
+        job.logger.info("start migration of vm {vm} from {src} to {dst}".format(
+                        vm=service.name, src=service.parent.name, dst=target_node.name))
 
         #start tlog server on target node
         services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]

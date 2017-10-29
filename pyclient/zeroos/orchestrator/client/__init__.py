@@ -61,7 +61,8 @@ from .EnumVdiskStatus import EnumVdiskStatus
 from .EnumVdiskType import EnumVdiskType
 from .EnumZerotierListItemType import EnumZerotierListItemType
 from .EnumZerotierType import EnumZerotierType
-from .ExportUrl import ExportUrl
+from .ExportVM import ExportVM
+from .FTPUrl import FTPUrl
 from .Filesystem import Filesystem
 from .FilesystemCreate import FilesystemCreate
 from .GW import GW
@@ -84,6 +85,7 @@ from .JobResult import JobResult
 from .ListGW import ListGW
 from .MemInfo import MemInfo
 from .Message import Message
+from .MigrateGW import MigrateGW
 from .NicInfo import NicInfo
 from .NicLink import NicLink
 from .Node import Node

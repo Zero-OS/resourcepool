@@ -22,10 +22,11 @@ class TestcasesBase(TestCase):
         self.storageclusters_api = self.orchasterator_driver.storageclusters_api
         self.vdisks_api = self.orchasterator_driver.vdisks_api
         self.vms_api = self.orchasterator_driver.vms_api
+        self.backup_api = self.orchasterator_driver.backup_api
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.vm_username = self.orchasterator_driver.vm_username
-        self.vm_password = self.orchasterator_driver.vm_password        
+        self.vm_password = self.orchasterator_driver.vm_password
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.Client = Client
         self.session = requests.Session()
@@ -211,9 +212,9 @@ class TestcasesBase(TestCase):
         """
         vnc = 'vncdotool -s %s' % vnc_ip
         commands = [
-            '%s' % username, 
-            '%s' % password, 
-            'sudo su', 
+            '%s' % username,
+            '%s' % password,
+            'sudo su',
             '%s' % password,
             'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd',
             'service sshd restart'
@@ -274,16 +275,15 @@ class Utiles:
     def logger(self):
         logger = logging.getLogger('0-Orchestrator')
         if not logger.handlers:
-            fileHandler = logging.FileHandler('test_suite.log', mode='w')  
+            fileHandler = logging.FileHandler('test_suite.log', mode='w')
             formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
             fileHandler.setFormatter(formatter)
             logger.addHandler(fileHandler)
 
         return logger
-        
-        
+
+
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, error = process.communicate()
         return out.decode('utf-8'), error.decode('utf-8')
-

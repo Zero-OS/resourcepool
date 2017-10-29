@@ -51611,17 +51611,19 @@ the "Authorization" header</p>
 
 
 
+
+
   
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__vms__vmid__import">
-          <span class="parent">/nodes/{nodeid}/vms/{vmid}</span>/import
+        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__vms_import">
+          <span class="parent">/nodes/{nodeid}/vms</span>/import
         </a>
 
         <span class="methods">
           
-            <a href="#nodes__nodeid__vms__vmid__import_post"><!-- modal shown by hashchange event -->
+            <a href="#nodes__nodeid__vms_import_post"><!-- modal shown by hashchange event -->
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -51629,7 +51631,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_nodes__nodeid__vms__vmid__import" class="panel-collapse collapse">
+    <div id="panel_nodes__nodeid__vms_import" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -51637,7 +51639,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#nodes__nodeid__vms__vmid__import_post'" class="list-group-item">
+            <div onclick="window.location.href = '#nodes__nodeid__vms_import_post'" class="list-group-item">
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Import the virtual machine from ftp server</p>
@@ -51651,14 +51653,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="nodes__nodeid__vms__vmid__import_post">
+      <div class="modal fade" tabindex="0" id="nodes__nodeid__vms_import_post">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/nodes/{nodeid}/vms/{vmid}</span>/import
+                <span class="parent">/nodes/{nodeid}/vms</span>/import
               </h4>
             </div>
 
@@ -51699,19 +51701,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#nodes__nodeid__vms__vmid__import_post_request" data-toggle="tab">Request</a>
+                    <a href="#nodes__nodeid__vms_import_post_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#nodes__nodeid__vms__vmid__import_post_response" data-toggle="tab">Response</a>
+                    <a href="#nodes__nodeid__vms_import_post_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#nodes__nodeid__vms__vmid__import_post_securedby" data-toggle="tab">Security</a>
+                    <a href="#nodes__nodeid__vms_import_post_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -51719,39 +51721,13 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="nodes__nodeid__vms__vmid__import_post_request">
+                  <div class="tab-pane active" id="nodes__nodeid__vms_import_post_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
                         
                           <li>
   <strong>nodeid</strong>:
-
-    
-      <em>required (string)
-      </em>
-    
-  
-
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                        
-                          <li>
-  <strong>vmid</strong>:
 
     
       <em>required (string)
@@ -51899,7 +51875,7 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>blockStoragecluster</strong>:
+  <strong>id</strong>:
 
     
       <em>required (string)
@@ -51925,36 +51901,10 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>objectStoragecluster</strong>:
+  <strong>vdiskstorage</strong>:
 
     
-      <em>(string)
-      </em>
-    
-  
-
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>backupStoragecluster</strong>:
-
-    
-      <em>(string)
+      <em>required (string)
       </em>
     
   
@@ -51988,7 +51938,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="nodes__nodeid__vms__vmid__import_post_response">
+                  <div class="tab-pane" id="nodes__nodeid__vms_import_post_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
 <p>Virtual machine is imported successfully</p>
@@ -52002,7 +51952,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="nodes__nodeid__vms__vmid__import_post_securedby">
+                  <div class="tab-pane" id="nodes__nodeid__vms_import_post_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -52097,8 +52047,6 @@ the "Authorization" header</p>
       </div>
     
   </div>
-
-
 
 
 
@@ -64524,7 +64472,7 @@ details in a user&#39;s account without getting their password.</p>
   <strong>eventtypes</strong>:
 
     
-      <em>required (array of EventTypes)
+      <em>required (array of EventType)
       </em>
     
   

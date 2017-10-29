@@ -272,7 +272,7 @@ class StoragePool(Mountable):
         subvolpath = os.path.join(fspath, name)
         self.client.btrfs.subvol_create(subvolpath)
         if quota:
-            pass
+            self.client.btrfs.subvol_quota(subvolpath, str(quota))
         return FileSystem(name, self)
 
     @property

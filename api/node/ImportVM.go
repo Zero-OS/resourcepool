@@ -6,10 +6,9 @@ import (
 )
 
 type ImportVM struct {
-	URL                  string `yaml:"url" json:"url" validate:"nonzero"`
-	BlockStoragecluster  string `yaml:"blockStoragecluster" json:"blockStoragecluster" validate:"nonzero"`
-	ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
-	BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
+	URL          string `yaml:"url" json:"url" validate:"nonzero"`
+	ID           string `yaml:"id" json:"id" validate:"nonzero"`
+	VdiskStorage string `yaml:"vdiskstorage" json:"vdiskstorage" validate:"nonzero"`
 }
 
 func (s ImportVM) Validate() error {
