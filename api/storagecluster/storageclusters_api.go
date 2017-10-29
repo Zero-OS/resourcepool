@@ -8,16 +8,16 @@ import (
 
 // StorageclusterAPI is API implementation of /storagecluster root endpoint
 type StorageclustersAPI struct {
-	AysRepo       string
-	AysUrl        string
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysUrl      string
+	JWTProvider *tools.JWTProvider
 }
 
 func NewStorageClusterAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *StorageclustersAPI {
 	return &StorageclustersAPI{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		JWTProvider:   jwtProvider,
+		AysRepo:     repo,
+		AysUrl:      aysurl,
+		JWTProvider: jwtProvider,
 	}
 }
 
@@ -32,5 +32,5 @@ func (api *StorageclustersAPI) AysRepoName() string {
 }
 
 func (api *StorageclustersAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetJWT()
+	return api.JWTProvider.GetJWT()
 }

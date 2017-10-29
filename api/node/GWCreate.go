@@ -2,9 +2,9 @@ package node
 
 import (
 	"fmt"
+	"github.com/zero-os/0-orchestrator/api/tools"
 	"gopkg.in/validator.v2"
 	"strconv"
-	"github.com/zero-os/0-orchestrator/api/tools"
 )
 
 type ListGW struct {
