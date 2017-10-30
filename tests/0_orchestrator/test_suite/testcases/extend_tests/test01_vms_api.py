@@ -19,8 +19,8 @@ class TestVmsAPI(TestcasesBase):
 
         TestVmsAPI.nodeid = self.nodeid
         #for this setup storage node will be different from vm node
-        storage_node = self.get_random_node(except_node=self.nodeid)
-        nodes = [storage_node]
+        TestVmsAPI.storage_node = self.get_random_node(except_node=self.nodeid)
+        nodes = [TestVmsAPI.storage_node]
         number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
 
         storageclusters = self.storageclusters_api.get_storageclusters()
@@ -61,7 +61,7 @@ class TestVmsAPI(TestcasesBase):
         self.vdisks_api.delete_image(TestVmsAPI.vdiskstorageid, TestVmsAPI.imageid)
 
     def setUp(self):
-        #super().setUp()
+        super().setUp(except_node=TestVmsAPI.storage_node)
         response = self.nodes_api.get_nodes_nodeid_mem(self.nodeid)
         self.assertEqual(response.status_code, 200)
         node_available_memory = int(response.json()['available'] / (1024 ** 3))
@@ -204,17 +204,17 @@ class TestVmsAPI(TestcasesBase):
         response = self.nodes_api.get_nodes()
         for i in range(60):
             time.sleep(1)
-            if check_node_status(self.nodeid) == 'halted':
+            if self.check_node_status(self.nodeid) == 'halted':
                 break
-        self.assertEqual(check_node_status(self.nodeid), 'halted')
+        self.assertEqual(self.check_node_status(self.nodeid), 'halted')
 
         self.lg.info('Make sure VM1 is running')
 
         self.lg.info('Make node (N0) join the zerotiernetwork again')
         client = Client(node_pb_ip, password=self.jwt)
-        client.zerotier.join(zt_nid)
+        client.client.zerotier.join(zt_nid)
         for i in range(60):
             time.sleep(1)
-            if check_node_status(self.nodeid) == 'running':
+            if self.check_node_status(self.nodeid) == 'running':
                 break
-        self.assertEqual(check_node_status(self.nodeid), 'running')
+        self.assertEqual(self.check_node_status(self.nodeid), 'running')

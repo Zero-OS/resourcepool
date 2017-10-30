@@ -25,13 +25,13 @@ class TestcasesBase(TestCase):
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.vm_username = self.orchasterator_driver.vm_username
-        self.vm_password = self.orchasterator_driver.vm_password        
+        self.vm_password = self.orchasterator_driver.vm_password
         self.nodes_info = self.orchasterator_driver.nodes_info
         self.Client = Client
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)
 
-    def setUp(self):
+    def setUp(self, except_node=None):
         self._testID = self._testMethodName
         self._startTime = time.time()
 
@@ -41,7 +41,7 @@ class TestcasesBase(TestCase):
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(540)
 
-        self.nodeid = self.get_random_node()
+        self.nodeid = self.get_random_node(except_node=except_node)
         self.lg.info('Get random nodeid : %s' % str(self.nodeid))
         self.nodeipList = [x['ip'] for x in self.nodes_info if x['id'] == self.nodeid]
         self.assertNotEqual(self.nodeipList, [])
@@ -211,9 +211,9 @@ class TestcasesBase(TestCase):
         """
         vnc = 'vncdotool -s %s' % vnc_ip
         commands = [
-            '%s' % username, 
-            '%s' % password, 
-            'sudo su', 
+            '%s' % username,
+            '%s' % password,
+            'sudo su',
             '%s' % password,
             'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd',
             'service sshd restart'
