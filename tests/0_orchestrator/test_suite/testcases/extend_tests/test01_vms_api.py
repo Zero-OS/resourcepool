@@ -123,17 +123,18 @@ class TestVmsAPI(TestcasesBase):
 
     def setUp_vm_migration(self):
         self.lg.info('[*] Migrate virtual machine (VM0) to another node(N1), should succeed with 204')
-        new_node = self.get_random_node(except_node=self.nodeid)
-        body = {"nodeid": new_node}
+        self.new_node = self.get_random_node(except_node=self.nodeid)
+        self.new_node_client = self.Client(self.get_node_ip(self.new_node), password=self.jwt)
+        body = {"nodeid": self.new_node}
         response = self.vms_api.post_nodes_vms_vmid_migrate(self.nodeid, self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
         self.lg.info('[*] Get virtual machine (VM0), virtual machine (VM0) status should be running ')
-        response = self.vms_api.get_nodes_vms(new_node)
+        response = self.vms_api.get_nodes_vms(self.new_node)
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.data['id'], [x['id'] for x in response.json()])
 
-        response = self.vms_api.get_nodes_vms_vmid(new_node, self.data['id'])
+        response = self.vms_api.get_nodes_vms_vmid(self.new_node, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running')
 
@@ -141,24 +142,38 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
 
+        self.lg.info('[*] Create ssh client contaienr for new_node')
+        nics = [{"type": "default"}]
+        response, data = self.containers_api.post_containers(self.new_node, nics=nics, hostNetworking=True)
+        self.assertEqual(response.status_code, 201)
+        self.ssh_client2 = self.new_node_client.get_container_client(data['name'])
+
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1199")
-    def test01_migrate_vm_more_than_one_time(self, destination_node):
+    def test01_migrate_vm_more_than_one_time(self):
         """ GAT-156
         **Test Scenario:**
 
         #. Get random nodid (N0).
         #. Create virtual machine (VM0) on node (N0).
         #. Migrate virtual machine (VM0) to another node(N1), should succeed with 204.
+        #. Execute command on virtual machine (VM0), should succeed.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
         #. Migrate virtual machine (VM0) to (N0) again, should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running.
+        #. Execute command on virtual machine (VM0), should succeed.
 
         """
         self.setUp_vm_migration()
 
+        self.lg.info("Execute command on virtual machine (VM0), should succeed.")
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'], self.new_node)
+        response = self.execute_command_inside_vm(self.ssh_client2, vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
+
         self.lg.info('[*] Migrate virtual machine (VM0) to (N0) again , should succeed with 204')
         body = {"nodeid": self.nodeid}
-        response = self.vms_api.post_nodes_vms_vmid_migrate(new_node, self.data['id'], body)
+        response = self.vms_api.post_nodes_vms_vmid_migrate(self.new_node, self.data['id'], body)
         self.assertEqual(response.status_code, 204)
 
         self.lg.info('[*] Get virtual machine (VM0) in (N0) , virtual machine (VM0) status should be running ')
@@ -170,9 +185,15 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running')
 
-        response = self.vms_api.get_nodes_vms(new_node)
+        response = self.vms_api.get_nodes_vms(self.new_node)
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
+
+        self.lg.info("Execute command on virtual machine (VM0), should succeed.")
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'], self.nodeid)
+        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
 
     def check_node_status(self, nodeid):
         response = self.nodes_api.get_nodes()
@@ -215,6 +236,9 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(self.check_node_status(self.nodeid), 'halted')
 
         self.lg.info('Make sure VM1 is running')
+        response = self.vms_api.get_nodes_vms_vmid(self.new_node, self.data['id'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'running')
 
         self.lg.info('Make node (N0) join the zerotiernetwork again')
         client = Client(node_pb_ip, password=self.jwt)

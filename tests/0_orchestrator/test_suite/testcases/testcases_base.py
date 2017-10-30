@@ -240,13 +240,19 @@ class TestcasesBase(TestCase):
                 self.utiles.execute_shell_commands(cmd="%s type %s key enter" % (vnc, repr(cmd)))
                 time.sleep(1)
 
-    def get_vm_default_ipaddress(self, vmname):
+    def get_vm_default_ipaddress(self, vmname, nodeid=""):
+        if not nodeid:
+            node_client = self.core0_client
+        else:
+            nodeip = self.get_node_ip(nodeid)
+            node_client = Client(nodeip, password=self.jwt)
+
         cmd = "virsh dumpxml {} | grep 'mac address' | cut -d '=' -f2 | cut -d '/' -f1".format(vmname)
-        vm_mac_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+        vm_mac_addr = node_client.client.bash(cmd).get().stdout.strip()
 
         cmd = "arp | grep {} | cut -d '(' -f2 | cut -d ')' -f1".format(vm_mac_addr)
         for i in range(20):
-            vm_ip_addr = self.core0_client.client.bash(cmd).get().stdout.strip()
+            vm_ip_addr = node_client.client.bash(cmd).get().stdout.strip()
             if vm_ip_addr:
                 break
             else:
@@ -254,6 +260,11 @@ class TestcasesBase(TestCase):
 
         return vm_ip_addr
 
+
+    def get_node_ip(self, nodeid):
+        response = self.nodes_api.get_nodes_nodeid(nodeid)
+        self.assertEqual(response.status_code, 200)
+        return response.json()["ipaddress"]
 
     def execute_command_inside_vm(self, client, vmip,  cmd, username=None, password=None):
         username = username or self.vm_username
@@ -274,16 +285,15 @@ class Utiles:
     def logger(self):
         logger = logging.getLogger('0-Orchestrator')
         if not logger.handlers:
-            fileHandler = logging.FileHandler('test_suite.log', mode='w')  
+            fileHandler = logging.FileHandler('test_suite.log', mode='w')
             formatter = logging.Formatter('%(asctime)s - %(name)s - [%(levelname)s] - %(message)s')
             fileHandler.setFormatter(formatter)
             logger.addHandler(fileHandler)
 
         return logger
-        
-        
+
+
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, error = process.communicate()
         return out.decode('utf-8'), error.decode('utf-8')
-
