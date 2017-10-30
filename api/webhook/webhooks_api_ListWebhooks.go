@@ -22,8 +22,8 @@ func (api *WebhooksAPI) ListWebhooks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var respBody = make([]string, len(services))
-	for _, service := range services {
-		respBody = append(respBody, service.Name)
+	for i, service := range services {
+		respBody[i] = service.Name
 	}
 
 	w.Header().Set("Content-Type", "application/json")
