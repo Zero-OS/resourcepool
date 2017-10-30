@@ -6,6 +6,7 @@ from .health_service import HealthService
 from .nodes_service import NodesService 
 from .storageclusters_service import StorageclustersService 
 from .vdiskstorage_service import VdiskstorageService 
+from .webhooks_service import WebhooksService 
 
 
 class Client:
@@ -19,6 +20,7 @@ class Client:
         self.nodes = NodesService(self)
         self.storageclusters = StorageclustersService(self)
         self.vdiskstorage = VdiskstorageService(self)
+        self.webhooks = WebhooksService(self)
 
     def is_goraml_class(self, data):
         # check if a data is go-raml generated class
