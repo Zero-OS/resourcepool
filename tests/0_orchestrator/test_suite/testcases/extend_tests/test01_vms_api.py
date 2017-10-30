@@ -4,6 +4,7 @@ from testcases.core0_client import Client
 from parameterized import parameterized
 #from zeroos.core0.client import Client
 from testcases.core0_client import Client
+import ipaddress
 
 class TestVmsAPI(TestcasesBase):
     @classmethod
@@ -197,6 +198,11 @@ class TestVmsAPI(TestcasesBase):
 
         self.lg.info('Shutdown node (N0) be leaving zerotier network, should succeed')
         node_pb_ip = self.core0_client.client.bash("ip -o a s dev enp2s0 | awk '{print $4}' | head -1 | awk -F/ '{print $1}'").get().stdout.split('\n')[0]
+        try:
+            if ipaddress.ip_address(node_pb_ip).is_private == True:
+                self.skipTest("Private ip .. Can't run this testcase")
+        except:
+            self.skipTest("Can't get ip .. Most probably the interface name is wrong")
         zt_nid = self.core0_client.client.zerotier.list()[0]['id']
         self.core0_client.client.zerotier.leave(zt_nid).get()
 
