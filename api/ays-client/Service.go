@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+
 	"gopkg.in/validator.v2"
 )
 
@@ -18,6 +19,7 @@ type Service struct {
 	Producers  []ServicePointer `json:"producers" validate:"nonzero"`
 	Repository string           `json:"repository" validate:"nonzero"`
 	Role       string           `json:"role" validate:"nonzero"`
+	Actor      string           `json:"actor" validate:"nonzero"`
 	State      string           `json:"state" validate:"nonzero"`
 }
 

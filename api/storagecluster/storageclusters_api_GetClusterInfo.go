@@ -96,7 +96,7 @@ func (api *StorageclustersAPI) GetClusterInfo(w http.ResponseWriter, r *http.Req
 		MetaDriveType: clusterItem.MetaDiskType,
 	}
 
-	if clusterItem.MetaDiskType != "" {
+	if service.Actor != "storagecluster.block" {
 		respBody.ClusterType = EnumClusterTypeObject
 	} else {
 		respBody.ClusterType = EnumClusterTypeBlock
