@@ -514,7 +514,6 @@ def shutdown_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-
     if vm.model.data.status == 'running':
         job.context['token'] = get_jwt_token(job.service.aysrepo)
         asyncio.ensure_future(vm.asyncExecuteAction('shutdown', context=job.context), loop=job.service._loop)

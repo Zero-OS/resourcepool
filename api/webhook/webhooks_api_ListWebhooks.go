@@ -21,7 +21,7 @@ func (api *WebhooksAPI) ListWebhooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var respBody []string
+	var respBody = make([]string, len(services))
 	for _, service := range services {
 		respBody = append(respBody, service.Name)
 	}
