@@ -1,7 +1,6 @@
 package storagecluster
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"net/http"
@@ -49,25 +48,11 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	data := struct {
-		MetaDriveType EnumClusterDriveType `yaml:"metaDiskType" json:"metaDiskType"`
-	}{}
-
-	if err := json.Unmarshal(service.Data, &data); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmarshaling ays response")
-		return
-	}
-
-	actor := "storagecluster.block"
-	if data.MetaDriveType != "" {
-		actor = "storagecluster.object"
-	}
-
 	// execute the delete action
 	blueprint := map[string]interface{}{
 		"actions": []tools.ActionBlock{{
 			Action:  "delete",
-			Actor:   actor,
+			Actor:   service.Actor,
 			Service: storageCluster,
 		}},
 	}
