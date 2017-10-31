@@ -68,14 +68,14 @@ class TestGraphsAPI(TestcasesBase):
         response = self.graphs_api.put_graphs_graphid(graphid=self.graphid, **body)
         self.assertEqual(response.status_code, 204, response.content)
 
-        self.lg.info('Get graph by id, should succeed with 200')
+        self.lg.info('Get graph (G0) info, should succeed with 200')
         response = self.graphs_api.get_graphs_graphid(graphid=self.graphid)
         self.assertEqual(response.status_code, 200, response.content)
 
         self.lg.info('Check that graph (G0) info is updated, should succeed')
         self.assertEqual(response.json()['url'], body['url'])
 
-        self.lg.info('Update graph info with invalid body, should fail with 400')
+        self.lg.info('Update graph (G0) info with invalid body, should fail with 400')
         body = {'id':123456, 'url':123456} 
         response, data = self.graphs_api.put_graphs_graphid(graphid=self.graphid, **body)
         self.assertEqual(response.status_code, 400, response.content)
@@ -93,7 +93,7 @@ class TestGraphsAPI(TestcasesBase):
         #. Create dashboard (DB0), should succeed with 201.
         #. List dashboards. dashboard (DB0) should be listed.
         """
-        self.lg.info('List dashboards. dashboard (DB0) should be listed')
+        self.lg.info('List dashboards. Dashboard (DB0) should be listed')
         response = self.graphs_api.get_dashboards(self.graphid)
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.dashboard_data['name'], [x['name'] for x in response.json()])
