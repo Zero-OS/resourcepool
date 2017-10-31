@@ -17,7 +17,8 @@ var (
 )
 
 type AYStool struct {
-	Ays *ays.AysService
+	Ays     *ays.AysService
+	Retries string
 }
 
 type AYSError struct {
@@ -221,8 +222,10 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 }
 
 func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
-
-	run, resp, err := aystool.Ays.CreateRun(repoName, nil, nil)
+	query := map[string]interface{}{
+		"retries": aystool.Retries,
+	}
+	run, resp, err := aystool.Ays.CreateRun(repoName, nil, query)
 	if err != nil {
 		return nil, NewHTTPError(resp, err.Error())
 	}
