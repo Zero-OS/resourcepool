@@ -34,10 +34,6 @@ class GraphsAPI(OrchestratorBase):
     def get_dashboard_dashboardname(self, graphid, dashboardname):
         return self.orchestrator_client.graphs.GetDashboard(graphid=graphid, dashboardname=dashboardname)
 
-    @catch_exception_decoration
-    def get_dashboard_dashboardname(self, graphid, dashboardname):
-        return self.orchestrator_client.graphs.GetDashboard(graphid=graphid, dashboardname=dashboardname)
-
     @catch_exception_decoration_return
     def post_dashboard(self, graphid, **kwargs):
         data = {
