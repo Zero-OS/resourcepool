@@ -211,7 +211,8 @@ class TestVmsAPI(TestcasesBase):
         #. Migrate virtual machine (VM0) to node (N1), should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running
         #. Shutdown node (N0) be leaving zerotier network, should succeed
-        #. Make sure VM1 is running
+        #. Make sure virtual machine (VM0) is running
+        #. Execute command on virtual machine (VM0), should succeed.
         #. Make node (N0) join the zerotiernetwork again
         """
 
@@ -220,14 +221,13 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info('Shutdown node (N0) be leaving zerotier network, should succeed')
         node_pb_ip = self.core0_client.client.bash("ip -o a s dev enp2s0 | awk '{print $4}' | head -1 | awk -F/ '{print $1}'").get().stdout.split('\n')[0]
         try:
-            if ipaddress.ip_address(node_pb_ip).is_private == True:
+            if ipaddress.ip_address(node_pb_ip).is_private:
                 self.skipTest("Private ip .. Can't run this testcase")
         except:
             self.skipTest("Can't get ip .. Most probably the interface name is wrong")
         zt_nid = self.core0_client.client.zerotier.list()[0]['id']
         self.core0_client.client.zerotier.leave(zt_nid).get()
 
-        ##List nodes make sure it's halted
         response = self.nodes_api.get_nodes()
         for i in range(60):
             time.sleep(1)
@@ -235,10 +235,16 @@ class TestVmsAPI(TestcasesBase):
                 break
         self.assertEqual(self.check_node_status(self.nodeid), 'halted')
 
-        self.lg.info('Make sure VM1 is running')
+        self.lg.info('Make sure VM0 is running')
         response = self.vms_api.get_nodes_vms_vmid(self.new_node, self.data['id'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'running')
+
+        self.lg.info("Execute command on virtual machine (VM0), should succeed.")
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'], self.nodeid)
+        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
+        self.assertEqual(response.state, 'SUCCESS')
+        self.assertEqual(response.stdout.strip(), 'Linux')
 
         self.lg.info('Make node (N0) join the zerotiernetwork again')
         client = Client(node_pb_ip, password=self.jwt)
