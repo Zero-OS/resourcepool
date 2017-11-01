@@ -40,6 +40,7 @@ func (api *VdiskstorageAPI) DeleteVdiskStorage(w http.ResponseWriter, r *http.Re
 	if len(services) > 0 {
 		err = fmt.Errorf("Deleting a vdisk storage that consume vdisk images is not allowed")
 		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
 	}
 
 	res, err := aysClient.Ays.DeleteServiceByName(vdiskstorageID, "vdiskstorage", api.AysRepo, nil, nil)

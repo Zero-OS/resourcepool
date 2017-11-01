@@ -49,15 +49,6 @@ class NodesService:
         return self.client.get(uri, None, headers, query_params, content_type)
 
 
-    def GetContainerDiskInfo(self, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
-        """
-        Get detailed information of all the disks in the container
-        It is method for GET /nodes/{nodeid}/containers/{containername}/disks
-        """
-        uri = self.client.base_url + "/nodes/"+nodeid+"/containers/"+containername+"/disks"
-        return self.client.get(uri, None, headers, query_params, content_type)
-
-
     def FileDelete(self, data, containername, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Delete file from container
@@ -429,6 +420,15 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def MigrateGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Migrate Gateway
+        It is method for POST /nodes/{nodeid}/gws/{gwname}/migrate
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/gws/"+gwname+"/migrate"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def StartGateway(self, data, gwname, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Start Gateway instance
@@ -780,21 +780,21 @@ class NodesService:
         return self.client.post(uri, data, headers, query_params, content_type)
 
 
+    def ImportVM(self, data, nodeid, headers=None, query_params=None, content_type="application/json"):
+        """
+        Import the virtual machine from ftp server
+        It is method for POST /nodes/{nodeid}/vms/import
+        """
+        uri = self.client.base_url + "/nodes/"+nodeid+"/vms/import"
+        return self.client.post(uri, data, headers, query_params, content_type)
+
+
     def ExportVM(self, data, vmid, nodeid, headers=None, query_params=None, content_type="application/json"):
         """
         Export the virtual machine to ftp server
         It is method for POST /nodes/{nodeid}/vms/{vmid}/export
         """
         uri = self.client.base_url + "/nodes/"+nodeid+"/vms/"+vmid+"/export"
-        return self.client.post(uri, data, headers, query_params, content_type)
-
-
-    def ImportVM(self, data, vmid, nodeid, headers=None, query_params=None, content_type="application/json"):
-        """
-        Import the virtual machine from ftp server
-        It is method for POST /nodes/{nodeid}/vms/{vmid}/import
-        """
-        uri = self.client.base_url + "/nodes/"+nodeid+"/vms/"+vmid+"/import"
         return self.client.post(uri, data, headers, query_params, content_type)
 
 

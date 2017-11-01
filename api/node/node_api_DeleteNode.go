@@ -41,6 +41,7 @@ func (api *NodeAPI) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	if len(services) > 0 {
 		err = fmt.Errorf("Deleting a node that consume storage clusters is not allowed")
 		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
 	}
 
 	// execute the uninstall action of the node

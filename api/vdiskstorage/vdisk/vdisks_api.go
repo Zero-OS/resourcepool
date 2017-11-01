@@ -8,16 +8,18 @@ import (
 
 // VdisksAPI is API implementation of /vdisks root endpoint
 type VdisksAPI struct {
-	AysRepo       string
-	AysUrl        string
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysUrl      string
+	AysRetries  string
+	JWTProvider *tools.JWTProvider
 }
 
-func NewVdiskAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *VdisksAPI {
+func NewVdiskAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider) *VdisksAPI {
 	return &VdisksAPI{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		JWTProvider:    jwtProvider,
+		AysRepo:     repo,
+		AysUrl:      aysUrl,
+		AysRetries:  aysRetries,
+		JWTProvider: jwtProvider,
 	}
 }
 
@@ -32,6 +34,9 @@ func (api *VdisksAPI) AysRepoName() string {
 }
 
 func (api *VdisksAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetJWT()
+	return api.JWTProvider.GetJWT()
 }
 
+func (api *VdisksAPI) AysRetriesConfig() string {
+	return api.AysRetries
+}
