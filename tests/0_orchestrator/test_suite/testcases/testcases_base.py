@@ -79,6 +79,12 @@ class TestcasesBase(TestCase):
     def random_item(self, array):
         return array[random.randint(0, len(array) - 1)]
 
+    def check_node_status(self, nodeid):
+        response = self.nodes_api.get_nodes()
+        self.assertEqual(response.status_code, 200)
+        for node in response.json():
+            return node['status']
+
     def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
 

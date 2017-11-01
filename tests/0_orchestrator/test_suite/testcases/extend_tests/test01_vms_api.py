@@ -195,13 +195,7 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
-    def check_node_status(self, nodeid):
-        response = self.nodes_api.get_nodes()
-        self.assertEqual(response.status_code, 200)
-        for node in response.json():
-            return node['status']
-
-    @unittest.skip('not fully tested')
+    @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1199')
     def test002_migration_afer_node_shutdown(self):
         """ GAT-000
         **Test Scenario:**
@@ -210,7 +204,7 @@ class TestVmsAPI(TestcasesBase):
         #. Create the VM0 itself on node N0
         #. Migrate virtual machine (VM0) to node (N1), should succeed with 204.
         #. Get virtual machine (VM0), virtual machine (VM0) status should be running
-        #. Shutdown node (N0) be leaving zerotier network, should succeed
+        #. Shutdown node (N0) by leaving zerotier network, should succeed
         #. Make sure virtual machine (VM0) is running
         #. Execute command on virtual machine (VM0), should succeed.
         #. Make node (N0) join the zerotiernetwork again
@@ -218,7 +212,7 @@ class TestVmsAPI(TestcasesBase):
 
         self.setUp_vm_migration()
 
-        self.lg.info('Shutdown node (N0) be leaving zerotier network, should succeed')
+        self.lg.info('Shutdown node (N0) by leaving zerotier network, should succeed')
         node_pb_ip = self.core0_client.client.bash("ip -o a s dev enp2s0 | awk '{print $4}' | head -1 | awk -F/ '{print $1}'").get().stdout.split('\n')[0]
         try:
             if ipaddress.ip_address(node_pb_ip).is_private:
@@ -226,9 +220,12 @@ class TestVmsAPI(TestcasesBase):
         except:
             self.skipTest("Can't get ip .. Most probably the interface name is wrong")
         zt_nid = self.core0_client.client.zerotier.list()[0]['id']
-        self.core0_client.client.zerotier.leave(zt_nid).get()
+        try:
+            self.core0_client.client.zerotier.leave(zt_nid)
+        except:
+            pass
+        time.sleep(20)
 
-        response = self.nodes_api.get_nodes()
         for i in range(60):
             time.sleep(1)
             if self.check_node_status(self.nodeid) == 'halted':
@@ -241,8 +238,8 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.json()['status'], 'running')
 
         self.lg.info("Execute command on virtual machine (VM0), should succeed.")
-        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'], self.nodeid)
-        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, 'uname')
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'], self.new_node)
+        response = self.execute_command_inside_vm(self.ssh_client2, vm_ip_address, 'uname')
         self.assertEqual(response.state, 'SUCCESS')
         self.assertEqual(response.stdout.strip(), 'Linux')
 
