@@ -197,7 +197,7 @@ class TestVmsAPI(TestcasesBase):
 
     @unittest.skip('https://github.com/zero-os/0-orchestrator/issues/1199')
     def test002_migration_afer_node_shutdown(self):
-        """ GAT-000
+        """ GAT-167
         **Test Scenario:**
 
         #. Create virtual machine (VM0)'s storage components on node other than node N0
