@@ -2,10 +2,10 @@ package webhook
 
 import (
 	"encoding/json"
-	"net/http"
-	"github.com/zero-os/0-orchestrator/api/tools"
-	"github.com/gorilla/mux"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/zero-os/0-orchestrator/api/tools"
+	"net/http"
 )
 
 // UpdateWebhook is the handler for PUT /webhooks/{webhookname}
@@ -31,7 +31,6 @@ func (api *WebhooksAPI) UpdateWebhook(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
-
 
 	exists, err := aysClient.ServiceExists("webhook", webhookName, api.AysRepo)
 	if err != nil {

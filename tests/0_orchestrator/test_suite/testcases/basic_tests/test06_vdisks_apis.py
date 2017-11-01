@@ -14,7 +14,7 @@ class TestVdisks(TestcasesBase):
         nodes = [self.nodeid]
         number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
-        if not storageclusters:
+        if not storageclusters.json():
             if not number_of_free_disks:
                 self.skipTest('[*] No free disks to create storagecluster')
 
@@ -256,7 +256,7 @@ class TestVdisks(TestcasesBase):
                      }
         self.assertIn(img0_data, response.json())
 
-    def test008_list_vdisk_images_get_vdiskstorage_details(self):
+    def test008_get_vdiskstorage_details(self):
         """ GAT-145
         *GET:/vdiskstorage/{vdiskstorageid}*
 
