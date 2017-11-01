@@ -66,6 +66,8 @@ class TestStoragepoolsAPI(TestcasesBase):
             devices_no = 2
         elif profile == 'raid6':
             devices_no = 3
+        elif profile == 'raid10':
+            devices_no = 4
         else:
             devices_no = 1
 
