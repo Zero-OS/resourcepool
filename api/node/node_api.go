@@ -12,14 +12,16 @@ import (
 type NodeAPI struct {
 	AysRepo     string
 	AysURL      string
+	AysRetries  string
 	Cache       *cache.Cache
 	JWTProvider *tools.JWTProvider
 }
 
-func NewNodeAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider, c *cache.Cache) *NodeAPI {
+func NewNodeAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider, c *cache.Cache) *NodeAPI {
 	return &NodeAPI{
 		AysRepo:     repo,
-		AysURL:      aysurl,
+		AysURL:      aysUrl,
+		AysRetries:  aysRetries,
 		Cache:       c,
 		JWTProvider: jwtProvider,
 	}
@@ -41,4 +43,8 @@ func (api *NodeAPI) ContainerCache() *cache.Cache {
 
 func (api *NodeAPI) GetJWT() (string, error) {
 	return api.JWTProvider.GetJWT()
+}
+
+func (api *NodeAPI) AysRetriesConfig() string {
+	return api.AysRetries
 }

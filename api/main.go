@@ -25,6 +25,7 @@ func main() {
 		bindAddr     string
 		aysURL       string
 		aysRepo      string
+		aysRetries   string
 		organization string
 		jwt          string
 		jwtProvider  *tools.JWTProvider
@@ -72,6 +73,11 @@ func main() {
 			Usage:       "Enable development mode",
 			Destination: &development,
 		},
+		cli.StringFlag{
+			Name:        "ays-retries",
+			Usage:       "Configure AYS run retries and delays",
+			Destination: &aysRetries,
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -103,7 +109,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		validator.SetValidationFunc("multipleOf", goraml.MultipleOf)
-		r := router.GetRouter(aysURL, aysRepo, organization, jwtProvider)
+		r := router.GetRouter(aysURL, aysRepo, aysRetries, organization, jwtProvider)
 
 		log.Println("starting server")
 		log.Printf("Server is listening on %s\n", bindAddr)
