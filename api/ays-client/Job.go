@@ -9,10 +9,10 @@ type Job struct {
 	Actor        string `json:"actor" validate:"nonzero"`
 	Key          string `json:"key" validate:"nonzero"`
 	Logs         []Log  `json:"logs" validate:"nonzero"`
+	Result       string `json:"result" validate:"nonzero"`
 	Service_key  string `json:"service_key" validate:"nonzero"`
 	Service_name string `json:"service_name" validate:"nonzero"`
 	State        string `json:"state" validate:"nonzero"`
-	Result       string `json:"result"`
 }
 
 func (s Job) Validate() error {

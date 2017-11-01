@@ -19,56 +19,11 @@ func (s *AysService) Reload(headers, queryParams map[string]interface{}) (*http.
 	return resp, nil
 }
 
-// list all repositorys
-func (s *AysService) ListRepositories(headers, queryParams map[string]interface{}) ([]string, *http.Response, error) {
-	var u []string
+// Get an actor by name
+func (s *AysService) GetActorByName(actor, repository string, headers, queryParams map[string]interface{}) (Actor, *http.Response, error) {
+	var u Actor
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository", headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// create a new repository
-func (s *AysService) CreateRepository(aysrepositorypostreqbody AysRepositoryPostReqBody, headers, queryParams map[string]interface{}) (Repository, *http.Response, error) {
-	var u Repository
-
-	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository", &aysrepositorypostreqbody, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// Delete a repository
-func (s *AysService) DeleteRepository(repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
-	// create request object
-	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository, headers, queryParams)
-}
-
-// Get information of a repository
-func (s *AysService) GetRepository(repository string, headers, queryParams map[string]interface{}) (Repository, *http.Response, error) {
-	var u Repository
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// list all actors in the repository
-func (s *AysService) ListActors(repository string, headers, queryParams map[string]interface{}) ([]NameListing, *http.Response, error) {
-	var u []NameListing
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/actor", headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/actor/"+actor, headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -90,11 +45,43 @@ func (s *AysService) UpdateActor(actor, repository string, headers, queryParams 
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// Get an actor by name
-func (s *AysService) GetActorByName(actor, repository string, headers, queryParams map[string]interface{}) (Actor, *http.Response, error) {
-	var u Actor
+// list all actors in the repository
+func (s *AysService) ListActors(repository string, headers, queryParams map[string]interface{}) ([]NameListing, *http.Response, error) {
+	var u []NameListing
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/actor/"+actor, headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/actor", headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// delete a run
+func (s *AysService) DeleteRun(runid, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
+	// create request object
+	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, headers, queryParams)
+}
+
+// Get an aysrun
+func (s *AysService) GetRun(runid, repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
+	var u AYSRun
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// execute an aysrun
+func (s *AysService) ExecuteRun(runid, repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
+	var u AYSRun
+
+	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, nil, headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -132,105 +119,6 @@ func (s *AysService) CreateRun(repository string, headers, queryParams map[strin
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// execute an aysrun
-func (s *AysService) ExecuteRun(runid, repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
-	var u AYSRun
-
-	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, nil, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// Get an aysrun
-func (s *AysService) GetRun(runid, repository string, headers, queryParams map[string]interface{}) (AYSRun, *http.Response, error) {
-	var u AYSRun
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// delete a run
-func (s *AysService) DeleteRun(runid, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
-	// create request object
-	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/aysrun/"+runid, headers, queryParams)
-}
-
-// List all blueprint
-func (s *AysService) ListBlueprints(repository string, headers, queryParams map[string]interface{}) ([]BlueprintListing, *http.Response, error) {
-	var u []BlueprintListing
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint", headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// Create a new blueprint
-func (s *AysService) CreateBlueprint(repository string, blueprint Blueprint, headers, queryParams map[string]interface{}) (AysRepositoryRepositoryBlueprintPostRespBody, *http.Response, error) {
-	var u AysRepositoryRepositoryBlueprintPostRespBody
-
-	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint", &blueprint, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// Get a blueprint
-func (s *AysService) GetBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (Blueprint, *http.Response, error) {
-	var u Blueprint
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// delete blueprint
-func (s *AysService) DeleteBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
-	// create request object
-	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, headers, queryParams)
-}
-
-// Execute the blueprint
-func (s *AysService) ExecuteBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
-
-	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, nil, headers, queryParams)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-// Update existing blueprint
-func (s *AysService) UpdateBlueprint(blueprint, repository string, aysrepositoryrepositoryblueprintblueprintputreqbody AysRepositoryRepositoryBlueprintBlueprintPutReqBody, headers, queryParams map[string]interface{}) (*http.Response, error) {
-
-	resp, err := s.client.doReqWithBody("PUT", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, &aysrepositoryrepositoryblueprintblueprintputreqbody, headers, queryParams)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	return resp, nil
-}
-
 // archive the blueprint
 func (s *AysService) ArchiveBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
 
@@ -255,6 +143,74 @@ func (s *AysService) RestoreBlueprint(blueprint, repository string, headers, que
 	return resp, nil
 }
 
+// delete blueprint
+func (s *AysService) DeleteBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
+	// create request object
+	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, headers, queryParams)
+}
+
+// Get a blueprint
+func (s *AysService) GetBlueprint(blueprint, repository string, headers, queryParams map[string]interface{}) (Blueprint, *http.Response, error) {
+	var u Blueprint
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// Execute the blueprint
+func (s *AysService) ExecuteBlueprint(blueprint, repository string, body AysRepositoryRepositoryBlueprintBlueprintPostReqBody, headers, queryParams map[string]interface{}) (*http.Response, error) {
+
+	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, &body, headers, queryParams)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// Update existing blueprint
+func (s *AysService) UpdateBlueprint(blueprint, repository string, body AysRepositoryRepositoryBlueprintBlueprintPutReqBody, headers, queryParams map[string]interface{}) (*http.Response, error) {
+
+	resp, err := s.client.doReqWithBody("PUT", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint/"+blueprint, &body, headers, queryParams)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return resp, nil
+}
+
+// List all blueprint
+func (s *AysService) ListBlueprints(repository string, headers, queryParams map[string]interface{}) ([]BlueprintListing, *http.Response, error) {
+	var u []BlueprintListing
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint", headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// Create a new blueprint
+func (s *AysService) CreateBlueprint(repository string, body Blueprint, headers, queryParams map[string]interface{}) (AysRepositoryRepositoryBlueprintPostRespBody, *http.Response, error) {
+	var u AysRepositoryRepositoryBlueprintPostRespBody
+
+	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository/"+repository+"/blueprint", &body, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
 // destroy repo without deleting it from FS
 func (s *AysService) DestroyRepository(repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
 
@@ -267,11 +223,43 @@ func (s *AysService) DestroyRepository(repository string, headers, queryParams m
 	return resp, nil
 }
 
-// List all services in the repository
-func (s *AysService) ListServices(repository string, headers, queryParams map[string]interface{}) ([]ServicePointer, *http.Response, error) {
-	var u []ServicePointer
+// Get a jobid
+func (s *AysService) GetJob(jobid, repository string, headers, queryParams map[string]interface{}) (Job, *http.Response, error) {
+	var u Job
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service", headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/job/"+jobid, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// List all jobs of the repository that match the filters
+func (s *AysService) ListJobs(repository string, headers, queryParams map[string]interface{}) ([]JobData, *http.Response, error) {
+	var u []JobData
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/job", headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// delete a service and all its children
+func (s *AysService) DeleteServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
+	// create request object
+	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role+"/"+name, headers, queryParams)
+}
+
+// Get a service by its name
+func (s *AysService) GetServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (Service, *http.Response, error) {
+	var u Service
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role+"/"+name, headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -293,11 +281,11 @@ func (s *AysService) ListServicesByRole(role, repository string, headers, queryP
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// Get a service by its name
-func (s *AysService) GetServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (Service, *http.Response, error) {
-	var u Service
+// List all services in the repository
+func (s *AysService) ListServices(repository string, headers, queryParams map[string]interface{}) ([]ServicePointer, *http.Response, error) {
+	var u []ServicePointer
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role+"/"+name, headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/service", headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -306,30 +294,11 @@ func (s *AysService) GetServiceByName(name, role, repository string, headers, qu
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// Get a jobid
-func (s *AysService) GetJob(jobid, repository string, headers, queryParams map[string]interface{}) (Job, *http.Response, error) {
-	var u Job
+// update all templates in a repository
+func (s *AysService) UpdateTemplates(repository string, headers, queryParams map[string]interface{}) (AysRepositoryRepositoryTemplateUpdateGetRespBody, *http.Response, error) {
+	var u AysRepositoryRepositoryTemplateUpdateGetRespBody
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/job/"+jobid, headers, queryParams)
-	if err != nil {
-		return u, nil, err
-	}
-	defer resp.Body.Close()
-
-	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
-}
-
-// delete a service and all its children
-func (s *AysService) DeleteServiceByName(name, role, repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
-	// create request object
-	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository+"/service/"+role+"/"+name, headers, queryParams)
-}
-
-// list all templates
-func (s *AysService) ListTemplates(repository string, headers, queryParams map[string]interface{}) ([]TemplateListing, *http.Response, error) {
-	var u []TemplateListing
-
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/template", headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/template/update", headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -351,11 +320,11 @@ func (s *AysService) GetTemplate(name, repository string, headers, queryParams m
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// add a new actor template repository
-func (s *AysService) AddTemplateRepo(templaterepo TemplateRepo, headers, queryParams map[string]interface{}) (TemplateRepo, *http.Response, error) {
-	var u TemplateRepo
+// list all templates
+func (s *AysService) ListTemplates(repository string, headers, queryParams map[string]interface{}) ([]TemplateListing, *http.Response, error) {
+	var u []TemplateListing
 
-	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/template_repo", &templaterepo, headers, queryParams)
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository+"/template", headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -364,11 +333,56 @@ func (s *AysService) AddTemplateRepo(templaterepo TemplateRepo, headers, queryPa
 	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
 }
 
-// list all AYS templates
-func (s *AysService) ListAYSTemplates(headers, queryParams map[string]interface{}) ([]TemplateListing, *http.Response, error) {
-	var u []TemplateListing
+// Delete a repository
+func (s *AysService) DeleteRepository(repository string, headers, queryParams map[string]interface{}) (*http.Response, error) {
+	// create request object
+	return s.client.doReqNoBody("DELETE", s.client.BaseURI+"/ays/repository/"+repository, headers, queryParams)
+}
 
-	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/templates", headers, queryParams)
+// Get information of a repository
+func (s *AysService) GetRepository(repository string, headers, queryParams map[string]interface{}) (Repository, *http.Response, error) {
+	var u Repository
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository/"+repository, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// list all repositorys
+func (s *AysService) ListRepositories(headers, queryParams map[string]interface{}) ([]string, *http.Response, error) {
+	var u []string
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/repository", headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// create a new repository
+func (s *AysService) CreateRepository(body AysRepositoryPostReqBody, headers, queryParams map[string]interface{}) (Repository, *http.Response, error) {
+	var u Repository
+
+	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/repository", &body, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// add a new actor template repository
+func (s *AysService) AddTemplateRepo(body TemplateRepo, headers, queryParams map[string]interface{}) (TemplateRepo, *http.Response, error) {
+	var u TemplateRepo
+
+	resp, err := s.client.doReqWithBody("POST", s.client.BaseURI+"/ays/template_repo", &body, headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}
@@ -382,6 +396,19 @@ func (s *AysService) GetAYSTemplate(name string, headers, queryParams map[string
 	var u Template
 
 	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/templates/"+name, headers, queryParams)
+	if err != nil {
+		return u, nil, err
+	}
+	defer resp.Body.Close()
+
+	return u, resp, json.NewDecoder(resp.Body).Decode(&u)
+}
+
+// list all AYS templates
+func (s *AysService) ListAYSTemplates(headers, queryParams map[string]interface{}) ([]TemplateListing, *http.Response, error) {
+	var u []TemplateListing
+
+	resp, err := s.client.doReqNoBody("GET", s.client.BaseURI+"/ays/templates", headers, queryParams)
 	if err != nil {
 		return u, nil, err
 	}

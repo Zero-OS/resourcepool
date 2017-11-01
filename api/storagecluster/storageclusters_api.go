@@ -10,13 +10,15 @@ import (
 type StorageclustersAPI struct {
 	AysRepo     string
 	AysUrl      string
+	AysRetries  string
 	JWTProvider *tools.JWTProvider
 }
 
-func NewStorageClusterAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *StorageclustersAPI {
+func NewStorageClusterAPI(repo string, aysurl string, aysRetries string, jwtProvider *tools.JWTProvider) *StorageclustersAPI {
 	return &StorageclustersAPI{
 		AysRepo:     repo,
 		AysUrl:      aysurl,
+		AysRetries:  aysRetries,
 		JWTProvider: jwtProvider,
 	}
 }
@@ -33,4 +35,8 @@ func (api *StorageclustersAPI) AysRepoName() string {
 
 func (api *StorageclustersAPI) GetJWT() (string, error) {
 	return api.JWTProvider.GetJWT()
+}
+
+func (api *StorageclustersAPI) AysRetriesConfig() string {
+	return api.AysRetries
 }
