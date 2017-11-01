@@ -42,6 +42,9 @@ class TestVdisks(TestcasesBase):
 
         self.lg.info(' [*] Delete Image (IMG0)')
         self.vdisks_api.delete_image(self.vdiskstoragedata["id"], self.imagedata['imageName'])
+
+        self.lg.info(' [*] Delete Vdiskstorage (VD0)')
+        self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
         super(TestVdisks, self).tearDown()
 
     def test001_create_two_vdiskstorage_with_same_name(self):

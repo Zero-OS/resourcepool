@@ -23,6 +23,7 @@ class TestcasesBase(TestCase):
         self.vdisks_api = self.orchasterator_driver.vdisks_api
         self.vms_api = self.orchasterator_driver.vms_api
         self.backup_api = self.orchasterator_driver.backup_api
+        self.graphs_api = self.orchasterator_driver.graph_apis
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.vm_username = self.orchasterator_driver.vm_username
