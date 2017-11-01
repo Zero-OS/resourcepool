@@ -16,7 +16,7 @@ class HealthcheckAPI:
         return self.orchestrator_client.health.ListNodeHealth(nodeid=node_id)
 
     @catch_exception_decoration
-    def get_storageclusters_health(self, node_id):
+    def get_storageclusters_health(self):
         return self.orchestrator_client.health.ListStorageClustersHealth()
 
     @catch_exception_decoration

@@ -13,7 +13,7 @@ class TesthealthcheckAPI(TestcasesBase):
         self.lg.info("Get list of nodes . ")
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
-        Nodes_result = response.json()
+        nodes_result = response.json()
 
         self.lg.info("Get list of a nodes healthcheck api request.")
         response = self.healthcheck_api.get_all_nodes_health()
@@ -21,7 +21,7 @@ class TesthealthcheckAPI(TestcasesBase):
         health_result = response.json()
 
         self.lg.info(" Check that all nodes have health check, should succeed. ")
-        self.assertEqual(len(health_result), len(Nodes_result))
+        self.assertEqual(len(health_result), len(nodes_result))
 
     def setUp(self):
         self.lg.info(' [*] Get healthcheck of random node ')
