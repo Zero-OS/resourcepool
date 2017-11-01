@@ -27,7 +27,7 @@ class TestStoragepoolsAPI(TestcasesBase):
             self.response, self.data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
                                                                                 free_devices=self.freeDisks, **kwargs)
         self.assertEqual(self.response.status_code, res_status)
-        if response.status_code == 201:
+        if self.response.status_code == 201:
             self.created_st_pools.append(self.data['name'])
 
     def tearDown(self):
