@@ -1,5 +1,6 @@
 import random
 from testcases.testcases_base import TestcasesBase
+from parameterized import parameterized
 import unittest
 import time
 
@@ -15,9 +16,8 @@ class TestStoragepoolsAPI(TestcasesBase):
         if self.freeDisks == []:
             self.skipTest(' [*] No free disks on node {}'.format(self.nodeid))
 
-        self.lg.info(' [*] Create storagepool (SP0) on node (N0)')
-        if not devices_no:
-            if devices_no >= len(self.freeDisks):
+        if devices_no:
+            if devices_no <= len(self.freeDisks):
                 devices = random.sample(set(self.freeDisks), devices_no)
                 self.response, self.data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
                                                                                     free_devices=self.freeDisks, devices=devices, **kwargs)
@@ -27,7 +27,8 @@ class TestStoragepoolsAPI(TestcasesBase):
             self.response, self.data = self.storagepools_api.post_storagepools(node_id=self.nodeid,
                                                                                 free_devices=self.freeDisks, **kwargs)
         self.assertEqual(self.response.status_code, res_status)
-        self.created_st_pools.append(self.data['name'])
+        if response.status_code == 201:
+            self.created_st_pools.append(self.data['name'])
 
     def tearDown(self):
         for st_pool in self.created_st_pools:
@@ -51,8 +52,9 @@ class TestStoragepoolsAPI(TestcasesBase):
                                                                                                           'name'])
         self.assertEqual(self.response_snapshot.status_code, 201, " [*] can't create new snapshot.")
 
-    def test001_create_storagepool_different_raids(self):
-        """ GAT-000
+    @parameterized.expand(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup'])
+    def test001_create_storagepool_different_raids(self, profile):
+        """ GAT-166
         **Test Scenario:**
 
         #. Get random nodid (N0), should succeed.
@@ -60,15 +62,30 @@ class TestStoragepoolsAPI(TestcasesBase):
         #. Check if two disks have been used for (SP0).
         #. Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.
         """
+        if profile == 'raid0' or 'raid1' or 'raid10' or 'raid5':
+            devices_no = 2
+        elif profile == 'raid6':
+            devices_no = 3
+        else:
+            devices_no = 1
+
 
         self.lg.info('Create storagepool (SP0) on node (N0) with raid0 using 2 disks, should succeed.')
-        self.setUp_storagepool(res_status=201, devices_no=2, metadataProfile='raid0', dataProfile='raid0')
+        self.setUp_storagepool(res_status=201, devices_no=devices_no, metadataProfile=profile, dataProfile=profile)
+
+        exp = "cut -d ':' -f 1 | cut -d ' ' -f 2"
+        res = self.core0_client.client.bash("btrfs filesystem df /mnt/storagepools/{} | grep Data | {}".format(self.data['name'], exp)).get().stdout.strip('\n')
+        self.assertEqual(profile, res.lower())
+        res = self.core0_client.client.bash("btrfs filesystem df /mnt/storagepools/{} | grep Metadata | {}".format(self.data['name'], exp)).get().stdout.strip('\n')
+        self.assertEqual(profile, res.lower())
 
         self.lg.info('Check if two disks have been used for (SP0).')
-        #check using the client
-        self.lg.info('Delete storagepool SP1')
-        self.teardown()
+        devices = [b['total_devices'] for b in self.core0_client.client.btrfs.list() if b['label'] == 'sp_' + self.data['name']]
+        self.assertEqual(devices[0], devices_no)
 
-        self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
-        # check what status are u expecting
-        self.setUp_storagepool(res_status=201, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
+        self.lg.info('Delete storagepool SP1')
+        self.tearDown()
+
+        if profile == 'raid0':
+            self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
+            self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
