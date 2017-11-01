@@ -28,12 +28,14 @@ type NAPI interface {
 	ContainerCache() *cache.Cache
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
+	AysRetriesConfig() string
 	GetJWT() (string, error)
 }
 
 type API interface {
 	AysAPIClient() *ays.AtYourServiceAPI
 	AysRepoName() string
+	AysRetriesConfig() string
 	GetJWT() (string, error)
 }
 
@@ -148,7 +150,8 @@ func GetAysConnection(api API) (*AYStool, error) {
 
 	aysAPI.AuthHeader = fmt.Sprintf("Bearer %s", token)
 	return &AYStool{
-		Ays: aysAPI.Ays,
+		Ays:     aysAPI.Ays,
+		Retries: api.AysRetriesConfig(),
 	}, nil
 }
 

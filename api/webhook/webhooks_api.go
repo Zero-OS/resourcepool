@@ -9,13 +9,15 @@ import (
 type WebhooksAPI struct {
 	AysRepo     string
 	AysUrl      string
+	AysRetries  string
 	JWTProvider *tools.JWTProvider
 }
 
-func NewWebhookAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *WebhooksAPI {
+func NewWebhookAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider) *WebhooksAPI {
 	return &WebhooksAPI{
 		AysRepo:     repo,
-		AysUrl:      aysurl,
+		AysUrl:      aysUrl,
+		AysRetries:  aysRetries,
 		JWTProvider: jwtProvider,
 	}
 }
@@ -32,4 +34,8 @@ func (api *WebhooksAPI) AysRepoName() string {
 
 func (api *WebhooksAPI) GetJWT() (string, error) {
 	return api.JWTProvider.GetJWT()
+}
+
+func (api *WebhooksAPI) AysRetriesConfig() string {
+	return api.AysRetries
 }

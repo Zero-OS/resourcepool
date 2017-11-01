@@ -20,6 +20,18 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	storageCluster := vars["label"]
 
+	service, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storagecluster", api.AysRepo, nil, nil)
+	if err != nil {
+		errmsg := fmt.Sprintf("error getting storagecluster %s service", storageCluster)
+		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
+		return
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	// Prevent deletion of nonempty clusters
 	query := map[string]interface{}{
 		"consume": fmt.Sprintf("storagecluster!%s", storageCluster),
@@ -32,19 +44,6 @@ func (api *StorageclustersAPI) KillCluster(w http.ResponseWriter, r *http.Reques
 	if len(services) > 0 {
 		err := fmt.Errorf("Can't delete storage clusters with attached vdiskstorage")
 		tools.WriteError(w, http.StatusBadRequest, err, "")
-		return
-	}
-
-	service, resp, err := aysClient.Ays.GetServiceByName(storageCluster, "storagecluster", api.AysRepo, nil, nil)
-
-	if err != nil {
-		errmsg := fmt.Sprintf("error getting storagecluster %s service", storageCluster)
-		tools.WriteError(w, http.StatusInternalServerError, err, errmsg)
-		return
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("Storage cluster %s does not exist", storageCluster), "")
 		return
 	}
 
