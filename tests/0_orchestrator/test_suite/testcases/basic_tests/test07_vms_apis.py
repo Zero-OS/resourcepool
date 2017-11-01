@@ -48,7 +48,10 @@ class TestVmsAPI(TestcasesBase):
     def tearDownClass(cls):
         self = cls()
         self.lg.info('[*] Delete image')
-        self.vdisks_api.delete_image(TestVmsAPI.vdiskstorageid, TestVmsAPI.imageid)
+        self.vdisks_api.delete_image(self.vdiskstorageid, self.imageid)
+        self.lg.info('[*] Delete Vdiskstorage')
+        self.vdisks_api.delete_vdiskstorage(self.vdiskstorageid)
+        
        
     def setUp(self):
         super().setUp()
