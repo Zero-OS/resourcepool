@@ -18,7 +18,7 @@ func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *h
 		return
 	}
 	queryParams := map[string]interface{}{
-		"fields": "label,clusterType",
+		"fields": "label",
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("storagecluster.block", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing storagecluster health checks") {
@@ -43,7 +43,7 @@ func (api *HealthCheckApi) ListStorageClustersHealth(w http.ResponseWriter, r *h
 		}
 
 		// Get healthcheck data
-		serviceName := fmt.Sprintf("storagecluster_block_%s", service.Name)
+		serviceName := fmt.Sprintf("storagecluster.block_%s", service.Name)
 		healthService, res, err := aysClient.Ays.GetServiceByName(serviceName, "healthcheck", api.AysRepo, nil, nil)
 		if !tools.HandleAYSResponse(err, res, w, "listing storage clusters health checks") {
 			return
