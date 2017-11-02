@@ -35,8 +35,8 @@ class TestStoragepoolsAPI(TestcasesBase):
         self.created_st_pools.remove(self.created_st_pools[0])
         super().tearDown()
 
-    @parameterized.expand([['raid0', 2], ['raid1', 2], ['raid5', 2], ['raid6', 3], ['raid10', 4], ['dup', 1]])
-    def test001_create_storagepool_different_raids(self, params):
+    @parameterized.expand([('raid0', 2), ('raid1', 2), ('raid5', 2), ('raid6', 3), ('raid10', 4), ('dup', 1)])
+    def test001_create_storagepool_different_raids(self, profile, devices_no):
         """ GAT-166
         **Test Scenario:**
 
@@ -45,12 +45,9 @@ class TestStoragepoolsAPI(TestcasesBase):
         #. Create storagepool (SP0) on node (N0) with different raids, should succeed.
         #. Check if two disks have been used for (SP0).
         """
-        profile = params[0]
-        devices_no = params[1]
 
-        if profile == 'raid0':
-            self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
-            self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
+        self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
+        self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
 
         self.lg.info('Create storagepool (SP0) on node (N0) with {} using {} disks, should succeed.'.format(profile, devices_no))
         self.setUp_storagepool(res_status=201, devices_no=devices_no, metadataProfile=profile, dataProfile=profile)
