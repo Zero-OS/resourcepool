@@ -73,7 +73,7 @@ def stop(job):
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     if container_ays.is_running():
-        grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
+        grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
         grafana.stop()
         container.executeAction('stop', context=job.context)
 
@@ -89,7 +89,7 @@ def uninstall(job):
     container = get_container(service, False)
 
     if container:
-        stop()
+        stop(job)
         container.delete()
     service.delete()
 
