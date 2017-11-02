@@ -122,3 +122,8 @@ export_runnig_nodes
 create_etcd_cluster_blueprint ${nodes}
 ays blueprint etcd_cluster.bp
 ays run create -fy
+
+cmd="orchestratorapiserver --bind ${server_ip}:8080 --ays-url http://127.0.0.1:5000 --ays-repo orchestrator-server --org ${organization} --jwt ${JWT} --ays-retries 0"
+tmux kill-window -t orchestrator
+tmux new-window -n orchestrator
+tmux send-keys -t:orchestrator "${cmd}" Enter
