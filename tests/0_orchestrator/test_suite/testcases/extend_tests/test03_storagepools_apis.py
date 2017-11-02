@@ -47,7 +47,7 @@ class TestStoragepoolsAPI(TestcasesBase):
         """
 
         self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
-        self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
+        self.setUp_storagepool(res_status=500, devices_no=devices_no - 1, metadataProfile=profile, dataProfile=profile)
 
         self.lg.info('Create storagepool (SP0) on node (N0) with {} using {} disks, should succeed.'.format(profile, devices_no))
         self.setUp_storagepool(res_status=201, devices_no=devices_no, metadataProfile=profile, dataProfile=profile)
