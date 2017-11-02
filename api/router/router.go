@@ -17,6 +17,7 @@ import (
 	"github.com/zero-os/0-orchestrator/api/tools"
 	"github.com/zero-os/0-orchestrator/api/vdiskstorage"
 	"github.com/zero-os/0-orchestrator/api/vdiskstorage/vdisk"
+	"github.com/zero-os/0-orchestrator/api/webhook"
 )
 
 func LoggingMiddleware(h http.Handler) http.Handler {
@@ -30,7 +31,7 @@ func adapt(h http.Handler, adapters ...func(http.Handler) http.Handler) http.Han
 	return h
 }
 
-func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http.Handler {
+func GetRouter(aysURL, aysRepo, aysRetries, org string, jwtProvider *tools.JWTProvider) http.Handler {
 	r := mux.NewRouter()
 	api := mux.NewRouter()
 
@@ -53,13 +54,16 @@ func GetRouter(aysURL, aysRepo, org string, jwtProvider *tools.JWTProvider) http
 	r.PathPrefix("/health").Handler(apihandler)
 	r.PathPrefix("/backup").Handler(apihandler)
 	r.PathPrefix("/vdiskstorage").Handler(apihandler)
+	r.PathPrefix("/webhooks").Handler(apihandler)
 
-	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
-	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
-	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, jwtProvider))
-	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, jwtProvider))
-	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthcheckAPI(aysRepo, aysURL, jwtProvider))
-	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, jwtProvider))
-	vdiskstorage.VdiskstorageInterfaceRoutes(api, vdiskstorage.NewVdiskStorageAPI(aysRepo, aysURL, jwtProvider))
+	node.NodesInterfaceRoutes(api, node.NewNodeAPI(aysRepo, aysURL, aysRetries, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
+	graph.GraphsInterfaceRoutes(api, graph.NewGraphAPI(aysRepo, aysURL, aysRetries, jwtProvider, cache.New(5*time.Minute, 1*time.Minute)))
+	storagecluster.StorageclustersInterfaceRoutes(api, storagecluster.NewStorageClusterAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+	vdisk.VdisksInterfaceRoutes(api, vdisk.NewVdiskAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+	healthcheck.HealthChechInterfaceRoutes(api, healthcheck.NewHealthCheckAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+	backup.BackupInterfaceRoutes(api, backup.NewBackupAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+	vdiskstorage.VdiskstorageInterfaceRoutes(api, vdiskstorage.NewVdiskStorageAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+	webhook.WebhooksInterfaceRoutes(api, webhook.NewWebhookAPI(aysRepo, aysURL, aysRetries, jwtProvider))
+
 	return r
 }

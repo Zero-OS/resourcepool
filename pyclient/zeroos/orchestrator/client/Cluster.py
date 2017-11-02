@@ -14,24 +14,24 @@ class Cluster(object):
     """
 
     @staticmethod
-    def create(dataStorage, driveType, label, metadataStorage, nodes, status):
+    def create(clusterType, driveType, label, nodes, status, storageServers):
         """
-        :type dataStorage: list[StorageServer]
+        :type clusterType: str
         :type driveType: EnumClusterDriveType
         :type label: str
-        :type metadataStorage: list[StorageServer]
         :type nodes: list[str]
         :type status: EnumClusterStatus
+        :type storageServers: list[StorageServer]
         :rtype: Cluster
         """
 
         return Cluster(
-            dataStorage=dataStorage,
+            clusterType=clusterType,
             driveType=driveType,
             label=label,
-            metadataStorage=metadataStorage,
             nodes=nodes,
             status=status,
+            storageServers=storageServers,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -44,12 +44,12 @@ class Cluster(object):
 
         data = json or kwargs
 
-        property_name = 'dataStorage'
+        property_name = 'clusterType'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [StorageServer]
+            datatypes = [str]
             try:
-                self.dataStorage = client_support.list_factory(val, datatypes)
+                self.clusterType = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
@@ -77,17 +77,6 @@ class Cluster(object):
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'metadataStorage'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [StorageServer]
-            try:
-                self.metadataStorage = client_support.list_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
-
         property_name = 'nodes'
         val = data.get(property_name)
         if val is not None:
@@ -105,6 +94,17 @@ class Cluster(object):
             datatypes = [EnumClusterStatus]
             try:
                 self.status = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'storageServers'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [StorageServer]
+            try:
+                self.storageServers = client_support.list_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

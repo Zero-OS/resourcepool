@@ -14,7 +14,7 @@ class TestVdisks(TestcasesBase):
         nodes = [self.nodeid]
         number_of_free_disks, disk_type = self.get_max_available_free_disks(nodes)
         storageclusters = self.storageclusters_api.get_storageclusters()
-        if not storageclusters:
+        if not storageclusters.json():
             if not number_of_free_disks:
                 self.skipTest('[*] No free disks to create storagecluster')
 
@@ -133,7 +133,7 @@ class TestVdisks(TestcasesBase):
         #. Create vdisk (VD0).
         #. Delete vdisk (VD0), should succeed with 204.
         #. List vdisks, (VD0) should be gone.
-        #. Delete nonexisting vdisk, should fail with 404.
+        #. Delete nonexisting vdisk, should fail with 204.
         """
         self.lg.info(' [*] Delete vdisk (VD0), should succeed with 204')
         response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], self.data['id'])
@@ -144,7 +144,7 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['id'], [x['id'] for x in response.json()])
 
-        self.lg.info(' [*] Delete nonexisting vdisk, should fail with 404')
+        self.lg.info(' [*] Delete nonexisting vdisk, should fail with 204')
         response = self.vdisks_api.delete_vdisks_vdiskid(self.vdiskstoragedata["id"], 'fake_vdisk')
         self.assertEqual(response.status_code, 204)
 
@@ -198,7 +198,7 @@ class TestVdisks(TestcasesBase):
         #. Delete vdisk (VD0) and image (IM0), should succeed
         #. Delete vdiskStorage (VDS0), should succeed with 204.
         #. List vdisks, (VDS0) should be gone.
-        #. Delete nonexisting vdisk, should fail with 404.
+        #. Delete nonexisting vdisk, should fail with 204.
 
         """
         self.lg.info(' [*] List vdisksStorage, should succeed with 200')
@@ -231,9 +231,9 @@ class TestVdisks(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(svd0_data, response.json())
 
-        self.lg.info('Delete nonexisting vdiskStorage, should fail with 404')
+        self.lg.info('Delete nonexisting vdiskStorage, should fail with 204')
         response = self.vdisks_api.delete_vdiskstorage(self.vdiskstoragedata["id"])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
     @unittest.skip("https://github.com/zero-os/0-orchestrator/issues/1148")
     def test007_list_vdisk_images(self):
@@ -256,7 +256,7 @@ class TestVdisks(TestcasesBase):
                      }
         self.assertIn(img0_data, response.json())
 
-    def test008_list_vdisk_images_get_vdiskstorage_details(self):
+    def test008_get_vdiskstorage_details(self):
         """ GAT-145
         *GET:/vdiskstorage/{vdiskstorageid}*
 

@@ -22,11 +22,14 @@ class TestcasesBase(TestCase):
         self.storageclusters_api = self.orchasterator_driver.storageclusters_api
         self.vdisks_api = self.orchasterator_driver.vdisks_api
         self.vms_api = self.orchasterator_driver.vms_api
+        self.backup_api = self.orchasterator_driver.backup_api
+        self.graphs_api = self.orchasterator_driver.graph_apis
         self.zerotiers_api = self.orchasterator_driver.zerotiers_api
         self.zerotier_token = self.orchasterator_driver.zerotier_token
         self.vm_username = self.orchasterator_driver.vm_username
         self.vm_password = self.orchasterator_driver.vm_password
         self.nodes_info = self.orchasterator_driver.nodes_info
+        self.healthcheck_api = self.orchasterator_driver.healthcheck_api
         self.Client = Client
         self.session = requests.Session()
         self.session.headers['Authorization'] = 'Bearer {}'.format(self.zerotier_token)

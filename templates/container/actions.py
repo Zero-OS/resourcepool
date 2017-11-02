@@ -146,7 +146,7 @@ def processChange(job):
 
 def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.orchestrator.utils import write_status_code_error
     from zeroos.core0.client.client import ResultError
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -202,7 +202,7 @@ def update(job, updated_nics):
             try:
                 cl.nic_add(container.id, nic_dict)
             except ResultError as e:
-                Write_Status_code_Error(job, e)
+                write_status_code_error(job, e)
                 service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))

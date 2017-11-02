@@ -1,42 +1,42 @@
 """
-Auto-generated class for ExportUrl
+Auto-generated class for MigrateGW
 """
 
 from . import client_support
 
 
-class ExportUrl(object):
+class MigrateGW(object):
     """
     auto-generated. don't touch.
     """
 
     @staticmethod
-    def create(url):
+    def create(node):
         """
-        :type url: str
-        :rtype: ExportUrl
+        :type node: str
+        :rtype: MigrateGW
         """
 
-        return ExportUrl(
-            url=url,
+        return MigrateGW(
+            node=node,
         )
 
     def __init__(self, json=None, **kwargs):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'ExportUrl'
+        class_name = 'MigrateGW'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 
         data = json or kwargs
 
-        property_name = 'url'
+        property_name = 'node'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.url = client_support.val_factory(val, datatypes)
+                self.node = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

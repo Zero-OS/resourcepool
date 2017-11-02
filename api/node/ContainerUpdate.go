@@ -1,8 +1,8 @@
 package node
 
 import (
-	"gopkg.in/validator.v2"
 	"github.com/zero-os/0-orchestrator/api/tools"
+	"gopkg.in/validator.v2"
 )
 
 // ContainerUpdate is a Struct for container update.

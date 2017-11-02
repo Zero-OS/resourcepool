@@ -481,19 +481,22 @@ def nic_shutdown(job, message):
 
 def ork_handler(job):
     import json
+    from zeroos.orchestrator.utils import send_event
 
     message = job.model.args.get('message')
     if not message:
         return
 
     message = json.loads(message)
-    if message['action'] == 'NIC_SHUTDOWN':
+    send_event('ork', message, job.service.aysrepo)
+
+    if message['event'] == 'NIC_SHUTDOWN':
         nic_shutdown(job, message)
-    elif message['action'] == 'VM_QUARANTINE' and message['state'] == 'WARNING':
+    elif message['event'] == 'VM_QUARANTINE' and message['state'] == 'WARNING':
         job.logger.info('VM %s exceeded cpu threshold and will be quarantined soon' % message['name'])
-    elif message['action'] == 'VM_QUARANTINE' and message['state'] == 'SUCCESS':
+    elif message['event'] == 'VM_QUARANTINE' and message['state'] == 'SUCCESS':
         job.logger.info('Vm %s has been quarantined' % message['name'])
-    elif message['action'] == 'VM_UNQUARANTINE' and message['state'] == 'SUCCESS':
+    elif message['event'] == 'VM_UNQUARANTINE' and message['state'] == 'SUCCESS':
         job.logger.info('Vm %s has been released from quarantine' % message['name'])
 
 
@@ -510,7 +513,6 @@ def start_vm(job, vm):
 def shutdown_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
-
 
     if vm.model.data.status == 'running':
         job.context['token'] = get_jwt_token(job.service.aysrepo)

@@ -240,7 +240,7 @@ def format_media_nics(job, medias):
 def install(job):
     import time
     from zeroos.core0.client.client import ResultError
-    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.orchestrator.utils import write_status_code_error
     service = job.service
     node = get_node(job)
 
@@ -263,7 +263,7 @@ def install(job):
                 nics=nics,
             )
         except ResultError as e:
-            Write_Status_code_Error(job, e)
+            write_status_code_error(job, e)
             cleanupzerodisk(job)
             service.saveAll()
             raise j.exceptions.Input(str(e))
@@ -648,8 +648,8 @@ def migrate(job):
     service.saveAll()
 
     try:
-        job.logger.info("start migration of vm {vm} from {src} to {dst} (try {rety})".format(
-                        vm=service.name, src=service.parent.name, dst=target_node.name, rety=migration_try))
+        job.logger.info("start migration of vm {vm} from {src} to {dst}".format(
+                        vm=service.name, src=service.parent.name, dst=target_node.name))
 
         #start tlog server on target node
         services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]

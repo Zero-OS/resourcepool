@@ -56,14 +56,8 @@ ImportVM:
   description: Import VM from ftp server
   properties:
     url: FTPUrl
-    blockStoragecluster:
-      type: string
-    objectStoragecluster:
-      type: string
-      required: false
-    backupStoragecluster:
-      type: string
-      required: false
+    id: string
+    vdiskstorage: string
 
 
 MemInfo:
@@ -1550,3 +1544,21 @@ Message:
     id: string
     status: string
     text: string
+
+EnumEventType:
+  enum: [ork]
+
+Webhook:
+  type: object
+  description: A webhook
+  properties:
+    name: string
+    url: string
+    eventtypes: EventType[]
+
+WebhookUpdate:
+  type: object
+  description: A webhook
+  properties:
+    url: string
+    eventtypes: EventType[]

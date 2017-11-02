@@ -48,7 +48,10 @@ class TestVmsAPI(TestcasesBase):
     def tearDownClass(cls):
         self = cls()
         self.lg.info('[*] Delete image')
-        self.vdisks_api.delete_image(TestVmsAPI.vdiskstorageid, TestVmsAPI.imageid)
+        self.vdisks_api.delete_image(self.vdiskstorageid, self.imageid)
+        self.lg.info('[*] Delete Vdiskstorage')
+        self.vdisks_api.delete_vdiskstorage(self.vdiskstorageid)
+        
        
     def setUp(self):
         super().setUp()
@@ -241,7 +244,7 @@ class TestVmsAPI(TestcasesBase):
         #. Create virtual machine (VM0) on node (N0).
         #. Delete virtual machine (VM0), should succeed with 204.
         #. List kvms in python client, (VM0) should be gone.
-        #. Delete non existing virtual machine, should fail with 404.
+        #. Delete non existing virtual machine, should fail with 204.
         """
         self.lg.info('[*] Execute command on virtual machine (VM0), should succeed')
         response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, 'uname')
@@ -256,9 +259,9 @@ class TestVmsAPI(TestcasesBase):
         vms = self.core0_client.client.kvm.list()
         self.assertNotIn(self.data['id'], [x['name'] for x in vms])
 
-        self.lg.info('[*] Delete non existing virtual machine, should fail with 404')
+        self.lg.info('[*] Delete non existing virtual machine, should fail with 204')
         response = self.vms_api.delete_nodes_vms_vmid(self.nodeid, 'fake_vm')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
     def test007_post_nodes_vms_vmid_start_stop(self):
         """ GAT-073
