@@ -245,6 +245,7 @@ def install(job):
     job.service.model.actions['start'].state = 'ok'
     job.service.model.data.status = 'ready'
     job.service.saveAll()
+    monitor(job)
 
 
 def start(job):
@@ -273,7 +274,6 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     storageEngines = service.producers.get('storage_engine', [])
-    zerostors = service.producers.get('zerostor', [])
     pools = service.producers.get('storagepool', [])
     filesystems = service.producers.get('filesystem', [])
 
@@ -346,9 +346,6 @@ def monitor(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
-
-    if service.model.actionsState['install'] != 'ok':
-        return
 
     cluster = BlockCluster.from_ays(service, job.context['token'])
     if service.model.data.status == 'ready' and not cluster.is_running():
