@@ -1,6 +1,7 @@
 """
 Auto-generated class for ImportVM
 """
+from .FTPUrl import FTPUrl
 
 from . import client_support
 
@@ -11,20 +12,18 @@ class ImportVM(object):
     """
 
     @staticmethod
-    def create(blockStoragecluster, url, backupStoragecluster=None, objectStoragecluster=None):
+    def create(id, url, vdiskstorage):
         """
-        :type backupStoragecluster: str
-        :type blockStoragecluster: str
-        :type objectStoragecluster: str
-        :type url: str
+        :type id: str
+        :type url: FTPUrl
+        :type vdiskstorage: str
         :rtype: ImportVM
         """
 
         return ImportVM(
-            backupStoragecluster=backupStoragecluster,
-            blockStoragecluster=blockStoragecluster,
-            objectStoragecluster=objectStoragecluster,
+            id=id,
             url=url,
+            vdiskstorage=vdiskstorage,
         )
 
     def __init__(self, json=None, **kwargs):
@@ -37,41 +36,34 @@ class ImportVM(object):
 
         data = json or kwargs
 
-        property_name = 'backupStoragecluster'
+        property_name = 'id'
         val = data.get(property_name)
         if val is not None:
             datatypes = [str]
             try:
-                self.backupStoragecluster = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'blockStoragecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.blockStoragecluster = client_support.val_factory(val, datatypes)
+                self.id = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:
             raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
-        property_name = 'objectStoragecluster'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [str]
-            try:
-                self.objectStoragecluster = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
         property_name = 'url'
         val = data.get(property_name)
         if val is not None:
-            datatypes = [str]
+            datatypes = [FTPUrl]
             try:
                 self.url = client_support.val_factory(val, datatypes)
+            except ValueError as err:
+                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
+        else:
+            raise ValueError(required_error.format(cls=class_name, prop=property_name))
+
+        property_name = 'vdiskstorage'
+        val = data.get(property_name)
+        if val is not None:
+            datatypes = [str]
+            try:
+                self.vdiskstorage = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
         else:

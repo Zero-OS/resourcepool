@@ -9,18 +9,20 @@ import (
 
 // GraphAPI is API implementation of /graphs root endpoint
 type GraphAPI struct {
-	AysRepo       string
-	AysUrl        string
-	Cache         *cache.Cache
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysUrl      string
+	AysRetries  string
+	Cache       *cache.Cache
+	JWTProvider *tools.JWTProvider
 }
 
-func NewGraphAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider, c *cache.Cache) *GraphAPI {
+func NewGraphAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider, c *cache.Cache) *GraphAPI {
 	return &GraphAPI{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		Cache:         c,
-		JWTProvider:   jwtProvider,
+		AysRepo:     repo,
+		AysUrl:      aysUrl,
+		AysRetries:  aysRetries,
+		Cache:       c,
+		JWTProvider: jwtProvider,
 	}
 }
 
@@ -39,5 +41,9 @@ func (api *GraphAPI) ContainerCache() *cache.Cache {
 }
 
 func (api *GraphAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetJWT()
+	return api.JWTProvider.GetJWT()
+}
+
+func (api *GraphAPI) AysRetriesConfig() string {
+	return api.AysRetries
 }

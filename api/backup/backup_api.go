@@ -8,16 +8,18 @@ import (
 
 // BackupAPI is API implementation of /backup root endpoint
 type BackupAPI struct {
-	AysRepo       string
-	AysUrl        string
-	JWTProvider   *tools.JWTProvider
+	AysRepo     string
+	AysUrl      string
+	AysRetries  string
+	JWTProvider *tools.JWTProvider
 }
 
-func NewBackupAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *BackupAPI {
+func NewBackupAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider) *BackupAPI {
 	return &BackupAPI{
-		AysRepo:       repo,
-		AysUrl:        aysurl,
-		JWTProvider:   jwtProvider,
+		AysRepo:     repo,
+		AysUrl:      aysUrl,
+		AysRetries:  aysRetries,
+		JWTProvider: jwtProvider,
 	}
 }
 
@@ -32,6 +34,9 @@ func (api *BackupAPI) AysRepoName() string {
 }
 
 func (api *BackupAPI) GetJWT() (string, error) {
-        return api.JWTProvider.GetJWT()
+	return api.JWTProvider.GetJWT()
 }
 
+func (api *BackupAPI) AysRetriesConfig() string {
+	return api.AysRetries
+}
