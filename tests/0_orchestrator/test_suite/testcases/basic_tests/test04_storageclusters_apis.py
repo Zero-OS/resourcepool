@@ -96,7 +96,7 @@ class TestStorageclustersAPI(TestcasesBase):
         **Test Scenario:**
         #. Kill storage cluster (SC0), should succeed with 204
         #. List storage clusters, (SC0) should be gone
-        #. Kill nonexisting storage cluster, should fail with 404
+        #. Kill nonexisting storage cluster, should fail with 204
         """
         self.lg.info(' [*] Kill storage cluster (SC0), should succeed with 204')
         response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
@@ -107,9 +107,9 @@ class TestStorageclustersAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['label'], response.json())
 
-        self.lg.info(' [*] Kill nonexisting storage cluster, should fail with 404')
+        self.lg.info(' [*] Kill nonexisting storage cluster, should fail with 204')
         response = self.storageclusters_api.delete_storageclusters_label(self.rand_str())
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
     def test005_check_disks_wiped(self):
         """ GAT-147

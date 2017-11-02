@@ -6,6 +6,7 @@ from framework.orchestrator_apis.storageclusters_apis import Storageclusters
 from framework.orchestrator_apis.storagepools_apis import StoragepoolsAPI
 from framework.orchestrator_apis.vms_apis import VmsAPI
 from framework.orchestrator_apis.vdisks_apis import VDisksAPIs
+from framework.orchestrator_apis.health_apis import HealthcheckAPI
 from framework.orchestrator_apis.zerotiers_apis import ZerotiersAPI
 from framework.orchestrator_apis.backup_apis import BackupAPI
 from framework.orchestrator_apis.graphs_apis import GraphsAPI
@@ -38,6 +39,7 @@ class OrchasteratorDriver:
         self.vms_api = VmsAPI(self)
         self.zerotiers_api = ZerotiersAPI(self)
         self.backup_api = BackupAPI(self)
+        self.healthcheck_api = HealthcheckAPI(self)
         self.graph_apis = GraphsAPI(self)
 
         self.nodes_info = self.get_node_info()
