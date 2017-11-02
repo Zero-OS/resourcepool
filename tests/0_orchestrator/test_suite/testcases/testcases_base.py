@@ -83,7 +83,8 @@ class TestcasesBase(TestCase):
         response = self.nodes_api.get_nodes()
         self.assertEqual(response.status_code, 200)
         for node in response.json():
-            return node['status']
+            if nodeid == node['id']:
+                return node['status']
 
     def create_zerotier_network(self, default_config=True, private=False, data={}):
         url = 'https://my.zerotier.com/api/network'
