@@ -41,12 +41,12 @@ class TestStoragepoolsAPI(TestcasesBase):
         **Test Scenario:**
 
         #. Get random nodid (N0), should succeed.
-        #. Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.
+        #. Create storagepool (SP1) on node (N0) with different raids using disks belown min number, should fail.
         #. Create storagepool (SP0) on node (N0) with different raids, should succeed.
         #. Check if two disks have been used for (SP0).
         """
 
-        self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
+        self.lg.info('Create storagepool (SP1) on node (N0) with different raids using disks belown min number, should fail.')
         self.setUp_storagepool(res_status=500, devices_no=devices_no - 1, metadataProfile=profile, dataProfile=profile)
 
         self.lg.info('Create storagepool (SP0) on node (N0) with {} using {} disks, should succeed.'.format(profile, devices_no))
