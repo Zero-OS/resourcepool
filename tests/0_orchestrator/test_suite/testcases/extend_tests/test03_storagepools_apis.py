@@ -31,45 +31,26 @@ class TestStoragepoolsAPI(TestcasesBase):
             self.created_st_pools.append(self.data['name'])
 
     def tearDown(self):
-        for st_pool in self.created_st_pools:
-            self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, st_pool)
-            self.created_st_pools.remove(st_pool)
+        self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, self.created_st_pools[0])
+        self.created_st_pools.remove(self.created_st_pools[0])
         super().tearDown()
 
-    def setUp_plus_fileSystem(self, **kwargs):
-        self.lg.info(' [*] Create filesystem (FS0) on storagepool {}'.format(self.data['name']))
-        self.response_filesystem, self.data_filesystem = self.storagepools_api.post_storagepools_storagepoolname_filesystems(
-            node_id=self.nodeid,
-            storagepoolname=self.data['name'], **kwargs)
-        self.assertEqual(self.response_filesystem.status_code, 201, " [*] Can't create filesystem on storagepool.")
-
-    def setUp_plus_fileSystem_plus_snapShots(self):
-        self.setUp_plus_fileSystem()
-        self.lg.info(' [*] Create snapshot (SS0) of filesystem {}'.format(self.data_filesystem['name']))
-        self.response_snapshot, self.data_snapshot = self.storagepools_api.post_filesystems_snapshots(self.nodeid,
-                                                                                                      self.data['name'],
-                                                                                                      self.data_filesystem[
-                                                                                                          'name'])
-        self.assertEqual(self.response_snapshot.status_code, 201, " [*] can't create new snapshot.")
-
-    @parameterized.expand(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup'])
-    def test001_create_storagepool_different_raids(self, profile):
+    @parameterized.expand([['raid0', 2], ['raid1', 2], ['raid5', 2], ['raid6', 3], ['raid10', 4], ['dup', 1]])
+    def test001_create_storagepool_different_raids(self, params):
         """ GAT-166
         **Test Scenario:**
 
         #. Get random nodid (N0), should succeed.
+        #. Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.
         #. Create storagepool (SP0) on node (N0) with different raids, should succeed.
         #. Check if two disks have been used for (SP0).
-        #. Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.
         """
-        if profile == 'dup':
-            devices_no = 1
-        elif profile == 'raid6':
-            devices_no = 3
-        elif profile == 'raid10':
-            devices_no = 4
-        else:
-            devices_no = 2
+        profile = params[0]
+        devices_no = params[1]
+
+        if profile == 'raid0':
+            self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
+            self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
 
         self.lg.info('Create storagepool (SP0) on node (N0) with {} using {} disks, should succeed.'.format(profile, devices_no))
         self.setUp_storagepool(res_status=201, devices_no=devices_no, metadataProfile=profile, dataProfile=profile)
@@ -80,13 +61,6 @@ class TestStoragepoolsAPI(TestcasesBase):
         res = self.core0_client.client.bash("btrfs filesystem df /mnt/storagepools/{} | grep Metadata | {}".format(self.data['name'], exp)).get().stdout.strip('\n')
         self.assertEqual(profile, res.lower())
 
-        self.lg.info('Check if two disks have been used for (SP0).')
+        self.lg.info('Check if {} disks have been used for (SP0).'.format(devices_no))
         devices = [b['total_devices'] for b in self.core0_client.client.btrfs.list() if b['label'] == 'sp_' + self.data['name']]
         self.assertEqual(devices[0], devices_no)
-
-        self.lg.info('Delete storagepool SP1')
-        self.tearDown()
-
-        if profile == 'raid0':
-            self.lg.info('Create storagepool (SP1) on node (N0) with raid0 using one disk, should fail.')
-            self.setUp_storagepool(res_status=500, devices_no=1, metadataProfile='raid0', dataProfile='raid0')
