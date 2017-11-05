@@ -25,8 +25,6 @@ def uninstall(job):
     else:
         raise RuntimeError('Cannot remove dashboard, got: {}'.format(result))
 
-    service.delete()
-
 
 def processChange(job):
     service = job.service
