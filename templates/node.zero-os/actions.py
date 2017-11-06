@@ -116,8 +116,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
-    import redis
-    import time
 
     service = job.service
     config = get_configuration(service.aysrepo)
