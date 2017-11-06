@@ -22,7 +22,9 @@ types:
     get:
       (AYSBased):
       securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-      description: List all nodes health
+      description: |
+      List all nodes health. Status will be OK unless one of the healthchecks has a status WARNING or ERROR.
+      If all healthchecks have a status SKIPPED, then status will be SKIPPED.
       displayName: ListNodesHealth
       responses:
         200:
