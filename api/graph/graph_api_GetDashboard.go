@@ -23,16 +23,30 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	name := vars["dashboardname"]
 
 	query := map[string]interface{}{
-		"parent": fmt.Sprintf("grafana!%s", graphID),
-		"fields": "dashboard,slug,grafana",
+		"fields": "node,port,url",
 	}
-	service, res, err := aysClient.Ays.GetServiceByName(name, "dashboard", api.AysRepo, nil, query)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
+	service, res, err := aysClient.Ays.GetServiceByName(graphID, "grafana", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, res, w, "Get grafana service by name") {
 		return
 	}
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
+
+	var grafana GraphService
+	if err := json.Unmarshal(service.Data, &grafana); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		return
+	}
+
+	query = map[string]interface{}{
+		"fields": "dashboard,slug,grafana",
+	}
+	service, res, err = aysClient.Ays.GetServiceByName(name, "dashboard", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, res, w, "Get dashboard by name") {
+		return
+	}
+
+	if service.Parent.Name != graphID {
+		err := fmt.Errorf("dashboard %s does not exists under parent %s", name, graphID)
+		tools.WriteError(w, http.StatusNotFound, err, "")
 		return
 	}
 
@@ -49,38 +63,10 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query = map[string]interface{}{
-		"fields": "node,port",
-	}
-	service, res, err = aysClient.Ays.GetServiceByName(data.Grafana, "grafana", api.AysRepo, nil, query)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting dashboard service from ays")
-		return
-	}
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
-		return
-	}
-
-	type grafanaItem struct {
-		Node string `json:"node" validate:"nonzero"`
-		Port int    `json:"port" validate:"nonzero"`
-	}
-
-	var grafana grafanaItem
-	if err := json.Unmarshal(service.Data, &grafana); err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
-		return
-	}
-	query = map[string]interface{}{
-		"fields": "RedisAddr",
+		"fields": "redisAddr",
 	}
 	serviceNode, res, err := aysClient.Ays.GetServiceByName(grafana.Node, "node.zero-os", api.AysRepo, nil, query)
-	if err != nil {
-		tools.WriteError(w, http.StatusInternalServerError, err, "Error getting node service from ays")
-		return
-	}
-	if res.StatusCode != http.StatusOK {
-		w.WriteHeader(res.StatusCode)
+	if !tools.HandleAYSResponse(err, res, w, "Get node by name") {
 		return
 	}
 
@@ -94,12 +80,19 @@ func (api *GraphAPI) GetDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var url string
+	if grafana.URL != "" {
+		url = grafana.URL
+	} else {
+		url = fmt.Sprintf("http://%s:%d", node.RedisAddr, grafana.Port)
+	}
+
 	var respBody DashboardListItem
 	dashboard := DashboardListItem{
-		Name:      service.Name,
+		Name:      name,
 		Slug:      data.Slug,
 		Dashboard: data.Dashboard,
-		Url:       fmt.Sprintf("http://%s:%d/dashboard/db/%s", node.RedisAddr, grafana.Port, data.Slug),
+		Url:       fmt.Sprintf("%s/dashboard/db/%s", url, data.Slug),
 	}
 	respBody = dashboard
 

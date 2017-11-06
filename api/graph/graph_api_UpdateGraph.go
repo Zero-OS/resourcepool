@@ -18,13 +18,13 @@ func (api *GraphAPI) UpdateGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var reqBody Graph
+	var reqBody GraphUpdate
 	vars := mux.Vars(r)
 	graphid := vars["graphid"]
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
