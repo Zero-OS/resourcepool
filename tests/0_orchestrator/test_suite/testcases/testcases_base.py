@@ -75,6 +75,12 @@ class TestcasesBase(TestCase):
             node_id = nodes_list[random.randint(0, len(nodes_list) - 1)]
             return node_id
 
+    def get_running_nodes(self):
+        response = self.nodes_api.get_nodes()
+        self.assertEqual(response.status_code, 200)
+        nodes_list = [x['id'] for x in response.json() if x['status'] == 'running']
+        return nodes_list
+
     def random_string(self, size=10):
         return str(uuid.uuid4()).replace('-', '')[:size]
 
@@ -194,14 +200,146 @@ class TestcasesBase(TestCase):
         mac_address = ':'.join(map(lambda x: "%02x" % x, random_mac))
         return mac_address
 
-    def get_max_available_free_disks(self, nodes):
-        disk_types = ['ssd', 'hdd', 'nvme']
+    def get_max_available_free_disks(self, nodes, disk_type=""):
+        if disk_type:
+            disk_types = [disk_type]
+        else:
+            disk_types = ['ssd', 'hdd', 'nvme']
         free_disks = []
         for nodeid in nodes:
             nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
             node_client = Client(ip=nodeip, password=self.jwt)
             free_disks.extend(node_client.getFreeDisks())
         return max([(sum([1 for x in free_disks if x.get('type') == y]), y) for y in disk_types])
+
+    def get_available_free_disks(self, nodes):
+        disk_types = ['ssd', 'hdd', 'nvme']
+        free_disks = []
+        disks = {"ssd": 0, "hdd": 0, "nvme": 0}
+        for nodeid in nodes:
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            free_disks.extend(node_client.getFreeDisks())
+        for disktype in disk_types:
+            disks[disktype] = sum([1 for x in free_disks if x.get('type') == disktype])
+        return disks
+
+    def get_nodes_disks(self, nodes):
+        nodes_disk = {}
+        for nodeid in nodes:
+            disks = {"ssd": 0, "hdd": 0, "nvme": 0}
+            nodeip = [x['ip'] for x in self.nodes_info if x['id'] == nodeid][0]
+            node_client = Client(ip=nodeip, password=self.jwt)
+            node_disks = node_client.getFreeDisks()
+            for disk in list(disks.keys()):
+                for x in node_disks:
+                    if x.get('type') == disk:
+                        disks[disk]+=1
+            nodes_disk[nodeid] = disks
+        return nodes_disk
+
+    def get_nodes_disks_sum(self, nodes):
+        nodes_disks = self.get_nodes_disks(nodes)
+        nodes_disks_info = {"ssd": {'sum':0,
+                                    'nodes': []},
+                            "hdd": {'sum':0,
+                                    'nodes': []},
+                            "nvme": {'sum':0,
+                                     'nodes': []}
+                            }
+        for node_id in nodes_disks:
+            for key in nodes_disks_info:
+                if nodes_disks[node_id][key] != 0:
+                    nodes_disks_info[key]['sum'] += nodes_disks[node_id][key]
+                    nodes_disks_info[key]['nodes'].append(node_id)
+        return nodes_disks_info
+
+    def block_cluster_creation(self, nodes):
+        nodes_disks_info = self.get_nodes_disks_sum(nodes)
+        nodes_disks = self.get_nodes_disks(nodes)
+        disks = {"ssd": nodes_disks_info["ssd"]["sum"],
+                 "hdd": nodes_disks_info["hdd"]["sum"],
+                 "nvme": nodes_disks_info["nvme"]["sum"]
+                }
+        tmp = dict(disks)
+        for disk_type in disks:
+            maxdisk = max(tmp, key=tmp.get)
+            nodes = nodes_disks_info[maxdisk]["nodes"]
+            if not nodes:
+                continue
+            while (tmp[maxdisk] % len(nodes)):
+                tmp[maxdisk] -=1
+            servers_per_node = int(tmp[maxdisk]/len(nodes))
+            for nodeid in nodes:
+                if (nodes_disks[nodeid][maxdisk] < servers_per_node):
+                    break
+            else:
+                block_cluster = {"servers": tmp[maxdisk], "type": maxdisk,
+                                 "nodes": nodes_disks_info[maxdisk]["nodes"]}
+                return block_cluster
+        else:
+            maxdisk = max(disks, key=disks.get)
+            block_cluster = {"servers": len(nodes_disks_info[maxdisk]["nodes"]), "type": maxdisk,
+                             "nodes": nodes_disks_info[maxdisk]["nodes"]}
+            return block_cluster
+
+    def get_clusters_data(self, nodes):
+        disk_types = ["ssd", "hdd", "nvme"]
+        blockcluster = self.block_cluster_creation(nodes)
+        max_disktype = blockcluster["type"]
+        disk_types.remove(max_disktype)
+        object_max_type = {"nodes":[], "drivetype":max_disktype , "metadatatype":max_disktype}
+        object_type1 = {"nodes": [], "drivetype": disk_types[0], "metadatatype": disk_types[0]}
+        object_type2 = {"nodes":[],"drivetype":disk_types[1],"metadatatype":disk_types[1]}
+        object_edintecal_types = {"nodes": [], "drivetype": disk_types[1], "metadatatype":disk_types[0]}
+        node_disks = self.get_nodes_disks(nodes)
+        for nodeid in nodes:
+            free_disks = node_disks[nodeid][disk_types[0]] + node_disks[nodeid][disk_types[1]]
+            if free_disks < 2:
+                remain_max_servers = node_disks[nodeid][max_disktype]-(blockcluster["servers"]/len(blockcluster["nodes"]))
+                if remain_max_servers >=2:
+                    object_max_type["nodes"].append(nodeid)
+            else:
+                if node_disks[nodeid][disk_types[0]] >= 2:
+                    object_type1["nodes"].append(nodeid)
+
+                elif node_disks[nodeid][disk_types[1]] >=2:
+                    object_type2["nodes"].append(nodeid)
+
+                elif (node_disks[nodeid][disk_types[1]]==1) and (node_disks[nodeid][disk_types[0]]==1):
+                    object_edintecal_types["nodes"].append(nodeid)
+        options = [object_max_type, object_type1, object_type2, object_edintecal_types]
+        nodes_number, objectcluster = max([(len(y["nodes"]), y) for y in options],key=lambda x:x[0])
+        return blockcluster, objectcluster
+
+    def get_available_cluster_type(self, clusters, clustertype):
+        clusters_details = []
+        for cluster in clusters:
+            response = self.storageclusters_api.get_storageclusters_label(cluster)
+            self.assertEqual(response.status_code,
+                             200)
+            if response.json()["clusterType"] == clustertype:
+                clusters_details.append(response.json())
+        return clusters_details
+
+    def create_object_cluster(self, objectcluster_data):
+        nodes = objectcluster_data["nodes"]
+        servers = len(nodes)
+        driveType = objectcluster_data["drivetype"]
+        metaDriveType = objectcluster_data["metadatatype"]
+        parityshards = random.randint(1,len(nodes)-1)
+        datashards = len(nodes) - parityshards
+        serversPerMetaDrive = 1
+        response, cluster = self.storageclusters_api.post_object_cluster(nodes=nodes,
+                                                                         driveType=driveType,
+                                                                         metaDriveType=metaDriveType,
+                                                                         servers=servers,
+                                                                         dataShards=datashards,
+                                                                         parityShards=parityshards,
+                                                                         serversPerMetaDrive =serversPerMetaDrive
+                                                                         )
+        return response, cluster
+
 
     def enable_ssh_access(self, vnc_ip, username=None, password=None, zerotier_nwid=None):
 
