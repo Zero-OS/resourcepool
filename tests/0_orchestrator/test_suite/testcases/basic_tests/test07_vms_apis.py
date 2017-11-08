@@ -33,7 +33,7 @@ class TestVmsAPI(TestcasesBase):
 
         objectcluster = self.get_available_cluster_type(storageclusters.json(), "object")
         if not objectcluster:
-            if objectcluster_data["nodes"] >1:
+            if len(objectcluster_data["nodes"]) >1:
                 response, cluster = self.create_object_cluster(objectcluster_data)
                 self.assertEqual(response.status_code, 201)
                 objectcluster = cluster['label']
