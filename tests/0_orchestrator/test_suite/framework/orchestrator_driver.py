@@ -63,5 +63,6 @@ class OrchasteratorDriver:
                 continue
             nodes_info.append({"id": node['id'],
                                "ip": node['ipaddress'],
-                               "status": node['status']})
+                               "status": node['status'],
+                               "hostname":node['hostname']})
         return nodes_info
