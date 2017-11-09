@@ -335,6 +335,8 @@ def list_vdisks(job):
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
+            if 'no vdisks could be found' in result.stderr:
+                return []
             raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
         return result.stdout.splitlines()
     finally:
@@ -362,7 +364,7 @@ def monitor(job):
         service.consume(healthcheck_service)
 
     # Get orphans
-    total_disks = list_vdisks(job)
+    total_disks = set(list_vdisks(job))
     vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer="%s!%s" % (service.model.role, service.name))
     nonorphans = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
 
