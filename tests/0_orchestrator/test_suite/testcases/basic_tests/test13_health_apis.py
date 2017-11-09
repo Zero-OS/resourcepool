@@ -19,6 +19,7 @@ class TestNodeHealthcheckAPI(TestcasesBase):
 
         #. List all nodes health, should succeed with 200.
         #. Check that all nodes have health check, should succeed.
+        #. Check that all nodes have the same status result.
         """
 
         self.lg.info("[*] List all nodes health, should succeed with 200")
@@ -29,9 +30,14 @@ class TestNodeHealthcheckAPI(TestcasesBase):
         nodes_info = [{'id':node['id'], 'status':node['status'], 'hostname':node['hostname']} for node in self.nodes_info]
         self.assertEqual(nodes_healthcheck, nodes_info)
 
+<<<<<<< HEAD
     @parameterized.expand([(89, 'OK'), (91, 'WARNING'), (94, 'WARNING'), (95, 'ERROR'), (99, 'ERROR')])
     def test02_disk_usage_checks(self, percentage, status):
         """ GAT-169
+=======
+    def test03_disk_usage_checks(self):
+        """ GAT-170
+>>>>>>> 0541507b611bf3b3bee8e548cebe730294b33649
 
         **Test Scenario:**
 
