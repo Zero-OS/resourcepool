@@ -73,7 +73,7 @@ def stop(job):
     container = get_container(service)
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     if container_ays.is_running():
-        grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
+        grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port)
         grafana.stop()
         container.executeAction('stop', context=job.context)
 
@@ -89,7 +89,7 @@ def uninstall(job):
     container = get_container(service, False)
 
     if container:
-        stop(job)
+        stop()
         container.delete()
     service.delete()
 
@@ -110,12 +110,35 @@ def processChange(job):
     container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
     grafana = Grafana(container_ays, service.parent.model.data.redisAddr, job.service.model.data.port, job.service.model.data.url)
 
-    if 'url' in args:
+    if 'url' in args or 'port' in args:
+        service.model.data.port = args.get('port', service.model.data.port)
         service.model.data.url = args.get('url', service.model.data.url)
         if container_ays.is_running() and grafana.is_running()[0]:
             grafana.stop()
+            grafana.port = service.model.data.port
             grafana.url = service.model.data.url
             grafana.start()
+
+    if args.get('influxdb'):
+        service.model.data.influxdb = args['influxdb']
+        added = []
+        removed = []
+        new = set(args['influxdb'])
+        old = set(s.name for s in service.producers.get('influxdb'))
+        for name in new - old:
+            s = service.aysrepo.serviceGet(role='influxdb', instance=name)
+            service.consume(s)
+            added.append(s)
+        for name in old - new:
+            s = service.aysrepo.serviceGet(role='influxdb', instance=name)
+            service.model.producerRemove(s)
+            removed.append(s)
+        if container_ays.is_running() and grafana.is_running()[0]:
+            grafana.influxdb = args['influxdb']
+            container = get_container(service)
+            container_ays = Container.from_ays(container, job.context['token'], logger=service.logger)
+            add_datasources(grafana, added)
+            delete_datasources(grafana, removed)
 
     service.saveAll()
 

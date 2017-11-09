@@ -19,6 +19,11 @@ class StoragepoolsAPI(OrchestratorBase):
                 "dataProfile": 'single',
                 "devices": [random.choice(free_devices)]}
 
+        if len(free_devices) > 6:
+            data['metadataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
+            data['dataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
+            data['devices'] = free_devices[:4]
+
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateStoragePool(nodeid=node_id, data=data)
         return response, data

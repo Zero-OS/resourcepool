@@ -1492,12 +1492,6 @@ Graph:
     id: string
     url: string
 
-GraphUpdate:
-  type: object
-  description: A graph
-  properties:
-    url: string
-
 Dashboard:
   type: object
   description: A dashboard
@@ -1521,9 +1515,7 @@ NodeHealthCheck:
   description: Node health check status
   properties:
     id: string
-    status:
-      type: string
-      description:  Status will be OK unless one of the healthchecks has a status WARNING or ERROR. If all healthchecks have a status SKIPPED, then status will be SKIPPED.
+    status: string
     hostname: string
 
 StorageClusterHealthCheck:

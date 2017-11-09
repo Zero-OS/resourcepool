@@ -10,6 +10,10 @@ class Client(TestCase):
     def stdout(self, resource):
         return resource.get().stdout.replace('\n', '').lower()
 
+    def bash(self, cmd):
+        response = self.client.bash(cmd).get()
+        return response
+
     def get_nodes_cpus(self):
         info = self.client.info.cpu()
         cpuInfo = []
@@ -157,7 +161,7 @@ class Client(TestCase):
                     else:
                         disktype = 'ssd'
 
-                current_disk = {'type':disktype, 'name':'/dev/{}'.format(disk['kname'])}
+                current_disk = {'type':disktype, 'name':'/dev/{}'.format(disk['kname']), 'size':int(diskSize)}
                 freeDisks.append(current_disk)
             
         return freeDisks

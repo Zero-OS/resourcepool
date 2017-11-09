@@ -18,7 +18,7 @@ func (api *GraphAPI) ListGraphs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queryParams := map[string]interface{}{
-		"fields": "node,port,url",
+		"fields": "node,port",
 	}
 	services, res, err := aysClient.Ays.ListServicesByRole("grafana", api.AysRepo, nil, queryParams)
 	if !tools.HandleAYSResponse(err, res, w, "listing graphs") {
