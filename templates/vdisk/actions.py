@@ -38,26 +38,16 @@ def install(job):
         # Clone the image to the new vdisk
         targetconfig = get_cluster_config(job)
         target_node = random.choice(targetconfig['nodes'])
-        vdiskstore = service.parent
-        blockStoragecluster = vdiskstore.model.data.blockCluster
-        objectStoragecluster = vdiskstore.model.data.objectCluster
 
         volume_container = create_from_template_container(job, target_node)
         try:
-            CMD = '/bin/zeroctl copy vdisk --config {etcd} {src_name} {dst_name} {tgtcluster} --flush-size 128'
-
-            if objectStoragecluster:
-                object_st = service.aysrepo.serviceGet(role='storagecluster.object', instance=objectStoragecluster)
-                dataShards = object_st.model.data.dataShards
-                parityShards = object_st.model.data.parityShards
-                CMD += ' --data-shards %s --parity-shards %s' % (dataShards, parityShards)
+            CMD = '/bin/zeroctl copy vdisk {src_name} {dst_name} --flush-size 128 --config {etcd}'
 
             etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
             etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
             cmd = CMD.format(etcd=etcd_cluster.dialstrings,
                              dst_name=service.name,
-                             src_name=service.model.data.imageId,
-                             tgtcluster=blockStoragecluster)
+                             src_name=service.model.data.imageId)
 
             job.logger.info(cmd)
             job_id = volume_container.client.system(cmd, id="vdisk.copy.%s" % service.name)
@@ -81,7 +71,7 @@ def delete(job):
     try:
         etcd_cluster = service.aysrepo.servicesFind(role='etcd_cluster')[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context['token'])
-        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
+        cmd = '/bin/zeroctl delete vdisk {} --config {}'.format(service.name, etcd_cluster.dialstrings)
         job.logger.info(cmd)
         result = container.client.system(cmd, id="vdisk.delete.%s" % service.name).get()
         if result.state != 'SUCCESS':
@@ -92,8 +82,6 @@ def delete(job):
 
 
 def save_config(job):
-    import hashlib
-    from urllib.parse import urlparse
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -346,7 +334,6 @@ def import_vdisk(job):
     clusterconfig = get_cluster_config(job)
     node = random.choice(clusterconfig["nodes"])
     container = create_from_template_container(job, node)
-    vdiskstorage_service = service.parent
     try:
         etcd_cluster = service.aysrepo.servicesFind(role="etcd_cluster")[0]
         etcd_cluster = EtcdCluster.from_ays(etcd_cluster, job.context["token"])
@@ -358,16 +345,6 @@ def import_vdisk(job):
                                           dialstrings=etcd_cluster.dialstrings,
                                           snapshotID=snapshotID,
                                           ftpurl=url)
-
-        object_cluster = vdiskstorage_service.model.data.objectCluster
-        if vdiskstorage_service.model.data.objectCluster:
-            object_cluster_service = service.aysrepo.serviceGet(role='storagecluster.object', instance=object_cluster)
-            data_shards = object_cluster_service.model.data.dataShards
-            parity_shards = object_cluster_service.model.data.parityShards
-            cmd += " --data-shards {dataShards} --parity-shards {parityShards}".format(dataShards=data_shards,
-                                                                                       parityShards=parity_shards)
-        else:
-            cmd += " --data-shards 0 --parity-shards 0"
 
         if cryptoKey:
             cmd += " --key {cryptoKey}".format(cryptoKey=cryptoKey)
