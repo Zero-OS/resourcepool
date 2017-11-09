@@ -18,6 +18,7 @@ class TestNodeHealthcheckAPI(TestcasesBase):
 
         #. List all nodes health, should succeed with 200.
         #. Check that all nodes have health check, should succeed.
+        #. Check that all nodes have the same status result.
         """
 
         self.lg.info("[*] List all nodes health, should succeed with 200")
@@ -27,18 +28,6 @@ class TestNodeHealthcheckAPI(TestcasesBase):
         nodes_healthcheck = response.json() 
         nodes_info = [{'id':node['id'], 'status':node['status'], 'hostname':node['hostname']} for node in self.nodes_info]
         self.assertEqual(nodes_healthcheck, nodes_info)
-
-    def test02_get_node_healthcheck(self):
-        """ GAT-169
-
-        **Test Scenario:**
-
-        #. Get random node (N0).
-        #. Check node (N0) healthchecks, should succeed with 200.
-        """
-        self.lg.info("Check node (N0) healthchecks, should succeed with 200")
-        response = self.healthcheck_api.get_node_health(nodeid=self.nodeid)
-        self.assertEqual(response.status_code, 200)
 
     def test03_disk_usage_checks(self):
         """ GAT-170
