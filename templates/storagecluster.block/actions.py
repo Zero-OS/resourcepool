@@ -302,11 +302,11 @@ def delete(job):
 
 def list_vdisks(job):
     import random
-    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
@@ -326,15 +326,19 @@ def list_vdisks(job):
                           node=node)
     container.start()
     try:
-        cluster = BlockCluster.from_ays(service, job.context['token'])
-        clusterconfig = cluster.get_config()
+        etcd_cluster_service = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd_cluster_sal = EtcdCluster.from_ays(etcd_cluster_service, job.context['token'])
 
-        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['dataStorage'][0]["address"])
+        cmd = '/bin/zeroctl list vdisks {cluster_id} --config {etcd}'
+        cmd = cmd.format(cluster_id=service.name, etcd=etcd_cluster_sal.dialstrings)
+
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
+            if 'no vdisks could be found' in result.stderr:
+                return []
             raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
-        return {vdisk.strip("lba:") for vdisk in result.stdout.splitlines()}
+        return result.stdout.splitlines()
     finally:
         container.stop()
 
@@ -360,7 +364,7 @@ def monitor(job):
         service.consume(healthcheck_service)
 
     # Get orphans
-    total_disks = list_vdisks(job)
+    total_disks = set(list_vdisks(job))
     vdisk_services = service.aysrepo.servicesFind(role='vdisk', producer="%s!%s" % (service.model.role, service.name))
     nonorphans = {disk.name for disk in vdisk_services if disk.model.data.status != "orphan"}
 
