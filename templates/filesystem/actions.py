@@ -30,7 +30,12 @@ def install(job):
 
 
 def delete(job):
-    pool = get_pool(job)
+    # Do nothing if the pool couldn't be found, ie was never installed correctly
+    try:
+        pool = get_pool(job)
+    except ValueError:
+        return
+
     fsname = str(job.service.model.data.name)
     try:
         fs = pool.get(fsname)
