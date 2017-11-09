@@ -1,4 +1,5 @@
 import random, time, unittest
+from parameterized import parameterized
 from testcases.testcases_base import TestcasesBase
 
 class TestNodeHealthcheckAPI(TestcasesBase):
@@ -28,20 +29,9 @@ class TestNodeHealthcheckAPI(TestcasesBase):
         nodes_info = [{'id':node['id'], 'status':node['status'], 'hostname':node['hostname']} for node in self.nodes_info]
         self.assertEqual(nodes_healthcheck, nodes_info)
 
-    def test02_get_node_healthcheck(self):
+    @parameterized.expand([(89, 'OK'), (91, 'WARNING'), (94, 'WARNING'), (95, 'ERROR'), (99, 'ERROR')])
+    def test02_disk_usage_checks(self, percentage, status):
         """ GAT-169
-
-        **Test Scenario:**
-
-        #. Get random node (N0).
-        #. Check node (N0) healthchecks, should succeed with 200.
-        """
-        self.lg.info("Check node (N0) healthchecks, should succeed with 200")
-        response = self.healthcheck_api.get_node_health(nodeid=self.nodeid)
-        self.assertEqual(response.status_code, 200)
-
-    def test03_disk_usage_checks(self):
-        """ GAT-170
 
         **Test Scenario:**
 
@@ -57,25 +47,11 @@ class TestNodeHealthcheckAPI(TestcasesBase):
         #. Get node (N0) healthchecks, device (DE0) usage status should be (ERROR).
         #. Delete storagepool (SP0), should succeed.
         """
-        def get_disk_usage(target_disk):
-            if target_disk['type'] == 'nvme':
-                targe_disk_name = '{}p1_usage'.format(target_disk['name'])
-            else:
-                targe_disk_name = '{}1_usage'.format(target_disk['name'])
-
-            response = self.healthcheck_api.get_node_health(nodeid=self.nodeid)
-            self.assertEqual(response.status_code, 200)
-
-            healthchecks = response.json()['healthchecks']
-            disk_usage = [x for x in healthchecks if x['id'] == 'disk-usage'][0]
-            target_disk_usage = [x for x in disk_usage['messages'] if x['id'] == targe_disk_name]
-            self.assertNotEqual(target_disk_usage, [])
-            return target_disk_usage[0]
-
+        self.lg.info('Choose random free device (DE0) from node (N0) devices')
         node_free_disks = self.core0_client.getFreeDisks() 
         target_disk = random.choice(node_free_disks)
 
-        self.lg.info('Choose random free device (DE0) from node (N0) devices')
+        self.lg.info('Create storagepool (SP0) and attach device (DE0) to it, should succeed')
         response, storagepool = self.storagepools_api.post_storagepools(self.nodeid, free_devices=[target_disk['name']])
         self.assertEqual(response.status_code, 201)
 
@@ -85,17 +61,12 @@ class TestNodeHealthcheckAPI(TestcasesBase):
         )
         self.assertEqual(response.status_code, 201)
 
-        time.sleep(35)
-
-        self.lg.info('Get node (N0) healthchecks, device (DE0) usage status should be (OK)')
-        disk_usage = get_disk_usage(target_disk)
-        self.assertEqual(disk_usage['status'], 'OK')
-
         path = '/mnt/storagepools/{}/filesystems/{}'.format(storagepool['name'], filesystem['name'])
-                
-        self.lg.info('Write file (F0) with size equal to (91 %) of device (DE0) space')
+
+        self.lg.info('Write file (F0) with size equal to ({} %) of device (DE0) space'.format(percentage))
         filename = self.random_string()
-        filesize = int(0.91 * target_disk['size'])
+        filesize = int((percentage/100) * target_disk['size'])
+        
         cmd = 'cd {path}; fallocate -l {filesize}G {filename}'.format(
             path=path,
             filename=filename,
@@ -106,31 +77,22 @@ class TestNodeHealthcheckAPI(TestcasesBase):
 
         time.sleep(35)
 
-        self.lg.info('Get node (N0) healthchecks, device (DE0) usage status should be (WARNING)')
-        disk_usage = get_disk_usage(target_disk)
-        self.assertEqual(disk_usage['status'], 'WARNING')
+        self.lg.info('Get node (N0) healthchecks, device (DE0) usage status should be ({})'.format(status))
 
-        self.lg.info('Remove file (F0)')
-        cmd = 'rm -f {}/*'.format(path)
-        self.core0_client.bash(cmd)
+        if target_disk['type'] == 'nvme':
+            targe_disk_name = '{}p1_usage'.format(target_disk['name'])
+        else:
+            targe_disk_name = '{}1_usage'.format(target_disk['name'])
 
-        self.lg.info('Write file (F1) with size equal to (95 %) of device (DE0) space')
-        filename = self.random_string()
-        filesize = int(0.95 * target_disk['size'])
-        cmd = 'cd {path}; fallocate -l {filesize}G {filename}'.format(
-            path=path,
-            filename=filename,
-            filesize=filesize
-        )
-        response = self.core0_client.bash(cmd)
-        self.assertEqual(response.state, 'SUCCESS')
+        response = self.healthcheck_api.get_node_health(nodeid=self.nodeid)
+        self.assertEqual(response.status_code, 200)
 
-        time.sleep(35)
+        disks_usage = [x for x in  response.json()['healthchecks'] if x['id'] == 'disk-usage'][0]
+        target_disk_usage = [x for x in disks_usage['messages'] if x['id'] == targe_disk_name]
+        self.assertNotEqual(target_disk_usage, [])
 
-        self.lg.info('Get node (N0) healthchecks, device (DE0) usage status should be (ERROR)')
-        disk_usage = get_disk_usage(target_disk)
-        self.assertEqual(disk_usage['status'], 'ERROR')
-
+        self.assertEqual(target_disk_usage[0]['status'], status)
+      
         self.lg.info('Delete storagepool (SP0), should succeed')
         response = self.storagepools_api.delete_storagepools_storagepoolname(self.nodeid, storagepool['name'])
         self.assertEqual(response.status_code, 204)
