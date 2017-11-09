@@ -114,13 +114,9 @@ def install(job):
                 -flush-size 128 \
                 -address {bind} \
                 -wait-listen-addr {waitListenBind} \
-                -data-shards {data_shards} \
-                -parity-shards {parity_shards} \
                 -config "{dialstrings}" \
                 '.format(id=vm.name,
                          bind=bind,
-                         data_shards=data_shards,
-                         parity_shards=parity_shards,
                          waitListenBind=waitListenBind,
                          dialstrings=etcd_cluster.dialstrings)
         if backup:

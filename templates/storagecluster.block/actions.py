@@ -302,11 +302,11 @@ def delete(job):
 
 def list_vdisks(job):
     import random
-    from zeroos.orchestrator.sal.StorageCluster import BlockCluster
     from zeroos.orchestrator.configuration import get_configuration
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
@@ -326,15 +326,17 @@ def list_vdisks(job):
                           node=node)
     container.start()
     try:
-        cluster = BlockCluster.from_ays(service, job.context['token'])
-        clusterconfig = cluster.get_config()
+        etcd_cluster_service = service.aysrepo.servicesFind(role='etcd_cluster')[0]
+        etcd_cluster_sal = EtcdCluster.from_ays(etcd_cluster_service, job.context['token'])
 
-        cmd = '/bin/zeroctl list vdisks {}'.format(clusterconfig['dataStorage'][0]["address"])
+        cmd = '/bin/zeroctl list vdisks {cluster_id} --config {etcd}'
+        cmd = cmd.format(cluster_id=service.name, etcd=etcd_cluster_sal.dialstrings)
+
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
             raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
-        return {vdisk.strip("lba:") for vdisk in result.stdout.splitlines()}
+        return result.stdout.splitlines()
     finally:
         container.stop()
 

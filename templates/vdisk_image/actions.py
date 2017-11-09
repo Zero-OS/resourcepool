@@ -44,12 +44,6 @@ def install(job):
         if service.model.data.overwrite:
             cmd += ' --force'
 
-        if vdiskstore.model.data.objectCluster:
-            storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.object',
-                                                               instance=vdiskstore.model.data.objectCluster)
-            cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
-                                                                 storageclusterservice.model.data.parityShards)
-
         job.logger.info("import image {} from {} as {}".format(snapshotID, url, service.name))
         job.logger.info(cmd)
 

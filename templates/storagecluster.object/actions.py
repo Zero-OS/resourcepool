@@ -242,8 +242,10 @@ def save_config(job):
             "clientID": zstor_clientid,
             "secret": zstor_clientsecret,
         },
-        "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
+        "dataServers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
         "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
+        "dataShards": service.model.data.dataShards,
+        "parityShards": service.model.data.parityShards,
     }
     yamlconfig = yaml.safe_dump(zerostor_config, default_flow_style=False)
     etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
