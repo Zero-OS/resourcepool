@@ -1,5 +1,6 @@
 import json
 import requests
+import math
 
 
 def write_status_code_error(job, exception):
@@ -63,10 +64,10 @@ def get_min_size(size):
     example:
         get_min_size(516) => 1024
     :param size: size in bytes
-    :return: minimum valid block size for the size param
+    :return: minimum valid block size for the size param in Gigabytes
     """
     size = size / (1024 * 1024)
-    power_val = 9
+    power_val = 10
     while size > 2**power_val:
         power_val += 1
-    return 2**power_val
+    return math.ceil(2**power_val / 1024)
