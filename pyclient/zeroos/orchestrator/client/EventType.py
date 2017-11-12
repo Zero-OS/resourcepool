@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class EnumEventType(Enum):
+class EventType(Enum):
     ork = "ork"
