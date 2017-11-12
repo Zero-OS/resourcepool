@@ -72,7 +72,7 @@ func WaitOnRun(api API, w http.ResponseWriter, r *http.Request, runid string) (R
 	if EnumRunState(run.State) != EnumRunStateok {
 		err = fmt.Errorf("Internal Server Error")
 		WriteError(w, http.StatusInternalServerError, err, "")
-		return Run{Runid: run.Key, State: EnumRunState(run.State)}, jobErr
+		return Run{Runid: run.Key, State: EnumRunState(run.State)}, err
 	}
 	response := Run{Runid: run.Key, State: EnumRunState(run.State)}
 	return response, nil

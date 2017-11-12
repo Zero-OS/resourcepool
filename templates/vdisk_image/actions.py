@@ -9,31 +9,47 @@ def input(job):
 def install(job):
     import random
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
+    from zeroos.orchestrator.utils import get_min_size
 
     service = job.service
-    vdiskstore = service.parent
-
-    save_config(job)
 
     url = service.model.data.ftpURL
 
-    snapshotID = "{}_{}".format(
+    snapshotID = '{}_{}'.format(
         service.model.data.exportName,
         service.model.data.exportSnapshot)
 
     node = random.choice(get_cluster_nodes(job))
     container = create_from_template_container(job, node)
+
     try:
-        find_resp = service.aysrepo.servicesFind(role="etcd_cluster")
+        # Get size and block size of the image
+        cmd = '/bin/zeroctl describe snapshot {snapshotID} --storage {ftpurl}'
+        cmd = cmd.format(snapshotID=snapshotID, ftpurl=url)
+
+        if service.model.data.encryptionKey:
+            cmd += ' --key {}'.format(service.model.data.encryptionKey)
+        result = container.client.system(cmd, id="vdisk.describe.%s" % service.name).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl describe {} {}".format(result.stdout, result.stderr))
+
+        imageinfo = j.data.serializer.json.loads(result.stdout)
+        service.model.data.size = get_min_size(imageinfo['size'])
+        service.model.data.exportBlockSize = imageinfo['blockSize']
+
+        # Save image configurations
+        save_config(job)
+
+        find_resp = service.aysrepo.servicesFind(role='etcd_cluster')
         if len(find_resp) <= 0:
-            raise j.exceptions.RuntimeError("no etcd_cluster service found")
+            raise j.exceptions.RuntimeError('no etcd_cluster service found')
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
+        cmd = '/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
                --flush-size 128 \
                --force \
-               --storage {ftpurl}".format(vdiskid=service.name,
+               --storage {ftpurl}'.format(vdiskid=service.name,
                                           snapshotID=snapshotID,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
@@ -72,7 +88,7 @@ def delete(job):
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
 
-        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
+        cmd = '/bin/zeroctl delete vdisk {} --config {}'.format(service.name, etcd_cluster.dialstrings)
 
         job.logger.info("delete image {}".format(service.name))
         job.logger.info(cmd)

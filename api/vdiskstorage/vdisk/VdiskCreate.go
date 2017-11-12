@@ -10,7 +10,7 @@ type VdiskCreate struct {
 	Blocksize int                      `json:"blocksize" validate:"nonzero"`
 	ImageID   string                   `json:"imageId,omitempty"`
 	ReadOnly  bool                     `json:"readOnly,omitempty"`
-	Size      int                      `json:"size" validate:"nonzero"`
+	Size      uint64                   `json:"size" validate:"nonzero"`
 	Vdisktype EnumVdiskCreateVdisktype `json:"type" validate:"nonzero"`
 }
 
