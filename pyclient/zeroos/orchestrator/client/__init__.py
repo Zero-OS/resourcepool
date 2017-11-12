@@ -38,6 +38,7 @@ from .EnumContainerNICStatus import EnumContainerNICStatus
 from .EnumContainerNICType import EnumContainerNICType
 from .EnumContainerStatus import EnumContainerStatus
 from .EnumDiskInfoType import EnumDiskInfoType
+from .EnumEventType import EnumEventType
 from .EnumGWNICType import EnumGWNICType
 from .EnumGetGWStatus import EnumGetGWStatus
 from .EnumJobResultName import EnumJobResultName
@@ -72,6 +73,7 @@ from .GWNIC import GWNIC
 from .GWNICconfig import GWNICconfig
 from .GetGW import GetGW
 from .Graph import Graph
+from .GraphUpdate import GraphUpdate
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .HealthCheck import HealthCheck
@@ -118,6 +120,8 @@ from .VdiskListItem import VdiskListItem
 from .VdiskResize import VdiskResize
 from .VdiskRollback import VdiskRollback
 from .VdiskStorage import VdiskStorage
+from .Webhook import Webhook
+from .WebhookUpdate import WebhookUpdate
 from .WriteFile import WriteFile
 from .Zerotier import Zerotier
 from .ZerotierBridge import ZerotierBridge
