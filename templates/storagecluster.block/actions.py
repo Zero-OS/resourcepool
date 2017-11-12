@@ -335,7 +335,8 @@ def list_vdisks(job):
         job.logger.debug(cmd)
         result = container.client.system(cmd).get()
         if result.state != 'SUCCESS':
-            if 'no vdisks could be found' in result.stderr:
+            # return empty list if no vdisks are found
+            if not result.stderr:
                 return []
             raise j.exceptions.RuntimeError("Failed to run zeroctl list {} {}".format(result.stdout, result.stderr))
         return result.stdout.splitlines()
