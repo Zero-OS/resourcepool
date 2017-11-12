@@ -88,7 +88,7 @@ def delete(job):
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
 
-        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
+        cmd = '/bin/zeroctl delete vdisk {} --config {}'.format(service.name, etcd_cluster.dialstrings)
 
         job.logger.info("delete image {}".format(service.name))
         job.logger.info(cmd)
