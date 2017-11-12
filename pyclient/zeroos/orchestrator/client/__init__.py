@@ -38,7 +38,6 @@ from .EnumContainerNICStatus import EnumContainerNICStatus
 from .EnumContainerNICType import EnumContainerNICType
 from .EnumContainerStatus import EnumContainerStatus
 from .EnumDiskInfoType import EnumDiskInfoType
-from .EnumEventType import EnumEventType
 from .EnumGWNICType import EnumGWNICType
 from .EnumGetGWStatus import EnumGetGWStatus
 from .EnumJobResultName import EnumJobResultName
@@ -62,6 +61,7 @@ from .EnumVdiskStatus import EnumVdiskStatus
 from .EnumVdiskType import EnumVdiskType
 from .EnumZerotierListItemType import EnumZerotierListItemType
 from .EnumZerotierType import EnumZerotierType
+from .EventType import EventType
 from .ExportVM import ExportVM
 from .FTPUrl import FTPUrl
 from .Filesystem import Filesystem
