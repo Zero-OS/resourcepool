@@ -21,6 +21,15 @@ func (api *GraphAPI) ListDashboards(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	graphID := vars["graphid"]
 
+	// validate graph exists
+	if exists, err := aysClient.ServiceExists("grafana", graphID, api.AysRepo); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error checking graphana service exists")
+		return
+	} else if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	query := map[string]interface{}{
 		"parent": fmt.Sprintf("grafana!%s", graphID),
 		"fields": "slug",
