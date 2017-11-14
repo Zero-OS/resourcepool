@@ -285,15 +285,15 @@ class TestcasesBase(TestCase):
 
         vdiskstorages = [x['id'] for x in self.vdisks_api.get_vdiskstorage().json()]
         for vdiskstorage_id in vdiskstorages:
-            images = [x['name'] for x in self.vdisks_api.get_import_images(vdiskstorageid=vdiskstorage_id).json()]
-            for image in images:
-                response = self.vdisks_api.delete_image(imageid=image, vdiskstorageid=vdiskstorage_id)
-                self.lg.info(' [*] Delete image ID : %s | Response : %s ' % (str(image), response.content))
-
             vdisks = [x['id'] for x in self.vdisks_api.get_vdisks(vdiskstorageid=vdiskstorage_id).json()]
             for vdisk in vdisks:
                 response = self.vdisks_api.delete_vdisks_vdiskid(vdiskstorageid=vdiskstorage_id, vdiskid=vdisk)
                 self.lg.info(' [*] Delete vdisk ID : %s | Response : %s  ' % (str(vdisk), response.content))
+
+            images = [x['name'] for x in self.vdisks_api.get_import_images(vdiskstorageid=vdiskstorage_id).json()]
+            for image in images:
+                response = self.vdisks_api.delete_image(imageid=image, vdiskstorageid=vdiskstorage_id)
+                self.lg.info(' [*] Delete image ID : %s | Response : %s ' % (str(image), response.content))
 
             response = self.vdisks_api.delete_vdiskstorage(vdiskstorageid=vdiskstorage_id)
             self.lg.info(' [*] Delete vdiskstorage ID : %s | Response : %s  ' % (str(vdiskstorage_id), response.content))
