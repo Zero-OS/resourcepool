@@ -291,7 +291,7 @@ def uninstall(job):
 
     # Remove etcd_cluster if this was the last node service
     node_services = service.aysrepo.servicesFind(role='node')
-    if node_services > 1:
+    if len(node_services) > 1:
         return
 
     for etcd_cluster_service in service.aysrepo.servicesFind(role='etcd_cluster'):

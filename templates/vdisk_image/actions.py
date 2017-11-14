@@ -9,7 +9,6 @@ def input(job):
 def install(job):
     import random
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
-    from zeroos.orchestrator.utils import get_min_size
 
     service = job.service
 
@@ -34,7 +33,7 @@ def install(job):
             raise j.exceptions.RuntimeError("Failed to run zeroctl describe {} {}".format(result.stdout, result.stderr))
 
         imageinfo = j.data.serializer.json.loads(result.stdout)
-        service.model.data.size = get_min_size(imageinfo['size'])
+        service.model.data.size = imageinfo['source']['size'] / 1024**3
         service.model.data.exportBlockSize = imageinfo['blockSize']
 
         # Save image configurations
