@@ -34,6 +34,7 @@ class TestZerotiersAPI(TestcasesBase):
         self.lg.info(' [*] Exit zerotier network (ZT0)')
         self.zerotiers_api.delete_nodes_zerotiers_zerotierid(TestZerotiersAPI.nodeid, zerotierid=TestZerotiersAPI.nw_id)
         self.delete_zerotier_network(nwid=TestZerotiersAPI.nw_id)
+        super(TestZerotiersAPI, cls).tearDownClass()
 
     def test001_get_nodes_zerotiers_zerotierid(self):
         """ GAT-078
