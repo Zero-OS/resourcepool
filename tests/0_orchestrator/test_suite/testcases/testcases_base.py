@@ -6,7 +6,6 @@ from testcases.core0_client import Client
 from datetime import timedelta
 
 
-
 class TestcasesBase(TestCase):
     orchasterator_driver = OrchasteratorDriver()
 
@@ -51,6 +50,11 @@ class TestcasesBase(TestCase):
         self.nodeip = self.nodeipList[0]
         self.jwt = self.orchasterator_driver.get_jwt()
         self.core0_client = Client(self.nodeip, password=self.jwt)
+
+    @classmethod
+    def tearDownClass(cls):
+        self = cls()
+        self.clear_environment()
 
     def randomMAC(self):
         random_mac = [0x00, 0x16, 0x3e, random.randint(0x00, 0x7f), random.randint(0x00, 0xff),
@@ -257,8 +261,7 @@ class TestcasesBase(TestCase):
 
         return vm_ip_addr
 
-
-    def execute_command_inside_vm(self, client, vmip,  cmd, username=None, password=None):
+    def execute_command_inside_vm(self, client, vmip, cmd, username=None, password=None):
         username = username or self.vm_username
         password = password or self.vm_password
 
@@ -272,8 +275,36 @@ class TestcasesBase(TestCase):
         response = client.bash(cmd).get()
         return response
 
-class Utiles:
+    def clear_environment(self):
+        nodes_list = [x['id'] for x in self.nodes_api.get_nodes().json() if x['status'] == 'running']
+        for node in nodes_list:
+            vms = [x['id'] for x in self.vms_api.get_nodes_vms(nodeid=node).json()]
+            for vm in vms:
+                response = self.vms_api.delete_nodes_vms_vmid(nodeid=node, vmid=vm)
+                self.lg.info(' [*] Delete vm ID : %s | Response : %s ' % (vm, response.content))
 
+        vdiskstorages = [x['id'] for x in self.vdisks_api.get_vdiskstorage().json()]
+        for vdiskstorage_id in vdiskstorages:
+            vdisks = [x['id'] for x in self.vdisks_api.get_vdisks(vdiskstorageid=vdiskstorage_id).json()]
+            for vdisk in vdisks:
+                response = self.vdisks_api.delete_vdisks_vdiskid(vdiskstorageid=vdiskstorage_id, vdiskid=vdisk)
+                self.lg.info(' [*] Delete vdisk ID : %s | Response : %s  ' % (str(vdisk), response.content))
+
+            images = [x['name'] for x in self.vdisks_api.get_import_images(vdiskstorageid=vdiskstorage_id).json()]
+            for image in images:
+                response = self.vdisks_api.delete_image(imageid=image, vdiskstorageid=vdiskstorage_id)
+                self.lg.info(' [*] Delete image ID : %s | Response : %s ' % (str(image), response.content))
+
+            response = self.vdisks_api.delete_vdiskstorage(vdiskstorageid=vdiskstorage_id)
+            self.lg.info(' [*] Delete vdiskstorage ID : %s | Response : %s  ' % (str(vdiskstorage_id), response.content))
+
+        blockclustes = [x for x in self.storageclusters_api.get_storageclusters().json()]
+        for blockcluster in blockclustes:
+            response = self.storageclusters_api.delete_storageclusters_label(label=blockcluster)
+            self.lg.info(' [*] Delete blockcluster LABEL : %s | Response : %s  ' % (str(blockcluster), response.content))
+
+
+class Utiles:
     def logger(self):
         logger = logging.getLogger('0-Orchestrator')
         if not logger.handlers:
@@ -283,7 +314,6 @@ class Utiles:
             logger.addHandler(fileHandler)
 
         return logger
-
 
     def execute_shell_commands(self, cmd):
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

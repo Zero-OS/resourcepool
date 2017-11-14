@@ -51,7 +51,7 @@ class TestVmsAPI(TestcasesBase):
         self.vdisks_api.delete_image(self.vdiskstorageid, self.imageid)
         self.lg.info('[*] Delete Vdiskstorage')
         self.vdisks_api.delete_vdiskstorage(self.vdiskstorageid)
-        
+        super(TestVmsAPI, cls).tearDownClass()
        
     def setUp(self):
         super().setUp()
