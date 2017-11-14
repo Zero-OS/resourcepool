@@ -480,3 +480,64 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info("[*] Create VM3 and attach vdisk VD1 to it. should fail")
         response, data = self.vms_api.post_nodes_vms(node_id=self.nodeid, memory=1024, cpu=1, disks=self.disks)
         self.assertEqual(response.status_code, 400, response.content)
+
+    @parameterized.expand([('past', 'fail'),
+                           ('at', 'pass'),
+                           ('feature', 'fail')])
+    def test013_rollback(self, timeStamp, expeced_result):
+        """ GAT-078
+        **Test Scenario:**
+
+        #. Create (VM1) on node (N0) and attach vdisk (VD1) to it. should succeed.
+        #. Create a new file in this vdisk, should succeed
+        #. Calculate this file md5 hash.
+        #. Take a timestamp.
+        #. Delete this file.
+        #. Stop virtual machine (VM0), should succeed with 204
+        #. Rollback to the timestamp
+        #. Start the machine
+        #. Check the file md5sum, should succeed.
+        """
+        self.lg.info('[*] Create a new file, should succeed')
+        cmd = """echo '%s' > new_file && md5sum new_file""" % self.random_string(size=random.randint(1, 100000))
+        response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, cmd=cmd)
+        self.assertEqual(response.state, 'SUCCESS')
+
+        self.lg.info('[*] Calculate this file md5 hash.')
+        md5sum = response.stdout.strip()
+
+        self.lg.info('[*] Take timestamp %s vdisk creation' % timeStamp)
+        if timeStamp == 'past':
+            timestamp = int(time.time()) - (60*60)
+        elif timeStamp == 'at':
+            timestamp = int(time.time())
+        elif timeStamp == 'feature':
+            timestamp = int(time.time()) + (60*60)
+
+        self.lg.info('[*] Delete this new file, should succeed')
+        cmd = "rm new_file"
+        response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, cmd=cmd)
+        self.assertEqual(response.state, 'SUCCESS')
+
+        self.lg.info('[*] Stop virtual machine (VM0), should succeed with 204')
+        response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 204, response.content)
+
+        self.lg.info('[*] Rollback to the timestamp')
+        import ipdb; ipdb.set_trace()
+        response = self.vdisks_api.post_vdisks_vdiskid_rollback(vdiskstorageid=TestVmsAPI.vdiskstorageid,
+                                                                vdiskid=self.vdisk['id'], timestamp=timestamp)
+        self.lg.info(response.status_code)
+        if expeced_result == 'pass':
+            self.assertEqual(response.status_code, 204, response.content)
+
+        self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
+        response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
+        self.assertEqual(response.status_code, 204, response.content)
+
+        if expeced_result == 'pass':
+            self.lg.info('[*] Check the file md5sum, should succeed.')
+            cmd = """md5sum new_file"""
+            response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, cmd=cmd)
+            self.assertEqual(response.state, 'SUCCESS')
+            self.assertEqual(response.stdout.strip(), md5sum)
