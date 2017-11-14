@@ -59,7 +59,7 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if reqBody.Size < image.Size {
-		err = fmt.Errorf("Vdisk size should be larger than the image size")
+		err = fmt.Errorf("Vdisk size should be equal or larger than the image size")
 		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
