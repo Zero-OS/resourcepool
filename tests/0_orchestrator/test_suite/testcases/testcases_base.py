@@ -281,27 +281,27 @@ class TestcasesBase(TestCase):
             vms = [x['id'] for x in self.vms_api.get_nodes_vms(nodeid=node).json()]
             for vm in vms:
                 response = self.vms_api.delete_nodes_vms_vmid(nodeid=node, vmid=vm)
-                print(' [*] Delete vm ID : %s | Response : %s ' % (vm, response.content))
+                self.lg.info(' [*] Delete vm ID : %s | Response : %s ' % (vm, response.content))
 
         vdiskstorages = [x['id'] for x in self.vdisks_api.get_vdiskstorage().json()]
         for vdiskstorage_id in vdiskstorages:
             images = [x['name'] for x in self.vdisks_api.get_import_images(vdiskstorageid=vdiskstorage_id).json()]
             for image in images:
                 response = self.vdisks_api.delete_image(imageid=image, vdiskstorageid=vdiskstorage_id)
-                print(' [*] Delete image ID : %s | Response : %s ' % (str(image), response.content))
+                self.lg.info(' [*] Delete image ID : %s | Response : %s ' % (str(image), response.content))
 
             vdisks = [x['id'] for x in self.vdisks_api.get_vdisks(vdiskstorageid=vdiskstorage_id).json()]
             for vdisk in vdisks:
                 response = self.vdisks_api.delete_vdisks_vdiskid(vdiskstorageid=vdiskstorage_id, vdiskid=vdisk)
-                print(' [*] Delete vdisk ID : %s | Response : %s  ' % (str(vdisk), response.content))
+                self.lg.info(' [*] Delete vdisk ID : %s | Response : %s  ' % (str(vdisk), response.content))
 
             response = self.vdisks_api.delete_vdiskstorage(vdiskstorageid=vdiskstorage_id)
-            print(' [*] Delete vdiskstorage ID : %s | Response : %s  ' % (str(vdiskstorage_id), response.content))
+            self.lg.info(' [*] Delete vdiskstorage ID : %s | Response : %s  ' % (str(vdiskstorage_id), response.content))
 
         blockclustes = [x for x in self.storageclusters_api.get_storageclusters().json()]
         for blockcluster in blockclustes:
             response = self.storageclusters_api.delete_storageclusters_label(label=blockcluster)
-            print(' [*] Delete blockcluster LABEL : %s | Response : %s  ' % (str(blockcluster), response.content))
+            self.lg.info(' [*] Delete blockcluster LABEL : %s | Response : %s  ' % (str(blockcluster), response.content))
 
 
 class Utiles:
