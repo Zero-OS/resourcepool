@@ -524,7 +524,6 @@ class TestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 204, response.content)
 
         self.lg.info('[*] Rollback to the timestamp')
-        import ipdb; ipdb.set_trace()
         response = self.vdisks_api.post_vdisks_vdiskid_rollback(vdiskstorageid=TestVmsAPI.vdiskstorageid,
                                                                 vdiskid=self.vdisk['id'], timestamp=timestamp)
         self.lg.info(response.status_code)
