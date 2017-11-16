@@ -47,6 +47,7 @@ class TestVdisks(TestcasesBase):
         self.vdisks_api.delete_image(TestVdisks.vdiskstoragedata['id'], TestVdisks.imagedata['imageName'])
         self.lg.info('[*] Delete vdiskstorage')
         self.vdisks_api.delete_vdiskstorage(TestVdisks.vdiskstoragedata['id'])
+        super(TestVdisks, cls).tearDownClass()
 
     def setUp(self):
         super().setUp()

@@ -71,7 +71,8 @@ class TestVmsAPI(TestcasesBase):
         self.lg.info(' [*] Kill created block and object clusters')
         self.storageclusters_api.delete_storageclusters_label(TestVmsAPI.objectcluster)
         self.storageclusters_api.delete_storageclusters_label(TestVmsAPI.blockcluster)
-
+        super(TestVmsAPI, cls).tearDownClass()
+       
     def setUp(self):
         super().setUp()
 
