@@ -1,4 +1,4 @@
-**NEEDS TO BE VERIFIED BY KRISTOF, see strategy of beta2**
+**NEEDS TO BE VERIFIED BY KRISTOF,IS NOT OK YET**
 
 # NBD server
 The NBD server is connected to AYS via the logging streaming offered by zero-os. If errors occur like eg an ARDB server that is not healty anymore, the NBD server will emit error logs that will be intercepted by the node.zero-os watchdog and propagated to the particular NBD service in AYS.
