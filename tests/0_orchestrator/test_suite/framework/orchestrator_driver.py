@@ -22,6 +22,7 @@ class OrchasteratorDriver:
     zerotier_token = config['main']['zerotier_token']
     vm_username = config['main']['vm_username']
     vm_password = config['main']['vm_password']
+    zerostor_namespace = config['main']['zerostor_namespace']
 
 
     def __init__(self):
