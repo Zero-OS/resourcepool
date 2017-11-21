@@ -2,6 +2,8 @@ import random, time, unittest
 from testcases.testcases_base import TestcasesBase
 from testcases.core0_client import Client
 from parameterized import parameterized
+from unittest import skip
+
 
 class TestVmsAPI(TestcasesBase):
     @classmethod
@@ -483,7 +485,8 @@ class TestVmsAPI(TestcasesBase):
 
     @parameterized.expand([('past', 'fail'),
                            ('at', 'pass'),
-                           ('feature', 'fail')])
+                           ('future', 'fail')])
+    @skip('[*] not tested yet!')
     def test013_rollback(self, timeStamp, expeced_result):
         """ GAT-078
         **Test Scenario:**
@@ -531,7 +534,7 @@ class TestVmsAPI(TestcasesBase):
             self.assertEqual(response.status_code, 204, response.content)
 
         self.lg.info('[*] Start virtual machine (VM0), should succeed with 204')
-        response = self.vms_api.post_nodes_vms_vmid_stop(self.nodeid, self.data['id'])
+        response = self.vms_api.post_nodes_vms_vmid_start(self.nodeid, self.data['id'])
         self.assertEqual(response.status_code, 204, response.content)
 
         if expeced_result == 'pass':
@@ -540,3 +543,9 @@ class TestVmsAPI(TestcasesBase):
             response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, cmd=cmd)
             self.assertEqual(response.state, 'SUCCESS')
             self.assertEqual(response.stdout.strip(), md5sum)
+        else:
+            self.lg.info("[*] Check the file ins't existing, should succeed.")
+            cmd = """ls | grep new_file"""
+            response = self.execute_command_inside_vm(self.ssh_client, self.vm_ip_address, cmd=cmd)
+            self.assertEqual(response.state, 'SUCCESS')
+            self.assertEqual(response.stdout.strip(), '')
