@@ -2,8 +2,9 @@ import random, time, unittest
 from testcases.testcases_base import TestcasesBase
 from parameterized import parameterized
 
+
 class AdvancedTestVmsAPI(TestcasesBase):
-    @parameterized.expand([(0, 0)])
+    @parameterized.expand([(89, 'OK'), (91, 'WARNING'), (94, 'WARNING'), (95, 'ERROR'), (99, 'ERROR')])
     def test014_vdisk_storage(self, limits, expeced_result):
         """ GAT-079
         **Test Scenario:**
@@ -45,6 +46,7 @@ class AdvancedTestVmsAPI(TestcasesBase):
                 break
         else:
             self.lg.error(' [*] There is an error!')
+            self.skipTest(' [*] There is an error in test cases implementation!')
 
         print('[*] block cluster is created with specs : {}'.format(cluster))
         storagecluster = cluster['label']
@@ -85,7 +87,6 @@ class AdvancedTestVmsAPI(TestcasesBase):
         self.assertEqual(response.status_code, 201)
 
         print('[*] Vdisk disk is created with specs : {}'.format(self.vdisk))
-
         self.disks = [{"vdiskid": self.vdisk['id'], "maxIOps": 2000}]
         memory = random.randint(1, node_available_memory - 1) * 1024
         cpu = random.randint(1, node_available_cpus - 1)
@@ -111,7 +112,18 @@ class AdvancedTestVmsAPI(TestcasesBase):
         vm_vnc_url = '{}:{}'.format(self.nodeip, vm_vnc_port)
         self.enable_ssh_access(vm_vnc_url)
 
-        """TODO
-            Write File
-            Check health check api
-        """
+        file_size = (limits / 100) * block_cluster_size
+        print('[*] Create a file with %sG size' % file_size)
+        cmd = 'fallocate -l %dG large' % int(file_size)
+        vm_ip_address = self.get_vm_default_ipaddress(self.data['id'])
+        response = self.execute_command_inside_vm(self.ssh_client, vm_ip_address, cmd)
+        self.assertEqual(response.state, 'SUCCESS')
+
+        print('[*] Check healthcheck status')
+        response = self.healthcheck_api.get_node_health(nodeid=node)
+        self.assertEqual(response.status_code, 200)
+        disks_usage = [x for x in response.json()['healthchecks'] if x['id'] == 'disk-usage'][0]
+        target_disk_usage = [x for x in disks_usage['messages'] if x['id'] == disk_before['name']]
+        self.assertNotEqual(target_disk_usage, [])
+        self.assertEqual(target_disk_usage[0]['status'], expeced_result)
+
