@@ -223,6 +223,7 @@ pip3 install python-jose
 ## Load private key
 
 ```bash
+eval `ssh-agent`
 ssh-add
 ```
 
