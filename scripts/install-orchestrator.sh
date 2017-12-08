@@ -131,7 +131,7 @@ echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${CORE_BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
 pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${ORCHESTRATOR_BRANCH}#subdirectory=pyclient" >> ${logfile} 2>&1
 pip3 install -U zerotier >> ${logfile} 2>&1
-python3 -c "from js9 import j; j.tools.prefab.local.development.golang.install()" >> ${logfile} 2>&1
+python3 -c "from js9 import j; j.tools.prefab.local.runtimes.golang.install()" >> ${logfile} 2>&1
 mkdir -p /usr/local/go >> ${logfile} 2>&1
 
 echo "[+] Updating AYS orchestrator server"
@@ -160,7 +160,7 @@ echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
 if [ -n "${ITSYOUONLINEORG}" ]; then
-    conf_path=$(js9 'print(j.core.state.configPath)')
+    conf_path=$(js9 'print(j.core.state.configStatePath)')
     if ! grep -q ays.oauth $conf_path ; then
 
        cat >>  $conf_path << EOL
@@ -199,8 +199,8 @@ echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
 echo "[+] Building orchestrator api server"
-export GOPATH=$(js9 "print(j.tools.prefab.local.development.golang.GOPATHDIR)")
-export GOROOT=$(js9 "print(j.tools.prefab.local.development.golang.GOROOTDIR)")
+export GOPATH=$(js9 "print(j.tools.prefab.local.runtimes.golang.GOPATHDIR)")
+export GOROOT=$(js9 "print(j.tools.prefab.local.runtimes.golang.GOROOTDIR)")
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 mkdir -p $GOPATH/src/github.com >> ${logfile} 2>&1
 if [ ! -d $GOPATH/src/github.com/zero-os ]; then
@@ -241,7 +241,7 @@ echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
-js9 'j.tools.prefab.local.apps.caddy.install()'
+js9 'j.tools.prefab.local.web.caddy.install()'
 tls=""
 
 if [ "$DEVELOPMENT" = true ]; then
@@ -259,7 +259,7 @@ $PUB {
     $tls
 }
 EOF
-echo 'js9 "j.tools.prefab.local.apps.caddy.start()"' >> ${orchinit}
+echo 'js9 "j.tools.prefab.local.web.caddy.start()"' >> ${orchinit}
 
 
 chmod +x ${orchinit} >> ${logfile} 2>&1
