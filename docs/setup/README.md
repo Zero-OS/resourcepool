@@ -117,7 +117,7 @@ Copy the export statetement and execute it in your terminal. This will allow the
 
 ## Start the AYS Configuration service
 
-In order for the Orchestrator to know which flists and version of JumpScale to use, and which Zero-OS version is required on the nodes, create the following blueprint in `/optvar/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
+In order for the Orchestrator to know which flists and version of JumpScale to use, and which Zero-OS version is required on the nodes, create the following blueprint in `/host/var/cockpit_repos/orchestrator-server/blueprints/configuration.bp`:
 
 ```yaml
 configuration__main:
@@ -147,14 +147,14 @@ See [Configuration](configuration.md) for more details about the AYS configurati
 
 After creating this blueprint, issue the following AYS command to install the configuration service:
 ```bash
-cd /optvar/cockpit_repos/orchestrator-server
+cd /host/var/cockpit_repos/orchestrator-server
 ays blueprint configuration.bp
 ```
 
 ## Setup the backplane network
 This optional setup allows you to interconnect your nodes using the (if available) 10GE+ network infrastructure. Skip this step if you don't have this in your setup.
 
-Create a new blueprint `/optvar/cockpit_repos/orchestrator-server/blueprints/network.bp` and depending on the available 10GE+ network infrastructure specify following configuration:
+Create a new blueprint `/host/var/cockpit_repos/orchestrator-server/blueprints/network.bp` and depending on the available 10GE+ network infrastructure specify following configuration:
 
 ### G8 setup
 ```yaml
@@ -182,7 +182,7 @@ network.publicstorage__storage:
 
 After creating this blueprint, issue the following AYS command to install it:
 ```shell
-cd /optvar/cockpit_repos/orchestrator-server
+cd /host/var/cockpit_repos/orchestrator-server
 ays blueprint network.bp
 ```
 
@@ -190,7 +190,7 @@ ays blueprint network.bp
 
 Then we need to update the bootstrap service so that it deploys the storage network when bootstrapping the nodes. The bootstrap service also authorizes ZeroTier join requests form Zero-OS nodes if they meet the conditions as set in the Configuration blueprint.
 
-So edit `/optvar/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp` as follows:
+So edit `/host/var/cockpit_repos/orchestrator-server/blueprints/bootstrap.bp` as follows:
 ```yaml
 bootstrap.zero-os__grid1:
   zerotierNetID: '<Your ZeroTier network id>'
@@ -202,7 +202,7 @@ bootstrap.zero-os__grid1:
 
 Now issue the following AYS commands to reinstall the updated bootstrap service:
 ```shell
-cd /optvar/cockpit_repos/orchestrator-server
+cd /host/var/cockpit_repos/orchestrator-server
 ays service delete -n grid1 -y
 ays blueprint bootstrap.bp
 ays run create -y

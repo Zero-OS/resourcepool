@@ -213,7 +213,7 @@ go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 
 echo "[+] Starting orchestrator api server"
 orchinit="/etc/my_init.d/11_orchestrator.sh"
-ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} |awk '{print $NF}' | awk -F / '{print $1}'`
+ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F , '{print $1}' | awk -F / '{print $1}'`
 
 if [ "$ZEROTIERIP" == "" ]; then
     echo "zerotier doesn't have an ip. make sure you have authorize this docker in your netowrk"
