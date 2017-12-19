@@ -43,10 +43,10 @@ function valid_ip()
 # Function to retrieve the zeroteir ip address and return it
 set_zerotierip(){
     ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F / '{print $1}'`
-    if !valid_ip $ZEROTIERIP; then
-        ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F , '{print $1}' | awk -F / '{print $1}'`
+    if ! valid_ip $ZEROTIERIP; then
+        ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F , '{print $2}' | awk -F / '{print $1}'`
     fi
-    if !valid_ip $ZEROTIERIP; then
+    if ! valid_ip $ZEROTIERIP; then
       ZEROTIERIP=""
     fi
 }
@@ -248,7 +248,7 @@ go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 
 echo "[+] Starting orchestrator api server"
 orchinit="/etc/my_init.d/11_orchestrator.sh"
-set_zerotierip()
+set_zerotierip
 
 if [ "$ZEROTIERIP" == "" ]; then
     echo "zerotier doesn't have an ip. make sure you have authorize this docker in your netowrk"
