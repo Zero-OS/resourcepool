@@ -21,7 +21,19 @@ def bootstrap(job):
     resp = zerotier.network.listMembers(netid)
     members = resp.json()
 
+    # First make sure all members that need to be authorzed anyway, are authorized
+    to_process = list()
     for member in members:
+        if member['nodeId'] in service.model.data.authorizedZerotierMembers:
+            if not member['config']['authorized']:
+                job.logger.info("Authorizing %s" % member['nodeId'])
+                member['config']['authorized'] = True
+                zerotier.network.updateMember(member, member['nodeId'], netid)
+        else:
+            to_process.append(member)
+
+    # In a second pass process all the others
+    for member in to_process:
         try:
             try_authorize(job, job.logger, netid, member, zerotier)
         except Exception as err:
@@ -82,13 +94,6 @@ def try_authorize(job, logger, netid, member, zerotier):
         member = resp.json()
     zerotier_ip = member['config']['ipAssignments'][0]
 
-    # do hardwarechecks
-    for prod in service.producers.get('hardwarecheck', []):
-        prod.executeAction('check', args={'ipaddr': zerotier_ip,
-                                          'node_id': member['nodeId'],
-                                          'jwt': get_jwt_token(service.aysrepo)})
-
-
     # test if we can connect to the new member
     node = Node(zerotier_ip, password=get_jwt_token(service.aysrepo))
     node.client.testConnectionAttempts = 0
@@ -106,7 +111,6 @@ def try_authorize(job, logger, netid, member, zerotier):
     # connection succeeded, set the hostname of the node to zerotier member
     member['name'] = node.name
     member['description'] = node.client.info.os().get('hostname', '')
-    member['config']['authorized'] = True # make sure we don't unauthorize
     zerotier.network.updateMember(member, member['nodeId'], netid)
 
     # create node.zero-os service
@@ -121,6 +125,11 @@ def try_authorize(job, logger, netid, member, zerotier):
         # after reboot we also wonna call install
         nodeservice.executeAction('install', context=job.context)
     except j.exceptions.NotFound:
+        # do hardwarechecks
+        for prod in service.producers.get('hardwarecheck', []):
+            prod.executeAction('check', args={'ipaddr': zerotier_ip,
+                                              'node_id': member['nodeId'],
+                                              'jwt': get_jwt_token(service.aysrepo)})
         # create and install the node.zero-os service
         if service.model.data.wipedisks:
             node.wipedisks()
