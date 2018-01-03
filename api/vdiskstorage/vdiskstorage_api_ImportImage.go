@@ -63,15 +63,13 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 	// execute blueprint
 	bp := make(map[string]interface{})
 	bp[fmt.Sprintf("vdisk_image__%s", imageImport.Name)] = map[string]interface{}{
-		"ftpURL":          imageImport.URL,
-		"size":            imageImport.Size,
-		"diskBlockSize":   imageImport.DiskBlockSize,
-		"exportBlockSize": imageImport.ExportBlockSize,
-		"vdiskstorage":    vdiskStorageID,
-		"exportName":      imageImport.ExportName,
-		"exportSnapshot":  imageImport.ExportSnapshot,
-		"encryptionKey":   imageImport.EncryptionKey,
-		"overwrite":       imageImport.Overwrite,
+		"ftpURL":         imageImport.URL,
+		"diskBlockSize":  imageImport.DiskBlockSize,
+		"vdiskstorage":   vdiskStorageID,
+		"exportName":     imageImport.ExportName,
+		"exportSnapshot": imageImport.ExportSnapshot,
+		"encryptionKey":  imageImport.EncryptionKey,
+		"overwrite":      imageImport.Overwrite,
 	}
 	bp["actions"] = []tools.ActionBlock{{
 		Action:  "install",
@@ -88,13 +86,20 @@ func (api *VdiskstorageAPI) ImportImage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var respBody Image
+	service, response, err := aysClient.Ays.GetServiceByName(imageImport.Name, "vdisk_image", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, response, w, fmt.Sprintf("getting service %s", imageImport.Name)) {
+		return
+	}
+	respBody.Name = imageImport.Name
+
+	if err := json.Unmarshal(service.Data, &respBody); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		return
+	}
+
 	w.Header().Set("Location", fmt.Sprintf("/vdiskstorage/%s/images/%s", vdiskStorageID, imageImport.Name))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	image := Image{
-		Blocksize: imageImport.DiskBlockSize,
-		Name:      imageImport.Name,
-		Size:      imageImport.Size,
-	}
-	json.NewEncoder(w).Encode(&image)
+	json.NewEncoder(w).Encode(&respBody)
 }

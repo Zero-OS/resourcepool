@@ -28,7 +28,7 @@ CPUInfo:
       type: number
       format: float
 
-ExportUrl:
+FTPUrl:
   type: object
   description: FTP server url
   properties:
@@ -42,27 +42,22 @@ ExportUrl:
           - ftp://user:pass@12.30.120.200:3000
           - ftp://user:pass@12.30.120.200:3000/root/dir
 
+ExportVM:
+  type: object
+  description: FTP server url
+  properties:
+    url: FTPUrl
+    cryptoKey:
+      type: string
+      description: 32 byte string, used to encrypt exported VM
+
 ImportVM:
   type: object
   description: Import VM from ftp server
   properties:
-    url:
-      type: string
-      description: |
-        FTP server url of the metadata to import the vm from, and it should be in one of the following formats
-        - localhost:22
-        - ftp://1.2.3.4:200
-        - ftp://user@127.0.0.1:200
-        - ftp://user:pass@12.30.120.200:3000
-        - ftp://user:pass@12.30.120.200:3000/root/dir
-    blockStoragecluster:
-      type: string
-    objectStoragecluster:
-      type: string
-      required: false
-    backupStoragecluster:
-      type: string
-      required: false
+    url: FTPUrl
+    id: string
+    vdiskstorage: string
 
 
 MemInfo:
@@ -1073,6 +1068,10 @@ Cluster:
     storageServers:
       type: StorageServer[]
       description: List of data storage servers in the cluster
+    clusterType:
+      type: string
+      description: type of the storagecluster
+
 
 # Vdisks API
 VdiskCreate:
@@ -1230,17 +1229,10 @@ ImageImport:
         Name of the snapshot of the exported image on the ftp server
         If not specified, defaults to 'default'
       default: default
-    size:
-      type: integer
-      description: Size of the vdisk in GiB
     diskBlockSize:
       type: integer
       description: block size in bytes of the image created in the local cluster
       default: 4096
-    exportBlockSize:
-      type: integer
-      description: block size in bytes of the exported image. It can be different from the disk block size
-      default: 131072
     url:
       type: string
       required: true
@@ -1457,6 +1449,12 @@ GW:
       description: List of HTTPProxy
       required: false
 
+MigrateGW:
+  properties:
+    node:
+      type: string
+      description: New node to migrate to
+
 GetGW:
   properties:
     domain:
@@ -1487,6 +1485,12 @@ Graph:
     id: string
     url: string
 
+GraphUpdate:
+  type: object
+  description: A graph
+  properties:
+    url: string
+
 Dashboard:
   type: object
   description: A dashboard
@@ -1510,7 +1514,9 @@ NodeHealthCheck:
   description: Node health check status
   properties:
     id: string
-    status: string
+    status:
+      type: string
+      description:  Status will be OK unless one of the healthchecks has a status WARNING or ERROR. If all healthchecks have a status SKIPPED, then status will be SKIPPED.
     hostname: string
 
 StorageClusterHealthCheck:
@@ -1539,3 +1545,21 @@ Message:
     id: string
     status: string
     text: string
+
+EventType:
+  enum: [ork]
+
+Webhook:
+  type: object
+  description: A webhook
+  properties:
+    name: string
+    url: string
+    eventtypes: EventType[]
+
+WebhookUpdate:
+  type: object
+  description: A webhook
+  properties:
+    url: string
+    eventtypes: EventType[]

@@ -11,16 +11,14 @@ class ImageImport(object):
     """
 
     @staticmethod
-    def create(diskBlockSize, exportBlockSize, exportName, imageName, size, url, encryptionKey=None, exportSnapshot=None, overwrite=None):
+    def create(diskBlockSize, exportName, imageName, url, encryptionKey=None, exportSnapshot=None, overwrite=None):
         """
         :type diskBlockSize: int
         :type encryptionKey: str
-        :type exportBlockSize: int
         :type exportName: str
         :type exportSnapshot: str
         :type imageName: str
         :type overwrite: bool
-        :type size: int
         :type url: str
         :rtype: ImageImport
         """
@@ -28,12 +26,10 @@ class ImageImport(object):
         return ImageImport(
             diskBlockSize=diskBlockSize,
             encryptionKey=encryptionKey,
-            exportBlockSize=exportBlockSize,
             exportName=exportName,
             exportSnapshot=exportSnapshot,
             imageName=imageName,
             overwrite=overwrite,
-            size=size,
             url=url,
         )
 
@@ -66,17 +62,6 @@ class ImageImport(object):
                 self.encryptionKey = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'exportBlockSize'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [int]
-            try:
-                self.exportBlockSize = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'exportName'
         val = data.get(property_name)
@@ -117,17 +102,6 @@ class ImageImport(object):
                 self.overwrite = client_support.val_factory(val, datatypes)
             except ValueError as err:
                 raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-
-        property_name = 'size'
-        val = data.get(property_name)
-        if val is not None:
-            datatypes = [int]
-            try:
-                self.size = client_support.val_factory(val, datatypes)
-            except ValueError as err:
-                raise ValueError(create_error.format(cls=class_name, prop=property_name, val=val, err=err))
-        else:
-            raise ValueError(required_error.format(cls=class_name, prop=property_name))
 
         property_name = 'url'
         val = data.get(property_name)

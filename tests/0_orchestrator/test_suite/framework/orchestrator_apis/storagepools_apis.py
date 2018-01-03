@@ -19,11 +19,6 @@ class StoragepoolsAPI(OrchestratorBase):
                 "dataProfile": 'single',
                 "devices": [random.choice(free_devices)]}
 
-        if len(free_devices) > 6:
-            data['metadataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
-            data['dataProfile'] = random.choice(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'dup', 'single'])
-            data['devices'] = free_devices[:4]
-
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateStoragePool(nodeid=node_id, data=data)
         return response, data
@@ -62,7 +57,8 @@ class StoragepoolsAPI(OrchestratorBase):
     @catch_exception_decoration_return
     def post_storagepools_storagepoolname_filesystems(self, node_id, storagepoolname, **kwargs):
         data = {"name": self.random_string(),
-                "quota": random.randint(0, 10)}
+                "quota": random.randint(0, 10),
+                "readOnly": False}
         data = self.update_default_data(default_data=data, new_data=kwargs)
         response = self.orchestrator_client.nodes.CreateFilesystem(nodeid=node_id, storagepoolname=storagepoolname,
                                                                    data=data)
@@ -104,9 +100,9 @@ class StoragepoolsAPI(OrchestratorBase):
                                                                        filesystemname=filesystemname,
                                                                        snapshotname=snapshotname)
 
-    @catch_exception_decoration_return
+    @catch_exception_decoration
     def post_filesystem_snapshots_snapshotname_rollback(self, nodeid, storagepoolname, filesystemname, snapshotname,
-                                                        data):
+                                                        data={}):
         return self.orchestrator_client.nodes.RollbackFilesystemSnapshot(nodeid=nodeid, storagepoolname=storagepoolname,
                                                                          filesystemname=filesystemname,
                                                                          snapshotname=snapshotname,

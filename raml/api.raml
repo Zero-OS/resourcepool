@@ -660,7 +660,18 @@ types:
           responses:
             204:
               description: Gateway updated successfully
-
+        /migrate:
+          post:
+            (AYSBased):
+            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+            displayName: MigrateGateway
+            description: Migrate Gateway
+            body:
+              application/json:
+                type: MigrateGW
+            responses:
+              200:
+                description: Gateway migrated successfully
         /firewall:
           /forwards:
             get:
@@ -1259,26 +1270,26 @@ types:
             description: Export the virtual machine to ftp server
             body:
               application/json:
-                type: ExportUrl
+                type: ExportVM
             responses:
               200:
                 description: Virtual machine export is done successfully
                 body:
                   application/json:
-                  type: ExportUrl
+                  type: FTPUrl
 
-        /import:
-          post:
-            (AYSBased):
-            securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
-            displayName: ImportVM
-            description: Import the virtual machine from ftp server
-            body:
-              application/json:
-                type: ImportVM
-            responses:
-              200:
-                description: Virtual machine is imported successfully
+      /import:
+        post:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: ImportVM
+          description: Import the virtual machine from ftp server
+          body:
+            application/json:
+              type: ImportVM
+          responses:
+            200:
+              description: Virtual machine is imported successfully
 
 
 /backup:
@@ -1400,6 +1411,16 @@ types:
               type: VdiskStorage
         404:
           description: The vdisk storage does not exist
+
+    delete:
+          (AYSBased):
+          securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+          displayName: DeleteVdiskStorage
+          description: Delete VdiskStorage
+          responses:
+            204:
+              description: VdiskStorage has been deleted succefully
+
     /images:
       get:
         (AYSBased):
@@ -1567,10 +1588,10 @@ types:
       displayName: UpdateGraph
       body:
         application/json:
-          type: Graph
+          type: GraphUpdate
       responses:
         204:
-          description: Grafh updated successfully
+          description: Graph updated successfully
     /dashboards:
       get:
         (AYSBased):
@@ -1615,3 +1636,59 @@ types:
           responses:
             204:
               description: Dashboard deleted successfully
+
+/webhooks:
+  get:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    description: List all webhooks
+    displayName: ListWebhooks
+    responses:
+      200:
+        body:
+          application/json:
+            type: string[]
+  post:
+    (AYSBased):
+    securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+    description: Create Webhook
+    displayName: CreateWebhook
+    body:
+      application/json:
+        type: Webhook
+    responses:
+      202:
+        description: Webhook created successfully
+        headers:
+          Location:
+            description: URL to the the Webhook
+  /{webhookname}:
+    get:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Get a webhook
+      displayName: GetWebhook
+      responses:
+        200:
+          body:
+            application/json:
+              type: Webhook
+    put:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Update a webhook
+      displayName: UpdateWebhook
+      body:
+        application/json:
+          type: WebhookUpdate
+      responses:
+        204:
+          description: Webhook updated successfully
+    delete:
+      (AYSBased):
+      securedBy: [itsyouonline: { scopes: [ "user:memberof:0-orchestrator" ] }]
+      description: Delete a webhook
+      displayName: DeleteWebhook
+      responses:
+        204:
+          description: Webhook deleted successfully

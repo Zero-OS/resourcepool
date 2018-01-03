@@ -32,24 +32,29 @@ class Grafana:
         self.container.client.filesystem.mkdir('/etc/grafana/')
         self.container.upload_content('/etc/grafana/grafana.ini', template)
 
-    def is_running(self):
+    @property
+    def PID(self):
         for process in self.container.client.process.list():
             if 'grafana-server' in process['cmdline']:
-                    return True, process['pid']
-        return False, None
+                return process['pid']
+        return None
+
+    def is_running(self):
+        if self.client.ping():
+            return True
+        return False
 
     def stop(self, timeout=30):
-        is_running, pid = self.is_running()
-        if not is_running:
+        if not self.is_running():
             return
 
-        self.container.client.process.kill(pid, signal.SIGTERM)
+        self.container.client.process.kill(self.PID, signal.SIGTERM)
         start = time.time()
         end = start + timeout
-        is_running, _ = self.is_running()
+        is_running = self.is_running()
         while is_running and time.time() < end:
             time.sleep(1)
-            is_running, _ = self.is_running()
+            is_running = self.is_running()
 
         if is_running:
             raise RuntimeError('Failed to stop grafana.')
@@ -57,8 +62,8 @@ class Grafana:
         if self.container.node.client.nft.rule_exists(self.port):
             self.container.node.client.nft.drop_port(self.port)
 
-    def start(self, timeout=30):
-        is_running, _ = self.is_running()
+    def start(self, timeout=45):
+        is_running = self.is_running()
         if is_running:
             return
 
@@ -73,10 +78,10 @@ class Grafana:
 
         start = time.time()
         end = start + timeout
-        is_running, _ = self.is_running()
+        is_running = self.is_running()
         while not is_running and time.time() < end:
             time.sleep(1)
-            is_running, _ = self.is_running()
+            is_running = self.is_running()
 
         if not is_running:
             if self.container.node.client.nft.rule_exists(self.port):

@@ -10,13 +10,15 @@ import (
 type VdiskstorageAPI struct {
 	AysRepo     string
 	AysUrl      string
+	AysRetries  string
 	JWTProvider *tools.JWTProvider
 }
 
-func NewVdiskStorageAPI(repo string, aysurl string, jwtProvider *tools.JWTProvider) *VdiskstorageAPI {
+func NewVdiskStorageAPI(repo string, aysUrl string, aysRetries string, jwtProvider *tools.JWTProvider) *VdiskstorageAPI {
 	return &VdiskstorageAPI{
 		AysRepo:     repo,
-		AysUrl:      aysurl,
+		AysUrl:      aysUrl,
+		AysRetries:  aysRetries,
 		JWTProvider: jwtProvider,
 	}
 }
@@ -32,4 +34,8 @@ func (api VdiskstorageAPI) AysRepoName() string {
 
 func (api *VdiskstorageAPI) GetJWT() (string, error) {
 	return api.JWTProvider.GetJWT()
+}
+
+func (api *VdiskstorageAPI) AysRetriesConfig() string {
+	return api.AysRetries
 }

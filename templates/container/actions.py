@@ -24,9 +24,15 @@ def input(job):
 def init(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.configuration import get_jwt_token
+    import re
+
     service = job.service
     job.context['token'] = get_jwt_token(service.aysrepo)
     for nic in service.model.data.nics:
+        if nic.hwaddr:
+            pattern = re.compile(r'^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
+            if not pattern.match(nic.hwaddr):
+                raise j.exceptions.Input('Hwaddr: string is not a valid mac address.')
         if nic.type == 'vlan':
             break
     else:
@@ -140,7 +146,7 @@ def processChange(job):
 
 def update(job, updated_nics):
     from zeroos.orchestrator.sal.Container import Container
-    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.orchestrator.utils import write_status_code_error
     from zeroos.core0.client.client import ResultError
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -196,7 +202,7 @@ def update(job, updated_nics):
             try:
                 cl.nic_add(container.id, nic_dict)
             except ResultError as e:
-                Write_Status_code_Error(job, e)
+                write_status_code_error(job, e)
                 service.model.data.nics = old_nics
                 service.saveAll()
                 raise j.exceptions.Input(str(e))
@@ -263,11 +269,10 @@ def watchdog_handler(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    loop = j.atyourservice.server.loop
     etcd = service.consumers.get('etcd')
     if not etcd:
         return
 
     etcd_cluster = etcd[0].consumers.get('etcd_cluster')
     if etcd_cluster:
-        asyncio.ensure_future(etcd_cluster[0].asyncExecuteAction('watchdog_handler', context=job.context), loop=loop)
+        etcd_cluster[0].self_heal_action('watchdog_handler')

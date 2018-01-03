@@ -6,7 +6,10 @@ from framework.orchestrator_apis.storageclusters_apis import Storageclusters
 from framework.orchestrator_apis.storagepools_apis import StoragepoolsAPI
 from framework.orchestrator_apis.vms_apis import VmsAPI
 from framework.orchestrator_apis.vdisks_apis import VDisksAPIs
+from framework.orchestrator_apis.health_apis import HealthcheckAPI
 from framework.orchestrator_apis.zerotiers_apis import ZerotiersAPI
+from framework.orchestrator_apis.backup_apis import BackupAPI
+from framework.orchestrator_apis.graphs_apis import GraphsAPI
 from zeroos.orchestrator import client
 from testconfig import config
 
@@ -17,6 +20,9 @@ class OrchasteratorDriver:
     client_secret = config['main']['client_secret']
     organization = config['main']['organization']
     zerotier_token = config['main']['zerotier_token']
+    vm_username = config['main']['vm_username']
+    vm_password = config['main']['vm_password']
+
 
     def __init__(self):
         self.JWT = None
@@ -32,6 +38,9 @@ class OrchasteratorDriver:
         self.vdisks_api = VDisksAPIs(self)
         self.vms_api = VmsAPI(self)
         self.zerotiers_api = ZerotiersAPI(self)
+        self.backup_api = BackupAPI(self)
+        self.healthcheck_api = HealthcheckAPI(self)
+        self.graph_apis = GraphsAPI(self)
 
         self.nodes_info = self.get_node_info()
 
@@ -54,5 +63,6 @@ class OrchasteratorDriver:
                 continue
             nodes_info.append({"id": node['id'],
                                "ip": node['ipaddress'],
-                               "status": node['status']})
+                               "status": node['status'],
+                               "hostname":node['hostname']})
         return nodes_info

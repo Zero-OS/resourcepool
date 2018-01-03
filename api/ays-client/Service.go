@@ -7,6 +7,7 @@ import (
 
 type Service struct {
 	Actions    []Action         `json:"actions" validate:"nonzero"`
+	Actor      string           `json:"actor" validate:"nonzero"`
 	Children   []ServicePointer `json:"children" validate:"nonzero"`
 	Consumers  []ServicePointer `json:"consumers" validate:"nonzero"`
 	Data       json.RawMessage  `json:"data" validate:"nonzero"`

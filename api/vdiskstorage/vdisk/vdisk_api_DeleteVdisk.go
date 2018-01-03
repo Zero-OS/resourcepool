@@ -28,7 +28,22 @@ func (api *VdisksAPI) DeleteVdisk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		tools.WriteError(w, http.StatusNotFound, fmt.Errorf("A vdisk with ID %s does not exist", vdiskID), "")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// Prevent deletion of vdisks attached to vm
+	query := map[string]interface{}{
+		"consume": fmt.Sprintf("vdisk!%s", vdiskID),
+	}
+	services, res, err := aysClient.Ays.ListServicesByRole("vm", api.AysRepo, nil, query)
+	if !tools.HandleAYSResponse(err, res, w, "listing vms") {
+		return
+	}
+
+	if len(services) > 0 {
+		err := fmt.Errorf("Can't delete vdisk that is attached to VM")
+		tools.WriteError(w, http.StatusBadRequest, err, "")
 		return
 	}
 

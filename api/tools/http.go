@@ -54,15 +54,13 @@ func HandleAYSResponse(aysErr error, aysRes *http.Response, w http.ResponseWrite
 	return true
 }
 
-
-
 func HandleAYSDeleteResponse(aysErr error, aysRes *http.Response, w http.ResponseWriter, action string) bool {
 	if aysErr != nil {
 		errmsg := fmt.Sprintf("AYS threw error while %s.\n", action)
 		WriteError(w, http.StatusInternalServerError, aysErr, errmsg)
 		return false
 	}
-	if aysRes.StatusCode != http.StatusOK && aysRes.StatusCode != http.StatusNotFound{
+	if aysRes.StatusCode != http.StatusOK && aysRes.StatusCode != http.StatusNotFound {
 		log.Errorf("AYS returned status %v while %s.\n", aysRes.StatusCode, action)
 		w.WriteHeader(aysRes.StatusCode)
 		return false

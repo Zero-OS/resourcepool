@@ -8,9 +8,9 @@ import (
 type VdiskCreate struct {
 	ID        string                   `json:"id" validate:"nonzero"`
 	Blocksize int                      `json:"blocksize" validate:"nonzero"`
-	ImageID  string                   `json:"imageId,omitempty"`
+	ImageID   string                   `json:"imageId,omitempty"`
 	ReadOnly  bool                     `json:"readOnly,omitempty"`
-	Size      int                      `json:"size" validate:"nonzero"`
+	Size      uint64                   `json:"size" validate:"nonzero"`
 	Vdisktype EnumVdiskCreateVdisktype `json:"type" validate:"nonzero"`
 }
 

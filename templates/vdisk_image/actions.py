@@ -11,29 +11,44 @@ def install(job):
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
 
     service = job.service
-    vdiskstore = service.parent
-
-    save_config(job)
 
     url = service.model.data.ftpURL
 
-    snapshotID = "{}_{}".format(
+    snapshotID = '{}_{}'.format(
         service.model.data.exportName,
         service.model.data.exportSnapshot)
 
     node = random.choice(get_cluster_nodes(job))
     container = create_from_template_container(job, node)
+
     try:
-        find_resp = service.aysrepo.servicesFind(role="etcd_cluster")
+        # Get size and block size of the image
+        cmd = '/bin/zeroctl describe snapshot {snapshotID} --storage {ftpurl}'
+        cmd = cmd.format(snapshotID=snapshotID, ftpurl=url)
+
+        if service.model.data.encryptionKey:
+            cmd += ' --key {}'.format(service.model.data.encryptionKey)
+        result = container.client.system(cmd, id="vdisk.describe.%s" % service.name).get()
+        if result.state != 'SUCCESS':
+            raise j.exceptions.RuntimeError("Failed to run zeroctl describe {} {}".format(result.stdout, result.stderr))
+
+        imageinfo = j.data.serializer.json.loads(result.stdout)
+        service.model.data.size = imageinfo['source']['size'] / 1024**3
+        service.model.data.exportBlockSize = imageinfo['blockSize']
+
+        # Save image configurations
+        save_config(job)
+
+        find_resp = service.aysrepo.servicesFind(role='etcd_cluster')
         if len(find_resp) <= 0:
-            raise j.exceptions.RuntimeError("no etcd_cluster service found")
+            raise j.exceptions.RuntimeError('no etcd_cluster service found')
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
-        cmd = "/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
+        cmd = '/bin/zeroctl import vdisk {vdiskid} {snapshotID} -j 100 \
                --config {dialstrings} \
                --flush-size 128 \
                --force \
-               --storage {ftpurl}".format(vdiskid=service.name,
+               --storage {ftpurl}'.format(vdiskid=service.name,
                                           snapshotID=snapshotID,
                                           dialstrings=etcd_cluster.dialstrings,
                                           ftpurl=url)
@@ -43,12 +58,6 @@ def install(job):
 
         if service.model.data.overwrite:
             cmd += ' --force'
-
-        if vdiskstore.model.data.objectCluster:
-            storageclusterservice = service.aysrepo.serviceGet(role='storagecluster.object',
-                                                               instance=vdiskstore.model.data.objectCluster)
-            cmd += ' --data-shards {} --parity-shards {}'.format(storageclusterservice.model.data.dataShards,
-                                                                 storageclusterservice.model.data.parityShards)
 
         job.logger.info("import image {} from {} as {}".format(snapshotID, url, service.name))
         job.logger.info(cmd)
@@ -68,8 +77,7 @@ def delete(job):
     job.context['token'] = get_jwt_token(job.service.aysrepo)
 
     service = job.service
-    clusterconfig = get_cluster_config(job)
-    node = random.choice(clusterconfig['nodes'])
+    node = random.choice(get_cluster_nodes(job))
     container = create_from_template_container(job, node)
     try:
         # delete disk on storage cluster
@@ -79,7 +87,7 @@ def delete(job):
 
         etcd_cluster = EtcdCluster.from_ays(find_resp[0], job.context["token"])
 
-        cmd = '/bin/zeroctl delete vdisks {} --config {}'.format(service.name, etcd_cluster.dialstrings)
+        cmd = '/bin/zeroctl delete vdisk {} --config {}'.format(service.name, etcd_cluster.dialstrings)
 
         job.logger.info("delete image {}".format(service.name))
         job.logger.info(cmd)
@@ -98,8 +106,6 @@ def delete(job):
 
 
 def save_config(job):
-    import hashlib
-    from urllib.parse import urlparse
     import yaml
     from zeroos.orchestrator.sal.ETCD import EtcdCluster
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -124,7 +130,6 @@ def save_config(job):
     etcd.put(key="%s:vdisk:conf:static" % service.name, value=yamlconfig)
 
     # push tlog config to etcd
-    vdiskType = "boot"
     objectStoragecluster = vdiskstore.model.data.objectCluster
     if objectStoragecluster:
         config = {

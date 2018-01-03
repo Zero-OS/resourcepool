@@ -387,6 +387,7 @@ details in a user&#39;s account without getting their password.</p>
     
   
 
+<p>Status will be OK unless one of the healthchecks has a status WARNING or ERROR. If all healthchecks have a status SKIPPED, then status will be SKIPPED.</p>
 
 
   
@@ -27446,6 +27447,381 @@ the "Authorization" header</p>
 
 
   
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__gws__gwname__migrate">
+          <span class="parent">/nodes/{nodeid}/gws/{gwname}</span>/migrate
+        </a>
+
+        <span class="methods">
+          
+            <a href="#nodes__nodeid__gws__gwname__migrate_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_nodes__nodeid__gws__gwname__migrate" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#nodes__nodeid__gws__gwname__migrate_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Migrate Gateway</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="nodes__nodeid__gws__gwname__migrate_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/nodes/{nodeid}/gws/{gwname}</span>/migrate
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Migrate Gateway</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#nodes__nodeid__gws__gwname__migrate_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="nodes__nodeid__gws__gwname__migrate_post_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>nodeid</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                          <li>
+  <strong>gwname</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>node</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>New node to migrate to</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__gws__gwname__migrate_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+<p>Gateway migrated successfully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="nodes__nodeid__gws__gwname__migrate_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+  
 
 
   
@@ -50960,6 +51336,25 @@ details in a user&#39;s account without getting their password.</p>
   <strong>url</strong>:
 
     
+      <em>required (object)
+      </em>
+    
+  
+
+<p>FTP server url</p>
+
+
+  
+
+  
+
+  
+    <ul>
+      
+        <li>
+  <strong>url</strong>:
+
+    
       <em>required (string)
       </em>
     
@@ -50973,6 +51368,45 @@ details in a user&#39;s account without getting their password.</p>
 <li>ftp://user:pass@12.30.120.200:3000</li>
 <li>ftp://user:pass@12.30.120.200:3000/root/dir</li>
 </ul>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+      
+    </ul>
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>cryptoKey</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>32 byte string, used to encrypt exported VM</p>
 
 
   
@@ -51178,17 +51612,19 @@ the "Authorization" header</p>
 
 
 
+
+
   
   <div class="panel panel-white resource-modal">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__vms__vmid__import">
-          <span class="parent">/nodes/{nodeid}/vms/{vmid}</span>/import
+        <a class="collapsed" data-toggle="collapse" href="#panel_nodes__nodeid__vms_import">
+          <span class="parent">/nodes/{nodeid}/vms</span>/import
         </a>
 
         <span class="methods">
           
-            <a href="#nodes__nodeid__vms__vmid__import_post"><!-- modal shown by hashchange event -->
+            <a href="#nodes__nodeid__vms_import_post"><!-- modal shown by hashchange event -->
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
@@ -51196,7 +51632,7 @@ the "Authorization" header</p>
       </h4>
     </div>
 
-    <div id="panel_nodes__nodeid__vms__vmid__import" class="panel-collapse collapse">
+    <div id="panel_nodes__nodeid__vms_import" class="panel-collapse collapse">
       <div class="panel-body">
         
           
@@ -51204,7 +51640,7 @@ the "Authorization" header</p>
 
         <div class="list-group">
           
-            <div onclick="window.location.href = '#nodes__nodeid__vms__vmid__import_post'" class="list-group-item">
+            <div onclick="window.location.href = '#nodes__nodeid__vms_import_post'" class="list-group-item">
               <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Import the virtual machine from ftp server</p>
@@ -51218,14 +51654,14 @@ the "Authorization" header</p>
     </div>
 
     
-      <div class="modal fade" tabindex="0" id="nodes__nodeid__vms__vmid__import_post">
+      <div class="modal fade" tabindex="0" id="nodes__nodeid__vms_import_post">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
               <h4 class="modal-title" id="myModalLabel">
                 <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
-                <span class="parent">/nodes/{nodeid}/vms/{vmid}</span>/import
+                <span class="parent">/nodes/{nodeid}/vms</span>/import
               </h4>
             </div>
 
@@ -51266,19 +51702,19 @@ details in a user&#39;s account without getting their password.</p>
               <ul class="nav nav-tabs">
                 
                   <li class="active">
-                    <a href="#nodes__nodeid__vms__vmid__import_post_request" data-toggle="tab">Request</a>
+                    <a href="#nodes__nodeid__vms_import_post_request" data-toggle="tab">Request</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#nodes__nodeid__vms__vmid__import_post_response" data-toggle="tab">Response</a>
+                    <a href="#nodes__nodeid__vms_import_post_response" data-toggle="tab">Response</a>
                   </li>
                 
 
                 
                   <li>
-                    <a href="#nodes__nodeid__vms__vmid__import_post_securedby" data-toggle="tab">Security</a>
+                    <a href="#nodes__nodeid__vms_import_post_securedby" data-toggle="tab">Security</a>
                   </li>
                 
               </ul>
@@ -51286,39 +51722,13 @@ details in a user&#39;s account without getting their password.</p>
               <!-- Tab panes -->
               <div class="tab-content">
                 
-                  <div class="tab-pane active" id="nodes__nodeid__vms__vmid__import_post_request">
+                  <div class="tab-pane active" id="nodes__nodeid__vms_import_post_request">
                     
                       <h3>URI Parameters</h3>
                       <ul>
                         
                           <li>
   <strong>nodeid</strong>:
-
-    
-      <em>required (string)
-      </em>
-    
-  
-
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                        
-                          <li>
-  <strong>vmid</strong>:
 
     
       <em>required (string)
@@ -51404,12 +51814,31 @@ details in a user&#39;s account without getting their password.</p>
   <strong>url</strong>:
 
     
+      <em>required (object)
+      </em>
+    
+  
+
+<p>FTP server url</p>
+
+
+  
+
+  
+
+  
+    <ul>
+      
+        <li>
+  <strong>url</strong>:
+
+    
       <em>required (string)
       </em>
     
   
 
-<p>FTP server url of the metadata to import the vm from, and it should be in one of the following formats</p>
+<p>FTP server url to export the vm from, and it should be in one of the following formats</p>
 <ul>
 <li>localhost:22</li>
 <li>ftp://1.2.3.4:200</li>
@@ -51433,9 +51862,21 @@ details in a user&#39;s account without getting their password.</p>
 
 </li>
 
+      
+    </ul>
+  
+
+  
+  
+  
+
+  
+
+</li>
+
                             
                               <li>
-  <strong>blockStoragecluster</strong>:
+  <strong>id</strong>:
 
     
       <em>required (string)
@@ -51461,36 +51902,10 @@ details in a user&#39;s account without getting their password.</p>
 
                             
                               <li>
-  <strong>objectStoragecluster</strong>:
+  <strong>vdiskstorage</strong>:
 
     
-      <em>(string)
-      </em>
-    
-  
-
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>backupStoragecluster</strong>:
-
-    
-      <em>(string)
+      <em>required (string)
       </em>
     
   
@@ -51524,7 +51939,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="nodes__nodeid__vms__vmid__import_post_response">
+                  <div class="tab-pane" id="nodes__nodeid__vms_import_post_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
 <p>Virtual machine is imported successfully</p>
@@ -51538,7 +51953,7 @@ details in a user&#39;s account without getting their password.</p>
                 
 
                 
-                  <div class="tab-pane" id="nodes__nodeid__vms__vmid__import_post_securedby">
+                  <div class="tab-pane" id="nodes__nodeid__vms_import_post_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -51633,8 +52048,6 @@ the "Authorization" header</p>
       </div>
     
   </div>
-
-
 
 
 
@@ -53868,6 +54281,33 @@ details in a user&#39;s account without getting their password.</p>
 </li>
 
                               
+                                <li>
+  <strong>clusterType</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>type of the storagecluster</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                              
                             </ul>
                           
 
@@ -55041,6 +55481,10 @@ the "Authorization" header</p>
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
             </a>
           
+            <a href="#vdiskstorage__vdiskstorageid__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
         </span>
       </h4>
     </div>
@@ -55057,6 +55501,15 @@ the "Authorization" header</p>
               <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
               <div class="method_description">
 <p>Get vdisk storage information</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#vdiskstorage__vdiskstorageid__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete VdiskStorage</p>
 
               </div>
               <div class="clearfix"></div>
@@ -55362,6 +55815,254 @@ details in a user&#39;s account without getting their password.</p>
 
                 
                   <div class="tab-pane" id="vdiskstorage__vdiskstorageid__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="vdiskstorage__vdiskstorageid__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/vdiskstorage</span>/{vdiskstorageid}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete VdiskStorage</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#vdiskstorage__vdiskstorageid__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#vdiskstorage__vdiskstorageid__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="vdiskstorage__vdiskstorageid__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>vdiskstorageid</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>VdiskStorage has been deleted succefully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="vdiskstorage__vdiskstorageid__delete_securedby">
                     
                       
                       <h1>Secured by itsyouonline</h1>
@@ -56047,43 +56748,15 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>encryptionKey</strong>:
+  <strong>imageName</strong>:
 
     
-      <em>(string)
+      <em>required (string - pattern: ^\w+$)
       </em>
     
   
 
-<p>In case the image has been encrypted during upload.
-You need to specify the encryption key to be able to import it</p>
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>exportBlockSize</strong>:
-
-    
-      <em>required (integer - default: 131072)
-      </em>
-    
-  
-
-<p>block size in bytes of the exported image. It can be different from the disk block size</p>
+<p>Name to give to the image you are importing</p>
 
 
   
@@ -56111,121 +56784,6 @@ You need to specify the encryption key to be able to import it</p>
   
 
 <p>Name of the exported image on the ftp server</p>
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>size</strong>:
-
-    
-      <em>required (integer)
-      </em>
-    
-  
-
-<p>Size of the vdisk in GiB</p>
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>overwrite</strong>:
-
-    
-      <em>(boolean)
-      </em>
-    
-  
-
-<p>overwrite an images if it already exist in the vdisk storage</p>
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>url</strong>:
-
-    
-      <em>required (string)
-      </em>
-    
-  
-
-<p>FTP server url of the image you want to import</p>
-<ul>
-<li>localhost:22</li>
-<li>ftp://1.2.3.4:200</li>
-<li>ftp://user@127.0.0.1:200</li>
-<li>ftp://user:pass@12.30.120.200:3000</li>
-<li>ftp://user:pass@12.30.120.200:3000/root/dir</li>
-</ul>
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
-  <strong>imageName</strong>:
-
-    
-      <em>required (string - pattern: ^\w+$)
-      </em>
-    
-  
-
-<p>Name to give to the image you are importing</p>
 
 
   
@@ -56281,6 +56839,95 @@ If not specified, defaults to &#39;default&#39;</p>
   
 
 <p>block size in bytes of the image created in the local cluster</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>url</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>FTP server url of the image you want to import</p>
+<ul>
+<li>localhost:22</li>
+<li>ftp://1.2.3.4:200</li>
+<li>ftp://user@127.0.0.1:200</li>
+<li>ftp://user:pass@12.30.120.200:3000</li>
+<li>ftp://user:pass@12.30.120.200:3000/root/dir</li>
+</ul>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>encryptionKey</strong>:
+
+    
+      <em>(string)
+      </em>
+    
+  
+
+<p>In case the image has been encrypted during upload.
+You need to specify the encryption key to be able to import it</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>overwrite</strong>:
+
+    
+      <em>(boolean)
+      </em>
+    
+  
+
+<p>overwrite an images if it already exist in the vdisk storage</p>
 
 
   
@@ -60818,32 +61465,6 @@ details in a user&#39;s account without getting their password.</p>
                           <ul>
                             
                               <li>
-  <strong>id</strong>:
-
-    
-      <em>required (string)
-      </em>
-    
-  
-
-
-
-  
-
-  
-
-  
-
-  
-  
-  
-
-  
-
-</li>
-
-                            
-                              <li>
   <strong>url</strong>:
 
     
@@ -60884,7 +61505,7 @@ details in a user&#39;s account without getting their password.</p>
                   <div class="tab-pane" id="graphs__graphid__put_response">
                     
                       <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
-<p>Grafh updated successfully</p>
+<p>Graph updated successfully</p>
 
 
                       
@@ -62552,6 +63173,1627 @@ the "Authorization" header</p>
               </div>
             </div>
           
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 id="webhooks" class="panel-title">/webhooks</h3>
+              </div>
+
+              <div class="panel-body">
+                
+
+                <div class="panel-group">
+                  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_webhooks">
+          <span class="parent"></span>/webhooks
+        </a>
+
+        <span class="methods">
+          
+            <a href="#webhooks_get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#webhooks_post"><!-- modal shown by hashchange event -->
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_webhooks" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#webhooks_get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>List all webhooks</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#webhooks_post'" class="list-group-item">
+              <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Create Webhook</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="webhooks_get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent"></span>/webhooks
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>List all webhooks</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+
+                
+                  <li class="active">
+                    <a href="#webhooks_get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks_get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+
+                
+                  <div class="tab-pane active" id="webhooks_get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: array of string</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks_get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="webhooks_post">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent"></span>/webhooks
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Create Webhook</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#webhooks_post_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks_post_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks_post_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="webhooks_post_request">
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>name</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>url</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>eventtypes</strong>:
+
+    
+      <em>required (array of EventType)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks_post_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/202" target="_blank">202</a></h2>
+<p>Webhook created successfully</p>
+
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Location</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>URL to the the Webhook</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks_post_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+  
+  <div class="panel panel-white resource-modal">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" href="#panel_webhooks__webhookname_">
+          <span class="parent">/webhooks</span>/{webhookname}
+        </a>
+
+        <span class="methods">
+          
+            <a href="#webhooks__webhookname__get"><!-- modal shown by hashchange event -->
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#webhooks__webhookname__put"><!-- modal shown by hashchange event -->
+              <span class="badge badge_put">put <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+            <a href="#webhooks__webhookname__delete"><!-- modal shown by hashchange event -->
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+            </a>
+          
+        </span>
+      </h4>
+    </div>
+
+    <div id="panel_webhooks__webhookname_" class="panel-collapse collapse">
+      <div class="panel-body">
+        
+          
+        
+
+        <div class="list-group">
+          
+            <div onclick="window.location.href = '#webhooks__webhookname__get'" class="list-group-item">
+              <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Get a webhook</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#webhooks__webhookname__put'" class="list-group-item">
+              <span class="badge badge_put">put <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Update a webhook</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+            <div onclick="window.location.href = '#webhooks__webhookname__delete'" class="list-group-item">
+              <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+              <div class="method_description">
+<p>Delete a webhook</p>
+
+              </div>
+              <div class="clearfix"></div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="modal fade" tabindex="0" id="webhooks__webhookname__get">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/webhooks</span>/{webhookname}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Get a webhook</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#webhooks__webhookname__get_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__get_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__get_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="webhooks__webhookname__get_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>webhookname</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__get_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2>
+
+
+                      
+
+                      
+                        <h3>Body</h3>
+                        
+                          <p><strong>Media type</strong>: application/json</p>
+
+                          
+                            
+                              
+                                <p><strong>Type</strong>: object</p>
+                              
+                            
+                          
+
+                          
+
+                          
+
+                          
+                            <strong>Properties</strong>
+                            <ul>
+                              
+                                <li>
+  <strong>name</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>url</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                                <li>
+  <strong>eventtypes</strong>:
+
+    
+      <em>required (array of EventType)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                              
+                            </ul>
+                          
+
+                          
+                          
+                          
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__get_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="webhooks__webhookname__put">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_put">put <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/webhooks</span>/{webhookname}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Update a webhook</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#webhooks__webhookname__put_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__put_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__put_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="webhooks__webhookname__put_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>webhookname</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                      <h3>Body</h3>
+                      
+                        <p><strong>Media type</strong>: application/json</p>
+
+                        
+                          
+                            
+                              <p><strong>Type</strong>: object</p>
+                            
+                          
+                        
+
+                        
+
+                        
+
+                        
+                          <strong>Properties</strong>
+                          <ul>
+                            
+                              <li>
+  <strong>url</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                              <li>
+  <strong>eventtypes</strong>:
+
+    
+      <em>required (array of EventType)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                            
+                          </ul>
+                        
+
+                        
+                        
+                        
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__put_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>Webhook updated successfully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__put_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" tabindex="0" id="webhooks__webhookname__delete">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">
+                <span class="badge badge_delete">delete <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span>
+                <span class="parent">/webhooks</span>/{webhookname}
+              </h4>
+            </div>
+
+            <div class="modal-body">
+              
+                <div class="alert alert-info">
+<p>Delete a webhook</p>
+
+                </div>
+              
+
+              
+                
+                  
+                    <div class="alert alert-warning">
+                      
+                      <span class="glyphicon glyphicon-lock" title="Authentication required"></span>
+                      Secured by <b>itsyouonline</b>
+                      
+                        with scopes:
+                        <ul>
+                          
+                            <li>user:memberof:0-orchestrator</li>
+                          
+                        </ul>
+                      
+                      
+<p>OAuth2 is a protocol that lets external apps request authorization to private
+details in a user&#39;s account without getting their password.</p>
+
+                      
+                    </div>
+                  
+                
+              
+
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs">
+                
+                  <li class="active">
+                    <a href="#webhooks__webhookname__delete_request" data-toggle="tab">Request</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__delete_response" data-toggle="tab">Response</a>
+                  </li>
+                
+
+                
+                  <li>
+                    <a href="#webhooks__webhookname__delete_securedby" data-toggle="tab">Security</a>
+                  </li>
+                
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+                
+                  <div class="tab-pane active" id="webhooks__webhookname__delete_request">
+                    
+                      <h3>URI Parameters</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>webhookname</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+                      <h3>Annotations</h3>
+                      <ul>
+                        
+                          <li>
+  <strong>AYSBased</strong>
+
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                        
+                      </ul>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__delete_response">
+                    
+                      <h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2>
+<p>Webhook deleted successfully</p>
+
+
+                      
+
+                      
+                    
+                  </div>
+                
+
+                
+                  <div class="tab-pane" id="webhooks__webhookname__delete_securedby">
+                    
+                      
+                      <h1>Secured by itsyouonline</h1>
+
+                      
+                        <h3>Headers</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>Authorization</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "access_token" query string parameter.</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h3>Query Parameters</h3>
+                        <ul>
+                          
+                            <li>
+  <strong>access_token</strong>:
+
+    
+      <em>required (string)
+      </em>
+    
+  
+
+<p>Used to send a valid OAuth 2 access token. Do not use together with
+the "Authorization" header</p>
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+
+</li>
+
+                          
+                        </ul>
+                      
+
+                      
+                        <h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2>
+<p>Unauthorized</p>
+
+                        
+
+                        
+
+                      
+
+                    
+                  </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+
+
+
+
+                </div>
+              </div>
+            </div>
+          
         </div>
 
         <div class="col-md-3">
@@ -62569,6 +64811,8 @@ the "Authorization" header</p>
                 <li><a href="#vdiskstorage">/vdiskstorage</a></li>
               
                 <li><a href="#graphs">/graphs</a></li>
+              
+                <li><a href="#webhooks">/webhooks</a></li>
               
             </ul>
           </div>

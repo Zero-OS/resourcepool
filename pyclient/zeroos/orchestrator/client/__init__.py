@@ -61,7 +61,9 @@ from .EnumVdiskStatus import EnumVdiskStatus
 from .EnumVdiskType import EnumVdiskType
 from .EnumZerotierListItemType import EnumZerotierListItemType
 from .EnumZerotierType import EnumZerotierType
-from .ExportUrl import ExportUrl
+from .EventType import EventType
+from .ExportVM import ExportVM
+from .FTPUrl import FTPUrl
 from .Filesystem import Filesystem
 from .FilesystemCreate import FilesystemCreate
 from .GW import GW
@@ -71,6 +73,7 @@ from .GWNIC import GWNIC
 from .GWNICconfig import GWNICconfig
 from .GetGW import GetGW
 from .Graph import Graph
+from .GraphUpdate import GraphUpdate
 from .HTTPProxy import HTTPProxy
 from .HTTPType import HTTPType
 from .HealthCheck import HealthCheck
@@ -84,6 +87,7 @@ from .JobResult import JobResult
 from .ListGW import ListGW
 from .MemInfo import MemInfo
 from .Message import Message
+from .MigrateGW import MigrateGW
 from .NicInfo import NicInfo
 from .NicLink import NicLink
 from .Node import Node
@@ -116,6 +120,8 @@ from .VdiskListItem import VdiskListItem
 from .VdiskResize import VdiskResize
 from .VdiskRollback import VdiskRollback
 from .VdiskStorage import VdiskStorage
+from .Webhook import Webhook
+from .WebhookUpdate import WebhookUpdate
 from .WriteFile import WriteFile
 from .Zerotier import Zerotier
 from .ZerotierBridge import ZerotierBridge

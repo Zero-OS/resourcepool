@@ -115,10 +115,14 @@ def get_storagecluster_config(job, storagecluster):
 def stop(job):
     from zeroos.orchestrator.configuration import get_jwt_token
     import time
+    import signal
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     service = job.service
     container = get_container(service, job.context['token'])
+
+    force_stop = job.model.args.get("force_stop", False)
+    max_wait = 10 if force_stop else 60
 
     vm = service.consumers['vm'][0]
     vdisks = vm.producers.get('vdisk', [])
@@ -132,16 +136,23 @@ def stop(job):
 
     nbdjob = is_job_running(container, socket=service.model.data.socketPath)
     if nbdjob:
+        pid = nbdjob['cmd']['id']
         job.logger.info("killing job {}".format(nbdjob['cmd']['arguments']['name']))
-        container.client.job.kill(nbdjob['cmd']['id'])
+        container.client.job.kill(pid)
 
         job.logger.info("wait for nbdserver to stop")
-        for i in range(60):
+        for i in range(max_wait):
             time.sleep(1)
             if is_job_running(container, socket=service.model.data.socketPath):
                 continue
             return
-        raise j.exceptions.RuntimeError("nbdserver didn't stop")
+
+        # if we couldn't stop the process gently, just kill it
+        container.client.job.kill(pid, signal=signal.SIGKILL)
+
+        if is_job_running(container, socket=service.model.data.socketPath):
+            raise j.exceptions.RuntimeError("nbdserver %s didn't stop" % service.model.name)
+
     service.model.data.status = 'halted'
     service.saveAll()
 
@@ -194,13 +205,13 @@ def handle_messages(job, message):
 
 def debug_failure(job):
     handle_messages(job, {
-        "status":422,
-        "subject":"ardb",
+        "status": 422,
+        "subject": "ardb",
         "data": {
-            "address":"172.17.0.255:2000",
-            "db":0,
-            "type":"primary",
-            "vdiskID":"vd0"
+            "address": "172.17.0.255:2000",
+            "db": 0,
+            "type": "primary",
+            "vdiskID": "vd0"
         }
     })
 

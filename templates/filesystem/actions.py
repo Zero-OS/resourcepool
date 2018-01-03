@@ -25,12 +25,17 @@ def install(job):
     try:
         fs = pool.get(fsname)
     except ValueError:
-        fs = pool.create(fsname, int(job.service.model.data.quota))
+        fs = pool.create(fsname, int(job.service.model.data.quota * 1024 * 1024))
     job.service.model.data.mountpoint = fs.path
 
 
 def delete(job):
-    pool = get_pool(job)
+    # Do nothing if the pool couldn't be found, ie was never installed correctly
+    try:
+        pool = get_pool(job)
+    except ValueError:
+        return
+
     fsname = str(job.service.model.data.name)
     try:
         fs = pool.get(fsname)

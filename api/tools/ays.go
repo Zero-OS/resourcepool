@@ -17,7 +17,8 @@ var (
 )
 
 type AYStool struct {
-	Ays *ays.AysService
+	Ays     *ays.AysService
+	Retries string
 }
 
 type AYSError struct {
@@ -87,9 +88,7 @@ func (aystool AYStool) WaitRunDone(runid, repoName string) (*ays.AYSRun, error) 
 		return run, err
 	}
 
-	for run.State == "new" || run.State == "running" || (run.State == "error" && run.Retry < 6) {
-		time.Sleep(time.Second)
-
+	for run.State == "new" || run.State == "running" || run.State == "error" && len(run.Retries.RemainingRetries) > 0 {
 		run, err = aystool.getRun(run.Key, repoName)
 		if err != nil && run.State != "error" {
 			return run, err
@@ -202,7 +201,7 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 		ProcessChangeJobs []string `json:"processChangeJobs"`
 	}{}
 
-	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, nil, nil)
+	resp, err := aystool.Ays.ExecuteBlueprint(blueprintName, repoName, ays.AysRepositoryRepositoryBlueprintBlueprintPostReqBody{Message: ""}, nil, nil)
 	if err != nil {
 		return "", nil, NewHTTPError(resp, err.Error())
 	}
@@ -221,8 +220,10 @@ func (aystool AYStool) executeBlueprint(blueprintName string, repoName string) (
 }
 
 func (aystool AYStool) runRepo(repoName string) (*ays.AYSRun, error) {
-
-	run, resp, err := aystool.Ays.CreateRun(repoName, nil, nil)
+	query := map[string]interface{}{
+		"retries": aystool.Retries,
+	}
+	run, resp, err := aystool.Ays.CreateRun(repoName, nil, query)
 	if err != nil {
 		return nil, NewHTTPError(resp, err.Error())
 	}

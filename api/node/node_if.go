@@ -171,6 +171,9 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// CreateGW is the handler for POST /nodes/{nodeid}/gws
 	// Create a new gateway
 	CreateGW(http.ResponseWriter, *http.Request)
+	// MigrateGW is the handler for POST /hodex/{nodeid}/gws/{gwname}/migrate
+	// Migrate gateway to a new node
+	MigrateGW(w http.ResponseWriter, r *http.Request)
 	// GetNodeOSInfo is the handler for GET /nodes/{nodeid}/info
 	// Get detailed information of the OS of the node
 	GetNodeOSInfo(http.ResponseWriter, *http.Request)
@@ -285,7 +288,7 @@ type NodesInterface interface { // DeleteBridge is the handler for DELETE /nodes
 	// ExportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/export
 	// export the virtual machine
 	ExportVM(http.ResponseWriter, *http.Request)
-	// ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
+	// ImportVM is the handler for POST /nodes/{nodeid}/vms/import
 	// import the virtual machine
 	ImportVM(http.ResponseWriter, *http.Request)
 	// StopVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/stop
@@ -380,6 +383,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies/{proxyid}", i.GetHTTPProxy).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.ListHTTPProxies).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/httpproxies", i.CreateHTTPProxies).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/migrate", i.MigrateGW).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/start", i.StartGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}/stop", i.StopGateway).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/gws/{gwname}", i.DeleteGateway).Methods("DELETE")
@@ -419,6 +423,7 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/storagepools/{storagepoolname}", i.GetStoragePoolInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/storagepools", i.ListStoragePools).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/storagepools", i.CreateStoragePool).Methods("POST")
+	r.HandleFunc("/nodes/{nodeid}/vms/import", i.ImportVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/info", i.GetVMInfo).Methods("GET")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/migrate", i.MigrateVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/pause", i.PauseVM).Methods("POST")
@@ -426,7 +431,6 @@ func NodesInterfaceRoutes(r *mux.Router, i NodesInterface) {
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/shutdown", i.ShutdownVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/start", i.StartVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/export", i.ExportVM).Methods("POST")
-	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/import", i.ImportVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}/stop", i.StopVM).Methods("POST")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.DeleteVM).Methods("DELETE")
 	r.HandleFunc("/nodes/{nodeid}/vms/{vmid}", i.GetVM).Methods("GET")

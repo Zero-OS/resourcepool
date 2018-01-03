@@ -105,7 +105,7 @@ def _init_zerodisk_services(job, nbd_container_service, tlog_container_service=N
         if not tlog_container_sal:
             from zeroos.orchestrator.sal.Container import Container
             tlog_container_sal = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
-        ports, tcp = get_baseports(job, tlog_container_sal.node, 11211, 2)
+        ports, tcp = get_baseports(job, tlog_container_service.parent, tlog_container_sal.node, 11211, 2)
         bind = "%s:%s" % (tlog_container_sal.node.storageAddr, ports[0])
         waitListenBind = "%s:%s" % (tlog_container_sal.node.storageAddr, ports[1])
         tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind)
@@ -142,7 +142,6 @@ def init(job):
 
 def start_dependent_services(job):
     import random
-    from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
@@ -160,7 +159,6 @@ def start_dependent_services(job):
         node = random.choice(services)
 
     tlog_container_service = create_zerodisk_container_service(job, node, "tlog")
-    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
 
     nbd_container_service = create_zerodisk_container_service(job, service.parent, "nbd")
     _init_zerodisk_services(job, nbd_container_service, tlog_container_service)
@@ -242,7 +240,7 @@ def format_media_nics(job, medias):
 def install(job):
     import time
     from zeroos.core0.client.client import ResultError
-    from zeroos.orchestrator.utils import Write_Status_code_Error
+    from zeroos.orchestrator.utils import write_status_code_error
     service = job.service
     node = get_node(job)
 
@@ -265,7 +263,7 @@ def install(job):
                 nics=nics,
             )
         except ResultError as e:
-            Write_Status_code_Error(job, e)
+            write_status_code_error(job, e)
             cleanupzerodisk(job)
             service.saveAll()
             raise j.exceptions.Input(str(e))
@@ -435,132 +433,123 @@ def shutdown(job):
     service.saveAll()
 
 
-def ssh_deamon_running(node, port):
-    for nodeport in node.client.info.port():
+def ssh_deamon_running(node_sal, port):
+    for nodeport in node_sal.client.info.port():
         if nodeport['network'] == 'tcp' and nodeport['port'] == port:
             return True
     return False
 
 
-def start_migartion_channel(job, old_service, new_service):
+def add_to_hosts(target_node_sal, node_sal):
+    """
+    Adds the ip of node_sal to the hosts file of target_node_sal
+    """
+    from io import BytesIO
+    bio = BytesIO()
+    host_name = node_sal.client.info.os().get("hostname")
+    hosts_line = b"\n%s %s\n" % (node_sal.storageAddr.encode(), host_name.encode())
+    target_node_sal.client.filesystem.download("/etc/hosts", bio)
+    if hosts_line not in bio.getvalue():
+        target_node_sal.client.bash("echo %s >> /etc/hosts" % hosts_line.strip())
+
+
+def start_migration_channel(job, old_node_sal, target_node_sal, target_node_service):
     import time
-    from zeroos.orchestrator.sal.Node import Node
+    from io import BytesIO
+    from zeroos.core0.client import ResultError
     from zeroos.orchestrator.configuration import get_jwt_token
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    old_node = Node.from_ays(old_service, job.context['token'])
-    node = Node.from_ays(new_service, job.context['token'])
-    service = job.service
     command = "/usr/sbin/sshd -D -f {config}"
     res = None
     port = None
+    tcp_service = None
 
     try:
         # Get free ports on node to use for ssh
-        freeports_node, _ = get_baseports(job, node, 4000, 1, 'migrationtcp')
+        freeports_node, tcp_services = get_baseports(job, target_node_service, target_node_sal, 4000, 1, 'migrationtcp')
 
         # testing should br changed to not
         if not freeports_node:
             raise j.exceptions.RuntimeError('No free port availble on taget node for migration')
 
         port = freeports_node[0]
-        tcp_service = service.aysrepo.serviceGet(instance='migrationtcp_%s_%s' % (node.name, freeports_node[0]), role='tcp')
+        tcp_service = tcp_services[0]
         tcp_service.executeAction('install', context=job.context)
-        service.consume(tcp_service)
-        service.saveAll()
-        ssh_config = "/tmp/ssh.config_%s_%s" % (service.name, port)
-
-        # check channel does not exist
-        if node.client.filesystem.exists(ssh_config):
-            node.client.filesystem.remove(ssh_config)
+        ssh_config = "/tmp/ssh.config_%s" % tcp_service.name
 
         # start ssh server on new node for this migration
-        node.upload_content(ssh_config, "Port %s" % port)
-        res = node.client.system(command.format(config=ssh_config))
+        target_node_sal.upload_content(ssh_config, "Port %s" % port)
+        res = target_node_sal.client.system(command.format(config=ssh_config))
         if not res.running:
-            raise j.exceptions.RuntimeError("Failed to run sshd instance to migrate vm from%s_%s" % (old_node.name,
-                                                                                                     node.name))
+            raise j.exceptions.RuntimeError("Failed to run sshd instance to migrate vm to %s" % target_node_service.name)
+
         # wait for max 5 seconds until the ssh deamon starts listening
         start = time.time()
         while time.time() < start + 5:
-            if ssh_deamon_running(node, port):
+            if ssh_deamon_running(target_node_sal, port):
                 break
         else:
             raise j.exceptions.RuntimeError("sshd instance failed to start listening within 5 seconds"
-                                            + " to migrate vm from%s_%s" % (old_node.name, node.name))
+                                            + " to migrate vm from %s" % target_node_service.name)
 
         # add host names addr to each node
-        file_discriptor = node.client.filesystem.open("/etc/hosts", mode='a')
-        host_name = old_node.client.info.os().get("hostname")
-        node.client.filesystem.write(file_discriptor,
-                                     str.encode("\n{hostname}    {addr}\n".format(hostname=old_node.addr,
-                                                                                  addr=host_name)))
-        node.client.filesystem.close(file_discriptor)
-
-        file_discriptor = old_node.client.filesystem.open("/etc/hosts", mode='a')
-        host_name = node.client.info.os().get("hostname")
-        old_node.client.filesystem.write(file_discriptor,
-                                         str.encode("\n{hostname}    {addr}\n".format(hostname=node.addr,
-                                                                                      addr=host_name)))
-        node.client.filesystem.close(file_discriptor)
+        add_to_hosts(old_node_sal, target_node_sal)
+        add_to_hosts(target_node_sal, old_node_sal)
 
         # Move keys from old_node to node authorized_keys
-        if not old_node.client.filesystem.exists("/root/.ssh/id_rsa.pub"):
-            old_node.client.bash("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
-
-        file_discriptor = old_node.client.filesystem.open("/root/.ssh/id_rsa.pub", mode='r')
-        pub_key = old_node.client.filesystem.read(file_discriptor)
-        old_node.client.filesystem.close(file_discriptor)
-        file_discriptor = node.client.filesystem.open("/root/.ssh/authorized_keys", mode='a')
-        node.client.filesystem.write(file_discriptor, pub_key)
-        old_node.client.filesystem.close(file_discriptor)
+        bioPK = BytesIO()
+        try:
+            old_node_sal.client.filesystem.download("/root/.ssh/id_rsa.pub", bioPK)
+        except ResultError:
+            old_node_sal.client.bash("ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''").get()
+            old_node_sal.client.filesystem.download("/root/.ssh/id_rsa.pub", bioPK)
+        bioAK = BytesIO()
+        try:
+            target_node_sal.client.filesystem.download("/root/.ssh/authorized_keys", bioAK)
+        except ResultError:
+            pass
+        if bioPK.getvalue() not in bioAK.getvalue():
+            target_node_sal.client.bash("echo %s >> /root/.ssh/authorized_keys" % bioPK.getvalue().decode().strip()).get()
 
         # write the ssh identy into the known hosts of old node if it doesnt exist
-        ssh_identity = old_node.client.system('ssh-keyscan -p %s %s' % (port, node.addr)).get().stdout
-        if not ssh_identity:
+        ssh_identities = target_node_sal.client.system('ssh-keyscan -p %s %s' % (port, target_node_sal.storageAddr)).get().stdout
+        if not ssh_identities:
             raise j.exceptions.RuntimeError('could not get the ssh identity')
-        exists = old_node.client.filesystem.exists("/root/.ssh/known_hosts")
-        if exists:
-            known_hosts = old_node.download_content("/root/.ssh/known_hosts")
-        if not exists or ssh_identity not in known_hosts:
-            file_discripter = old_node.client.filesystem.open("/root/.ssh/known_hosts", mode='a')
-            old_node.client.filesystem.write(file_discripter, str.encode(ssh_identity))
-            old_node.client.filesystem.close(file_discripter)
+        bioKH = BytesIO()
+        try:
+            old_node_sal.client.filesystem.download("/root/.ssh/known_hosts", bioKH)
+        except ResultError:
+            pass
+        for ssh_identity in ssh_identities.splitlines():
+            if ssh_identity not in bioKH.getvalue().decode():
+                old_node_sal.client.bash("echo %s >> /root/.ssh/known_hosts" % ssh_identity.strip()).get()
 
-        return str(port), res.id
+        return tcp_service, res.id
     except Exception as e:
-        service.model.changeParent(old_service)
-        service.model.data.node = old_service.name
-        service.model.data.status = 'running'
-        service.saveAll()
-        old_service.saveAll()
-        new_service.saveAll()
         if res:
-            node.client.job.kill(res.id)
-        if node.client.filesystem.exists('/tmp/ssh.config_%s_%s' % (service.name, port)):
-            node.client.filesystem.remove('/tmp/ssh.config_%s_%s' % (service.name, port))
-        if not port:
-            raise e
-        tcp_name = "migrationtcp_%s_%s" % (new_service.name, str(port))
-        tcp_services = service.aysrepo.servicesFind(role='tcp', name=tcp_name)
-        if tcp_services:
-            tcp_service = tcp_services[0]
+            target_node_sal.client.job.kill(res.id)
+        if tcp_service:
+            if target_node_sal.client.filesystem.exists('/tmp/ssh.config_%s' % tcp_service.name):
+                target_node_sal.client.filesystem.remove('/tmp/ssh.config_%s' % tcp_service.name)
             tcp_service.executeAction("drop", context=job.context)
             tcp_service.delete()
-
         raise e
 
 
-def get_baseports(job, node, baseport, nrports, name=None):
+def get_baseports(job, node_service, node_sal, baseport, nrports, name=None):
     """
-    look for nrports free ports on node, starting from baseport
+    look for nrports free ports on node_service, starting from baseport
     it retuns 2 lists,
     - list of selected port, [int]
     - list of tcp ays services, [Service]
     """
     service = job.service
-    tcps = service.aysrepo.servicesFind(role='tcp', parent='node.zero-os!%s' % node.name)
+    if node_sal is None:
+        from zeroos.orchestrator.sal.Node import Node
+        node_sal = Node.from_ays(node_service, job.context['token'])
+    parent_str = "%s!%s" % (node_service.model.role, node_service.name)
+    tcps = service.aysrepo.servicesFind(role='tcp', parent=parent_str)
 
     usedports = set()
     for tcp in tcps:
@@ -571,20 +560,28 @@ def get_baseports(job, node, baseport, nrports, name=None):
     tcpservices = []
     while True:
         if baseport not in usedports:
-            port = node.freeports(baseport=baseport, nrports=1)
+            port = node_sal.freeports(baseport=baseport, nrports=1)
             if not port:
+                for ts in tcpservices:
+                    ts.delete()
                 return None
             baseport = port[0]
 
             args = {
-                'node': node.name,
+                'node': node_service.name,
                 'port': baseport,
             }
-            tcp = 'tcp_{}_{}'.format(node.name, baseport)
+            tcp = 'tcp_{}_{}'.format(node_service.name, baseport)
             if name:
-                tcp = '{}_{}_{}'.format(name, node.name, baseport)
-            tcpservices.append(tcpactor.serviceCreate(instance=tcp, args=args))
-            freeports.append(baseport)
+                tcp = '{}_{}_{}'.format(name, node_service.name, baseport)
+            ts = tcpactor.serviceCreate(instance=tcp, args=args)
+            # Check for race condition
+            tcps = service.aysrepo.servicesFind(role='tcp', parent=parent_str)
+            if len(tcps) > 1:
+                ts.delete()
+            else:
+                tcpservices.append(ts)
+                freeports.append(baseport)
             if len(freeports) >= nrports:
                 return freeports, tcpservices
         baseport += 1
@@ -614,146 +611,162 @@ def migrate(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
     service = job.service
+    try:
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        old_node_sal = Node.from_ays(service.parent, job.context['token'])
+        vm = next((kvm for kvm in old_node_sal.client.kvm.list() if kvm['name'] == service.name), None)
+        if not vm:
+            raise RuntimeError("vm is not running")
+        node = service.model.data.node
+        if not node:
+            raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
 
-    old_node_sal = Node.from_ays(service.parent, job.context['token'])
-    vm = next((kvm for kvm in old_node_sal.client.kvm.list() if kvm['name'] == service.name), None)
-    if not vm:
-        raise RuntimeError("vm is not running")
+        # define node services
+        target_node = service.aysrepo.serviceGet('node', node)
+        target_node_sal = Node.from_ays(target_node, job.context['token'])
+        old_node_service = service.parent
 
+        # start migration channel to copy keys and start ssh deamon
+        j.tools.lock.lock("start_migration_channel")
+        try:
+                migration_tcp_service, migration_channel_job_id = start_migration_channel(job, old_node_sal, target_node_sal, target_node)
+                # test if channel works
+                br = old_node_sal.client.bash("ssh -p %s %s ls /" % (migration_tcp_service.model.data.port, target_node_sal.storageAddr), max_time=2).get()
+                if br.state != "SUCCESS":
+                    cleanup_migration_channel(job, target_node_sal, migration_channel_job_id, migration_tcp_service)
+                    raise RuntimeError("could not establish working migration channel\n%s" % br)
+        finally:
+            j.tools.lock.unlock("start_migration_channel")
+    except Exception as e:
+        service.model.data.node = service.parent.name
+        service.saveAll()
+        raise e
+
+    #service.consume(migration_tcp_service)
     service.model.data.status = 'migrating'
-
-    node = service.model.data.node
-    if not node:
-        raise j.exceptions.Input("migrate action expect to have the destination node in the argument")
-
-    # define node services
-    target_node = service.aysrepo.serviceGet('node', node)
-    target_node_sal = Node.from_ays(target_node, job.context['token'])
-
-    old_node = service.parent
-    job.logger.info("start migration of vm {} from {} to {}".format(service.name, service.parent.name, target_node.name))
-
-    # start migration channel to copy keys and start ssh deamon
-    ssh_port, job_id = start_migartion_channel(job, old_node, target_node)
-
-    #start tlog server on target node
-    services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]
-    if len(services) < 2:
-        raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
-
-    services.remove(old_node) # source node
-
-    if len(services) == 1:
-        # if we only have one node available, no other choice to deploy on the same node as the vm
-        tlog_target_node = services[0]
-    else:
-        services.remove(target_node) # make sure we don't deploy on the same node as the vm
-        tlog_target_node = random.choice(services)
-
-    job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node)
-    tlog_container_service = create_zerodisk_container_service(job, tlog_target_node, "tlog")
-    tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
-    tlog_container_service.executeAction('start', context=job.context)
-
-    # find some fee ports for the tlog servers on the target node
-    ports, tcp_services = get_baseports(job, tlog_container.node, 11211, 2)
-    # open the ports
-    for tcp_service in tcp_services:
-        tcp_service.executeAction('install', context=job.context)
-
-    # Create tlogserver service
-    bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
-    waitListenBind = "%s:%s" % (tlog_container.node.storageAddr, ports[1])
-    tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind, acceptAddress=target_node_sal.storageAddr)
-    tlogserver_service.consume(tcp_services[0])
-    tlogserver_service.consume(tcp_services[1])
-
-    # destination tlogserver consume source tlog server, so he can synchronise with it during migration
-    if 'tlogserver' in service.producers and len(service.producers['tlogserver']) > 0:
-        source_tlogserver_service = service.producers['tlogserver'][0]
-        tlogserver_service.consume(source_tlogserver_service)
-    job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node, service.name))
-    service.consume(tlogserver_service)
-
-    # make sure the tlogserver is started
-    tlogserver_service.executeAction('start', context=job.context)
-
-    # start new nbdserver on target node
-    nbd_container = create_zerodisk_container_service(job, target_node, "nbd")
-    job.logger.info("start nbd server for migration of vm {}".format(service.name))
-    nbdserver = create_service(service, nbd_container)
-    nbd_actor = service.aysrepo.actorGet('nbdserver')
-    nbdserver.consume(nbd_container)
-    nbdserver.consume(tlogserver_service)
-
-    service.consume(nbdserver)
-    service.consume(nbd_container)
-    target_node_client = Node.from_ays(target_node, job.context['token']).client
-    node_client = Node.from_ays(service.parent, job.context['token']).client
-
-    # change parent service to new node and save
-    service.model.changeParent(target_node)
-    target_node.saveAll()
-    old_node.saveAll()
     service.saveAll()
 
-    # start nbds
-    medias = _start_nbd(job, nbdserver.name)
-
-    # run the migrate command
-    uuid = vm["uuid"]
-    _, nics = format_media_nics(job, medias)
-    target_node_client.kvm.prepare_migration_target(
-        uuid=uuid,
-        nics=nics,
-    )
     try:
-        node_client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node.model.data.redisAddr, ssh_port))
-    except Exception as e:
-        service.model.data.node = old_node.name
-        service.model.changeParent(old_node)
+        job.logger.info("start migration of vm {vm} from {src} to {dst}".format(
+                        vm=service.name, src=service.parent.name, dst=target_node.name))
+
+        #start tlog server on target node
+        services = [node for node in service.aysrepo.servicesFind(role="node") if node.model.data.status == "running"]
+        if len(services) < 2:
+            raise RuntimeError("live migration is not possible if the enviroment has less then two nodes running")
+
+        services.remove(old_node_service) # source node
+
+        if len(services) == 1:
+            # if we only have one node available, no other choice to deploy on the same node as the vm
+            tlog_target_node_service = services[0]
+        else:
+            services.remove(target_node) # make sure we don't deploy on the same node as the vm
+            tlog_target_node_service = random.choice(services)
+
+        job.logger.info("selected node for tlog server for vm migration of vm %s: %s", service, tlog_target_node_service)
+        tlog_container_service = create_zerodisk_container_service(job, tlog_target_node_service, "tlog")
+        tlog_container = Container.from_ays(tlog_container_service, job.context['token'], logger=service.logger)
+        tlog_container_service.executeAction('start', context=job.context)
+
+        # find some fee ports for the tlog servers on the target node
+        ports, tcp_services = get_baseports(job, tlog_target_node_service, None, 11211, 2)
+        # open the ports
+        for tcp_service in tcp_services:
+            tcp_service.executeAction('install', context=job.context)
+
+        # Create tlogserver service
+        bind = "%s:%s" % (tlog_container.node.storageAddr, ports[0])
+        waitListenBind = "%s:%s" % (tlog_container.node.storageAddr, ports[1])
+        tlogserver_service = create_service(service, tlog_container_service, role='tlogserver', bind=bind, waitListenBind=waitListenBind, acceptAddress=target_node_sal.storageAddr)
+        tlogserver_service.consume(tcp_services[0])
+        tlogserver_service.consume(tcp_services[1])
+
+        # destination tlogserver consume source tlog server, so he can synchronise with it during migration
+        if 'tlogserver' in service.producers and len(service.producers['tlogserver']) > 0:
+            source_tlogserver_service = service.producers['tlogserver'][0]
+            tlogserver_service.consume(source_tlogserver_service)
+        job.logger.info("creates tlog server on {} for migration of vm {}".format(tlog_target_node_service, service.name))
+        service.consume(tlogserver_service)
+
+        # make sure the tlogserver is started
+        tlogserver_service.executeAction('start', context=job.context)
+
+        # start new nbdserver on target node
+        nbd_container = create_zerodisk_container_service(job, target_node, "nbd")
+        job.logger.info("start nbd server for migration of vm {}".format(service.name))
+        nbdserver = create_service(service, nbd_container)
+        nbd_actor = service.aysrepo.actorGet('nbdserver')
+        nbdserver.consume(nbd_container)
+        nbdserver.consume(tlogserver_service)
+        service.consume(nbdserver)
+        service.consume(nbd_container)
+
+        # start nbds
+        medias = _start_nbd(job, nbdserver.name)
+
+        # Prepare networking on target node
+        uuid = vm["uuid"]
+        _, nics = format_media_nics(job, medias)
+        target_node_sal.client.kvm.prepare_migration_target(
+            uuid=uuid,
+            nics=nics,
+        )
+
+        try:
+            # change parent service to new node and save
+            service.model.changeParent(target_node)
+            target_node.saveAll()
+            old_node_service.saveAll()
+            service.saveAll()
+            # run the migrate command
+            old_node_sal.client.kvm.migrate(uuid, "qemu+ssh://%s:%s/system" % (target_node_sal.storageAddr, migration_tcp_service.model.data.port))
+        except Exception as e:
+
+            job.logger.warning("Life migration failed due to:\n%s", e)
+
+            service.model.data.node = old_node_service.name
+            service.model.changeParent(old_node_service)
+            service.model.data.status = 'running'
+            service.saveAll()
+
+            # Cleanup nbdserver & tlogserver we are not using anymore
+            job.logger.info("delete new nbd services and vdisk container created for life migration")
+            stop_and_delete(job, [nbdserver], force=True)
+            stop_and_delete(job, [tlogserver_service], force=True)
+
+            raise e
+
+
+        # open vnc port
+        start = time.time()
+        while start + 15 > time.time():
+            kvm = get_domain(job)
+            if kvm:
+                service.model.data.vnc = kvm['vnc']
+                if kvm['vnc'] != -1:
+                    if target_node_sal.client.nft.rule_exists(kvm['vnc']):
+                        break
+                    target_node_sal.client.nft.open_port(kvm['vnc'])
+                break
+            else:
+                time.sleep(3)
+        else:
+            raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
+
+
+    finally:
+        cleanup_migration_channel(job, target_node_sal, migration_channel_job_id, migration_tcp_service)
+        service.model.data.node = service.parent.name
         service.model.data.status = 'running'
         service.saveAll()
 
-        # Cleanup nbdserver & tlogserver we are not using anymore
-        job.logger.info("delete new nbd services and vdisk container created for life migration")
-        stop_and_delete(job, [nbdserver])
-        stop_and_delete(job, [tlogserver_service])
-
-        raise e
-
-    # open vnc port
-    node = Node.from_ays(target_node, job.context['token'])
-    start = time.time()
-    while start + 15 > time.time():
-        kvm = get_domain(job)
-        if kvm:
-            service.model.data.vnc = kvm['vnc']
-            if kvm['vnc'] != -1:
-                if node.client.nft.rule_exists(kvm['vnc']):
-                    break
-                node.client.nft.open_port(kvm['vnc'])
-            break
-        else:
-            time.sleep(3)
-    else:
-        service.model.data.status = 'error'
-        raise j.exceptions.RuntimeError("Failed to migrate vm {}".format(service.name))
-
-    service.model.data.status = 'running'
-
-    # cleanup to remove ssh job and config file
-    node.client.job.kill(job_id)
-    node.client.filesystem.remove("/tmp/ssh.config_%s_%s" % (service.name, ssh_port))
-    tcp_name = "migrationtcp_%s_%s" % (node.name, ssh_port)
-    tcp_service = service.aysrepo.serviceGet(role='tcp', instance=tcp_name)
+def cleanup_migration_channel(job, target_node_sal, migration_channel_job_id, tcp_service):
+    target_node_sal.client.job.kill(migration_channel_job_id)
+    target_node_sal.client.filesystem.remove("/tmp/ssh.config_%s" % tcp_service.name)
     tcp_service.executeAction("drop", context=job.context)
     tcp_service.delete()
-    service.saveAll()
-
 
 def _remove_duplicates(col):
     try:
@@ -858,6 +871,7 @@ def updateNics(job, client, args):
     service.model.data.nics = args['nics']
     service.saveAll()
 
+
 def update_data(job, args):
     from zeroos.orchestrator.configuration import get_jwt_token
 
@@ -896,22 +910,25 @@ def update_data(job, args):
     service.saveAll()
 
 
-def stop_and_delete(job, services):
+def stop_and_delete(job, services, force=False):
     """
     stop a list of services and their parents
     then delete the service and all its children
     """
+    args = {}
+    if force:
+        args["force_stop"] = force
+
     for service in list(services):
-        service.executeAction('stop', context=job.context)
+        service.executeAction('stop', context=job.context, args=args)
         parent = service.parent
         service.delete()
-        parent.executeAction('stop', context=job.context)
+        parent.executeAction('stop', context=job.context, args=args)
         parent.delete()
 
 
 def export(job):
     from zeroos.orchestrator.sal.FtpClient import FtpClient
-    import hashlib
     import time
     import yaml
 
@@ -922,10 +939,10 @@ def export(job):
     # ftp://user:pass@12.30.120.200:3000
     # ftp://user:pass@12.30.120.200:3000/root/dir
     url = job.model.args.get("backupUrl", None)
-    if not url:
+    crypto_key = job.model.args.get("cryptoKey", "")
+    export_path = job.model.args.get("exportPath", None)
+    if not url or not export_path:
         return
-
-    url, filename = url.split("#", 1)
 
     if not url.startswith("ftp://"):
         url = "ftp://" + url
@@ -937,7 +954,7 @@ def export(job):
 
     # populate the metadata
     metadata = service.model.data.to_dict()
-    metadata["cryptoKey"] = hashlib.md5(str(int(time.time() * 10**6)).encode("utf-8")).hexdigest()
+    metadata["cryptoKey"] = crypto_key
     metadata["snapshotIDs"] = []
 
     args = {
@@ -949,21 +966,21 @@ def export(job):
     for vdisk in vdisks:
         snapshotID = str(int(time.time() * 10**6))
         args["snapshotID"] = snapshotID
-        vdisksrv = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
-        vdisksrv.executeAction('export', context=job.context, args=args)
+        vdisk_service = service.aysrepo.serviceGet(role='vdisk', instance=vdisk)
+        vdisk_service.executeAction('export', context=job.context, args=args)
         metadata["snapshotIDs"].append(snapshotID)
         metadata["vdisks"].append({
-            "blockSize": vdisksrv.model.data.blocksize,
-            "type": str(vdisksrv.model.data.type),
-            "size": vdisksrv.model.data.size,
-            "readOnly": vdisksrv.model.data.readOnly,
+            "blockSize": vdisk_service.model.data.blocksize,
+            "type": str(vdisk_service.model.data.type),
+            "size": vdisk_service.model.data.size,
+            "readOnly": vdisk_service.model.data.readOnly,
         })
 
     # upload metadta to ftp server
     yamlconfig = yaml.safe_dump(metadata, default_flow_style=False)
     content = yamlconfig.encode('utf8')
     ftpclient = FtpClient(url)
-    ftpclient.upload(content, filename)
+    ftpclient.upload(content, export_path)
 
 
 def processChange(job):

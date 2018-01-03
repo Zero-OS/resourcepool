@@ -51,18 +51,31 @@ func (api *HealthCheckApi) ListNodesHealth(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		var messages int
+		var skipped int
+
+	HealthChecks:
 		for _, healthCheck := range health.HealthChecks {
+			messages += len(healthCheck.Messages)
 			for _, message := range healthCheck.Messages {
-				if message.Status != "OK" {
+				if message.Status == "SKIPPED" {
+					skipped += 1
+				} else if message.Status != "OK" {
 					healthstatus = message.Status
 					if message.Status == "ERROR" {
-						break
+						break HealthChecks
 					}
 				}
 			}
 		}
 
-		respBody[i].Status = healthstatus
+		if skipped == messages {
+			// Only set status to skipped if all messages have a skipped status
+			respBody[i].Status = "SKIPPED"
+		} else {
+			respBody[i].Status = healthstatus
+
+		}
 
 	}
 

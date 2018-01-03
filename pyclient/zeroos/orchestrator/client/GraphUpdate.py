@@ -1,11 +1,11 @@
 """
-Auto-generated class for ExportUrl
+Auto-generated class for GraphUpdate
 """
 
 from . import client_support
 
 
-class ExportUrl(object):
+class GraphUpdate(object):
     """
     auto-generated. don't touch.
     """
@@ -14,10 +14,10 @@ class ExportUrl(object):
     def create(url):
         """
         :type url: str
-        :rtype: ExportUrl
+        :rtype: GraphUpdate
         """
 
-        return ExportUrl(
+        return GraphUpdate(
             url=url,
         )
 
@@ -25,7 +25,7 @@ class ExportUrl(object):
         if json is None and not kwargs:
             raise ValueError('No data or kwargs present')
 
-        class_name = 'ExportUrl'
+        class_name = 'GraphUpdate'
         create_error = '{cls}: unable to create {prop} from value: {val}: {err}'
         required_error = '{cls}: missing required property {prop}'
 

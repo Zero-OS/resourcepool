@@ -17,7 +17,7 @@ import (
 	tools "github.com/zero-os/0-orchestrator/api/tools"
 )
 
-// ImportVM is the handler for POST /nodes/{nodeid}/vms/{vmid}/import
+// ImportVM is the handler for POST /nodes/{nodeid}/vms/import
 // Import the VM
 func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 	aysClient, err := tools.GetAysConnection(api)
@@ -26,7 +26,6 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vars := mux.Vars(r)
-	vmID := vars["vmid"]
 	nodeID := vars["nodeid"]
 
 	var reqBody ImportVM
@@ -36,6 +35,7 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		tools.WriteError(w, http.StatusBadRequest, err, "Error decoding request body")
 		return
 	}
+	vmID := reqBody.ID
 	reqBody.URL = strings.TrimRight(reqBody.URL, "/")
 
 	// validate request
@@ -93,28 +93,31 @@ func (api *NodeAPI) ImportVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create vdisk storage for the new VM
+	vdiskstorageServiceName := reqBody.VdiskStorage
+
 	vdiskServices := []string{}
 	for idx, val := range metadata.Vdisks {
-		backupURL := fmt.Sprintf("%s#%s#%s", reqBody.URL, metadata.CryptoKey, metadata.SnapshotIDs[idx])
+		backupURL := reqBody.URL
 		// Create the blueprint
 		bp := struct {
-			Size                 int    `yaml:"size" json:"size"`
-			BlockSize            int    `yaml:"blocksize" json:"blocksize"`
-			ReadOnly             bool   `yaml:"readOnly" json:"readOnly"`
-			Type                 string `yaml:"type" json:"type"`
-			BackupURL            string `yaml:"backupUrl" json:"backupUrl"`
-			BlockStoragecluster  string `yaml:"blockStoragecluster" json:"blockStoragecluster"`
-			ObjectStoragecluster string `yaml:"objectStoragecluster" json:"objectStoragecluster"`
-			BackupStoragecluster string `yaml:"backupStoragecluster" json:"backupStoragecluster"`
+			Size         int    `yaml:"size" json:"size"`
+			BlockSize    int    `yaml:"blocksize" json:"blocksize"`
+			ReadOnly     bool   `yaml:"readOnly" json:"readOnly"`
+			Type         string `yaml:"type" json:"type"`
+			BackupURL    string `yaml:"backupUrl" json:"backupUrl"`
+			Vdiskstorage string `yaml:"vdiskstorage" json:"vdiskstorage"`
+			CryptoKey    string `yaml:"cryptoKey" json:"cryptoKey"`
+			SnapshotID   string `yaml:"snapshotID" json:"snapshotID"`
 		}{
-			Size:                 val.Size,
-			BlockSize:            val.Blocksize,
-			ReadOnly:             val.ReadOnly,
-			Type:                 string(val.Vdisktype),
-			BlockStoragecluster:  reqBody.BlockStoragecluster,
-			ObjectStoragecluster: reqBody.ObjectStoragecluster,
-			BackupStoragecluster: reqBody.BackupStoragecluster,
-			BackupURL:            backupURL,
+			Size:         val.Size,
+			BlockSize:    val.Blocksize,
+			ReadOnly:     val.ReadOnly,
+			Type:         string(val.Vdisktype),
+			Vdiskstorage: vdiskstorageServiceName,
+			BackupURL:    backupURL,
+			CryptoKey:    metadata.CryptoKey,
+			SnapshotID:   metadata.SnapshotIDs[idx],
 		}
 
 		now := time.Now()

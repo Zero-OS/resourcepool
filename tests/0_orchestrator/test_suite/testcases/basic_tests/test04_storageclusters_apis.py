@@ -16,6 +16,7 @@ class TestStorageclustersAPI(TestcasesBase):
             if not self.number_of_free_disks:
                 self.skipTest(' [*] No free disks to create storagecluster')
 
+            self.lg.info(' [*] Create storage cluster')
             self.response, self.data = self.storageclusters_api.post_storageclusters(
                 nodes=nodes,
                 driveType=disk_type,
@@ -39,7 +40,8 @@ class TestStorageclustersAPI(TestcasesBase):
         self.lg.info(' [*] Get storage cluster (SC0), should succeed with 200')
         response = self.storageclusters_api.get_storageclusters_label(self.data['label'])
         self.assertEqual(response.status_code, 200)
-        for key in ['label', 'driveType', 'nodes']:
+        
+        for key in ['label', 'driveType', 'nodes', 'clusterType']:
             self.assertEqual(response.json()[key], self.data[key])
         self.assertEqual(response.json()['status'], 'ready')
 
@@ -94,7 +96,7 @@ class TestStorageclustersAPI(TestcasesBase):
         **Test Scenario:**
         #. Kill storage cluster (SC0), should succeed with 204
         #. List storage clusters, (SC0) should be gone
-        #. Kill nonexisting storage cluster, should fail with 404
+        #. Kill nonexisting storage cluster, should fail with 204
         """
         self.lg.info(' [*] Kill storage cluster (SC0), should succeed with 204')
         response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
@@ -105,9 +107,9 @@ class TestStorageclustersAPI(TestcasesBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.data['label'], response.json())
 
-        self.lg.info(' [*] Kill nonexisting storage cluster, should fail with 404')
+        self.lg.info(' [*] Kill nonexisting storage cluster, should fail with 204')
         response = self.storageclusters_api.delete_storageclusters_label(self.rand_str())
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
     def test005_check_disks_wiped(self):
         """ GAT-147
@@ -133,3 +135,29 @@ class TestStorageclustersAPI(TestcasesBase):
         response = self.nodes_api.get_nodes_mounts(self.nodeid)
         mounted_disks_num = sum([1 for x in response.json() if self.data['label'] in x['mountpoint']])
         self.assertEqual(mounted_disks_num, 0)
+
+    def test006_delete_storagecluster_with_vdiskstorage(self):
+        """ GAT-154
+        **Test Scenario:**
+        #. Deploy new storage cluster (SC1), should succeed with 201.
+        #. Create vdiskstorage (VS1) on storage cluster (SC1), should succeed.
+        #. Kill storage cluster (SC0), should fail with 400 as it has vdiskstorage.
+        #. Delete vdiskstorage (VS1), should succeed.
+        #. Kill storage cluster (SC0), should succeed.
+        """
+
+        self.lg.info(' [*] Create vdiskstorage (VS1) on storage cluster (SC1)')
+        response, vdiskstorage = self.vdisks_api.post_vdiskstorage(storagecluster=self.data['label'])
+        self.assertEqual(response.status_code, 201)
+
+        self.lg.info(' [*] Kill storage cluster (SC1), should fail with 400')
+        response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
+        self.assertEqual(response.status_code, 400, response.content)
+
+        self.lg.info(' [*] Delete vdiskstorage (VS1), should succeed.')
+        response = self.vdisks_api.delete_vdiskstorage(vdiskstorageid=vdiskstorage['id'])
+        self.assertEqual(response.status_code, 204)
+
+        self.lg.info(' [*] Kill storage cluster (SC0), should succeed')
+        response = self.storageclusters_api.delete_storageclusters_label(self.data['label'])
+        self.assertEqual(response.status_code, 204)

@@ -242,8 +242,10 @@ def save_config(job):
             "clientID": zstor_clientid,
             "secret": zstor_clientsecret,
         },
-        "servers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
+        "dataServers": [{"address": zservice.model.data.bind} for zservice in zerostor_services],
         "metadataServers": [{"address": dialstring} for dialstring in etcd.dialstrings.split(",")],
+        "dataShards": service.model.data.dataShards,
+        "parityShards": service.model.data.parityShards,
     }
     yamlconfig = yaml.safe_dump(zerostor_config, default_flow_style=False)
     etcd.put(key="%s:cluster:conf:zerostor" % service.name, value=yamlconfig)
@@ -265,6 +267,7 @@ def delete_config(job):
 
 def get_availabledisks(job, disktype):
     from zeroos.orchestrator.sal.StorageCluster import ObjectCluster
+    from zeroos.orchestrator.utils import find_disks
 
     service = job.service
 
@@ -278,7 +281,8 @@ def get_availabledisks(job, disktype):
         used_disks[node] = disks
 
     cluster = ObjectCluster.from_ays(service, job.context['token'])
-    availabledisks = cluster.find_disks(disktype)
+    partition_name = 'sp_cluster_{}'.format(cluster.name)
+    availabledisks = find_disks(disktype, cluster.nodes, partition_name)
     freedisks = {}
     for node, disks in availabledisks.items():
         node_disks = []

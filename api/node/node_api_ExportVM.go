@@ -57,9 +57,13 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	bp := struct {
-		URL string `yaml:"backupUrl" json:"backupUrl"`
+		URL        string `yaml:"backupUrl" json:"backupUrl"`
+		CryptoKey  string `yaml:"cryptoKey" json:"cryptoKey"`
+		ExportPath string `yaml:"exportPath" json:"exportPath"`
 	}{
-		URL: fmt.Sprintf("%s#%s_%v", reqBody.URL, vmID, now.Unix()),
+		URL:        reqBody.URL,
+		CryptoKey:  reqBody.CryptoKey,
+		ExportPath: fmt.Sprintf("%s_%v", vmID, now.Unix()),
 	}
 
 	obj := make(map[string]interface{})
@@ -74,7 +78,7 @@ func (api *NodeAPI) ExportVM(w http.ResponseWriter, r *http.Request) {
 	respBody := struct {
 		BackupURL string `yaml:"url" json:"url"`
 	}{
-		BackupURL: strings.Replace(bp.URL, "#", "/", 1),
+		BackupURL: fmt.Sprintf("%s/%s", bp.URL, bp.ExportPath),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

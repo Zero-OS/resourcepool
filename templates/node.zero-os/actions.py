@@ -116,8 +116,6 @@ def monitor(job):
     from zeroos.orchestrator.sal.Node import Node
     from zeroos.orchestrator.sal.healthcheck import HealthCheckObject
     from zeroos.orchestrator.configuration import get_jwt_token, get_configuration
-    import redis
-    import time
 
     service = job.service
     config = get_configuration(service.aysrepo)
@@ -291,6 +289,15 @@ def uninstall(job):
     if bootstraps:
         bootstraps[0].executeAction('delete_node', args={'node_name': service.name})
 
+    # Remove etcd_cluster if this was the last node service
+    node_services = service.aysrepo.servicesFind(role='node')
+    if len(node_services) > 1:
+        return
+
+    for etcd_cluster_service in service.aysrepo.servicesFind(role='etcd_cluster'):
+        etcd_cluster_service.executeAction('delete', context=job.context)
+        etcd_cluster_service.delete()
+
 
 def watchdog(job):
     from zeroos.orchestrator.sal.Pubsub import Pubsub
@@ -303,7 +310,7 @@ def watchdog(job):
     service = job.service
     watched_roles = {
         'nbdserver': {
-            # 'message': (re.compile('^storageengine-failure.*$')),  # TODO: Not implemented yet in 0-disk yet
+            'level': 20,
             'message': (re.compile('.*'),),
             'eof': True
         },
@@ -354,10 +361,6 @@ def watchdog(job):
     }
 
     async def callback(jobid, level, message, flag):
-        if "nbd" in jobid:
-            print("****** nbd: %s" % message)
-        if "tlog" in jobid:
-            print("****** tlog: %s" % message)
         if '.' not in jobid:
             return
 
@@ -476,40 +479,47 @@ def nic_shutdown(job, message):
 
 def ork_handler(job):
     import json
+    from zeroos.orchestrator.utils import send_event
 
     message = job.model.args.get('message')
     if not message:
         return
 
     message = json.loads(message)
-    if message['action'] == 'NIC_SHUTDOWN':
+    send_event('ork', message, job.service.aysrepo)
+
+    if message['event'] == 'NIC_SHUTDOWN':
         nic_shutdown(job, message)
+    elif message['event'] == 'VM_QUARANTINE' and message['state'] == 'WARNING':
+        job.logger.info('VM %s exceeded cpu threshold and will be quarantined soon' % message['name'])
+    elif message['event'] == 'VM_QUARANTINE' and message['state'] == 'SUCCESS':
+        job.logger.info('Vm %s has been quarantined' % message['name'])
+    elif message['event'] == 'VM_UNQUARANTINE' and message['state'] == 'SUCCESS':
+        job.logger.info('Vm %s has been released from quarantine' % message['name'])
 
 
 def start_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('start', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+
+        asyncio.ensure_future(vm.asyncExecuteAction('start', context=job.context), loop=job.service._loop)
 
 
 def shutdown_vm(job, vm):
     import asyncio
     from zeroos.orchestrator.configuration import get_jwt_token
 
-    job.context['token'] = get_jwt_token(job.service.aysrepo)
-
-    service = job.service
     if vm.model.data.status == 'running':
-        vm.executeAction('shutdown', context=job.context)
+        job.context['token'] = get_jwt_token(job.service.aysrepo)
+        asyncio.ensure_future(vm.asyncExecuteAction('shutdown', context=job.context), loop=job.service._loop)
 
 
 def vm_handler(job):
     import json
+    import asyncio
 
     message = job.model.args.get('message')
     if not message:
@@ -521,10 +531,10 @@ def vm_handler(job):
         return
 
     if message['event'] == 'stopped' and message['detail'] == 'failed':
-        start_vm(job, vm)
+        asyncio.ensure_future(start_vm(job, vm))
 
     if message['event'] == 'stopped' and message['detail'] == 'shutdown':
-        shutdown_vm(job, vm)
+        asyncio.ensure_future(shutdown_vm(job, vm))
 
 
 def processChange(job):
@@ -534,4 +544,3 @@ def processChange(job):
     if 'forceReboot' in args and node_data.get('forceReboot') != args['forceReboot']:
         service.model.data.forceReboot = args['forceReboot']
         service.saveAll()
-

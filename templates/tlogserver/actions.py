@@ -114,13 +114,9 @@ def install(job):
                 -flush-size 128 \
                 -address {bind} \
                 -wait-listen-addr {waitListenBind} \
-                -data-shards {data_shards} \
-                -parity-shards {parity_shards} \
                 -config "{dialstrings}" \
                 '.format(id=vm.name,
                          bind=bind,
-                         data_shards=data_shards,
-                         parity_shards=parity_shards,
                          waitListenBind=waitListenBind,
                          dialstrings=etcd_cluster.dialstrings)
         if backup:
@@ -182,7 +178,7 @@ def stop(job):
             if not is_port_listening(container, port):
                 break
             raise j.exceptions.RuntimeError("Failed to stop Tlog server")
-    
+
     # after stop, in case this service was consume by another tlog server for synchronisation
     # need to clean the consumer relation cause the sync is done just before stop.
     # the relation doesn't need to exists anymore.

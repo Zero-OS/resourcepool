@@ -46,9 +46,27 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if disk size is larger than the image
+	var image struct {
+		Size uint64 `json:"size" validate:"nonzero"`
+	}
+	service, response, err := aysClient.Ays.GetServiceByName(reqBody.ImageID, "vdisk_image", api.AysRepo, nil, nil)
+	if !tools.HandleAYSResponse(err, response, w, fmt.Sprintf("getting service %s", reqBody.ImageID)) {
+		return
+	}
+	if err := json.Unmarshal(service.Data, &image); err != nil {
+		tools.WriteError(w, http.StatusInternalServerError, err, "Error unmrshaling ays response")
+		return
+	}
+	if reqBody.Size < image.Size {
+		err = fmt.Errorf("Vdisk size should be equal or larger than the image size")
+		tools.WriteError(w, http.StatusBadRequest, err, "")
+		return
+	}
+
 	// Create the blueprint
 	bp := struct {
-		Size         int    `yaml:"size" json:"size"`
+		Size         uint64 `yaml:"size" json:"size"`
 		BlockSize    int    `yaml:"blocksize" json:"blocksize"`
 		ImageID      string `yaml:"imageId" json:"imageId"`
 		ReadOnly     bool   `yaml:"readOnly" json:"readOnly"`
@@ -81,6 +99,5 @@ func (api *VdisksAPI) CreateNewVdisk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/vdisks/%s", reqBody.ID))
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }

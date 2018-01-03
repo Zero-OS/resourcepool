@@ -27,19 +27,23 @@ class VDisksAPIs(OrchestratorBase):
         return self.orchestrator_client.vdiskstorage.GetVdiskStorageInfo(vdiskstorageid=vdiskstorageid)
 
     @catch_exception_decoration
+    def delete_vdiskstorage(self, vdiskstorageid):
+        return self.orchestrator_client.vdiskstorage.DeleteVdiskStorage(vdiskstorageid=vdiskstorageid)
+
+    @catch_exception_decoration
     def get_import_images(self, vdiskstorageid):
         return self.orchestrator_client.vdiskstorage.ListImages(vdiskstorageid=vdiskstorageid)
 
     @catch_exception_decoration_return
     def post_import_image(self, vdiskstorageid, **kwargs):
-        size = random.randint(1, 50)
-        block_size = 2**random.randint(9, 15)
-        export_block_size = 2**random.randint(15, 20)
+        size = random.randint(15, 100)
+        block_size = 2 ** random.randint(9, 15)
+        export_block_size = 1048576 # should be 1048576 for image: template:ubuntu-1604
         imagename = self.random_string()
         data = {"imageName": imagename,
                 "exportName": "template:ubuntu-1604",
                 "exportSnapshot": "default",
-                "exportBlockSize": export_block_size,
+                "exportBlockSize": 1048576,
                 "size": size,
                 "diskBlockSize": block_size,
                 "url": "ftp://hub.gig.tech"
@@ -63,8 +67,8 @@ class VDisksAPIs(OrchestratorBase):
 
     @catch_exception_decoration_return
     def post_vdisks(self, vdiskstorageid, imageid="",  **kwargs):
-        size = random.randint(1, 50)
-        block_size = 2**random.randint(9, 15)
+        size = random.randint(15, 100)
+        block_size = 2 ** random.randint(9, 15)
         data = {"id": self.random_string(),
                 "size": size,
                 "blocksize": block_size,
@@ -82,7 +86,7 @@ class VDisksAPIs(OrchestratorBase):
         return self.orchestrator_client.vdiskstorage.GetVdiskInfo(vdiskstorageid=vdiskstorageid,vdiskid=vdiskid)
 
     @catch_exception_decoration
-    def delete_vdisks_vdiskid(self, vdiskstorageid,vdiskid):
+    def delete_vdisks_vdiskid(self, vdiskstorageid, vdiskid):
         return self.orchestrator_client.vdiskstorage.DeleteVdisk(vdiskstorageid=vdiskstorageid, vdiskid=vdiskid)
 
     @catch_exception_decoration

@@ -112,6 +112,7 @@ def install(job):
     service = job.service
     service.executeAction('start', context=job.context)
 
+
 def save_certificates(job, container, caddy_dir="/.caddy"):
     from io import  BytesIO
     if container.client.filesystem.exists(caddy_dir):
@@ -204,6 +205,29 @@ def get_zerotier_nic(zerotierid, containerobj):
         raise j.exceptions.RuntimeError("Failed to get zerotier network device")
 
 
+def migrate(job, dest):
+    from zeroos.orchestrator.sal.Container import Container
+    
+    service = job.service
+    node = service.aysrepo.serviceGet(role='node', instance=dest)
+    containers = []
+    for container in service.producers.get('container'):
+        containers.append(
+            Container.from_ays(container, job.context['token'], logger=job.service.logger)
+        )
+
+        container.model.changeParent(node)
+        container.saveAll()
+        container.executeAction('install', context=job.context)
+    
+    service.model.changeParent(node)
+    service.saveAll()
+    service.executeAction('start', context=job.context)
+
+    for container_sal in containers:
+        container_sal.stop()
+
+
 def processChange(job):
     from zeroos.orchestrator.sal.Container import Container
     from zeroos.orchestrator.configuration import get_jwt_token
@@ -217,12 +241,17 @@ def processChange(job):
         return
 
     gatewaydata = service.model.data.to_dict()
+    container = service.producers.get('container')[0]
+    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
+
+    nodechanged = gatewaydata.get('node') != args.get('node')
+    if nodechanged:
+        migrate(job, args.get('node'))
+        return
+
     nicchanges = gatewaydata['nics'] != args.get('nics')
     httproxychanges = gatewaydata['httpproxies'] != args.get('httpproxies')
     portforwardchanges = gatewaydata['portforwards'] != args.get('portforwards')
-
-    container = service.producers.get('container')[0]
-    containerobj = Container.from_ays(container, job.context['token'], logger=job.service.logger)
 
     if nicchanges:
         nics_args = {'nics': args['nics']}
@@ -459,5 +488,3 @@ def monitor(job):
 
     job.context['token'] = get_jwt_token(job.service.aysrepo)
     start(job)
-
-

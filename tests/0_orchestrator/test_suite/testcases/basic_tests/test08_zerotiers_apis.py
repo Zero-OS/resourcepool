@@ -34,6 +34,7 @@ class TestZerotiersAPI(TestcasesBase):
         self.lg.info(' [*] Exit zerotier network (ZT0)')
         self.zerotiers_api.delete_nodes_zerotiers_zerotierid(TestZerotiersAPI.nodeid, zerotierid=TestZerotiersAPI.nw_id)
         self.delete_zerotier_network(nwid=TestZerotiersAPI.nw_id)
+        super(TestZerotiersAPI, cls).tearDownClass()
 
     def test001_get_nodes_zerotiers_zerotierid(self):
         """ GAT-078
@@ -95,7 +96,7 @@ class TestZerotiersAPI(TestcasesBase):
         #. Leave zerotier network (ZT0), should succeed with 204.
         #. List node (N0) zerotier networks, (ZT0) should be gone.
         #. List zerotier networks using python client, (ZT0) should be gone.
-        #. Leave nonexisting zerotier network, should fail with 404
+        #. Leave nonexisting zerotier network, should fail with 204
         """
         self.lg.info(' [*] Leave zerotier network (ZT0), should succeed with 204')
         response = self.zerotiers_api.delete_nodes_zerotiers_zerotierid(TestZerotiersAPI.nodeid, zerotierid=TestZerotiersAPI.nw_id)
@@ -110,7 +111,7 @@ class TestZerotiersAPI(TestcasesBase):
         zerotiers = TestZerotiersAPI.core0_client.client.zerotier.list()
         self.assertNotIn(TestZerotiersAPI.nw_id, [x['nwid'] for x in zerotiers])
 
-        self.lg.info(' [*] Leave nonexisting zerotier network, should fail with 404')
+        self.lg.info(' [*] Leave nonexisting zerotier network, should fail with 204')
         response = self.zerotiers_api.delete_nodes_zerotiers_zerotierid(TestZerotiersAPI.nodeid, zerotierid='fake_zerotier')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
         

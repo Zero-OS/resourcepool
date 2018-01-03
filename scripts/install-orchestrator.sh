@@ -16,6 +16,41 @@ error_handler() {
 
 trap 'error_handler $LINENO' ERR
 
+# Test an IP address for validity:
+# Usage:
+#      valid_ip IP_ADDRESS
+#      if [[ $? -eq 0 ]]; then echo good; else echo bad; fi
+#   OR
+#      if valid_ip IP_ADDRESS; then echo good; else echo bad; fi
+#
+function valid_ip()
+{
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
+# Function to retrieve the zeroteir ip address and return it
+set_zerotierip(){
+    ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F / '{print $1}'`
+    if ! valid_ip $ZEROTIERIP; then
+        ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} | awk '{print $NF}' | awk -F , '{print $2}' | awk -F / '{print $1}'`
+    fi
+    if ! valid_ip $ZEROTIERIP; then
+      ZEROTIERIP=""
+    fi
+}
+
 export LC_ALL="en_US.UTF-8"
 export LANG="en_US.UTF-8"
 if ! grep -q "^${LANG}" /etc/locale.gen; then
@@ -131,7 +166,7 @@ echo "[+] Installing orchestrator dependencies"
 pip3 install -U "git+https://github.com/zero-os/0-core.git@${CORE_BRANCH}#subdirectory=client/py-client" >> ${logfile} 2>&1
 pip3 install -U "git+https://github.com/zero-os/0-orchestrator.git@${ORCHESTRATOR_BRANCH}#subdirectory=pyclient" >> ${logfile} 2>&1
 pip3 install -U zerotier >> ${logfile} 2>&1
-python3 -c "from js9 import j; j.tools.prefab.local.development.golang.install()" >> ${logfile} 2>&1
+python3 -c "from js9 import j; j.tools.prefab.local.runtimes.golang.install()" >> ${logfile} 2>&1
 mkdir -p /usr/local/go >> ${logfile} 2>&1
 
 echo "[+] Updating AYS orchestrator server"
@@ -160,7 +195,7 @@ echo "[+] Start AtYourService server"
 
 aysinit="/etc/my_init.d/10_ays.sh"
 if [ -n "${ITSYOUONLINEORG}" ]; then
-    conf_path=$(js9 'print(j.core.state.configPath)')
+    conf_path=$(js9 'print(j.core.state.configStatePath)')
     if ! grep -q ays.oauth $conf_path ; then
 
        cat >>  $conf_path << EOL
@@ -199,8 +234,8 @@ echo "[+] Waiting for AtYourService"
 while ! curl http://127.0.0.1:5000 >> ${logfile} 2>&1; do sleep 0.1; done
 
 echo "[+] Building orchestrator api server"
-export GOPATH=$(js9 "print(j.tools.prefab.local.development.golang.GOPATHDIR)")
-export GOROOT=$(js9 "print(j.tools.prefab.local.development.golang.GOROOTDIR)")
+export GOPATH=$(js9 "print(j.tools.prefab.local.runtimes.golang.GOPATHDIR)")
+export GOROOT=$(js9 "print(j.tools.prefab.local.runtimes.golang.GOROOTDIR)")
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 mkdir -p $GOPATH/src/github.com >> ${logfile} 2>&1
 if [ ! -d $GOPATH/src/github.com/zero-os ]; then
@@ -213,7 +248,7 @@ go build -o /usr/local/bin/orchestratorapiserver >> ${logfile} 2>&1
 
 echo "[+] Starting orchestrator api server"
 orchinit="/etc/my_init.d/11_orchestrator.sh"
-ZEROTIERIP=`zerotier-cli  listnetworks  | grep ${ZEROTIERNWID} |awk '{print $NF}' | awk -F / '{print $1}'`
+set_zerotierip
 
 if [ "$ZEROTIERIP" == "" ]; then
     echo "zerotier doesn't have an ip. make sure you have authorize this docker in your netowrk"
@@ -241,7 +276,7 @@ echo 'tmux new-session -d -s main -n 1 || true' >> ${orchinit}
 echo 'tmux new-window -t main -n orchestrator' >> ${orchinit}
 echo 'tmux send-key -t orchestrator.0 "$cmd" ENTER' >> ${orchinit}
 
-js9 'j.tools.prefab.local.apps.caddy.install()'
+js9 'j.tools.prefab.local.web.caddy.install()'
 tls=""
 
 if [ "$DEVELOPMENT" = true ]; then
@@ -259,7 +294,7 @@ $PUB {
     $tls
 }
 EOF
-echo 'js9 "j.tools.prefab.local.apps.caddy.start()"' >> ${orchinit}
+echo 'js9 "j.tools.prefab.local.web.caddy.start()"' >> ${orchinit}
 
 
 chmod +x ${orchinit} >> ${logfile} 2>&1
