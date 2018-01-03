@@ -1,4 +1,4 @@
-@0x921f9bfbc5173ac9;
+@0xe94696d8e021e01d;
 
 struct Schema {
     zerotierNetID @0 :Text;
@@ -8,4 +8,5 @@ struct Schema {
     wipedisks @3 :Bool=false;
     hardwarechecks @4 :List(Text);
     registrations @5 :List(Text);
+    authorizedZerotierMembers @6 : List(Text);
 }
