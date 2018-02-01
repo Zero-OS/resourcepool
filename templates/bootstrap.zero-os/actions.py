@@ -20,6 +20,7 @@ def bootstrap(job):
 
     resp = zerotier.network.listMembers(netid)
     members = resp.json()
+    job.logger.info("Received %s members" % len(members))
 
     # First make sure all members that need to be authorzed anyway, are authorized
     to_process = list()
@@ -78,6 +79,7 @@ def try_authorize(job, logger, netid, member, zerotier):
     job.context['token'] = get_jwt_token(service.aysrepo)
 
     if not member['online'] or member['config']['authorized']:
+        job.logger.info("Skipping member %s: online=%s, authorized=%s" % (member['nodeId'], member['online'], member['config']['authorized']))
         return
 
     # authorized new member
@@ -88,10 +90,14 @@ def try_authorize(job, logger, netid, member, zerotier):
     # get assigned ip of this member
     resp = zerotier.network.getMember(member['nodeId'], netid)
     member = resp.json()
-    while len(member['config']['ipAssignments']) <= 0:
+    for _ in range(20):
+        if len(member['config']['ipAssignments']):
+            break
         time.sleep(1)
         resp = zerotier.network.getMember(member['nodeId'], netid)
         member = resp.json()
+    else:
+        raise RuntimeError('Node %s did not get an ip assigned' % (member['nodeId']))
     zerotier_ip = member['config']['ipAssignments'][0]
 
     # test if we can connect to the new member
