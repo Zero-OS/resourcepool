@@ -1,3 +1,5 @@
+> NOTICE: This project is discontinued
+
 # Zero-OS Orchestrator
 
 The Zero-OS Orchestrator exposes all services of a cluster of Zero-OS nodes through a RESTful API.
